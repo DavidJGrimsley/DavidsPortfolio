@@ -1,0 +1,145 @@
+{
+    "MobileApps": [
+        {
+            "title": "PokePages",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "An app designed to connect Pokémon Go players in your area..",
+            "picture": "/img/pokepages.png",
+            "gif": "/img/pokepages.png",
+            "youtubeID": "",
+            "github": "",
+            "breakdown": "While playing Pokémon Go, I noticed a significant gap in the game's ecosystem: players had no dedicated way to communicate with one another. This insight inspired me to develop Poke Pages, a mobile app designed to fulfill this need and enhance the overall gaming experience. Created over a few months using Adalo, Poke Pages allowed Pokémon Go players to connect, share tips, and coordinate activities, fostering a stronger sense of community. This experimental project was my first foray into mobile app development, and it was successfully launched on both the Apple App Store and Google Play Store. For a year, it was available for download, earning positive feedback for its contribution to the Pokémon Go community.", 
+            "skillsUsed": ["Basic Computer Skills", "Community Building", "Programming Logic"],
+            "skillsLearned": ["App Development", "App Store Publishing", "User Experience Design", "User Interface Design", "Database infrastructure"]
+        },        
+        {
+            "title": "xCard",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "A social media app built to empower local business networking.",
+            "picture": "/img/xcard.png",
+            "gif": "/img/xcard.png",
+            "youtubeID": "",
+            "github": "",
+            "breakdown": "During my time at a startup, I played a key role in the development of xCard, a social media app designed to transform local business networking. With the goal of making the platform intuitive and user-friendly, I designed the UI using SwiftUI, ensuring that every aspect of the interface was tailored to the needs of business professionals. The app was developed to target local markets, allowing companies to connect with professionals within their immediate area while excluding large chains to create a more focused and meaningful networking environment. My contributions to the UI design were guided by a deep understanding of the users' needs, helping to make xCard a powerful tool for local business connections.", 
+            "skillsUsed": ["Mobile Development", "Clean Code", "User Experience Design", "User Interface Design", "SwiftUI"],
+            "skillsLearned": ["Collaborative Development", "Figma", "Prototyping", "User Testing"]
+        }
+    ],  
+    "GameDesign": [
+        {
+            "title": "Adventure",
+            "isFeatured": false,
+            "inProgress": true,
+            "caption": "Exciting gameplay set in a mountainous landscape with climbing, chasms, and interactive elements",
+            "picture": "/img/adventure.png",
+            "gif": "/img/AdventureLevelMontage.gif",
+            "steam": "",
+            "youtubeID": "b4quDbxCA5c",
+            "breakdown": "In the game Adventure, I crafted a dynamic mountain scene where players traverse chasms and explore diverse landscapes. Using Unreal Engine 5, I started with a high-level mood board to visualize the nature-inspired setting, grounding the design in realistic mountain terrain. This creative vision was brought to life by integrating various assets and incorporating a unique trapdoor mechanic, which required players to find a key and engage in environmental exploration. Team collaboration was a highlight, as we combined our assets and ideas to create a cohesive level, and the use of landscape tools enhanced the scene’s natural beauty, drawing from my personal experiences around lakes and ponds.\n\nHowever, the project faced challenges, including asset migration issues and texture streaming pool limitations, which required reducing texture resolutions and re-migrating assets. Despite these hurdles, the experience was rewarding, with lessons learned in managing underground environments and resolving software issues with Perforce. Overall, the project was both enjoyable and educational, and I plan to create a level sequence trailer to showcase the final result.",
+            "skillsUsed": ["Unreal Engine 5", "Game Design", "Basic Programming Knowledge", "Asset Integration", "Blueprint Scripting", "Environmental Design"],
+            "skillsLearned": ["Level Design", "Blockmesh", "Landscape Creation", "Problem-Solving in Game Development", "Level Sequences", "Collaborative Development"],
+            "highlights": [ 
+              
+            ]
+        },
+        {
+            "title": "Off the Coast",
+            "isFeatured": false,
+            "inProgress": true,
+            "caption": "Rocket Racing Track | Fortnite Custom Map Design | High-Speed Thrills & Epic Stunts!",
+            "picture": "/img/OffTheCoastRR.png",
+            "gif": "/img/OFFtheCoast_FortniteRR.gif",
+            "steam": "",
+            "youtubeID": "6DbQtEAsb4U",
+            "breakdown": "Welcome to \"Off the Coast,\" a custom map meticulously designed in Unreal Editor for Fortnite (UEFN) to deliver high-speed excitement and unique challenges. This track features dynamic layouts, including loops, jumps, and sharp turns, with sections extending over the sea for added thrill. One of the standout features is a carefully crafted spiral that tested my precision in level design, ensuring both difficulty and enjoyment for players.\n\nThe map's stunning visuals, interactive obstacles, and multiplayer-friendly design showcase my expertise in creating engaging environments. Thoughtfully placed scenery enhances immersion, while hidden shortcuts and rocket boosts add layers of complexity. \"Off the Coast\" exemplifies my ability to blend creativity with technical precision, offering a memorable racing experience for players of all skill levels.",
+            "skillsUsed":  ["Unreal Editor for Fortnite (UEFN)", "Level Design", "Environment Art", "Prefab Integration"],
+            "skillsLearned": ["Advanced Course Layouts", "Interactive Obstacle Design", "Multiplayer Optimization"],
+            "highlights": [ 
+                
+            ]
+        },
+        {
+            "title": "Nimbus Ride",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "An exciting exploration of C++ classes in Unreal Engine, featuring a unique Nimbus Ride mechanic.",
+            "picture": "/img/Nimbus.png",
+            "gif": "/img/Nimbus.gif",
+            "steam": "",
+            "youtubeID": "rjcxlrudjUw",
+            "breakdown": "In this project, I explored the fundamentals of C++ within Unreal Engine by creating a Nimbus Ride mechanic. As you can see I'm in my learning stages, this was actually a final project for CS50. The process involved building a series of C++ classes, which were later converted into Blueprints for easy integration within the game. One of the main features is the actor component that spawns clouds beneath the player, providing a magical ride experience. A special pure heart value was introduced, which gets affected based on the player's interaction with specific objects, such as a turtle pickup. This experience was an integral part of my learning journey into Unreal Engine's class structure and functionality, highlighting both the complexities and the creative possibilities of game development using C++.",
+            "skillsUsed": ["C++", "Unreal Engine", "Blueprint Scripting", "Game Design", "Actor Components"],
+            "skillsLearned": ["Class Creation in Unreal Engine", "Blueprint Integration", "Debugging", "Actor Component Design"],
+            "highlights": [
+                {
+                    "highlightTitle": "Nimbus Cloud Mechanic",
+                    "highlightCaption": "",
+                    "highlightPicture": "",
+                    "video": "",
+                    "description": "A key feature where clouds spawn under the player, allowing them to ride through the level."
+                },
+                {
+                    "highlightTitle": "Pure Heart Mechanic",
+                    "highlightCaption": "",
+                    "highlightPicture": "",
+                    "video": "",
+                    "description": "A system that changes the player's 'pure heart' value based on interactions, influencing gameplay outcomes."
+                }
+            ]
+        },
+        {
+            "title": "Tile By Numbers",
+            "isFeatured": true,
+            "inProgress": true,
+            "caption": "A strategic tile-based game where players must navigate a grid of number tiles whiles going indoor skydiving.",
+            "picture": "/img/Tile.png",
+            "gif": "/img/Tile.gif",
+            "steam": "",
+            "youtubeID": "sYCM9Ayc3zA",
+            "breakdown": "This game challenges players to move across a grid of tiles that either add to or subtract from their score. The objective is to reach the exit, but the final tiles will only open once the required score is met. Over 100 levels, players will learn various math concepts in a fun and interactive way. Levels 1-4 focus on the basic addition and subtraction tile mechanics. Levels 5-8 introduce teleport tiles, adding a layer of complexity. Levels 9-13 feature a patrolling enemy that resets the level if it catches the player. Levels 14-17 introduce moving blocks, which players can push to clear paths or block the patroller. At level 21, multiplication tiles are introduced, shifting the focus to multiplication, with similar structures for division, fractions, and square roots at levels 41, 61, and 81 respectively. The game blends strategic movement with progressively challenging math concepts, aiming to keep gameplay engaging while teaching foundational math skills.",
+            "skillsUsed": ["Unreal Engine 5", "Blueprint Scripting", "Data driven gameplay", "Level Design", "Mathematics"],
+            "skillsLearned": ["Parent class inheritance", "Puzzle Design", "Simplified UI", "Agile Development", "Advanced Blueprint Logic", "Enemy Behavior Implementation", "Game Balancing"],
+            "highlights": [
+                {
+                    "highlightTitle": "Patroller Mechanic Introduction",
+                    "highlightCaption": "This is a caption. It is optional as well as the picture and youtube video. This whole highlight section is optional. Coding is sooo cool. This is my last assignment before getting my associates degree!! Whoop Whoop!",
+                    "highlightPicture": "",
+                    "video": "t5nB5CKhrho",
+                    "description": "Introduced a patroller mechanic that moves based on the player’s actions. If the player is caught, the level resets, adding new strategic elements. This is the first of many mechanics to be added, but a major one that will give the game a unique feel. I want it to be fun while also teaching the player to think ahead and do math on the fly."
+                },
+                {
+                    "highlightTitle": "Number Tile System",
+                    "highlightCaption": "",
+                    "highlightPicture": "/img/NumberTiles.png",
+                    "video": "",
+                    "description": "Implemented number tiles that dynamically add or subtract from the player’s score. Special wall tiles block the exit until the required score is achieved. This is the basis for the game and will be expanded upon later. It creates the need to find a 'net increase or decrease' on the board. The player will learn to add multiple numbers together quickly in order to find the best path."
+                },
+                {
+                    "highlightTitle": "What went wrong?",
+                    "highlightCaption": "I put cars in the game",
+                    "highlightPicture": "/img/OFFtheCoast_FortniteRR.gif",
+                    "video": "x7vPuu8TnS0",
+                    "description": "The Flower Meadow is a beautiful place where the player can relax and enjoy the scenery. It is a place where the player can take a break from the action and enjoy the beauty of the game. The Flower Meadow is a place where the player can relax and enjoy the scenery. It is a place where the player can take a break from the action and enjoy the beauty of the game. The Flower Meadow is a place where the player can relax and enjoy the scenery. It is a place where the player can take a break from the action and enjoy the beauty of the game."
+                }
+            ]
+        }              
+    ],
+    "WebDev": [
+        {
+            "title": "This Website!",
+            "isFeatured": false,
+            "inProgress": true,
+            "caption": "A modern portfolio website showcasing mobile apps, game design, and web development projects.",
+            "picture": "/img/giphy.webp",
+            "gif": "/img/giphy.webp",
+            "site": "https://www.DavidJGrimsley.com",
+            "youtubeID": "",
+            "github": "",
+            "breakdown": "I developed this website using TypeScript, JSON, and Bootstrap, showcasing my diverse skill set across mobile apps, game design, and web development. The website features a clean, modern design with linear gradient backgrounds and carefully crafted spacing to ensure a pleasant user experience. The navigational flow is intuitive, making it easy for visitors to explore my work. \n\nFor each portfolio piece, I utilize JSON to dynamically generate Bootstrap cards, complete with 'Learn More' buttons. These buttons pass the 'title' key as a prop/parameter to the next page, where more detailed information about each project is displayed. This structure allows for scalable and maintainable content management, keeping the site organized and easy to update. I really enjoyed building this website in such a dynamic way, and I'm excited to continue expanding it with new projects and features in the future.",
+            "skillsUsed": ["HTML", "CSS", "JS", "Bootstrap", "JSON", "Expo", "React", "React Native", "TypeScript", "Responsive Design"],
+            "skillsLearned": ["Dynamic Routes", "Deep Links", "Custom Components", "State Management", "Reusable Components", "API Integration"]
+        }
+    ]
+}

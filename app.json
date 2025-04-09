@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "DJsPortfolio",
+    "slug": "DJsPortfolio",
+    "privacy": "public",
+    "description": "A portfolio of David J Grimsley's work in mobile development, game design and web development.",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./public/images/icon.png",
+    "scheme": "portfolio",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./public/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./public/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./public/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
