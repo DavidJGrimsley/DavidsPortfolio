@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, Dimensions, Platform } from 'react-native';
+import { View, Text, Image, Dimensions, Platform, Pressable } from 'react-native';
 import { styles } from '../constants/styles';
 import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -17,6 +17,7 @@ interface Highlight {
     highlightPicture?: string;
     video?: string;
     description: string;
+    code?: string;
 }
 
 interface Piece {
@@ -169,27 +170,37 @@ const FeaturedCard = () => {
 
 const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {
     return (
-        <View >
+        <View>
             {highlights.map((highlight, index) => (
                 <View key={index} style={styles.highlightView}>
                     <Text style={styles.highlightTitle}>{highlight.highlightTitle}</Text>
                     <View style={styles.highlightHeader}>
-                        {highlight.highlightPicture && (<Image source={{ uri: highlight.highlightPicture }} style={styles.highlightPicture} />)}
-                        {highlight.highlightCaption && (<Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>)}
+                        {highlight.highlightPicture && (
+                            <Image source={{ uri: highlight.highlightPicture }} style={styles.highlightPicture} />
+                        )}
+                        {highlight.highlightCaption && (
+                            <Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>
+                        )}
                     </View>
                     <Text style={styles.highlightDescription}>{highlight.description}</Text>
-                    {highlight.video && (<YoutubePlayer
+                    {highlight.video && (
+                        <YoutubePlayer
                             height={Dimensions.get('window').width * 0.5 * 0.5625}
                             width={Dimensions.get('window').width * 0.5}
                             play={false}
                             videoId={highlight.video}
-                            />
-                        )}
+                        />
+                    )}
+                    {highlight.code && (
+                        <View style={styles.codeContainer}>
+                            <Text style={styles.codeText}>{highlight.code}</Text>
+                        </View>
+                    )}
                 </View>
             ))}
         </View>
-    );  
-}
+    );
+};
 
 
 const backgroundGradient = () => {
@@ -235,4 +246,26 @@ const IframeEmbed = ({ src }: { src: string }) => {
     );
 }
 
-export { MyCards, Foot, TitleOfPage, FeaturedCard, Highlight, Piece, Pieces, UnderConstruction, IframeEmbed, HighlightView, InProgress};
+const HorizontalLinks = ({ github, site, steam }: { github?: string; site?: string; steam?: string }) => {
+    return (
+        <View style={styles.horizontalLinksContainer}>
+            {github && (
+                <Pressable style={styles.button} onPress={() => window.open(github)}>
+                    <Text style={styles.buttonText}>Github</Text>
+                </Pressable>
+            )}
+            {site && (
+                <Pressable style={styles.button} onPress={() => window.open(site)}>
+                    <Text style={styles.buttonText}>Website</Text>
+                </Pressable>
+            )}
+            {steam && (
+                <Pressable style={styles.button} onPress={() => window.open(steam)}>
+                    <Text style={styles.buttonText}>Steam</Text>
+                </Pressable>
+            )}
+        </View>
+    );
+};
+
+export { MyCards, Foot, TitleOfPage, FeaturedCard, Highlight, Piece, Pieces, UnderConstruction, IframeEmbed, HighlightView, InProgress, HorizontalLinks };

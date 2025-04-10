@@ -5,7 +5,7 @@ import { styles } from "@/constants/styles";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import React, { useCallback } from "react";
 import pieces from '@/assets/json/pieces.json';
-import { InProgress, Piece, Pieces } from '@/components/CustomComponents'
+import { HighlightView, HorizontalLinks, InProgress, Piece, Pieces } from '@/components/CustomComponents'
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";
 
@@ -97,11 +97,11 @@ export default function Page() {
                             />
                           
                         </View>
-                        {element.github && (
-                          <Pressable style={mobileStyles.button} onPress={() => window.open(element.github)}>
-                            <Text style={mobileStyles.buttonText}>Github</Text>
-                          </Pressable>
-                        )}
+                        {element.github || element.site || element.steam ? (
+                          <HorizontalLinks github={element.github} site={element.site} steam={element.steam} />
+                        ) : null}                        
+                        {/* Show highlights if they exist */}
+                        {element.highlights && (<HighlightView highlights={element.highlights} />)}
                       </View>
                     );
                     newData = page;

@@ -1,6 +1,58 @@
 {
     "MobileApps": [
         {
+            "title": "Star Wars Galaxies",
+            "isFeatured": true,
+            "inProgress": false,
+            "caption": "Access to all the Star Wars information at your fingertips.",
+            "picture": "/img/starwars.png",
+            "gif": "/img/yoda.png",
+            "youtubeID": "",
+            "site": "https://galaxies.dev/mission/zero-to-hero/1-09",
+            "github": "https://github.com/DavidJGrimsley/Star_Wars_Galaxies",
+            "breakdown": "I followed the tutorial for this on Galaxies.dev. It goes through making reusable components, JSX and styling, Navigation, storing data, working with JSON data, API calls, Tab bar, AsyncStorage, useEffect, useState and a few other things. I added several features including finishing the 'people' page as the instructor suggested, some background images and much more! I had a blast making this and I’m ready to become a huge Star Wars nerd. Please read on to see the details of the added features, the best one is at the bottom!",    
+            "skillsUsed": [
+                "Reusable Components",
+                "JSX",
+                "Styling",
+                "Navigation",
+                "API Calls",
+                "JSON Data Handling",
+                "React Hooks",
+                "Animated UI Elements",
+                "Responsive Design",
+                "Touchable Components",
+                "URL Manipulation"
+            ],
+            "skillsLearned": [
+                "AsyncStorage",
+                "Pagination",
+                "JSON Parsing",
+                "Context Management",
+                "Search Bar Implementation",
+                "Advanced State Management",
+                "FlatList Optimization",
+                "Cinematic UI Effects",
+                "Iterative Debugging"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Characters Tab",
+                    "description": "I added a search bar to the header of this screen and made the FlatList searchable. This uses the useContext provided by React to manage state. It handles the pagination of the ‘people’ data from the Star Wars API by adding to the list of characters for each page. This is stored in the RAM by the function and destroyed when the application closes, unlike the favorites data stored in AsyncStorage which is stored on the user’s device drive. I also created a loading state variable in the PeopleContext so and exposed it so that the page displaying the data would be able to render a loading screen while the data is being fetched. The character details page has a styled Touchable Opacity to bring the user to that Character’s home world. This page also displays the character’s movies. Both are done by manipulating the URL that is in place for the home world or movie and then using dot notation to display the name or title respectively."
+                },
+                {
+                    "highlightTitle": "Planets Tab",
+                    "description": "I also added a planets tab that is searchable as well, but this one uses a native search bar. This uses SWAPI's search API call rather than loading all the elements into a state variable. While both lists are small enough to load into memory, I wanted to have two different methods in place to practice querying in different ways. The user can search and see the results displayed immediately just like the Characters tab."
+                },
+                {
+                    "highlightTitle": "Opening Crawl",
+                    "highlightCaption": "If you’ve ever watched a Star Wars movie, you know this iconic opening marquee.",
+                    "description": "The React Native component, crawl.tsx, is designed to bring the iconic Star Wars opening crawl animation to life in mobile applications and on the web. Utilizing the Animated library, it features a sequence of animations including fading, scaling, and translating elements within a modal. The component dynamically displays a provided opening crawl text with cinematic effects: a fade-in and fade-out introduction text (\"A long time ago in a galaxy far, far away...\"), a scaling and fading logo animation, a scrolling and tilted crawl text animation with customizable content, and a starry background image for immersion. Styled using StyleSheet, it supports responsive design with Dimensions. This component demonstrates expertise in React Native animations, dynamic content handling, and creative UI design. And I just had to do it. I hope you enjoy being able to watch the opening crawl of the Star Wars films in the palm of your hand.",
+                    "code": "useEffect(() => {\n    // Sequence of animations\n    Animated.sequence([\n      // Step 1: Fade in the View with texts\n      Animated.timing(viewOpacity, {\n        toValue: 1,\n        duration: 1000, // 1 second fade-in\n        useNativeDriver: true,\n      }),\n      Animated.timing(viewOpacity, {\n        toValue: 0,\n        duration: 1000, // 1 second fade-out after 5 seconds\n        delay: 4000, // Wait for 4 seconds before fading out\n        useNativeDriver: true,\n      }),\n\n      // Step 2: Scale and fade in the logo\n      Animated.parallel([\n        Animated.timing(logoOpacity, {\n          toValue: 1,\n          duration: 1000, // 1 second fade-in\n          useNativeDriver: true,\n        }),\n        Animated.timing(logoScale, {\n          toValue: 0.05, // Shrink to 1/20th of the size\n          duration: 12000, // 10 seconds\n          useNativeDriver: true,\n        }),\n      ]),\n\n      // Step 3: Fade out the logo\n      Animated.timing(logoOpacity, {\n        toValue: 0,\n        duration: 1000, // 1 second fade-out\n        useNativeDriver: true,\n      }),\n    ]).start();\n\n    // Step 4: Animate the crawl text\n    Animated.parallel([\n      Animated.timing(translateY, {\n        toValue: -1000, // Move the text far up\n        duration: 70000, // Duration of the animation (70 seconds)\n        delay: 4000, // Delay before starting the crawl\n        useNativeDriver: true,\n      }),\n      // Animated.timing(crawlScale, {\n      //   toValue: 0.5, // Shrink to 50% of the original size\n      //   duration: 70000, // Match the duration of the crawl\n      //   delay: 8000, // Delay before starting the crawl\n      //   useNativeDriver: true,\n      // }),\n    ]).start();\n  }, [viewOpacity, logoScale, logoOpacity, translateY, crawlScale]);"
+                }
+            ]
+        },
+        {
             "title": "PokePages",
             "isFeatured": false,
             "inProgress": false,
@@ -37,27 +89,35 @@
             "gif": "/img/AdventureLevelMontage.gif",
             "steam": "",
             "youtubeID": "b4quDbxCA5c",
-            "breakdown": "In the game Adventure, I crafted a dynamic mountain scene where players traverse chasms and explore diverse landscapes. Using Unreal Engine 5, I started with a high-level mood board to visualize the nature-inspired setting, grounding the design in realistic mountain terrain. This creative vision was brought to life by integrating various assets and incorporating a unique trapdoor mechanic, which required players to find a key and engage in environmental exploration. Team collaboration was a highlight, as we combined our assets and ideas to create a cohesive level, and the use of landscape tools enhanced the scene’s natural beauty, drawing from my personal experiences around lakes and ponds.\n\nHowever, the project faced challenges, including asset migration issues and texture streaming pool limitations, which required reducing texture resolutions and re-migrating assets. Despite these hurdles, the experience was rewarding, with lessons learned in managing underground environments and resolving software issues with Perforce. Overall, the project was both enjoyable and educational, and I plan to create a level sequence trailer to showcase the final result.",
+            "breakdown": "In this game called simply Adventure, I crafted a beautiful and inviting mountain scene where players traverse chasms and explore diverse landscapes. Using Unreal Engine 5, I started with a high-level mood board to visualize the nature-inspired setting, grounding the design in realistic mountain terrain. This creative vision was brought to life by integrating various assets and incorporating a unique trapdoor mechanic, which required players to find a key and engage in environmental exploration. Team collaboration was a highlight, as we combined our assets and ideas to create a cohesive level, and the use of landscape tools enhanced the scene’s natural beauty, drawing from my personal experiences around lakes and ponds.\n\nHowever, the project faced challenges, including asset migration issues and texture streaming pool limitations, which required reducing texture resolutions and re-migrating assets. Despite these hurdles, the experience was rewarding, with lessons learned in managing underground environments and resolving software issues with Perforce. Overall, the project was both enjoyable and educational, and I plan to create a level sequence trailer to showcase the final result.",
             "skillsUsed": ["Unreal Engine 5", "Game Design", "Basic Programming Knowledge", "Asset Integration", "Blueprint Scripting", "Environmental Design"],
             "skillsLearned": ["Level Design", "Blockmesh", "Landscape Creation", "Problem-Solving in Game Development", "Level Sequences", "Collaborative Development"],
             "highlights": [ 
-              
+                {
+                    "highlightTitle": "The flower meadow",
+                    "video": "clsu6B12Qnk",
+                    "description": "The Flower Meadow is a beautiful place where the player can relax and enjoy the scenery. The player can take a break from the action and enjoy the beauty of the game here because to get here you must traverse a mountain and find collectibles. I used fog and falling leaves effect paired with tall flowers and taller trees to make the area feel inviting and whimsical but still connected to reality."
+                }
             ]
         },
         {
             "title": "Off the Coast",
             "isFeatured": false,
-            "inProgress": true,
+            "inProgress": false,
             "caption": "Rocket Racing Track | Fortnite Custom Map Design | High-Speed Thrills & Epic Stunts!",
             "picture": "/img/OffTheCoastRR.png",
             "gif": "/img/OFFtheCoast_FortniteRR.gif",
             "steam": "",
-            "youtubeID": "6DbQtEAsb4U",
+            "youtubeID": "IkWvHfnGgQg",
             "breakdown": "Welcome to \"Off the Coast,\" a custom map meticulously designed in Unreal Editor for Fortnite (UEFN) to deliver high-speed excitement and unique challenges. This track features dynamic layouts, including loops, jumps, and sharp turns, with sections extending over the sea for added thrill. One of the standout features is a carefully crafted spiral that tested my precision in level design, ensuring both difficulty and enjoyment for players.\n\nThe map's stunning visuals, interactive obstacles, and multiplayer-friendly design showcase my expertise in creating engaging environments. Thoughtfully placed scenery enhances immersion, while hidden shortcuts and rocket boosts add layers of complexity. \"Off the Coast\" exemplifies my ability to blend creativity with technical precision, offering a memorable racing experience for players of all skill levels.",
             "skillsUsed":  ["Unreal Editor for Fortnite (UEFN)", "Level Design", "Environment Art", "Prefab Integration"],
             "skillsLearned": ["Advanced Course Layouts", "Interactive Obstacle Design", "Multiplayer Optimization"],
             "highlights": [ 
-                
+                {
+                    "highlightTitle": "Driving through structures",
+                    "highlightCaption": "without destroying them!",
+                    "description": "Some settings needed to be adjusted so that the player could drive through the structures without destroying them. I ended up submitting some bug reports about the functionality of this to help improve the Unreal Editor for Fortnite and Rocket Racing community. I thought placing these structures along the path was a great way to make the course more intersting while also tying it into the environment in a way that felt natural and added to the experience"
+                }
             ]
         },
         {
@@ -74,18 +134,16 @@
             "skillsLearned": ["Class Creation in Unreal Engine", "Blueprint Integration", "Debugging", "Actor Component Design"],
             "highlights": [
                 {
-                    "highlightTitle": "Nimbus Cloud Mechanic",
-                    "highlightCaption": "",
-                    "highlightPicture": "",
-                    "video": "",
-                    "description": "A key feature where clouds spawn under the player, allowing them to ride through the level."
+                    "highlightTitle": "Nimbus Ride Mechanic Code",
+                    "highlightCaption": "C++ implementation of the Nimbus Ride mechanic.",
+                    "description": "A key feature where clouds spawn under the player, allowing them to ride through the level. This code demonstrates the implementation of the Nimbus Ride mechanic in Unreal Engine. It spawns a rideable actor beneath the player and changes the movement mode to flying.",
+                    "code": "void UNimbusRide::Ride()\n{\n\tif (RideableActor != nullptr)\n\t{\n\t\tACharacter* Character = Cast<ACharacter>(GetOwner());\n\t\tif (Character != nullptr)\n\t\t{\n\t\t\tFVector Location = Character->GetActorLocation();\n\t\t\tFRotator Rotation = Character->GetActorRotation();\n\t\t\tFVector HalfHeightOffset = FVector(0.0f, 0.0f, Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());\n\t\t\tLocation -= HalfHeightOffset*1.3;\n\t\t\tFActorSpawnParameters SpawnInfo;\n\t\t\t// alwaysspawn\n\t\t\tSpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;\n\t\t\tSpawnedActor = GetWorld()->SpawnActor<AActor>(RideableActor, Location, Rotation, SpawnInfo);\n\t\t\t// Log a message if the spawned actor is valid\n\t\t\tUE_LOG(LogTemp, Warning, TEXT(\"SpawnedActor is %s\"), SpawnedActor ? TEXT(\"valid\") : TEXT(\"null\"));\n\t\t\tif (SpawnedActor != nullptr)\n\t\t\t{\n\t\t\t\t// Attach the spawned actor to the owner actor\n\t\t\t\tSpawnedActor->AttachToActor(Character, FAttachmentTransformRules::KeepWorldTransform);\n\t\t\t}\n\n\t\t\t// Change the character's movement mode to flying\n\t\t\tUCharacterMovementComponent* CharacterMovement = Character->GetCharacterMovement();\n\t\t\tif (CharacterMovement != nullptr)\n\t\t\t{\n\t\t\t\tCharacterMovement->SetMovementMode(EMovementMode::MOVE_Flying);\n\t\t\t}\n\t\t}\n\t}\n}"
                 },
                 {
-                    "highlightTitle": "Pure Heart Mechanic",
-                    "highlightCaption": "",
-                    "highlightPicture": "",
-                    "video": "",
-                    "description": "A system that changes the player's 'pure heart' value based on interactions, influencing gameplay outcomes."
+                    "highlightTitle": "Pure Heart Test Mechanic Code",
+                    "highlightCaption": "C++ implementation of the Pure Heart Test mechanic.",
+                    "description": "This code demonstrates the implementation of the the Nimbus cloud testing the heart of the person who tries to ride it. It checks if the player's heart is pure and grants them the ability to ride the Nimbus if they pass the test.",
+                    "code": "bool ANimbus::GivePureHeartTest(AActor* PlayerToTest)\n{\n\tbool bHeartIsPure = false;\n\t// Check if the player is valid\n\tif (PlayerToTest && bCanGiveAway)\n\t{\n\t\t// Cast to the player's class which should be Goku\n\t\tGoku = dynamic_cast<AGokuCharacter*>(PlayerToTest);\n\t\tif (Goku)\n\t\t{\n\t\t\t// Call the function to check the player's heart\n\t\t\tbHeartIsPure = Goku->IsHeartPure();\n\t\t\tif (bHeartIsPure) {\n\t\t\t\t// Call the function to give the player the ability to fly\n\t\t\t\tUNimbusRide* NimbusRide = Cast<UNimbusRide>(Goku->GetComponentByClass(UNimbusRide::StaticClass()));\n\t\t\t\tif (NimbusRide)\n\t\t\t\t{\n\t\t\t\t\tif (bOnNimbus)\n\t\t\t\t\t{\n\t\t\t\t\t\tGiveFlyAbility();\n\t\t\t\t\t\tNimbusRide->Ride();\n\t\t\t\t\t\tUE_LOG(LogTemp, Warning, TEXT(\"You ARE on the nimbus!\"));\n\t\t\t\t\t\tUE_LOG(LogTemp, Warning, TEXT(\"OnNimbus value is: %d\"), bOnNimbus);\n\t\t\t\t\t\treturn bHeartIsPure;\n\t\t\t\t\t}\n\t\t\t\t\telse\n\t\t\t\t\t{\n\t\t\t\t\t\tUE_LOG(LogTemp, Warning, TEXT(\"You are NOT on the nimbus!\"));\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\telse\n\t\t\t\t{\n\t\t\t\t\tUE_LOG(LogTemp, Warning, TEXT(\"NimbusRide component not found!\"));\n\t\t\t\t}\n\t\t\t\tUE_LOG(LogTemp, Warning, TEXT(\"You have passed the test!\"));\n\t\t\t\treturn bHeartIsPure;\n\t\t\t}\n\t\t\telse {\n\t\t\t\t// Give the player a message that they failed the test\n\t\t\t\t// TODO: Add message to UI after it's been set up\n\t\t\t\tUE_LOG(LogTemp, Warning, TEXT(\"You have failed the test of heart. You suck!\"));\n\t\t\t\treturn bHeartIsPure;\n\t\t\t}\n\t\t}\n\t}\n\treturn bHeartIsPure;\n}"
                 }
             ]
         },
@@ -104,24 +162,13 @@
             "highlights": [
                 {
                     "highlightTitle": "Patroller Mechanic Introduction",
-                    "highlightCaption": "This is a caption. It is optional as well as the picture and youtube video. This whole highlight section is optional. Coding is sooo cool. This is my last assignment before getting my associates degree!! Whoop Whoop!",
-                    "highlightPicture": "",
                     "video": "t5nB5CKhrho",
                     "description": "Introduced a patroller mechanic that moves based on the player’s actions. If the player is caught, the level resets, adding new strategic elements. This is the first of many mechanics to be added, but a major one that will give the game a unique feel. I want it to be fun while also teaching the player to think ahead and do math on the fly."
                 },
                 {
                     "highlightTitle": "Number Tile System",
-                    "highlightCaption": "",
                     "highlightPicture": "/img/NumberTiles.png",
-                    "video": "",
-                    "description": "Implemented number tiles that dynamically add or subtract from the player’s score. Special wall tiles block the exit until the required score is achieved. This is the basis for the game and will be expanded upon later. It creates the need to find a 'net increase or decrease' on the board. The player will learn to add multiple numbers together quickly in order to find the best path."
-                },
-                {
-                    "highlightTitle": "What went wrong?",
-                    "highlightCaption": "I put cars in the game",
-                    "highlightPicture": "/img/OFFtheCoast_FortniteRR.gif",
-                    "video": "x7vPuu8TnS0",
-                    "description": "The Flower Meadow is a beautiful place where the player can relax and enjoy the scenery. It is a place where the player can take a break from the action and enjoy the beauty of the game. The Flower Meadow is a place where the player can relax and enjoy the scenery. It is a place where the player can take a break from the action and enjoy the beauty of the game. The Flower Meadow is a place where the player can relax and enjoy the scenery. It is a place where the player can take a break from the action and enjoy the beauty of the game."
+                    "description": "Implemented number tiles that dynamically add or subtract from the player’s score. Special wall tiles block the exit until the required score is achieved. This is the basis for the game and will be expanded upon later. It creates the need to find a 'net increase or decrease' on the board. The player will learn to add multiple numbers together quickly in order to find the best path. The fact that the door will close again if the player steps on another number changing their score means that they will have to think carefully and do mutliple math operations in their head."
                 }
             ]
         }              
@@ -136,10 +183,18 @@
             "gif": "/img/giphy.webp",
             "site": "https://www.DavidJGrimsley.com",
             "youtubeID": "",
-            "github": "",
+            "github": "https://github.com/DavidJGrimsley/DavidsPortfolio",
             "breakdown": "I developed this website using TypeScript, JSON, and Bootstrap, showcasing my diverse skill set across mobile apps, game design, and web development. The website features a clean, modern design with linear gradient backgrounds and carefully crafted spacing to ensure a pleasant user experience. The navigational flow is intuitive, making it easy for visitors to explore my work. \n\nFor each portfolio piece, I utilize JSON to dynamically generate Bootstrap cards, complete with 'Learn More' buttons. These buttons pass the 'title' key as a prop/parameter to the next page, where more detailed information about each project is displayed. This structure allows for scalable and maintainable content management, keeping the site organized and easy to update. I really enjoyed building this website in such a dynamic way, and I'm excited to continue expanding it with new projects and features in the future.",
             "skillsUsed": ["HTML", "CSS", "JS", "Bootstrap", "JSON", "Expo", "React", "React Native", "TypeScript", "Responsive Design"],
-            "skillsLearned": ["Dynamic Routes", "Deep Links", "Custom Components", "State Management", "Reusable Components", "API Integration"]
+            "skillsLearned": ["Dynamic Routes", "Deep Links", "Custom Components", "State Management", "Reusable Components", "API Integration"],
+            "highlights": [
+                {
+                    "highlightTitle": "This Highlight Section",
+                    "highlightCaption": "This is a caption. It is optional as well as the picture and youtube video. This whole highlight section is optional.",
+                    "description": "The cards and information displayed on this site are generated from a JSON file where this text you’re reading is. Custom types/interfaces and optional JSX elements are used to create dynamic pages. Each details page is produced by JavaScript using the [title].tsx format, giving the appearance that each page is tailored to its specific content. This modularity ensures consistency in styles while allowing the functional code to be written once. The components use parameters to show the appropriate information. The JSON file also populates the skills used and learned sections, which helps maintain organization and ease of updates. New projects, skills, highlights, etc. can be added to without modifying the code, keeping everything organized and simple to update.",
+                    "code": "const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {\n    return (\n        <View>\n            {highlights.map((highlight, index) => (\n                <View key={index} style={styles.highlightView}>\n                    <Text style={styles.highlightTitle}>{highlight.highlightTitle}</Text>\n                    <View style={styles.highlightHeader}>\n                        {highlight.highlightPicture && (\n                            <Image source={{ uri: highlight.highlightPicture }} style={styles.highlightPicture} />\n                        )}\n                        {highlight.highlightCaption && (\n                            <Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>\n                        )}\n                    </View>\n                    <Text style={styles.highlightDescription}>{highlight.description}</Text>\n                    {highlight.video && (\n                        <YoutubePlayer\n                            height={Dimensions.get('window').width * 0.5 * 0.5625}\n                            width={Dimensions.get('window').width * 0.5}\n                            play={false}\n                            videoId={highlight.video}\n                        />\n                    )}\n                    {highlight.code && (\n                        <View style={styles.codeContainer}>\n                            <Text style={styles.codeText}>{highlight.code}</Text>\n                        </View>\n                    )}\n                </View>\n            ))}\n        </View>\n    );\n};"
+                }
+            ]
         }
     ]
 }

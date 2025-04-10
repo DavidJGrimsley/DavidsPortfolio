@@ -271,7 +271,9 @@ export const styles = StyleSheet.create({
     highlightCaption: {
         color: Colors[colorScheme ?? 'light'].accent,
         textAlign: 'center',
+        padding: RFPercentage(.5),
         fontSize: RFPercentage(1.2),
+        backgroundColor: applyOpacity(Colors[colorScheme ?? 'light'].secondary, 0.15),
     },
     highlightPicture: {
         margin: RFPercentage(1),
@@ -283,6 +285,41 @@ export const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: RFPercentage(1.5),
         marginBottom: RFPercentage(1),
+    },
+    button: {
+        backgroundColor: Colors[colorScheme ?? 'light'].accent,
+        padding: RFPercentage(1),
+        borderRadius: RFPercentage(1),
+        margin: RFPercentage(1),
+        width: RFPercentage(20),
+        alignSelf: 'center',
+    },
+    buttonText: {
+        color: Colors[colorScheme ?? 'light'].secondary,
+        textAlign: 'center',
+        fontSize: RFPercentage(2),
+    },
+    horizontalLinksContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: 10,
+    },
+    codeContainer: {
+        backgroundColor: '#f5f5f5', // Light gray background
+        borderRadius: 5,
+        padding: 10,
+        marginVertical: 10,
+        borderWidth: 1,
+        borderColor: '#ddd', // Light border
+        width: '70%',
+    },
+    codeText: {
+        fontFamily: 'Courier New', // Monospace font
+        fontSize: 14,
+        color: '#333', // Dark text color
+        lineHeight: 20,
+        // whiteSpace: 'pre-wrap', // Preserve formatting
     },
 });
 

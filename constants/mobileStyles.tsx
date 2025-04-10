@@ -110,19 +110,7 @@ export const mobileStyles = StyleSheet.create({
         color: Colors[colorScheme ?? 'light'].background,
         fontWeight: 'bold',
     },
-    button: {
-        backgroundColor: Colors[colorScheme ?? 'light'].accent,
-        padding: RFPercentage(1),
-        borderRadius: RFPercentage(1),
-        margin: RFPercentage(1),
-        width: RFPercentage(20),
-        alignSelf: 'center',
-    },
-    buttonText: {
-        color: Colors[colorScheme ?? 'light'].secondary,
-        textAlign: 'center',
-        fontSize: RFPercentage(2),
-    },
+    
     
 });
 
