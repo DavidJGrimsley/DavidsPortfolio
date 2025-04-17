@@ -1,0 +1,148 @@
+{
+  "apiRoutes": [],
+  "htmlRoutes": [
+    {
+      "file": "./(tabs)/WebDev/index.tsx",
+      "page": "/(tabs)/WebDev/index",
+      "namedRegex": "^(?:/\\(tabs\\))?/WebDev(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/MobileApps/index.tsx",
+      "page": "/(tabs)/MobileApps/index",
+      "namedRegex": "^(?:/\\(tabs\\))?/MobileApps(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/GameDesign/index.tsx",
+      "page": "/(tabs)/GameDesign/index",
+      "namedRegex": "^(?:/\\(tabs\\))?/GameDesign(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/About/(website-forms)/index.tsx",
+      "page": "/(tabs)/About/(website-forms)/index",
+      "namedRegex": "^(?:/\\(tabs\\))?/About(?:/\\(website\\-forms\\))?(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/About/index.tsx",
+      "page": "/(tabs)/About/index",
+      "namedRegex": "^(?:/\\(tabs\\))?/About(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/index.tsx",
+      "page": "/(tabs)/index",
+      "namedRegex": "^(?:/\\(tabs\\))?(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/MobileApps/xCard.tsx",
+      "page": "/(tabs)/MobileApps/xCard",
+      "namedRegex": "^(?:/\\(tabs\\))?/MobileApps/xCard(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/About/survey.tsx",
+      "page": "/(tabs)/About/survey",
+      "namedRegex": "^(?:/\\(tabs\\))?/About/survey(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "expo-router/build/views/Sitemap.js",
+      "page": "/_sitemap",
+      "namedRegex": "^/_sitemap(?:/)?$",
+      "routeKeys": {},
+      "generated": true
+    },
+    {
+      "file": "./(tabs)/MobileApps/PokePages.tsx",
+      "page": "/(tabs)/MobileApps/PokePages",
+      "namedRegex": "^(?:/\\(tabs\\))?/MobileApps/PokePages(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/GameDesign/Adventure.tsx",
+      "page": "/(tabs)/GameDesign/Adventure",
+      "namedRegex": "^(?:/\\(tabs\\))?/GameDesign/Adventure(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/GameDesign/Nimbus Ride.tsx",
+      "page": "/(tabs)/GameDesign/Nimbus Ride",
+      "namedRegex": "^(?:/\\(tabs\\))?/GameDesign/Nimbus Ride(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/WebDev/This Website!.tsx",
+      "page": "/(tabs)/WebDev/This Website!",
+      "namedRegex": "^(?:/\\(tabs\\))?/WebDev/This Website!(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/GameDesign/Off the Coast.tsx",
+      "page": "/(tabs)/GameDesign/Off the Coast",
+      "namedRegex": "^(?:/\\(tabs\\))?/GameDesign/Off the Coast(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/About/(website-forms)/website-intake.tsx",
+      "page": "/(tabs)/About/(website-forms)/website-intake",
+      "namedRegex": "^(?:/\\(tabs\\))?/About(?:/\\(website\\-forms\\))?/website\\-intake(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/GameDesign/Tile By Numbers.tsx",
+      "page": "/(tabs)/GameDesign/Tile By Numbers",
+      "namedRegex": "^(?:/\\(tabs\\))?/GameDesign/Tile By Numbers(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/About/(website-forms)/portfolio-intake.tsx",
+      "page": "/(tabs)/About/(website-forms)/portfolio-intake",
+      "namedRegex": "^(?:/\\(tabs\\))?/About(?:/\\(website\\-forms\\))?/portfolio\\-intake(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/MobileApps/Star Wars Galaxies.tsx",
+      "page": "/(tabs)/MobileApps/Star Wars Galaxies",
+      "namedRegex": "^(?:/\\(tabs\\))?/MobileApps/Star Wars Galaxies(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./(tabs)/WebDev/[title].tsx",
+      "page": "/(tabs)/WebDev/[title]",
+      "namedRegex": "^(?:/\\(tabs\\))?/WebDev/(?<title>[^/]+?)(?:/)?$",
+      "routeKeys": {
+        "title": "title"
+      }
+    },
+    {
+      "file": "./(tabs)/MobileApps/[title].tsx",
+      "page": "/(tabs)/MobileApps/[title]",
+      "namedRegex": "^(?:/\\(tabs\\))?/MobileApps/(?<title>[^/]+?)(?:/)?$",
+      "routeKeys": {
+        "title": "title"
+      }
+    },
+    {
+      "file": "./(tabs)/GameDesign/[title].tsx",
+      "page": "/(tabs)/GameDesign/[title]",
+      "namedRegex": "^(?:/\\(tabs\\))?/GameDesign/(?<title>[^/]+?)(?:/)?$",
+      "routeKeys": {
+        "title": "title"
+      }
+    }
+  ],
+  "notFoundRoutes": [
+    {
+      "file": "./+not-found.tsx",
+      "page": "/+not-found",
+      "namedRegex": "^(?:/(?<notfound>.+?))?(?:/)?$",
+      "routeKeys": {
+        "notfound": "not-found"
+      }
+    }
+  ]
+}

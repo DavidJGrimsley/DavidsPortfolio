@@ -256,12 +256,12 @@ const HorizontalLinks = ({ github, site, steam }: { github?: string; site?: stri
             )}
             {site && (
                 <Pressable style={styles.button} onPress={() => window.open(site)}>
-                    <Text style={styles.buttonText}>Website</Text>
+                    <Text style={styles.buttonText}>Info Website</Text>
                 </Pressable>
             )}
             {steam && (
                 <Pressable style={styles.button} onPress={() => window.open(steam)}>
-                    <Text style={styles.buttonText}>Steam</Text>
+                    <Text style={styles.buttonText}>See it here!</Text>
                 </Pressable>
             )}
         </View>
