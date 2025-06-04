@@ -138,6 +138,9 @@ export const styles = StyleSheet.create({
         flex: 1,
         // width: '100%',
     },
+    homeContent: {
+
+    },
     featuredCardContainer: {
         alignItems: "center",
         padding: RFPercentage(2),
@@ -146,25 +149,31 @@ export const styles = StyleSheet.create({
     // Styles for Portfolio pages
     page: {
         flex: 1,
-        width: '100%',
+        // width: '100%',
         alignItems: "center",
         marginBottom: RFPercentage(1),  
+        // marginRight: RFPercentage(50),
+        width: '100%',
+    },
+    content: {
+        marginRight: RFPercentage(16),
+        // width: RFPercentage(100),
     },
     scrollCards: {
-        justifyContent: "space-around",
-        alignItems: "center",  
-        width: RFPercentage(95),
+      alignItems: "center",  
+        // justifyContent: "space-around",
         display: 'flex',
+        // marginRight: RFPercentage(16),
         flex: 1,
         // flexWrap: 'wrap',
         // alignItems: 'center',
         // backgroundColor: Colors[colorScheme ?? 'light'].background,
     },
     cardsContainer: {
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        alignItems: 'center',    
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center',    
     },
     cardsRow: {
         alignItems: 'center',

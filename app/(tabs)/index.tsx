@@ -22,18 +22,21 @@ export default function Index() {
         contentContainerStyle={styles.scrollHome}
         >
         <TitleOfPage></TitleOfPage>
-        <View style={styles.featuredCardContainer}>
-          <FeaturedCard></FeaturedCard>
-        </View>
         
-        <Container style={tttStyles.tttGameContainer}>
-          <View style={tttStyles.tttHeader}>
-        <Text style={tttStyles.tttHeaderText}>Have a little fun playing Tic-Tac-Toe. This uses React's state property to store all the data about the game and only update needed components. It shows how closely related software development and game design are.</Text>
+        {/* <View style={styles.homeContent}> */}
+          <View style={styles.featuredCardContainer}>
+            <FeaturedCard></FeaturedCard>
           </View>
-          <View style={tttStyles.tttBoardContainer}>
-        <Game></Game>
-          </View>
-        </Container>
+          
+          <Container style={tttStyles.tttGameContainer}>
+            <View style={tttStyles.tttHeader}>
+          <Text style={tttStyles.tttHeaderText}>Have a little fun playing Tic-Tac-Toe. This uses React's state property to store all the data about the game and only update needed components. It shows how closely related software development and game design are.</Text>
+            </View>
+            <View style={tttStyles.tttBoardContainer}>
+          <Game></Game>
+            </View>
+          </Container>
+        {/* </View> */}
         
         <Foot></Foot>
       </ScrollView>

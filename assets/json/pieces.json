@@ -14,6 +14,11 @@
             "breakdown": "I followed the tutorial for this on Galaxies.dev. It goes through making reusable components, JSX and styling, Navigation, storing data, working with JSON data, API calls, Tab bar, AsyncStorage, useEffect, useState and a few other things. I added several features including finishing the 'people' page as the instructor suggested, some background images and much more! I had a blast making this and I’m ready to become a huge Star Wars nerd. Please read on to see the details of the added features, the best one is at the bottom!",    
             "skillsUsed": [
                 "Reusable Components",
+                "Environment Setup",
+                "Expo Go",
+                "React Native",
+                "React Navigation",
+                "CLI",
                 "JSX",
                 "Styling",
                 "Navigation",

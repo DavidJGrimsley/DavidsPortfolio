@@ -7,14 +7,16 @@ export default function MobileApps() {
     <View style={styles.page}>
       <MobileBackgroundGradient></MobileBackgroundGradient>
       <TitleOfPage titleA="Mobile" titleB="Applications"></TitleOfPage>      
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollCards}
-        >
-        <MyCards pageCategory={"MobileApps"}></MyCards>
-        <Foot></Foot>
-      </ScrollView>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollCards}
+          >
+          <View style={styles.content}>
+            <MyCards pageCategory={"MobileApps"}></MyCards>
+          </View>
+          <Foot></Foot>
+        </ScrollView>
     </View>
   );
 }
