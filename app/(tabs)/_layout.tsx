@@ -1,23 +1,26 @@
 import React from 'react';
 import { Href, router, Stack, Tabs, useSegments } from 'expo-router';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { PokemonButton } from '@/components/PokemonButton';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { styles } from '@/constants/styles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import * as Device from 'expo-device';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, Dimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 const deviceType = Device.DeviceType;
+const { width: screenWidth } = Dimensions.get('window');
 
-const isMobileDevice = ((Device.deviceType === Device.DeviceType.PHONE) || (Device.deviceType === Device.DeviceType.TABLET));
+// Treat anything smaller than 768px as mobile (tablets in portrait, phones, small windows)
+const isMobileDevice = screenWidth < 768 || Device.deviceType === Device.DeviceType.PHONE || Device.deviceType === Device.DeviceType.TABLET;
 
 const TabLayout = ({  }) => {
   const colorScheme = useColorScheme();
   const segments = useSegments();
   const isHomePage = segments[0] === '(tabs)'; // Check if it's the home page
-  const isMainLevel = segments.length > 1 && ['index', '(tabs)', 'MobileApps', 'GameDesign', 'WebDev', 'About', 'Learn'].includes(segments[1]);
+  const isMainLevel = segments.length > 1 && segments[1] !== undefined && ['index', '(tabs)', 'MobileApps', 'GameDesign', 'WebDev', 'About', 'Learn', 'Pokemon'].includes(segments[1] as string);
   const isPieceLevel = segments.length > 2 && segments[2] === '[title]';
   // Log the current route segments
   console.log('Segments:', segments);
@@ -50,6 +53,14 @@ const TabLayout = ({  }) => {
           headerShadowVisible: false,
           title: 'David \'DJ\' Grimsley',
           headerStyle: styles.headerBackground,
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.replace('/Pokemon' as Href<string>)}
+              style={{ marginRight: 15, padding: 5 }}
+            >
+              <PokemonButton size={RFPercentage(2.4)} />
+            </Pressable>
+          ),
           // headerTransparent: true,
           tabBarLabel: '',
           tabBarIcon: ({ color, focused }) => (
@@ -107,6 +118,15 @@ const TabLayout = ({  }) => {
           ),
         }}
       />
+      {/* Pokemon screen is accessible via header button only, not in tab bar */}
+      <Tabs.Screen
+        name="Pokemon"
+        options={{
+          headerShown: false,
+          title: 'Pokemon',
+          href: null, // This removes it from the tab bar
+        }}
+      />
     </Tabs>
   ) : (
     <>
@@ -117,12 +137,21 @@ const TabLayout = ({  }) => {
             headerShadowVisible: false,
             title: 'David \'DJ\' Grimsley',
             headerStyle: styles.headerBackground,
+            headerRight: () => (
+              <Pressable
+                onPress={() => router.replace('/Pokemon' as Href<string>)}
+                style={{ marginRight: 15, padding: 5 }}
+              >
+                <PokemonButton size={45} />
+              </Pressable>
+            ),
           }}
         />
         <Stack.Screen name="MobileApps" options={{ headerShown: false }} />
         <Stack.Screen name="GameDesign" options={{ headerShown: false }} />
         <Stack.Screen name="WebDev" options={{ headerShown: false }} />
         <Stack.Screen name="Learn" options={{ headerShown: false }} />
+        <Stack.Screen name="Pokemon" options={{ headerShown: false }} />
         <Stack.Screen name="About" options={{ headerShown: false }} />
       </Stack>
       {!isPieceLevel && (
@@ -161,7 +190,10 @@ const NavButton = ({ title, route, icon, focusedIcon }: { title: string, route: 
   const isActive = (routeName: string) => routeName === newRoute.name;
   
   return (
-    <Pressable style={styles.sideNav} onPress={() => router.replace(route as Href<string>)}>
+    <Pressable style={styles.sideNav} onPress={() => {
+      router.dismissAll();
+      router.replace(route as Href<string>);
+    }}>
       <Text style={styles.sideNavText}>{title}</Text>
       <TabBarIcon name={isActive(route) ? icon as any : focusedIcon as any}  />
     </Pressable>

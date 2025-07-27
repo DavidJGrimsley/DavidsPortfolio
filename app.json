@@ -2,7 +2,6 @@
   "expo": {
     "name": "DJsPortfolio",
     "slug": "DJsPortfolio",
-    "privacy": "public",
     "description": "A portfolio of David J Grimsley's work in mobile development, game design and web development.",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -25,8 +24,15 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "server",
-      "favicon": "./public/images/favicon.png"
+      "output": "static",
+      "favicon": "./public/images/favicon.png",
+      "build": {
+        "babel": {
+          "include": [
+            "@expo/metro-runtime"
+          ]
+        }
+      }
     },
     "plugins": [
       "expo-router"

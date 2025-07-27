@@ -1,0 +1,16 @@
+# Handle case-insensitive routes and missing trailing slashes
+/pokemon  /Pokemon/  301
+/pokemon/  /Pokemon/  301
+/mobileapps  /MobileApps/  301
+/mobileapps/  /MobileApps/  301
+/gamedesign  /GameDesign/  301
+/gamedesign/  /GameDesign/  301
+/webdev  /WebDev/  301
+/webdev/  /WebDev/  301
+/about  /About/  301
+/about/  /About/  301
+/learn  /Learn/  301
+/learn/  /Learn/  301
+
+# Handle all other routes with trailing slash issues
+/*  /index.html  200
