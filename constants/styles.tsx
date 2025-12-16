@@ -43,6 +43,7 @@ const applyOpacity = (hexColor: string, opacity: number) => {
 export const styles = StyleSheet.create({
     // Styles for all in the app/site with a font family of Lora
     text: {
+        textAlign: 'center',
     },
 
     // styles for the Side nav
@@ -107,13 +108,15 @@ export const styles = StyleSheet.create({
     footer: {
         borderWidth: RFPercentage(0.2),
         borderColor: Colors[colorScheme ?? 'light'].accent,
-        height: RFPercentage(5),
+        minHeight: RFPercentage(5),
         margin: RFPercentage(1),
-        padding: RFPercentage(1),
+        padding: RFPercentage(1.5),
         borderRadius: RFPercentage(0.5),
         alignItems: 'center',
         justifyContent: 'center',
-        width: '40%',
+        width: isMobileDevice ? '90%' : '60%',
+        maxWidth: 600,
+        minWidth: 300,
     },
     footerText: {
         color: Colors[colorScheme ?? 'light'].accent,
@@ -149,10 +152,7 @@ export const styles = StyleSheet.create({
     // Styles for Portfolio pages
     page: {
         flex: 1,
-        // width: '100%',
         alignItems: "center",
-        marginBottom: RFPercentage(1),  
-        // marginRight: RFPercentage(50),
         width: '100%',
     },
     content: {
@@ -160,14 +160,10 @@ export const styles = StyleSheet.create({
         // width: RFPercentage(100),
     },
     scrollCards: {
+      flexGrow: 1,
+      justifyContent: 'space-evenly',
       alignItems: "center",  
-        // justifyContent: "space-around",
-        display: 'flex',
-        // marginRight: RFPercentage(16),
-        flex: 1,
-        // flexWrap: 'wrap',
-        // alignItems: 'center',
-        // backgroundColor: Colors[colorScheme ?? 'light'].background,
+      paddingVertical: 20,
     },
     cardsContainer: {
       display: 'flex',
@@ -206,6 +202,7 @@ export const styles = StyleSheet.create({
     // styles for the About page
     website: {
         display: 'flex',
+        flexDirection: 'row',
         padding: RFPercentage(1),
         margin: RFPercentage(1),
         borderRadius: RFPercentage(0.5),
@@ -253,7 +250,10 @@ export const styles = StyleSheet.create({
     aboutText: {
         color: Colors[colorScheme ?? 'light'].text,
         textAlign: 'center',
-        fontSize: RFPercentage(1.2),
+        fontSize: RFPercentage(1.5),
+        width: '80%',
+        // marginHorizontal: RFPercentage(1),
+        // padding: RFPercentage(4),
     },
     // For the Highlight component
     highlightView: {

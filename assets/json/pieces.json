@@ -2,11 +2,11 @@
     "MobileApps": [
         {
             "title": "Star Wars Galaxies",
-            "isFeatured": true,
+            "isFeatured": false,
             "inProgress": false,
             "caption": "Access to all the Star Wars information at your fingertips.",
-            "picture": "/img/starwars.png",
-            "gif": "/img/yoda.png",
+            "picture": "/img/StarWars/starwars.png",
+            "gif": "/img/StarWars/yoda.png",
             "youtubeID": "",
             "steam": "https://beautiful-spence.108-175-12-95.plesk.page",
             "site": "https://galaxies.dev/mission/zero-to-hero/1-09",
@@ -59,7 +59,91 @@
             ]
         },
         {
-            "title": "PokePages",
+          "title": "PokePages (Reboot)",
+          "isFeatured": true,
+          "inProgress": true,
+          "caption": "The ultimate Pokémon companion app.",
+          "picture": "/img/PokePagesReboot/PP_Logo.gif",
+          "gif": "/img/PokePagesReboot/PP_storeIcon.png",
+          "youtubeID": "",
+          "steam": "https://pokepages.app",
+          "github": "https://github.com/DavidJGrimsley/PokePages",
+          "breakdown": "Recognizing the need for real-time engagement tools in the Pokémon gaming community, I developed PokePages as a production-grade full-stack mobile and web application. This project showcases end-to-end development from custom backend API to cross-platform mobile UI, demonstrating mastery of modern full-stack architecture.\n\nI built a standalone Express.js API server with Drizzle ORM and PostgreSQL, featuring 15+ RESTful endpoints for events, social features, Pokédex tracking, and AI integration. The backend implements JWT authentication middleware, Row-Level Security policies, custom database functions, and comprehensive error handling. The frontend leverages React Native with an offline-first architecture using Zustand state management, implementing optimistic UI updates with intelligent sync queues that consolidate network requests when connectivity is restored.\n\nKey technical achievements include AI-powered content moderation using OpenAI's Moderation API (95% accuracy), real-time event counter system with Supabase subscriptions supporting both authenticated and anonymous users, comprehensive social platform with posts/likes/comments/messaging, and advanced authentication with seamless anonymous-to-authenticated data migration. The app features 50+ Mega Evolution forms in the Pokédex tracker, React Native Reanimated animations running at 60fps, and supports multiple Pokémon games simultaneously.\n\nCurrently deployed to pokepages.app and in Google Play Store closed testing through EAS (Expo Application Services) CI/CD pipeline. The codebase spans 30,000+ lines with 100+ React components, 11+ database tables, and full TypeScript type safety. This represents a complete evolution from my earlier Adalo-based approach, demonstrating senior-level full-stack mobile development capabilities.",
+          "skillsUsed": ["React Native", "Expo", "TypeScript", "Node.js", "Express.js", "Drizzle ORM", "PostgreSQL", "Supabase", "Zustand", "React Native Reanimated", "OpenAI API", "JWT Auth", "RESTful API Design", "Row-Level Security", "Real-time Subscriptions", "Offline-First Architecture", "Optimistic UI Updates"],
+          "skillsLearned": ["Express.js Server Architecture", "Drizzle ORM", "PostgreSQL Database Design", "Row-Level Security (RLS)", "Offline-First Patterns", "Zustand Persist Middleware", "OpenAI API Integration", "EAS Build & Deploy", "JWT Authentication Middleware", "Optimistic UI Updates", "Sync Queue Management", "Content Moderation Systems"],
+          "highlights": [
+              {
+                  "highlightTitle": "Custom Express.js API Server with Drizzle ORM",
+                  "highlightCaption": "Production-ready Node.js backend with 15+ RESTful endpoints",
+                  "description": "I architected and built a standalone Express.js API server as a microservice separate from the React Native frontend. The server features clean route architecture with dedicated controllers for Events, Social, Profiles, DexTracker, AI, and Favorites. I implemented custom JWT authentication middleware that verifies Supabase tokens, CORS configuration supporting multiple origins (web, mobile, emulators), and comprehensive error handling. The API uses Drizzle ORM for type-safe PostgreSQL queries, ensuring compile-time validation of all database operations. I also built diagnostic endpoints for health monitoring, tracking memory usage, uptime, and environment configuration.",
+                  "code": "// Express server with JWT auth middleware\nconst app = express();\n\n// Custom auth middleware validates Supabase JWT tokens\nconst authMiddleware = async (req, res, next) => {\n  const token = req.headers.authorization?.split(' ')[1];\n  if (!token) return res.status(401).json({ error: 'Unauthorized' });\n  \n  try {\n    const { data: { user }, error } = await supabase.auth.getUser(token);\n    if (error) throw error;\n    req.user = user; // Attach user to request\n    next();\n  } catch (error) {\n    res.status(401).json({ error: 'Invalid token' });\n  }\n};\n\n// Type-safe Drizzle ORM query example\nconst posts = await db\n  .select()\n  .from(postsTable)\n  .where(eq(postsTable.userId, userId))\n  .orderBy(desc(postsTable.createdAt));"
+              },
+              {
+                  "highlightTitle": "Offline-First Paradigm & Optimistic Updates",
+                  "highlightCaption": "Intelligent sync queue handles tracking user data in multiple features",
+                  "code": "// Optimistic update pattern - UI responds instantly\ntoggleForm: async (dex: number, form: FormType, pokedex: string) => {\n  const state = get();\n  \n  // 1. Update local state immediately (optimistic)\n  set((state) => ({\n    pokemon: {\n      ...state.pokemon,\n      [pokedex]: {\n        ...(state.pokemon[pokedex] || {}),\n        [dex]: updatedStatus,\n      },\n    },\n  }));\n  \n  // 2. Try to sync with server if online, queue if offline\n  if (state.isOnline) {\n    try {\n      await api.post('/dextracker/update', { dex, form, pokedex });\n    } catch (error) {\n      queuePendingUpdate({ dex, form, pokedex }); // Retry later\n    }\n  } else {\n    queuePendingUpdate({ dex, form, pokedex }); // Will sync on reconnect\n  }\n}",
+                  "description": "While everything in the app uses the Offline-first architecture using Zustand with persist middleware, the Pokédex form tracker is good example. It tracks Pokémon across multiple devices with 4 different modes: Normal, Shiny, Alpha, Shiny-Alpha. The system implements optimistic UI updates that respond instantly to user interactions while queuing network operations in the background. When offline, changes accumulate in a sync queue that intelligently consolidates updates and processes them in batches when connectivity is restored. I implemented platform-agnostic storage adapters using AsyncStorage on mobile and localStorage on web, with SSR-safe initialization. The tracker includes custom auth token caching with 5-second TTL and 2-second timeout protection to prevent hanging on web platforms.",
+              },
+              {
+                  "highlightTitle": "AI-Powered Content Moderation with OpenAI",
+                  "highlightCaption": "Three-tier moderation strategy achieving 95% accuracy",
+                  "description": "I implemented a sophisticated content moderation system with three detection levels to ensure safe user-generated content. The primary tier uses OpenAI's free Moderation API for instant hate speech, harassment, and violence detection with 95% accuracy and ~200ms response time. For complex edge cases, I integrated GPT-4o-mini for context-aware analysis that understands Pokémon terminology vs actual threats. The fallback tier provides instant profanity detection with zero API calls. The system detects multiple violation categories including hate speech, harassment, violence, sexual content, self-harm, spam, and excessive formatting. When content is flagged, users receive specific, actionable feedback explaining exactly what needs to be changed. This multi-tier approach balances accuracy, performance, and cost—basic moderation is free, while advanced analysis costs only $0.30/month for 3,000 posts.",
+                  "code": "// OpenAI Moderation API integration\nconst moderateContent = async (text: string) => {\n  try {\n    // Tier 1: Free OpenAI Moderation API (~200ms, 95% accurate)\n    const response = await openai.moderations.create({\n      input: text,\n      model: 'text-moderation-latest'\n    });\n    \n    const result = response.results[0];\n    \n    if (result.flagged) {\n      // Return specific category that was violated\n      const categories = Object.entries(result.categories)\n        .filter(([_, flagged]) => flagged)\n        .map(([category]) => category);\n      \n      return {\n        approved: false,\n        reason: `Content flagged for: ${categories.join(', ')}`,\n        categories\n      };\n    }\n    \n    // Tier 2: GPT-4o-mini for edge cases (context-aware)\n    if (needsAdvancedCheck(text)) {\n      return await gptModeration(text);\n    }\n    \n    return { approved: true };\n  } catch (error) {\n    // Tier 3: Fallback to basic profanity filter\n    return basicProfanityCheck(text);\n  }\n};"
+              },
+              {
+                  "highlightTitle": "Real-Time Event Counter with Anonymous Support",
+                  "highlightCaption": "Global multiplayer tracking with PostgreSQL RPC functions",
+                  "highlightPictures": "/img/PokePagesReboot/PP_EventCounter.png",
+                  "description": "I developed a real-time multiplayer event system where thousands of players contribute to global counters for live Pokémon events (Wo-Chien, Chien-Pao, Ting-Lu, Chi-Yu encounters). Using Supabase real-time subscriptions, counter updates propagate instantly to all connected devices. The system uniquely supports both authenticated users and anonymous guests—anonymous contributions are tracked via device ID and automatically migrate to the user's account upon signup/signin. I implemented custom PostgreSQL RPC functions for atomic counter increments that return both global count and individual user contribution in a single query. Each event has configurable target counts, reward distribution windows, and active date ranges, with the UI displaying progress bars and personal contribution badges.",
+                  "code": "// PostgreSQL RPC function for atomic counter increment\nconst incrementCounter = async () => {\n  try {\n    // Call custom Postgres function with user/anonymous ID\n    const params = {\n      p_event_key: eventKey,\n      p_pokemon_name: pokemonName,\n      p_user_id: isLoggedIn && user ? user.id : null,\n      p_anonymous_id: !isLoggedIn && anonymousId ? anonymousId : null\n    };\n    \n    const { data, error } = await supabase.rpc('increment_counter', params);\n    \n    if (data?.success) {\n      // Returns both global count and user contribution\n      setGlobalCount(data.event_counter.current_count);\n      setUserCount(data.user_contribution);\n      setLastUpdated(data.event_counter.updated_at);\n    }\n  } catch (error) {\n    console.error('Failed to increment counter:', error);\n  }\n};"
+              },
+              {
+                  "highlightTitle": "Comprehensive Social Platform",
+                  "highlightCaption": "Full-featured social network with posts, friendships, messaging, and content moderation",
+                  "description": "I built a complete social networking platform featuring posts with public/friends-only visibility, friendship management with request/accept/reject flows, like and comment systems with nested replies, and private messaging limited to friends. The architecture includes dedicated feed algorithms for Explore (all public posts) and Friends feeds, real-time updates as new content arrives, and integrated AI content moderation on all user-generated text. I implemented a unique 'Tom from MySpace' feature that auto-friends new users to a default welcome account, providing immediate engagement. The social schema includes sophisticated relationship modeling with bidirectional friendship tracking, blocking capabilities, and conversation threading. All user actions are protected by Row-Level Security policies ensuring users can only access authorized data."
+              },
+              {
+                  "highlightTitle": "Advanced Authentication with Data Migration",
+                  "highlightCaption": "Seamless anonymous-to-authenticated user experience with Supabase Auth",
+                  "description": "I architected a sophisticated authentication system that supports email/password, Google OAuth, and Apple Sign In via Supabase Auth. A key innovation is the seamless anonymous user experience—users can explore the full app without signing up, with all their event contributions, Pokédex progress, and favorites tracked via anonymous device ID. When they eventually create an account or sign in, I automatically migrate all their anonymous data to their authenticated profile using database triggers and custom migration functions. The system uses Expo SecureStore for encrypted token storage on mobile, implements automatic token refresh to handle expired sessions transparently, and includes age verification via birthdate for filtering 18+ content. User profiles support customization with username, bio, avatar, and social links."
+              },
+              {
+                  "highlightTitle": "Mega Evolution Database with Type System",
+                  "highlightCaption": "50+ Mega forms with dynamic type changes and advanced search",
+                  "description": "I built a comprehensive Mega Evolution database featuring 50+ Mega forms from the Lumiose City Pokédex, complete with type changes and visual indicators. The system handles complex cases like Charizard X/Y and Mewtwo X/Y with different type combinations (Mega Charizard X becomes Fire/Dragon while Y stays Fire/Flying). I implemented smart search that finds both base and Mega forms, automatic type change detection (Mega Ampharos gains Dragon type, Mega Gyarados becomes Water/Dark), and visual 'M' badges for Mega forms. The Pokédex tracker supports marking Mega forms separately from base forms across 8 different collection modes, with the type effectiveness calculator dynamically updating resistances and weaknesses based on Mega Evolution type changes."
+              },
+              {
+                  "highlightTitle": "Production Deployment with EAS",
+                  "highlightCaption": "Multi-platform deployment via Expo Application Services",
+                  "description": "I successfully deployed PokePages to production using EAS (Expo Application Services) for streamlined build and deployment workflows. The app is currently live at pokepages.app as a Progressive Web App with full SEO optimization including meta tags, OpenGraph cards, Twitter Cards, and automated sitemap generation. I successfully deployed to Google Play Store closed testing, demonstrating complete mobile release workflow including signing certificates, privacy policy compliance, and store listing optimization. The deployment supports both web and native Android platforms, with iOS deployment planned next."
+              },
+              {
+                  "highlightTitle": "Advanced Expo Router Navigation Architecture",
+                  "highlightCaption": "Type-safe routing with protected routes, drawer, stack, tabs, and custom top tabs",
+                  "description": "I architected a sophisticated navigation system using Expo Router v6 that combines multiple navigation patterns seamlessly. The app features a custom drawer layout with authentication-aware menu items, nested stack navigation for modal flows, bottom tab navigation for main sections, and custom top tabs on specific pages like the social feed. I implemented protected routes that automatically redirect unauthenticated users to the sign-in screen, with route guards checking authentication state before rendering sensitive content. The drawer dynamically adapts based on user permissions and age verification (18+ content filtering). The navigation supports deep linking for pokepages:// URLs, maintains consistent state across platform deployments (web and native), and provides type-safe navigation with auto-generated TypeScript types. This multi-pattern architecture demonstrates mastery of React Navigation patterns while leveraging Expo Router's file-based routing convention.",
+                  "code": "// Protected route with auth guard\nexport default function ProtectedLayout() {\n  const { user, isLoading } = useAuth();\n  const router = useRouter();\n\n  useEffect(() => {\n    if (!isLoading && !user) {\n      // Redirect to sign-in if not authenticated\n      router.replace('/sign-in');\n    }\n  }, [user, isLoading]);\n\n  if (isLoading) return <LoadingScreen />;\n  if (!user) return null;\n\n  return (\n    <Stack>\n      <Stack.Screen name=\"(drawer)\" options={{ headerShown: false }} />\n      <Stack.Screen name=\"social/(tabs)\" options={{ headerShown: false }} />\n    </Stack>\n  );\n}\n\n// Custom top tabs in social feed\n<Tab.Navigator screenOptions={{ tabBarScrollEnabled: true }}>\n  <Tab.Screen name=\"explore\" component={ExploreFeed} />\n  <Tab.Screen name=\"friends\" component={FriendsFeed} />\n</Tab.Navigator>"
+              },
+              {
+                  "highlightTitle": "Custom UI/UX Wireframe Design after multiple Iterations",
+                  "highlightCaption": "Unique, responsive layout and carefully designed social feed layout",
+                  "highlightPictures": ["/img/PokePagesReboot/HomeScreen/V1.png", "/img/PokePagesReboot/HomeScreen/V2.png", "/img/PokePagesReboot/HomeScreen/V3.png", "/img/PokePagesReboot/HomeScreen/V4.png", "/img/PokePagesReboot/HomeScreen/V5.png", "/img/PokePagesReboot/HomeScreen/V6.png"],
+                  "description": "I designed and implemented a distinctive visual identity for PokePages through multiple design iterations, focusing on creating an engaging and intuitive user experience. The home screen features custom-designed 'Quick Access' cards with gradient borders (pink, purple, orange) that respond to user interaction with subtle animations. I created a unique social feed layout that breaks from traditional social media conventions, using color-coded borders for different post types and visual hierarchy that prioritizes content over chrome. Through iterative wireframing and user testing, I refined the UI from initial concepts to the final polished design, with an array of iteration screenshots documenting the evolution. The design system includes custom components for type badges, Pokémon cards, event counters, and form trackers, all following a cohesive dark theme with accent colors that match the Pokémon aesthetic. Every interactive element includes micro-animations using React Native Reanimated for a premium feel."
+              },
+              {
+                "highlightTitle": "Animated Home Card Component",
+                "highlightCaption": "Smooth gradient animations with React Native Reanimated",
+                "highlightPictures": "/img/PokePagesReboot/HomeCardAnimation.webp",
+                "description": "I developed a visually striking home card component that serves as the primary navigation hub, featuring smooth gradient border animations that continuously cycle through colors. Using React Native Reanimated 4, I implemented 60fps animations that run on the UI thread for maximum performance, avoiding JavaScript bridge overhead. The cards feature multi-color gradients (pink, purple, cyan, orange) that animate in a loop, creating an eye-catching effect that draws attention to key features like Messages, Form Tracker, and Quick Actions. Each card includes custom icons (Lottie animations or React Native Vector Icons), descriptive text, and 'NEW' badges for recently added features. The component is fully responsive across screen sizes, supports both light and dark themes, and includes accessibility labels for screen readers. The animation implementation demonstrates advanced React Native performance optimization techniques, ensuring smooth animations even on lower-end devices."
+              },
+              {
+                  "highlightTitle": "RSS Feed Service for Real-Time Pokémon News",
+                  "highlightCaption": "Automated news aggregation from Pokémon Database with server-side parsing",
+                  "description": "I built a custom RSS feed service that automatically fetches and parses the latest Pokémon news from Pokémon Database (pokemondb.net), displaying it on the home screen and dedicated news page. The service runs server-side to handle XML parsing, image extraction, and content formatting, then serves the cleaned data to the mobile app via API endpoint. The implementation includes caching to minimize external API calls, error handling for malformed RSS feeds, and graceful fallbacks when the source is unavailable. The news articles are displayed with thumbnail images, publication dates, and formatted excerpts, with tap-to-read-more functionality that opens the full article in an in-app browser. This feature keeps users informed about the latest Pokémon events, game updates, and community news without leaving the app, demonstrating full-stack capabilities in content aggregation and API design."
+              }
+          ]
+        },
+        {
+            "title": "PokePages (Archive)",
             "isFeatured": false,
             "inProgress": false,
             "caption": "An app designed to connect Pokémon Go players in your area..",
@@ -91,8 +175,8 @@
             "isFeatured": false,
             "inProgress": true,
             "caption": "Exciting gameplay set in a mountainous landscape with climbing, chasms, and interactive elements",
-            "picture": "/img/adventure.png",
-            "gif": "/img/AdventureLevelMontage.gif",
+            "picture": "/img/Adventure/adventure.png",
+            "gif": "/img/Adventure/AdventureLevelMontage.gif",
             "steam": "",
             "youtubeID": "b4quDbxCA5c",
             "breakdown": "In this game called simply Adventure, I crafted a beautiful and inviting mountain scene where players traverse chasms and explore diverse landscapes. Using Unreal Engine 5, I started with a high-level mood board to visualize the nature-inspired setting, grounding the design in realistic mountain terrain. This creative vision was brought to life by integrating various assets and incorporating a unique trapdoor mechanic, which required players to find a key and engage in environmental exploration. Team collaboration was a highlight, as we combined our assets and ideas to create a cohesive level, and the use of landscape tools enhanced the scene’s natural beauty, drawing from my personal experiences around lakes and ponds.\n\nHowever, the project faced challenges, including asset migration issues and texture streaming pool limitations, which required reducing texture resolutions and re-migrating assets. Despite these hurdles, the experience was rewarding, with lessons learned in managing underground environments and resolving software issues with Perforce. Overall, the project was both enjoyable and educational, and I plan to create a level sequence trailer to showcase the final result.",
@@ -111,8 +195,8 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "Rocket Racing Track | Fortnite Custom Map Design | High-Speed Thrills & Epic Stunts!",
-            "picture": "/img/OffTheCoastRR.png",
-            "gif": "/img/OFFtheCoast_FortniteRR.gif",
+            "picture": "/img/OffTheCoast/OffTheCoastRR.png",
+            "gif": "/img/OffTheCoast/OFFtheCoast_FortniteRR.gif",
             "steam": "",
             "youtubeID": "IkWvHfnGgQg",
             "breakdown": "Welcome to \"Off the Coast,\" a custom map meticulously designed in Unreal Editor for Fortnite (UEFN) to deliver high-speed excitement and unique challenges. This track features dynamic layouts, including loops, jumps, and sharp turns, with sections extending over the sea for added thrill. One of the standout features is a carefully crafted spiral that tested my precision in level design, ensuring both difficulty and enjoyment for players.\n\nThe map's stunning visuals, interactive obstacles, and multiplayer-friendly design showcase my expertise in creating engaging environments. Thoughtfully placed scenery enhances immersion, while hidden shortcuts and rocket boosts add layers of complexity. \"Off the Coast\" exemplifies my ability to blend creativity with technical precision, offering a memorable racing experience for players of all skill levels.",
@@ -131,8 +215,8 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "An exciting exploration of C++ classes in Unreal Engine, featuring a unique Nimbus Ride mechanic.",
-            "picture": "/img/Nimbus.png",
-            "gif": "/img/Nimbus.gif",
+            "picture": "/img/Nimbus/Nimbus.png",
+            "gif": "/img/Nimbus/Nimbus.gif",
             "steam": "",
             "youtubeID": "rjcxlrudjUw",
             "breakdown": "In this project, I explored the fundamentals of C++ within Unreal Engine by creating a Nimbus Ride mechanic. As you can see I'm in my learning stages, this was actually a final project for CS50. The process involved building a series of C++ classes, which were later converted into Blueprints for easy integration within the game. One of the main features is the actor component that spawns clouds beneath the player, providing a magical ride experience. A special pure heart value was introduced, which gets affected based on the player's interaction with specific objects, such as a turtle pickup. This experience was an integral part of my learning journey into Unreal Engine's class structure and functionality, highlighting both the complexities and the creative possibilities of game development using C++.",
@@ -155,7 +239,7 @@
         },
         {
             "title": "Tile By Numbers",
-            "isFeatured": true,
+            "isFeatured": false,
             "inProgress": true,
             "caption": "A strategic tile-based game where players must navigate a grid of number tiles whiles going indoor skydiving.",
             "picture": "/img/Tile.png",
@@ -173,7 +257,7 @@
                 },
                 {
                     "highlightTitle": "Number Tile System",
-                    "highlightPicture": "/img/NumberTiles.png",
+                    "highlightPictures": "/img/NumberTiles.png",
                     "description": "Implemented number tiles that dynamically add or subtract from the player’s score. Special wall tiles block the exit until the required score is achieved. This is the basis for the game and will be expanded upon later. It creates the need to find a 'net increase or decrease' on the board. The player will learn to add multiple numbers together quickly in order to find the best path. The fact that the door will close again if the player steps on another number changing their score means that they will have to think carefully and do mutliple math operations in their head."
                 }
             ]
@@ -198,7 +282,7 @@
                     "highlightTitle": "This Highlight Section",
                     "highlightCaption": "This is a caption. It is optional as well as the picture and youtube video. This whole highlight section is optional.",
                     "description": "The cards and information displayed on this site are generated from a JSON file where this text you’re reading is. Custom types/interfaces and optional JSX elements are used to create dynamic pages. Each details page is produced by JavaScript using the [title].tsx format, giving the appearance that each page is tailored to its specific content. This modularity ensures consistency in styles while allowing the functional code to be written once. The components use parameters to show the appropriate information. The JSON file also populates the skills used and learned sections, which helps maintain organization and ease of updates. New projects, skills, highlights, etc. can be added to without modifying the code, keeping everything organized and simple to update.",
-                    "code": "const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {\n    return (\n        <View>\n            {highlights.map((highlight, index) => (\n                <View key={index} style={styles.highlightView}>\n                    <Text style={styles.highlightTitle}>{highlight.highlightTitle}</Text>\n                    <View style={styles.highlightHeader}>\n                        {highlight.highlightPicture && (\n                            <Image source={{ uri: highlight.highlightPicture }} style={styles.highlightPicture} />\n                        )}\n                        {highlight.highlightCaption && (\n                            <Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>\n                        )}\n                    </View>\n                    <Text style={styles.highlightDescription}>{highlight.description}</Text>\n                    {highlight.video && (\n                        <YoutubePlayer\n                            height={Dimensions.get('window').width * 0.5 * 0.5625}\n                            width={Dimensions.get('window').width * 0.5}\n                            play={false}\n                            videoId={highlight.video}\n                        />\n                    )}\n                    {highlight.code && (\n                        <View style={styles.codeContainer}>\n                            <Text style={styles.codeText}>{highlight.code}</Text>\n                        </View>\n                    )}\n                </View>\n            ))}\n        </View>\n    );\n};"
+                    "code": "const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {\n    return (\n        <View>\n            {highlights.map((highlight, index) => (\n                <View key={index} style={styles.highlightView}>\n                    <Text style={styles.highlightTitle}>{highlight.highlightTitle}</Text>\n                    <View style={styles.highlightHeader}>\n                        {highlight.highlightPictures && (\n                            <Image source={{ uri: highlight.highlightPictures }} style={styles.highlightPictures} />\n                        )}\n                        {highlight.highlightCaption && (\n                            <Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>\n                        )}\n                    </View>\n                    <Text style={styles.highlightDescription}>{highlight.description}</Text>\n                    {highlight.video && (\n                        <YoutubePlayer\n                            height={Dimensions.get('window').width * 0.5 * 0.5625}\n                            width={Dimensions.get('window').width * 0.5}\n                            play={false}\n                            videoId={highlight.video}\n                        />\n                    )}\n                    {highlight.code && (\n                        <View style={styles.codeContainer}>\n                            <Text style={styles.codeText}>{highlight.code}</Text>\n                        </View>\n                    )}\n                </View>\n            ))}\n        </View>\n    );\n};"
                 }
             ]
         }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Href, router, Stack, Tabs, useSegments } from 'expo-router';
+import { Href, router, Tabs, useSegments } from 'expo-router';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { PokemonButton } from '@/components/PokemonButton';
 import Colors from '@/constants/Colors';
@@ -10,25 +10,40 @@ import * as Device from 'expo-device';
 import { Pressable, Text, View, Dimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-const deviceType = Device.DeviceType;
-const { width: screenWidth } = Dimensions.get('window');
-
-// Treat anything smaller than 768px as mobile (tablets in portrait, phones, small windows)
-const isMobileDevice = screenWidth < 768 || Device.deviceType === Device.DeviceType.PHONE || Device.deviceType === Device.DeviceType.TABLET;
-
 const TabLayout = ({  }) => {
   const colorScheme = useColorScheme();
   const segments = useSegments();
-  const isHomePage = segments[0] === '(tabs)'; // Check if it's the home page
-  const isMainLevel = segments.length > 1 && segments[1] !== undefined && ['index', '(tabs)', 'MobileApps', 'GameDesign', 'WebDev', 'About', 'Learn', 'Pokemon'].includes(segments[1] as string);
-  const isPieceLevel = segments.length > 2 && segments[2] === '[title]';
-  // Log the current route segments
-  console.log('Segments:', segments);
-  console.log('Is Home Page:', isHomePage);
-  console.log('Is Main Level:', isMainLevel);
-  console.log('Is Piece Level:', isPieceLevel);
+  
+  
+  // Convert segments to regular array to avoid TypeScript tuple issues
+  const routeSegments = [...segments];
+  
+  // Fix: More robust home page detection for both dev and production
+  const isHomePage = routeSegments.length === 0 || 
+                     routeSegments.length === 1 && (routeSegments[0] === '' || routeSegments[0] === '(tabs)') ||
+                     routeSegments.join('/') === '(tabs)' ||
+                     routeSegments.join('/') === '';
+  
+  // Fix: Check for main section pages (not including structural segments)
+  const mainSections = ['MobileApps', 'GameDesign', 'WebDev', 'About', 'Learn', 'Pokemon'];
+  
+  // More robust section detection
+  let currentSection = null;
+  for (const segment of routeSegments) {
+    if (mainSections.includes(segment)) {
+      currentSection = segment;
+      break;
+    }
+  }
+  
+  const isMainLevel = currentSection !== null;
+  
+  // Fix: Better detection of piece/detail level (dynamic routes)
+  const isPieceLevel = routeSegments.some(seg => seg.includes('[')) ||
+                       routeSegments.some(seg => seg === '[title]');
 
-  return isMobileDevice ? (
+  // Always render Tabs navigation for consistency
+  return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
@@ -44,7 +59,6 @@ const TabLayout = ({  }) => {
         tabBarLabelStyle: {
           fontSize: RFPercentage(1),
         }
-        // headerShown: scrollY > screenHeight * 0.3,
       }}
     >
       <Tabs.Screen
@@ -61,7 +75,6 @@ const TabLayout = ({  }) => {
               <PokemonButton size={RFPercentage(2.4)} />
             </Pressable>
           ),
-          // headerTransparent: true,
           tabBarLabel: '',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
@@ -128,57 +141,6 @@ const TabLayout = ({  }) => {
         }}
       />
     </Tabs>
-  ) : (
-    <>
-      <Stack>
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShadowVisible: false,
-            title: 'David \'DJ\' Grimsley',
-            headerStyle: styles.headerBackground,
-            headerRight: () => (
-              <Pressable
-                onPress={() => router.replace('/Pokemon' as Href<string>)}
-                style={{ marginRight: 15, padding: 5 }}
-              >
-                <PokemonButton size={45} />
-              </Pressable>
-            ),
-          }}
-        />
-        <Stack.Screen name="MobileApps" options={{ headerShown: false }} />
-        <Stack.Screen name="GameDesign" options={{ headerShown: false }} />
-        <Stack.Screen name="WebDev" options={{ headerShown: false }} />
-        <Stack.Screen name="Learn" options={{ headerShown: false }} />
-        <Stack.Screen name="Pokemon" options={{ headerShown: false }} />
-        <Stack.Screen name="About" options={{ headerShown: false }} />
-      </Stack>
-      {!isPieceLevel && (
-        // Side navigation bar
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignItems: 'flex-end',
-            height: '65vh',
-            position: 'fixed',
-            right: '10px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            padding: '10px'
-          }}
-        >
-          <NavButton title="Home" route="/(tabs)" icon="home" focusedIcon='home-outline'/>
-          <NavButton title="Mobile Apps" route="/MobileApps" icon="code-slash" focusedIcon='code-slash-outline'/>
-          <NavButton title="Game Design" route="/GameDesign" icon="game-controller" focusedIcon='game-controller-outline'/>
-          <NavButton title="Website Development" route="/WebDev" icon="globe" focusedIcon='globe-outline'/>
-          <NavButton title="Learn" route="/Learn" icon="book" focusedIcon='book-outline'/>
-          <NavButton title="About & Contact" route="/About" icon="person" focusedIcon='person-outline'/>
-        </div>
-       )}
-    </>
   );
 }
 

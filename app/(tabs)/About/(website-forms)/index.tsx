@@ -18,14 +18,14 @@ export default function Index() {
       >
         {/* pressable to go to website creation intake */}
         <Pressable style={styles.website} onPress={() => router.push('/(tabs)/About/(website-forms)/website-intake' as Routes)}>
-          <Text style={styles.websiteText}>Get your portfolio website created here! Click to fill out the website intake form.</Text>
+          <Text style={styles.websiteText}>Get your portfolio or website created here! Click to fill out the website intake form.</Text>
         </Pressable>
         {/* pressable to go to portfolio piece intake */}
         <Pressable style={styles.survey} onPress={() => router.push('/(tabs)/About/(website-forms)/portfolio-intake' as Routes)}>
           <Text style={styles.surveyText}>Click here to enter the information for each of your portfolio pieces after you have filled out the website intake form.</Text>
         </Pressable>
       {/* </Container> */}
-      <Foot></Foot>
+      <Foot />
     </ScrollView>
   </View>
   );

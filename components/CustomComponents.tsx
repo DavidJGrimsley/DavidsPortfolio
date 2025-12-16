@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, Dimensions, Platform, Pressable } from 'react-native';
+import { View, Text, Dimensions, Platform, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { styles } from '../constants/styles';
 import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -14,7 +15,7 @@ import { WebView } from 'react-native-webview';
 interface Highlight {
     highlightTitle: string;
     highlightCaption?: string;
-    highlightPicture?: string;
+    highlightPictures?: string[];
     video?: string;
     description: string;
     code?: string;
@@ -36,13 +37,35 @@ interface Piece {
     skillsLearned?: string[];
     highlights?: Highlight[];
 }
+
 interface Pieces {
     [key: string]: Piece[];
     MobileApps: Piece[];
     GameDesign: Piece[];
     WebDev: Piece[];
 }
-const piecesData: Pieces = pieces;
+// Preprocess pieces to ensure highlightPictures is always an array if present
+function normalizePieces(raw: any): Pieces {
+    const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [] };
+    Object.keys(result).forEach(category => {
+        if (Array.isArray(raw[category])) {
+            result[category] = raw[category].map((piece: any) => {
+                if (Array.isArray(piece.highlights)) {
+                    piece.highlights = piece.highlights.map((highlight: any) => {
+                        if (highlight.highlightPictures && !Array.isArray(highlight.highlightPictures)) {
+                            highlight.highlightPictures = [highlight.highlightPictures];
+                        }
+                        return highlight;
+                    });
+                }
+                return piece;
+            });
+        }
+    });
+    return result;
+}
+
+const piecesData: Pieces = normalizePieces(pieces);
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -103,7 +126,7 @@ const MyCards = ({ pageCategory }: { pageCategory: string }) => {
                                     {/* // Have the card button link to a new page with more information at app/(tabs)/MobileDev/[id].tsx where id is the "title" of the element */}
                                     
                                     <Button variant="primary" onClick={() => router.push(`/${pageCategory}/${element.title}` as Href<string>)}>
-                                        Learn More
+                                        View details
                                     </Button>
                                 </Card.Body>
                             </Card>
@@ -151,7 +174,7 @@ const FeaturedCard = () => {
                                     <Card.Text>{element.caption}</Card.Text>
                                     {/* // Have the card button link to a new page with more information at app/(tabs)/MobileDev/[id].tsx where id is the "title" of the element */}
                                     <Button variant="primary" onClick={() => router.push(`/${category}/${element.title}` as Href<`/${string}/${string}`>)}>
-                                        Learn More
+                                        View Details
                                     </Button>
                                 </Card.Body>
                             </Card>
@@ -168,6 +191,49 @@ const FeaturedCard = () => {
 };
 
 
+const HighlightImageCarousel = ({ pictures }: { pictures?: string[] }) => {
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+
+    React.useEffect(() => {
+        if (!pictures || !Array.isArray(pictures) || pictures.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentIndex((prevIndex) => (prevIndex + 1) % pictures.length);
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, [pictures]);
+
+    if (!pictures || !Array.isArray(pictures) || pictures.length === 0) return null;
+
+    return (
+        <View>
+            <Image 
+                source={{ uri: pictures[currentIndex] }} 
+                style={styles.highlightPicture}
+                contentFit="contain"
+                transition={300}
+            />
+            {pictures.length > 1 && (
+                <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
+                    {pictures.map((_, idx) => (
+                        <View
+                            key={idx}
+                            style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: 2,
+                                backgroundColor: idx === currentIndex ? '#007bff' : '#ccc',
+                                marginHorizontal: 4,
+                            }}
+                        />
+                    ))}
+                </View>
+            )}
+        </View>
+    );
+};
+
 const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {
     return (
         <View>
@@ -175,8 +241,8 @@ const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {
                 <View key={index} style={styles.highlightView}>
                     <Text style={styles.highlightTitle}>{highlight.highlightTitle}</Text>
                     <View style={styles.highlightHeader}>
-                        {highlight.highlightPicture && (
-                            <Image source={{ uri: highlight.highlightPicture }} style={styles.highlightPicture} />
+                        {highlight.highlightPictures && Array.isArray(highlight.highlightPictures) && highlight.highlightPictures.length > 0 && (
+                            <HighlightImageCarousel pictures={highlight.highlightPictures} />
                         )}
                         {highlight.highlightCaption && (
                             <Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>

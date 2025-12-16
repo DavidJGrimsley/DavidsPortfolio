@@ -51,7 +51,8 @@
     "react-native-web": "^0.19.12",
     "react-native-web-webview": "^1.0.2",
     "react-native-webview": "^13.8.6",
-    "react-native-youtube-iframe": "^2.3.0"
+    "react-native-youtube-iframe": "^2.3.0",
+    "expo-image": "~1.13.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
