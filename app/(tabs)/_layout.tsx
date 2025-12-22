@@ -25,7 +25,7 @@ const TabLayout = ({  }) => {
                      routeSegments.join('/') === '';
   
   // Fix: Check for main section pages (not including structural segments)
-  const mainSections = ['MobileApps', 'GameDesign', 'WebDev', 'About', 'Learn', 'Pokemon'];
+  const mainSections = ['MobileApps', 'GameDesign', 'WebDev', 'SoftwareDevelopment', 'About', 'Learn', 'Pokemon'];
   
   // More robust section detection
   let currentSection = null;
@@ -87,7 +87,7 @@ const TabLayout = ({  }) => {
           headerShown: false,
           title: 'Mobile Apps',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+            <TabBarIcon name={focused ? 'phone-portrait' : 'phone-portrait-outline'} color={color} />
           ),
         }}
       />
@@ -108,6 +108,16 @@ const TabLayout = ({  }) => {
           title: 'Website Development',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'globe' : 'globe-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="SoftwareDevelopment"
+        options={{
+          headerShown: false,
+          title: 'Software Dev',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'server' : 'server-outline'} color={color} />
           ),
         }}
       />

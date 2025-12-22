@@ -338,6 +338,36 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         marginVertical: 10,
     },
+    otherSectionsContainer: {
+        marginVertical: 20,
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        borderTopWidth: 2,
+        borderTopColor: Colors[colorScheme ?? 'light'].tint,
+        alignItems: 'center',
+    },
+    otherSectionsTitle: {
+        fontSize: RFPercentage(2.5),
+        fontWeight: 'bold',
+        color: Colors[colorScheme ?? 'light'].text,
+        marginBottom: 10,
+    },
+    otherSectionButton: {
+        backgroundColor: Colors[colorScheme ?? 'light'].tint,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        marginVertical: 5,
+        width: '100%',
+        maxWidth: 600,
+        alignItems: 'center',
+    },
+    otherSectionText: {
+        color: Colors[colorScheme ?? 'light'].secondary,
+        fontSize: RFPercentage(2),
+        fontWeight: '600',
+        textAlign: 'center',
+    },
     codeContainer: {
         backgroundColor: '#f5f5f5', // Light gray background
         borderRadius: 5,

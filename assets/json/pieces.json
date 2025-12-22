@@ -171,6 +171,48 @@
     ],  
     "GameDesign": [
         {
+            "title": "Quantum Jam 2025: Echoes of Light",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "Godot game integration with quantum API - HTTP client and fallback logic.",
+            "picture": "/img/QuantumJamEcho/godot_integration.png",
+            "gif": "/img/QuantumJamEcho/godot_gameplay.gif",
+            "github": "https://github.com/ReneJSchwartz/quantum-jam-2025-choose-your-own-adventure",
+            "breakdown": "For this collaborative Quantum Game Jam project, I implemented the technical integration layer between the Godot game and external quantum API. Working alongside René Schwartz (game designer/lead), MajaQ (quantum consultant), and Saara (artist), I focused on making real quantum computing accessible within the game engine through robust API communication.\n\nI wrote GDScript HTTP clients that handle POST requests, JSON parsing, and response callbacks for quantum gate operations and text transformations. The implementation includes comprehensive error handling with automatic fallback to local pseudo-random generation when the server is unreachable, ensuring the game never breaks due to network issues. I integrated quantum keyword detection into the dialogue system, automatically triggering API calls when characters mention words like 'memory', 'quantum', or 'consciousness'. The integration required careful timing coordination to prevent visual glitches while waiting for server responses, with 2-second timeout protection.\n\nI also connected player dialogue choices to quantum gate measurements, where the API's 0 or 1 result determines story branching. The dual-system approach (real quantum + fallback) allowed the team to playtest locally without requiring server access. This project demonstrates my ability to integrate external APIs into game engines while designing resilient systems that gracefully handle network failures.",
+            "skillsUsed": ["GDScript", "Godot Engine 4.x", "HTTP Client", "JSON Parsing", "Error Handling", "API Integration"],
+            "skillsLearned": ["Godot HTTPRequest Node", "GDScript Signals & Callbacks", "Network Error Fallbacks", "Dialogue System Integration", "Cross-Platform API Communication"],
+            "otherSections": [
+                {
+                    "category": "SoftwareDevelopment",
+                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "caption": "See how I built the Python quantum server"
+                },
+                {
+                    "category": "WebDev",
+                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "caption": "See the React Native website with quantum animations"
+                }
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "GDScript HTTP Client Integration",
+                    "highlightCaption": "Reusable request/response handler with safe fallbacks",
+                    "description": "I built a reusable HTTP client in GDScript using Godot's HTTPRequest node to call external APIs from inside the game. It sends POST requests with JSON payloads, parses responses, and uses signals for async callbacks. The client queues requests to avoid flooding endpoints, logs errors for debugging, and times out gracefully to trigger local fallback effects so gameplay never stalls. This node can be dropped into any scene to enable networked interactions without duplicating code.",
+                    "code": "# api_client.gd\nextends Node\n\nsignal request_completed(result)\nvar http: HTTPRequest\nvar _callback: Callable\n\nfunc _ready():\n    http = HTTPRequest.new()\n    add_child(http)\n    http.request_completed.connect(_on_done)\n\nfunc post_json(endpoint: String, body: Dictionary, callback: Callable):\n    _callback = callback\n    var err = http.request(endpoint, [\"Content-Type: application/json\"], HTTPClient.METHOD_POST, JSON.stringify(body))\n    if err != OK:\n        push_warning(\"request failed: \" + str(err))\n        _callback.call(null) # trigger fallback\n\nfunc _on_done(result, code, _headers, data):\n    if result != HTTPRequest.RESULT_SUCCESS or code != 200:\n        _callback.call(null) # fallback path\n        return\n    var json := JSON.new()\n    if json.parse(data.get_string_from_utf8()) == OK:\n        _callback.call(json.get_data())\n    else:\n        _callback.call(null)"
+                },
+                {
+                    "highlightTitle": "Dialogue System Integration",
+                    "highlightCaption": "Automatic keyword detection triggers quantum transformations",
+                    "description": "I integrated the quantum API into the game's dialogue system by modifying the DialogueManager script to detect context-relevant keywords. When dialogue contains words like 'remember', 'quantum', 'consciousness', or 'memory', the system automatically processes that text through the API before displaying it. This creates narrative moments where emotionally or technically significant dialogue appears visually distorted. I implemented careful timing coordination—the dialogue waits for the API transformation to complete before starting the typewriter effect, but includes a 2-second timeout to abort the call if the server doesn't respond. The system also caches which lines have been transformed to avoid redundant API calls on dialogue replay."
+                },
+                {
+                    "highlightTitle": "Robust Fallback System",
+                    "highlightCaption": "Local pseudo-random generation ensures uninterrupted gameplay",
+                    "description": "I designed a dual-system approach where the game works perfectly with or without server access. When the API is reachable, quantum measurements provide true randomness for story choices and text effects. When offline, the game seamlessly falls back to Godot's built-in random number generator with similar probability distributions. I implemented local text transformation algorithms that mimic the quantum effects using character swapping, rotation, and opacity changes. This was crucial for team playtesting—René and other team members could test the game locally without needing my server running. The system even displays visual feedback showing whether a choice was decided by 'quantum randomness' or 'classical fallback', which became a fun meta-commentary on quantum mechanics."
+                }
+            ]
+        },
+        {
             "title": "Adventure",
             "isFeatured": false,
             "inProgress": true,
@@ -283,6 +325,109 @@
                     "highlightCaption": "This is a caption. It is optional as well as the picture and youtube video. This whole highlight section is optional.",
                     "description": "The cards and information displayed on this site are generated from a JSON file where this text you’re reading is. Custom types/interfaces and optional JSX elements are used to create dynamic pages. Each details page is produced by JavaScript using the [title].tsx format, giving the appearance that each page is tailored to its specific content. This modularity ensures consistency in styles while allowing the functional code to be written once. The components use parameters to show the appropriate information. The JSON file also populates the skills used and learned sections, which helps maintain organization and ease of updates. New projects, skills, highlights, etc. can be added to without modifying the code, keeping everything organized and simple to update.",
                     "code": "const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {\n    return (\n        <View>\n            {highlights.map((highlight, index) => (\n                <View key={index} style={styles.highlightView}>\n                    <Text style={styles.highlightTitle}>{highlight.highlightTitle}</Text>\n                    <View style={styles.highlightHeader}>\n                        {highlight.highlightPictures && (\n                            <Image source={{ uri: highlight.highlightPictures }} style={styles.highlightPictures} />\n                        )}\n                        {highlight.highlightCaption && (\n                            <Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>\n                        )}\n                    </View>\n                    <Text style={styles.highlightDescription}>{highlight.description}</Text>\n                    {highlight.video && (\n                        <YoutubePlayer\n                            height={Dimensions.get('window').width * 0.5 * 0.5625}\n                            width={Dimensions.get('window').width * 0.5}\n                            play={false}\n                            videoId={highlight.video}\n                        />\n                    )}\n                    {highlight.code && (\n                        <View style={styles.codeContainer}>\n                            <Text style={styles.codeText}>{highlight.code}</Text>\n                        </View>\n                    )}\n                </View>\n            ))}\n        </View>\n    );\n};"
+                }
+            ]
+        },
+        {
+            "title": "Quantum Jam 2025: Echoes of Light",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "React Native Expo website with quantum-driven animations and team showcase.",
+            "picture": "/img/QuantumJamEcho/website_home.png",
+            "gif": "/img/QuantumJamEcho/website_animation.gif",
+            "site": "https://happy-noyce.108-175-12-95.plesk.page/team",
+            "github": "https://github.com/ReneJSchwartz/quantum-jam-2025-choose-your-own-adventure",
+            "breakdown": "For Quantum Game Jam 2025, I built a complete React Native Expo web application to showcase our team's work and host the game outside of itch.io. The website demonstrates production-ready web development with advanced animations, responsive design, and sophisticated UI components—all built with modern React Native and TypeScript.\n\nThe site features custom parallax scrolling with three-layer depth effects, where background elements move at different speeds to create an illusion of 3D space. I implemented quantum-themed animations using React Native Reanimated 4, including rotating icons whose behavior is controlled by real-time API calls to an external quantum server. These animations run at 60fps on the UI thread using shared values and worklets. I configured NativeWind (Tailwind CSS for React Native) with a custom quantum-inspired color palette featuring deep purples, electric blues, and neon accents.\n\nThe team showcase section features animated collapsible cards with gradient borders, smooth expand/collapse transitions, and rich content including profiles, GitHub links, and role descriptions. I embedded the Godot game directly in the website using an iframe with responsive sizing. Built with expo-router for navigation and fully responsive across desktop and mobile, this project showcases my ability to create polished web applications with cutting-edge animation techniques and clean component architecture.",
+            "skillsUsed": ["React Native", "Expo", "TypeScript", "React Native Reanimated", "NativeWind", "Tailwind CSS", "Parallax Scrolling", "HTTP/Fetch API", "Responsive Design", "expo-router", "Component Architecture"],
+            "skillsLearned": ["React Native Reanimated 4", "NativeWind Configuration", "Expo Web Deployment", "Multi-Layer Parallax Effects", "Quantum-Driven UI", "Collapsible Animated Components", "Cross-Platform Web/Mobile Development"],
+            "otherSections": [
+                {
+                    "category": "SoftwareDevelopment",
+                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "caption": "See how I built the Python quantum server that powers these animations"
+                },
+                {
+                    "category": "GameDesign",
+                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "caption": "See how I integrated the quantum API into the Godot game"
+                }
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "React Native Reanimated 4 Animations",
+                    "highlightCaption": "60fps animations running on UI thread with shared values",
+                    "description": "I implemented sophisticated animations using React Native Reanimated 4, leveraging shared values and worklets to run animations on the UI thread at 60fps without blocking JavaScript. The quantum icon component features dynamic rotation patterns that cycle between orbital (360° loops) and oscillation (back-and-forth) motions. I used withRepeat, withSequence, and withTiming to create complex animation chains with configurable durations and cycle counts. The animations are triggered by external API calls that return measurement values, which I map to rotation intensity (20-60°) and repetition counts (15-30 cycles). The implementation demonstrates advanced React Native performance optimization—all animation logic runs natively using worklets, avoiding the JavaScript bridge overhead that typically causes janky animations.",
+                    "code": "import Animated, { useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';\n\nconst QuantumIcon = () => {\n  const rotation = useSharedValue(0);\n  const [icon, setIcon] = useState('⚛️');\n\n  const startAnimation = async () => {\n    try {\n      const response = await fetch('API_URL', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ gate_type: 'rotation', rotation_angle: Math.random() * Math.PI })\n      });\n      \n      const { measurement, superposition_strength } = await response.json();\n      \n      // Map quantum values to animation parameters\n      const intensity = 20 + (superposition_strength * 40); // 20° to 60°\n      const cycles = Math.floor(15 + (superposition_strength * 15)); // 15-30\n      \n      if (measurement === 0) {\n        // Orbital pattern\n        rotation.value = withRepeat(\n          withSequence(\n            withTiming(360, { duration: 2000 }),\n            withTiming(0, { duration: 0 })\n          ),\n          cycles\n        );\n        setIcon('⭐');\n      } else {\n        // Oscillation pattern\n        rotation.value = withRepeat(\n          withSequence(\n            withTiming(intensity, { duration: 1000 }),\n            withTiming(-intensity, { duration: 1000 })\n          ),\n          cycles\n        );\n        setIcon('🌌');\n      }\n    } catch (error) {\n      console.error('API error:', error);\n    }\n  };\n\n  return (\n    <Animated.View style={{ transform: [{ rotate: \`\${rotation.value}deg\` }] }}>\n      <Text style={{ fontSize: 48 }}>{icon}</Text>\n    </Animated.View>\n  );\n};"
+                },
+                {
+                    "highlightTitle": "Custom Parallax Scrolling System",
+                    "highlightCaption": "Three-layer depth effects with ScrollView integration",
+                    "description": "I built custom parallax scrolling components that create stunning 3D depth effects. The ParallaxScrollView implements three animated layers: a slow-moving background (0.3x scroll speed), medium-speed middle layer (0.6x), and fast-moving foreground particles (1.2x). Each layer's position is calculated based on ScrollView's onScroll event using Animated.event for native-driven animations. The system uses Animated.multiply and Animated.divide to compute parallax offsets without blocking the JavaScript thread. I also created an AdvancedParallaxScrollView with an animated grid background and floating quantum particles that move independently. The parallax effects add professional polish and make the site feel dynamic rather than static, demonstrating my understanding of scroll-driven animations and performance optimization in React Native."
+                },
+                {
+                    "highlightTitle": "Animated Team Showcase Cards",
+                    "highlightCaption": "Collapsible components with measured heights and smooth transitions",
+                    "description": "I designed animated collapsible cards for the team showcase using React Native Reanimated's measured height system. Each card starts collapsed, showing only the member's name, role, and avatar. When tapped, the card smoothly expands to reveal their full bio, portfolio links, and GitHub profile. I implemented this using useSharedValue for height, measuring the content's natural height with onLayout, then animating between 0 and the measured value using withTiming. The gradient borders are created with LinearGradient components, and I added staggered animations so cards expand in sequence rather than all at once. The cards include profile images loaded with expo-image for optimization, clickable links using Pressable components, and responsive layouts that adapt to screen width. This demonstrates my ability to create polished, interactive UI components with smooth animations."
+                },
+                {
+                    "highlightTitle": "Embedded Godot Game Integration",
+                    "highlightCaption": "Responsive iframe with proper aspect ratio and fallback",
+                    "description": "I created a section to embed the Godot game directly within the website using platform-specific rendering. On web, I use an iframe with responsive sizing that maintains 16:9 aspect ratio using Dimensions API. On mobile (if deployed natively), it falls back to WebView for better performance. The implementation includes loading states, error handling for when the game fails to load, and instructions displayed above the game. I configured the iframe to allow fullscreen mode and handle touch events properly. The embedded game section also includes controls explanation and a link to the full version on itch.io. This integration demonstrates my ability to seamlessly embed third-party content into React Native applications while maintaining responsive design."
+                },
+                {
+                    "highlightTitle": "NativeWind Configuration & Custom Theme",
+                    "highlightCaption": "Tailwind CSS utility-first styling for React Native",
+                    "description": "I configured NativeWind (Tailwind CSS for React Native) to enable utility-first styling throughout the website. I extended the default Tailwind config with a custom quantum-inspired color palette: deep purples (#6B46C1, #7C3AED), electric blues (#3B82F6, #60A5FA), neon accents (#A78BFA, #C084FC), and dark backgrounds (#0F172A, #1E293B). I also added custom spacing values, animation utilities, and responsive breakpoints specific to our design. NativeWind allowed me to rapidly prototype layouts using className utilities like 'flex-row justify-center items-center p-4 bg-purple-900', while still maintaining native performance. I combined NativeWind utilities with StyleSheet for performance-critical animations, showing understanding of when to use each approach. The system supports both light and dark modes, though the quantum theme works best with dark backgrounds."
+                }
+            ]
+        }
+    ],
+    "SoftwareDevelopment": [
+        {
+            "title": "Quantum Jam 2025: Echoes of Light",
+            "isFeatured": true,
+            "inProgress": false,
+            "caption": "Quantum backend project: Python Qiskit server with VPS deployment.",
+            "picture": "/img/QuantumJamEcho/quantum_server.png",
+            "gif": "/img/QuantumJamEcho/quantum_animation.gif",
+            "site": "https://happy-noyce.108-175-12-95.plesk.page/team",
+            "github": "https://github.com/ReneJSchwartz/quantum-jam-2025-choose-your-own-adventure",
+            "breakdown": "For Quantum Game Jam 2025, I built a production Python Flask server that implements real quantum computing using IBM's Qiskit library. This project demonstrates advanced backend development with quantum circuits, RESTful API design, and professional deployment practices on a VPS with systemd service management.\n\nI implemented quantum circuits from scratch using Qiskit 2.1.2's Statevector simulator, creating clean abstractions for quantum gates (Hadamard, Pauli-X, Pauli-Z, Y-rotation) while maintaining proper quantum state throughout operations. The Qubit class handles initialization to |0⟩ state, gate transformations, wavefunction collapse measurement, and superposition strength calculation. The server exposes two main RESTful endpoints: /quantum_gate for direct gate operations and /quantum_text for context-aware text transformations based on quantum effects.\n\nCollaborating with MajaQ on quantum logic design, I implemented text transformation algorithms with a 150+ word categorization system that maps keywords (memory, AI, quantum, consciousness) to specific quantum gate sequences. The server includes comprehensive Flask-CORS configuration for cross-origin requests, error handling with proper HTTP status codes, and a /health endpoint with Qiskit verification. Deployed to my VPS with systemd service configuration, the server handles concurrent requests with automatic restart on failure, journalctl logging, and proper environment management. This showcases production-ready backend development with cutting-edge quantum computing integration.",
+            "skillsUsed": ["Python 3.11", "Qiskit", "Flask", "REST API Design", "Quantum Computing", "HTTP/CORS", "VPS Deployment", "Linux Administration", "systemd"],
+            "skillsLearned": ["IBM Qiskit Quantum Circuits", "Quantum Gate Operations", "Statevector Simulation", "Quantum Measurement & Collapse", "Flask-CORS Configuration", "VPS systemd Service Setup", "API Error Handling", "Logging & Observability"],
+            "otherSections": [
+                {
+                    "category": "WebDev",
+                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "caption": "See the React Native website I built with quantum animations"
+                },
+                {
+                    "category": "GameDesign",
+                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "caption": "See how I integrated this quantum server into the Godot game"
+                }
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Qiskit Quantum Circuit Implementation",
+                    "highlightCaption": "Real quantum gates using IBM's Statevector simulator",
+                    "description": "I implemented real quantum computing using Qiskit's Statevector simulator to create a Qubit class with proper quantum state management. The class initializes qubits to |0⟩ state ([1, 0] amplitude vector), applies quantum gate transformations using matrix operations, and measures outcomes with probabilistic collapse. I implemented four core gates: Pauli-X (bit flip), Pauli-Z (phase flip), Hadamard (superposition creation), and Ry (Y-axis rotation). The measure() method uses NumPy's random.choice with probabilities derived from amplitude squared (Born rule), causing authentic wavefunction collapse. The get_superposition_strength() method calculates |amplitude₁|² to quantify how much the qubit is in the |1⟩ state. This demonstrates deep understanding of quantum mechanics principles translated into production code.",
+                    "code": "from qiskit.quantum_info import Statevector, Operator\nimport numpy as np\n\nclass Qubit:\n    def __init__(self):\n        self.state = Statevector([1, 0])  # |0⟩ state\n    \n    def bit_flip(self):\n        # Pauli-X gate: |0⟩ → |1⟩, |1⟩ → |0⟩\n        X = Operator([[0, 1], [1, 0]])\n        self.state = self.state.evolve(X)\n    \n    def phase_flip(self):\n        # Pauli-Z gate: |1⟩ → -|1⟩\n        Z = Operator([[1, 0], [0, -1]])\n        self.state = self.state.evolve(Z)\n    \n    def hadamard(self):\n        # Hadamard: creates equal superposition\n        H = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])\n        self.state = self.state.evolve(Operator(H))\n    \n    def rotate_y(self, theta):\n        # Y-axis rotation by angle theta\n        Ry = np.array([\n            [np.cos(theta/2), -np.sin(theta/2)],\n            [np.sin(theta/2), np.cos(theta/2)]\n        ])\n        self.state = self.state.evolve(Operator(Ry))\n    \n    def measure(self):\n        # Collapse to 0 or 1 based on |amplitude|²\n        probs = self.state.probabilities()\n        return np.random.choice([0, 1], p=probs)\n    \n    def get_superposition_strength(self):\n        # Return |amplitude₁|² (probability of |1⟩)\n        return abs(self.state.data[1]) ** 2"
+                },
+                {
+                    "highlightTitle": "Flask RESTful API with CORS",
+                    "highlightCaption": "Two endpoints with JSON request/response handling",
+                    "description": "I designed a clean RESTful API with Flask exposing two main endpoints. The /quantum_gate endpoint accepts POST requests with gate_type ('bit_flip', 'phase_flip', 'rotation') and optional rotation_angle, creates a fresh qubit, applies the transformation, measures the result, and returns JSON with measurement (0/1), superposition_strength (0.0-1.0), and success boolean. The /quantum_text endpoint processes text using context-aware quantum transformations based on keyword detection. I configured Flask-CORS to allow cross-origin requests from multiple origins (game clients, web apps, local emulators), ensuring proper headers are included in responses. The API includes comprehensive error handling with try-catch blocks, proper HTTP status codes (200, 400, 500), and descriptive error messages. I also implemented a /health endpoint that verifies Qiskit availability and returns server status with version info."
+                },
+                {
+                    "highlightTitle": "Context-Aware Text Transformation System",
+                    "highlightCaption": "150+ word categorization with quantum gate mapping",
+                    "description": "Collaborating with MajaQ, I built a sophisticated text transformation system that analyzes input for quantum-relevant keywords and applies appropriate gate sequences. I categorized 150+ words into themes: MEMORY (remember, forget, past, recall, amnesia), AI (algorithm, data, neural, intelligence, learning), QUANTUM (superposition, entanglement, qubit, measurement, coherence), and CONSCIOUSNESS (aware, think, thought, mind, perceive). When text contains memory-related words, the system applies Y-rotation gates for 'quantum fragmentation' effects. AI content gets Hadamard gates for maximum scrambling. The algorithm uses keyword density to determine transformation strength—more quantum keywords result in more aggressive effects. This creates narrative-appropriate visual distortions where technical discussions appear more 'quantum' than casual dialogue, demonstrating creative application of quantum computing to text manipulation."
+                },
+                {
+                    "highlightTitle": "VPS Deployment with systemd Service",
+                    "highlightCaption": "Production infrastructure with automatic restart and logging",
+                    "description": "I deployed the quantum server to my personal VPS running Linux, configuring it as a systemd service for production reliability. The service unit file specifies the working directory, Python virtual environment path, user permissions (deployer), and restart policy (always restart with 10-second delay on failure). I configured the server to start automatically on boot, log all output to journalctl for debugging, and run in the background without blocking the terminal. The deployment process includes setting up the Python venv with all dependencies (Qiskit 2.1.2, Flask, NumPy, Flask-CORS), configuring the firewall to allow port 8000 traffic, and testing both HTTP endpoints. I documented the deployment with bash scripts for reproducibility. The server has been running reliably throughout the game jam, handling concurrent requests from the web app and Godot game simultaneously. This demonstrates professional DevOps practices including service management, logging, resource limits, and environment configuration."
                 }
             ]
         }

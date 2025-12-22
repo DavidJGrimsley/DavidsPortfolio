@@ -116,6 +116,36 @@ export const mobileStyles = StyleSheet.create({
         color: Colors[colorScheme ?? 'light'].background,
         fontWeight: 'bold',
     },
+    otherSectionsContainer: {
+        marginVertical: RFPercentage(2),
+        paddingVertical: RFPercentage(2),
+        paddingHorizontal: RFPercentage(2),
+        borderTopWidth: 2,
+        borderTopColor: Colors[colorScheme ?? 'light'].tint,
+        alignItems: 'center',
+        width: '100%',
+    },
+    otherSectionsTitle: {
+        fontSize: RFPercentage(3),
+        fontWeight: 'bold',
+        color: Colors[colorScheme ?? 'light'].text,
+        marginBottom: RFPercentage(1.5),
+    },
+    otherSectionButton: {
+        backgroundColor: Colors[colorScheme ?? 'light'].tint,
+        paddingVertical: RFPercentage(1.5),
+        paddingHorizontal: RFPercentage(2.5),
+        borderRadius: RFPercentage(1),
+        marginVertical: RFPercentage(0.8),
+        width: '100%',
+        alignItems: 'center',
+    },
+    otherSectionText: {
+        color: Colors[colorScheme ?? 'light'].secondary,
+        fontSize: RFPercentage(2.2),
+        fontWeight: '600',
+        textAlign: 'center',
+    },
     
     
 });

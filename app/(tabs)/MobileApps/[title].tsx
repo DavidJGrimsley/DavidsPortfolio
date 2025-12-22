@@ -5,7 +5,7 @@ import { styles } from "@/constants/styles";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import React, { useCallback } from "react";
 import pieces from '@/assets/json/pieces.json';
-import { HighlightView, InProgress, Piece, Pieces, HorizontalLinks } from '@/components/CustomComponents'
+import { HighlightView, InProgress, Piece, Pieces, HorizontalLinks, OtherSectionsLinks } from '@/components/CustomComponents'
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";
 
@@ -103,6 +103,8 @@ export default function Page() {
                         ) : null}
                         {/* Show highlights if they exist */}
                         {element.highlights && (<HighlightView highlights={element.highlights} />)}
+                        {/* Show cross-reference links to other sections */}
+                        {element.otherSections && (<OtherSectionsLinks otherSections={element.otherSections} />)}
                       </View>
                     );
                     newData = page;

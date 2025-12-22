@@ -10,23 +10,23 @@ import YoutubePlayer from "react-native-youtube-iframe";
 
 // Normalize pieces to ensure proper structure
 function normalizePieces(raw: any): Pieces {
-  const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [], SoftwareDevelopment: [] };
-  Object.keys(result).forEach(category => {
-    if (Array.isArray(raw[category])) {
-      result[category] = raw[category].map((piece: any) => {
-        if (Array.isArray(piece.highlights)) {
-          piece.highlights = piece.highlights.map((highlight: any) => {
-            if (highlight.highlightPictures && !Array.isArray(highlight.highlightPictures)) {
-              highlight.highlightPictures = [highlight.highlightPictures];
-            }
-            return highlight;
-          });
+    const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [], SoftwareDevelopment: [] };
+    Object.keys(result).forEach(category => {
+        if (Array.isArray(raw[category])) {
+            result[category] = raw[category].map((piece: any) => {
+                if (Array.isArray(piece.highlights)) {
+                    piece.highlights = piece.highlights.map((highlight: any) => {
+                        if (highlight.highlightPictures && !Array.isArray(highlight.highlightPictures)) {
+                            highlight.highlightPictures = [highlight.highlightPictures];
+                        }
+                        return highlight;
+                    });
+                }
+                return piece;
+            });
         }
-        return piece;
-      });
-    }
-  });
-  return result;
+    });
+    return result;
 }
 
 const piecesData: Pieces = normalizePieces(rawPieces);
@@ -34,8 +34,11 @@ const piecesData: Pieces = normalizePieces(rawPieces);
 
 export async function generateStaticParams(): Promise<Record<string, string>[]> {
   let params: Record<string, string>[] = [];
-  piecesData.GameDesign.forEach((element: Piece) => {
-    params.push({ title: element.title });
+  Object.keys(piecesData).forEach((category) => {
+    if (category === "SoftwareDevelopment") {
+    piecesData[category].forEach((element: Piece) => {
+      params.push({ title: element.title });
+    });}
   });
   // const directory = await fs.readdir(path.join(process.cwd(), './(tabs)/MobileApps', category));
   return params;
@@ -71,7 +74,8 @@ export default function Page() {
   };
     
     React.useEffect(() => {
-        const element = piecesData.GameDesign.find((piece) => piece.title === title);
+        let newData: React.ReactElement<any, any> | null = null;
+        const element = piecesData.SoftwareDevelopment.find((piece) => piece.title === title);
         if (element) {
           const page = (
             <View> 
@@ -91,30 +95,38 @@ export default function Page() {
                   onChangeState={onStateChange}
                 />)}
               </View>
-              <View style={mobileStyles.listView}>
+              <View style={{backgroundColor: 'black', height: 1, width: '100%', marginVertical: 20}}></View>
+              {element.highlights && (<HighlightView highlights={element.highlights}/>)}
+              <View style={{backgroundColor: 'black', height: 1, width: '100%', marginVertical: 20}}></View>
+              {element.skillsUsed && (
+                  <>
+                  <Text style={mobileStyles.subtitle}>Skills Used</Text>
                   <FlashList
-                    data={element.skillsUsed}
-                    ListHeaderComponent={<Text style={mobileStyles.listHeader}>Skills Used:</Text>}
-                    renderItem={({ item }) => <Text style={mobileStyles.skills}>{item}</Text>}
-                    estimatedItemSize={20}
-                    horizontal={false}
-                    numColumns={3}
-                    showsHorizontalScrollIndicator={false}
+                      estimatedItemSize={50}
+                      data={element.skillsUsed}
+                      numColumns={2}
+                      renderItem={({ item }: { item: string }) => (
+                      <Text style={mobileStyles.skillsUsed}>{item}</Text>
+                      )}
+                      keyExtractor={(item, index) => `${item}-${index}`}
                   />
-                  <FlashList 
-                    data={element.skillsLearned}
-                    ListHeaderComponent={<Text style={mobileStyles.listHeader}>Skills Learned:</Text>}
-                    renderItem={({ item }) => <Text style={mobileStyles.skills}>{item}</Text>}
-                    estimatedItemSize={20}
-                    horizontal={false}
-                    numColumns={3}
-                    showsHorizontalScrollIndicator={false}
+                  </>
+              )}
+              {element.skillsLearned && (
+                  <>
+                  <Text style={mobileStyles.subtitle}>Skills Learned</Text>
+                  <FlashList
+                      estimatedItemSize={50}
+                      data={element.skillsLearned}
+                      numColumns={2}
+                      renderItem={({ item }: { item: string }) => (
+                      <Text style={mobileStyles.skillsLearned}>{item}</Text>
+                      )}
+                      keyExtractor={(item, index) => `${item}-${index}`}
                   />
-              </View>
-              {element.github || element.site || element.steam ? (
-                  <HorizontalLinks github={element.github} site={element.site} steam={element.steam} />
-              ) : null}
-              {element.highlights && (<HighlightView highlights={element.highlights} />)}
+                  </>
+              )}
+              <HorizontalLinks github={element.github} steam={element.steam} site={element.site}/>
               {element.otherSections && (<OtherSectionsLinks otherSections={element.otherSections} />)}
             </View>
           );
@@ -122,21 +134,25 @@ export default function Page() {
         } else {
           setData(null);
         }
+
+        setData(newData);
+        return () => {};
+
     }, [title]);
-    return (
-      <ScrollView 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={mobileStyles.scroll}
-        onScroll={handleScroll}
-        scrollEventThrottle={20}
-      >
-        <View style={mobileStyles.scroll}>
-          <MobileDetailsBackgroundGradient/>
-          <View style={mobileStyles.page}>{data}</View>
-        </View>
-      </ScrollView>
 
-    );
-  
+
+  return (
+    <ScrollView 
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={mobileStyles.scroll}
+      onScroll={handleScroll}
+      scrollEventThrottle={20}
+    >
+      <View style={mobileStyles.scroll}>
+        <MobileDetailsBackgroundGradient/>
+        <View style={mobileStyles.page}>{data}</View>
+      </View>
+    </ScrollView>
+
+  );
 }
-

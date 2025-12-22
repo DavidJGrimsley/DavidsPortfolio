@@ -21,6 +21,12 @@ interface Highlight {
     code?: string;
 }
 
+interface OtherSection {
+    category: string;
+    title: string;
+    caption: string;
+}
+
 interface Piece {
     title: string;
     isFeatured: boolean;
@@ -36,6 +42,7 @@ interface Piece {
     skillsUsed?: string[];
     skillsLearned?: string[];
     highlights?: Highlight[];
+    otherSections?: OtherSection[];
 }
 
 interface Pieces {
@@ -43,10 +50,11 @@ interface Pieces {
     MobileApps: Piece[];
     GameDesign: Piece[];
     WebDev: Piece[];
+    SoftwareDevelopment: Piece[];
 }
 // Preprocess pieces to ensure highlightPictures is always an array if present
 function normalizePieces(raw: any): Pieces {
-    const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [] };
+    const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [], SoftwareDevelopment: [] };
     Object.keys(result).forEach(category => {
         if (Array.isArray(raw[category])) {
             result[category] = raw[category].map((piece: any) => {
@@ -338,4 +346,33 @@ const HorizontalLinks = ({ github, site, steam }: { github?: string; site?: stri
     );
 };
 
-export { MyCards, Foot, TitleOfPage, FeaturedCard, Highlight, Piece, Pieces, UnderConstruction, IframeEmbed, HighlightView, InProgress, HorizontalLinks };
+const OtherSectionsLinks = ({ otherSections }: { otherSections?: OtherSection[] }) => {
+    if (!otherSections || otherSections.length === 0) {
+        return null;
+    }
+
+    const handlePress = (category: string, title: string) => {
+        // Navigate to the other section's detail page
+        const route = `/${category}/${encodeURIComponent(title)}` as Href;
+        router.push(route);
+    };
+
+    return (
+        <View style={styles.otherSectionsContainer}>
+            <Text style={styles.otherSectionsTitle}>Related Projects:</Text>
+            {otherSections.map((section, index) => (
+                <Pressable 
+                    key={index} 
+                    style={styles.otherSectionButton} 
+                    onPress={() => handlePress(section.category, section.title)}
+                >
+                    <Text style={styles.otherSectionText}>
+                        {section.caption} →
+                    </Text>
+                </Pressable>
+            ))}
+        </View>
+    );
+};
+
+export { MyCards, Foot, TitleOfPage, FeaturedCard, Highlight, Piece, Pieces, UnderConstruction, IframeEmbed, HighlightView, InProgress, HorizontalLinks, OtherSectionsLinks, OtherSection };
