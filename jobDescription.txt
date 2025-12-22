@@ -1,0 +1,144 @@
+Basic Qualifications
+
+- B.S. in Computer Science, Software Engineering, Electrical Engineering, or related field (M.S. preferred).
+- 1+ years professional software development; at least 1  year building mission‑critical HMI/C2 interfaces or real‑time dashboards.
+- Proficiency in C++ (Qt) or C#, TypeScript/JavaScript, and HTML5/CSS3.
+- Strong experience with React or Angular, UI‑state management (Redux, NgRx), and WebGL/Three.js for 3‑D visualizations.
+- Experience building and maintaining CI/CD pipelines (GitLab CI, Jenkins, Azure DevOps) and using static/dynamic security tooling.
+- Experience with Unit test frameworks and UI-automation
+Agile/SAFe execution, JIRA/Confluence, and ability to produce clear technical documentation.
+
+Job Code/TitleE1072:Software Engineer
+Job Description
+
+We are committed to work life balance by promoting this REMOTE telework option. These job requirements allow the employee to work their entire schedule somewhere other than a Lockheed Martin designated office or job site.
+
+What We’re Doing
+
+Do you want to be part of a culture that inspires employees to think big, innovate, perform with excellence, and build incredible products? If you have the passion, drive, and courage to dream big, then we want to build a better tomorrow with you. Come and join our team!
+
+Lockheed Martin’s Rotary and Mission Systems’ C4ISR team is looking for proven and experienced UX SW Engineers to support a one‑of‑a‑kind Cross Business Area campaign that exemplifies our commitment to our OneLM Strategy.
+
+The Work
+
+- Front‑End Development – Build responsive UI components using React / Angular and implement reusable UI kits.
+
+- Back‑End / Middleware – Develop real‑time data‑pipeline adapters to ingest sensor, AI/ML, and telemetry feeds. Write high‑performance services for native console displays and HMI extensions. Integrate with AWS services.
+
+- DevSecOps & CI/CD – Own the CI/CD pipelines that build, test, and deploy UI packages.
+
+- Testing & Validation – Write unit, integration, and UI‑automation tests.
+
+- Collaboration – Participate in SAFe Program Increment (PI) Planning, Scrum of Scrums, and System Demos. Produce design specs, API docs, and acceptance criteria. Work closely with the Advisory Board to validate that UI meets mission‑critical detection‑prediction‑response‑recovery workflows.
+
+Who We Are
+
+The Unified HMI team within our Digital Production Environment is building the next‑generation command‑and‑control operator workspace that fuses AI/ML insights, real‑time mission data, and a seamless AWS‑based data‑lake backend. We are seeking UX Software Engineers who can translate complex sensor and analytics streams into intuitive, mission‑focused visual experiences for a non‑DoD customer. You will work closely with system architects, software engineers, AI/ML specialists, and the Advisory Board to ensure the interface supports the full Detection → Prediction → Response → Recovery workflow.
+
+Who You Are
+
+- A self‑starter
+
+- An experienced UX Designer
+
+- An engineer committed to delivering high‑quality, cutting‑edge technology for customers and allies worldwide.
+
+Why Join Us
+
+Joining our team offers you the opportunity to support a company and a team where your contributions are valued and you can develop your skills and expertise.
+
+- Our team puts a high value on work‑life balance. We focus on results, not on how many hours you spend at work or online.
+
+- We offer a flexible schedule so you can be productive while enjoying a well‑balanced life inside and outside of work.
+
+- Competitive pay and a comprehensive benefits package.
+
+Become part of a mission‑driven organization where innovation, excellence, and balance go hand‑in‑hand.
+
+Desired skills
+
+- Prior work on C2/Command‑and‑Control or operator console systems for aerospace, cyber‑defense, or critical infrastructure.
+- Hands‑on data integration experience with Kafka, MQTT, AWS Kinesis/AppSync, REST/GraphQL, and experience handling high‑velocity streaming data.
+- Experience with AWS services and Infrastructure‑as‑Code.
+- Familiarity with MBSE tools (Cameo → DOORS NEXT) and the ability to surface model‑derived data in the UI.
+- Background in AI/ML explainability visualizations integrated into the operator dashboard.
+- Certifications: Microsoft Certified: Azure Developer Associate, AWS Certified Solutions Architect – Professional, IAAP CPACC (accessibility), or CISSP (security).
+
+Other Important Information
+
+By applying to this job, you are expressing interest in this position and could be considered for other career opportunities where similar skills and requirements have been identified as a match. Should this match be identified you may be contacted for this and future openings.
+
+Ability to work remotely
+
+Full-time Remote Telework: The employee selected for this position will work remotely full time at a location other than a Lockheed Martin designated office/job site. Employees may travel to a Lockheed Martin office for periodic meetings.
+
+Select the Telework classification for this positionEmployee that will telework full-time
+Shift
+
+First
+
+Work Schedule Information
+
+Lockheed Martin supports a variety of alternate work schedules that provide additional flexibility to our employees. Schedules range from standard 40 hours over a five day work week while others may be condensed. These condensed schedules provide employees with additional time away from the office and are in addition to our Paid Time off benefits.
+
+Work Schedule4x10 hour day, 3 days off per week
+Security Clearance Information
+
+This position requires a government security clearance, you must be a US Citizen for consideration.
+
+Security ClearanceSecret
+LMCareers Business Unit
+
+RMS
+
+ProgramEG
+Department
+
+XECTQS:C4ISR VF E&T
+
+Job ClassSystems Engineering: Software
+Job Category
+
+Experienced Professional
+
+City, StateColorado Springs-CO, Huntsville-AL, King of Prussia-PA, Littleton-CO
+City
+
+COLORADO SPRINGS, Huntsville, King of Prussia, Littleton
+
+Zip19406, 35808, 80127, 80921
+Virtual
+
+yes
+
+Relocation/Housing Stipend AvailableNo
+Req Type
+
+Full-Time
+
+Direct/IndirectDirect
+*
+
+At Lockheed Martin, we use our passion for purposeful innovation to help keep people safe and solve the world's most complex challenges. Our people are some of the greatest minds in the industry and truly make Lockheed Martin a great place to work.
+
+With our employees as our priority, we provide diverse career opportunities designed to propel, develop, and boost agility. Our flexible schedules, competitive pay, and comprehensive benefits enable our employees to live a healthy, fulfilling life at and outside of work. We place an emphasis on empowering our employees by fostering an inclusive environment built upon integrity and corporate responsibility.
+
+If this sounds like a culture you connect with, you’re invited to apply for this role. Or, if you are unsure whether your experience aligns with the requirements of this position, we encourage you to search on Lockheed Martin Jobs, and apply for roles that align with your qualifications.
+
+EEO
+
+Lockheed Martin is an equal opportunity employer. Qualified candidates will be considered without regard to legally protected characteristics.
+The application window will close in 90 days; applicants are encouraged to apply within 5 - 30 days of the requisition posting date in order to receive optimal consideration.
+
+National Pay Statement
+
+Pay Rate: The annual base salary range for this position in California, Massachusetts, and New York (excluding most major metropolitan areas), Colorado, Hawaii, Illinois, Maryland, Minnesota, New Jersey, Vermont, Washington or Washington DC is $76,500 - $134,895. For states not referenced above, the salary range for this position will reflect the candidate’s final work location. Please note that the salary information is a general guideline only. Lockheed Martin considers factors such as (but not limited to) scope and responsibilities of the position, candidate's work experience, education/ training, key skills as well as market and business considerations when extending an offer.
+Benefits offered: Medical, Dental, Vision, Life Insurance, Short-Term Disability, Long-Term Disability, 401(k) match, Flexible Spending Accounts, EAP, Education Assistance, Parental Leave, Paid time off, and Holidays.
+(Washington state applicants only) Non-represented full-time employees: accrue at least 10 hours per month of Paid Time Off (PTO) to be used for incidental absences and other reasons; receive at least 90 hours for holidays. Represented full time employees accrue 6.67 hours of Vacation per month; accrue up to 52 hours of sick leave annually; receive at least 96 hours for holidays. PTO, Vacation, sick leave, and holiday hours are prorated based on start date during the calendar year.
+This position is incentive plan eligible.
+
+Premium Pay Statement
+
+Pay Rate: The annual base salary range for this position in most major metropolitan areas in California, Massachusetts, and New York is $88,000 - $152,490. For states not referenced above, the salary range for this position will reflect the candidate’s final work location. Please note that the salary information is a general guideline only. Lockheed Martin considers factors such as (but not limited to) scope and responsibilities of the position, candidate's work experience, education/ training, key skills as well as market and business considerations when extending an offer.
+Benefits offered: Medical, Dental, Vision, Life Insurance, Short-Term Disability, Long-Term Disability, 401(k) match, Flexible Spending Accounts, EAP, Education Assistance, Parental Leave, Paid time off, and Holidays.
+This position is incentive plan eligible.

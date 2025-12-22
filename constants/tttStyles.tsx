@@ -1,11 +1,13 @@
 //Import the StyleSheet module from react-native.
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import Colors from './Colors';
 import { DeviceType, getDeviceTypeAsync } from 'expo-device';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { RFPercentage } from "react-native-responsive-fontsize";
 
 const colorScheme = useColorScheme();
+const getScreenWidth = () => Dimensions.get('window').width;
+const isSmallScreen = () => getScreenWidth() < 768;
 let isMobileDevice = false;
 
 (async () => {
@@ -30,11 +32,16 @@ export const tttStyles = StyleSheet.create({
         display: 'flex',   
         justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: isMobileDevice ? 'column' : 'row',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        width: '100%',
+        paddingHorizontal: RFPercentage(1),
     },
     tttHeader: {
-        marginRight: RFPercentage(5),
-        width: isMobileDevice ? RFPercentage(100) : RFPercentage(50),   
+        marginRight: RFPercentage(2),
+        marginBottom: RFPercentage(2),
+        width: '90%',
+        maxWidth: 600,
         backgroundColor: Colors[colorScheme ?? 'light'].background, 
         borderRadius: RFPercentage(2),
         opacity: 0.6,
@@ -44,13 +51,13 @@ export const tttStyles = StyleSheet.create({
     },
     tttHeaderText: {
         padding: RFPercentage(2),
-        fontSize: RFPercentage(3),
+        fontSize: RFPercentage(2.5),
         textAlign: 'center',
         color: Colors[colorScheme ?? 'light'].secondary,
     },
     status: {
         color: Colors[colorScheme ?? 'light'].text,
-        fontSize: RFPercentage(2),
+        fontSize: RFPercentage(2.2),
         fontWeight: '700',
         marginBottom: RFPercentage(1),
         textAlign: 'center',
@@ -63,6 +70,9 @@ export const tttStyles = StyleSheet.create({
         borderRadius: RFPercentage(1),
         padding: RFPercentage(1),
         textAlign: 'center',
+        width: '95%',
+        maxWidth: 400,
+        alignSelf: 'center',
     },
     tttBoard: {
         display: 'flex',
@@ -84,15 +94,15 @@ export const tttStyles = StyleSheet.create({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        width: RFPercentage(7),
-        height: RFPercentage(7),
+        width: RFPercentage(9),
+        height: RFPercentage(9),
         padding: RFPercentage(1),
         margin: RFPercentage(0.5),
         borderRadius: RFPercentage(0.5),
     },
     tttSquareText: {
         color: Colors[colorScheme ?? 'light'].secondary,
-        fontSize: RFPercentage(5),
+        fontSize: RFPercentage(5.5),
     },
     tttHistory: {
         alignItems: 'center',        

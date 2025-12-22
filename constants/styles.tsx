@@ -1,5 +1,5 @@
 //Import the StyleSheet module from react-native.
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import Colors from './Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { DeviceType, getDeviceTypeAsync } from 'expo-device';
@@ -7,6 +7,15 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { RFPercentage } from "react-native-responsive-fontsize";
 
 const colorScheme = useColorScheme();
+
+// Dynamic dimension getters to handle window resizing
+const getScreenDimensions = () => Dimensions.get('window');
+const isSmallScreen = () => getScreenDimensions().width < 768;
+const isMediumScreen = () => {
+  const width = getScreenDimensions().width;
+  return width >= 768 && width < 1024;
+};
+const isLargeScreen = () => getScreenDimensions().width >= 1024;
 let isMobileDevice = false;
 
 (async () => {
@@ -51,14 +60,15 @@ export const styles = StyleSheet.create({
         display: 'flex',
         alignItems: 'center',
         margin: RFPercentage(0.5),
-        width: '50%',
+        width: '90%',
+        maxWidth: isLargeScreen() ? 400 : 600,
         borderRadius: RFPercentage(1.5),
     },
     sideNavText: {
         textAlign: 'center',
         opacity: 0.5,
         color: Colors[colorScheme ?? 'light'].text,
-        fontSize: RFPercentage(1),
+        fontSize: RFPercentage(1.2),
         fontWeight: '300',
     },
     // Styles for the title on each screen
@@ -66,12 +76,13 @@ export const styles = StyleSheet.create({
         textAlign: 'center',
         paddingBottom: RFPercentage(1.2),
         paddingTop: RFPercentage(1.2),
+        paddingHorizontal: RFPercentage(1),
         zIndex: -1,
     },
     mainTitleText: {
         position: 'relative',
         textTransform: 'uppercase',
-        fontSize: RFPercentage(5),
+        fontSize: RFPercentage(4),
         fontWeight: '700',
         fontFamily: 'Rubik',
         color: Colors[colorScheme ?? 'light'].text,
@@ -88,7 +99,7 @@ export const styles = StyleSheet.create({
         transform: 'translate(-50%, -50%)',
         fontWeight: '800',
         opacity: 0.5,
-        fontSize: RFPercentage(7),
+        fontSize: RFPercentage(6),
     },
     // gradient background
     background: {
@@ -114,13 +125,14 @@ export const styles = StyleSheet.create({
         borderRadius: RFPercentage(0.5),
         alignItems: 'center',
         justifyContent: 'center',
-        width: isMobileDevice ? '90%' : '60%',
+        width: '90%',
         maxWidth: 600,
-        minWidth: 300,
+        alignSelf: 'center',
     },
     footerText: {
         color: Colors[colorScheme ?? 'light'].accent,
-        fontSize: RFPercentage(1.2),
+        fontSize: RFPercentage(1.4),
+        textAlign: 'center',
     },
     // Extra space if needed
     spacer: {
@@ -154,10 +166,12 @@ export const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         width: '100%',
+        paddingHorizontal: RFPercentage(1),
     },
     content: {
-        marginRight: RFPercentage(16),
-        // width: RFPercentage(100),
+        marginRight: isLargeScreen() ? RFPercentage(16) : 0,
+        width: '100%',
+        maxWidth: 1200,
     },
     scrollCards: {
       flexGrow: 1,
@@ -173,15 +187,18 @@ export const styles = StyleSheet.create({
     },
     cardsRow: {
         alignItems: 'center',
-        flexDirection: isMobileDevice ? 'column' : 'row',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        width: '100%',
     },
     cardsCol: {
-        // padding: 20,
+        width: '100%',
+        alignItems: 'center',
     },
     card: {
-        // padding: 20,
-        margin: RFPercentage(3),
-        width: isMobileDevice ? '100%' : RFPercentage(60),
+        margin: RFPercentage(2),
+        width: '90%',
+        maxWidth: 800,
     },
     // Webview for embedded sites
     webview: { 
@@ -210,14 +227,15 @@ export const styles = StyleSheet.create({
         borderColor: Colors[colorScheme ?? 'light'].accent,
         alignItems: 'center',
         justifyContent: 'center',
-        maxWidth: '60%',
-        minWidth: '40%',
+        width: '85%',
+        maxWidth: 600,
+        alignSelf: 'center',
         backgroundColor: applyOpacity(Colors[colorScheme ?? 'light'].background, 0.2),
     },
     websiteText: {
         color: Colors[colorScheme ?? 'light'].accent,
         textAlign: 'center',
-        fontSize: RFPercentage(1.2),
+        fontSize: RFPercentage(1.4),
     },
     websiteButton: {
         backgroundColor: Colors[colorScheme ?? 'light'].accent,
@@ -233,8 +251,9 @@ export const styles = StyleSheet.create({
         fontSize: RFPercentage(1.2),
     },
     surveyView: {
-        width: '65%',
+        width: '85%',
         marginVertical: RFPercentage(2.5),
+        alignSelf: 'center',
     },
     survey: {
         backgroundColor: Colors[colorScheme ?? 'light'].accent,
@@ -245,15 +264,14 @@ export const styles = StyleSheet.create({
     surveyText: {
         color: Colors[colorScheme ?? 'light'].secondary,
         textAlign: 'center',
-        fontSize: RFPercentage(1.2),
+        fontSize: RFPercentage(1.4),
     },
     aboutText: {
         color: Colors[colorScheme ?? 'light'].text,
         textAlign: 'center',
-        fontSize: RFPercentage(1.5),
-        width: '80%',
-        // marginHorizontal: RFPercentage(1),
-        // padding: RFPercentage(4),
+        fontSize: RFPercentage(1.6),
+        width: '90%',
+        paddingHorizontal: RFPercentage(1),
     },
     // For the Highlight component
     highlightView: {
@@ -264,11 +282,13 @@ export const styles = StyleSheet.create({
         borderRadius: RFPercentage(0.5),
         padding: RFPercentage(1),
         margin: RFPercentage(1),
+        width: '95%',
+        alignSelf: 'center',
     },
     highlightTitle: {
         color: Colors[colorScheme ?? 'light'].text,
         textAlign: 'center',
-        fontSize: RFPercentage(2),
+        fontSize: RFPercentage(2.2),
         fontWeight: '700',
     },
     highlightHeader: {
@@ -276,24 +296,28 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
+        flexWrap: 'wrap',
     },
     highlightCaption: {
         color: Colors[colorScheme ?? 'light'].accent,
         textAlign: 'center',
         padding: RFPercentage(.5),
-        fontSize: RFPercentage(1.2),
+        fontSize: RFPercentage(1.4),
         backgroundColor: applyOpacity(Colors[colorScheme ?? 'light'].secondary, 0.15),
     },
     highlightPicture: {
         margin: RFPercentage(1),
-        width: RFPercentage(30),
-        height: RFPercentage(20),
+        width: '90%',
+        height: RFPercentage(35),
+        resizeMode: 'contain',
+        alignSelf: 'center',
     },
     highlightDescription: {
         color: Colors[colorScheme ?? 'light'].text,
         textAlign: 'center',
-        fontSize: RFPercentage(1.5),
+        fontSize: RFPercentage(1.6),
         marginBottom: RFPercentage(1),
+        paddingHorizontal: RFPercentage(1),
     },
     button: {
         backgroundColor: Colors[colorScheme ?? 'light'].accent,
@@ -321,14 +345,15 @@ export const styles = StyleSheet.create({
         marginVertical: 10,
         borderWidth: 1,
         borderColor: '#ddd', // Light border
-        width: '70%',
+        width: '90%',
+        maxWidth: 800,
+        alignSelf: 'center',
     },
     codeText: {
         fontFamily: 'Courier New', // Monospace font
-        fontSize: 14,
+        fontSize: 13,
         color: '#333', // Dark text color
-        lineHeight: 20,
-        // whiteSpace: 'pre-wrap', // Preserve formatting
+        lineHeight: 19,
     },
 });
 

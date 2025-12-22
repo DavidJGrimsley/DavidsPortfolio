@@ -1,9 +1,17 @@
-import { StyleSheet } from 'react-native';
-import { Dimensions } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import Animated, { useAnimatedStyle, interpolate, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
 
-const { width } = Dimensions.get('window');
-const IMG_HEIGHT = 300;
+// Dynamic dimension getters to prevent refresh issues
+const getDimensions = () => Dimensions.get('window');
+const getImageHeight = () => {
+  const { width, height } = getDimensions();
+  const isSmall = width < 768;
+  const isMedium = width >= 768 && width < 1024;
+  return isSmall ? Math.min(height * 0.3, 250) : isMedium ? 300 : 350;
+};
+
+const { width } = getDimensions();
+const IMG_HEIGHT = getImageHeight();
 
 const scrollRef = useAnimatedRef<Animated.ScrollView>();
 const scrollOffset = useScrollViewOffset(scrollRef);

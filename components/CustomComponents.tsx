@@ -193,6 +193,10 @@ const FeaturedCard = () => {
 
 const HighlightImageCarousel = ({ pictures }: { pictures?: string[] }) => {
     const [currentIndex, setCurrentIndex] = React.useState(0);
+    const screenWidth = Dimensions.get('window').width;
+    const screenHeight = Dimensions.get('window').height;
+    const imageWidth = screenWidth * 0.9;
+    const imageHeight = Math.min(screenHeight * 0.5, imageWidth * 1.2); // Use more height
 
     React.useEffect(() => {
         if (!pictures || !Array.isArray(pictures) || pictures.length <= 1) return;
@@ -207,10 +211,10 @@ const HighlightImageCarousel = ({ pictures }: { pictures?: string[] }) => {
     if (!pictures || !Array.isArray(pictures) || pictures.length === 0) return null;
 
     return (
-        <View>
+        <View style={{ width: '100%', alignItems: 'center', marginVertical: 4 }}>
             <Image 
                 source={{ uri: pictures[currentIndex] }} 
-                style={styles.highlightPicture}
+                style={{ width: imageWidth, height: imageHeight, resizeMode: 'contain' }}
                 contentFit="contain"
                 transition={300}
             />

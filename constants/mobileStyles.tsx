@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import Colors from "./Colors";
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -6,6 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 
 
 const colorScheme = useColorScheme();
+const getScreenWidth = () => Dimensions.get('window').width;
+const isSmallScreen = () => getScreenWidth() < 768;
 
 
 // Utility function to apply opacity multiplier to a hex color
@@ -41,45 +43,49 @@ export const mobileStyles = StyleSheet.create({
         alignContent: 'center',
         justifyContent: 'space-around',
         flex: 1,
-        marginLeft: RFPercentage(3),
-        marginRight: RFPercentage(2),
+        marginHorizontal: RFPercentage(2),
         marginVertical: RFPercentage(3),
-        width: RFPercentage(95),
-        // alignContent: 'center',
-        // justifyContent: 'center',
-        // alignItems: 'center',
+        width: '95%',
+        maxWidth: 1200,
+        alignSelf: 'center',
     },
     header: {
         flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
     },
     title: {
-        fontSize: RFPercentage(6),
+        fontSize: RFPercentage(5),
         textAlign: 'left',
         fontWeight: 'bold',
         color: Colors[colorScheme ?? 'light'].tint,
         marginLeft: RFPercentage(2),
     },
     caption: {
-        fontSize: RFPercentage(1.65),
+        fontSize: RFPercentage(2),
         textAlign: 'right',
         color: Colors[colorScheme ?? 'light'].background,
-        marginRight: RFPercentage(5),
+        marginRight: RFPercentage(2),
+        marginLeft: RFPercentage(2),
     },
     imageContainer: {
         flexDirection: 'row',
         display: 'flex',
-        justifyContent: 'space-around',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginHorizontal: RFPercentage(3),
-        // width: '100%',
-        height: RFPercentage(30), // Adjust the height as needed
+        marginHorizontal: RFPercentage(2),
+        marginVertical: RFPercentage(2),
+        width: '100%',
+        alignSelf: 'center',
+        height: RFPercentage(40),
     },
     image: {
-        height: '80%',
         width: '100%',
+        height: '100%',
+        resizeMode: 'contain',
     },
     breakdown: {
-        fontSize: RFPercentage(2),
+        fontSize: RFPercentage(2.2),
         textAlign: 'left',
         color: Colors[colorScheme ?? 'light'].text,
         marginBottom: RFPercentage(1),
@@ -94,19 +100,19 @@ export const mobileStyles = StyleSheet.create({
         marginVertical: RFPercentage(1),
         backgroundColor: applyOpacity(Colors[colorScheme ?? 'light'].secondary, .4),
         borderRadius: RFPercentage(1),
-        padding: RFPercentage(1),
-        // opacity: 0.7,
+        padding: RFPercentage(1.5),
+        width: '100%',
         justifyContent: 'space-around',
     },
     listHeader: {
-        fontSize: RFPercentage(3),
+        fontSize: RFPercentage(3.2),
         textAlign: 'left',
         fontWeight: 'bold',
         color: Colors[colorScheme ?? 'light'].accent,
     },
     skills: {
         textAlign: 'left',
-        fontSize: RFPercentage(2),
+        fontSize: RFPercentage(2.2),
         color: Colors[colorScheme ?? 'light'].background,
         fontWeight: 'bold',
     },
