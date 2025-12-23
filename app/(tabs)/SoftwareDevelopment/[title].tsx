@@ -5,6 +5,7 @@ import { styles } from "@/constants/styles";
 import React, { useCallback, useState } from "react";
 import rawPieces from '@/assets/json/pieces.json';
 import { InProgress, Piece, Pieces, HighlightView, HorizontalLinks, OtherSectionsLinks} from '@/components/CustomComponents'
+import { HelloWave } from '@/components/QuantumAnimation';
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";
 
@@ -74,16 +75,23 @@ export default function Page() {
   };
     
     React.useEffect(() => {
-        let newData: React.ReactElement<any, any> | null = null;
-        const element = piecesData.SoftwareDevelopment.find((piece) => piece.title === title);
-        if (element) {
-          const page = (
+          console.log('[SoftwareDev detail] route param title:', title);
+          const element = piecesData.SoftwareDevelopment.find((piece) => piece.title === title);
+          console.log('[SoftwareDev detail] found element:', !!element, element?.title);
+
+          if (element) {
+            const page = (
             <View> 
               <Text style={mobileStyles.title}>{element.title}</Text>
               <Text style={mobileStyles.caption}>{element.caption}</Text>
               <View style={mobileStyles.imageContainer}>
-                <Image source={{ uri: element.gif }} style={mobileStyles.image} resizeMode="contain" />
+                <Image source={{ uri: element.picture }} style={mobileStyles.image} resizeMode="contain" />
               </View>
+              {element.title === 'Quantum Jam 2025: Echoes of Light' && (
+                <View style={{ marginVertical: 12 }}>
+                  <HelloWave />
+                </View>
+              )}
               {element.inProgress && (<InProgress/>)} 
               <Text style={mobileStyles.breakdown}>{element.breakdown}</Text>
               <View style={mobileStyles.YTView}>
@@ -132,10 +140,10 @@ export default function Page() {
           );
           setData(page);
         } else {
+          console.log('[SoftwareDev detail] no element match; available titles:', piecesData.SoftwareDevelopment.map(p => p.title));
           setData(null);
         }
 
-        setData(newData);
         return () => {};
 
     }, [title]);

@@ -78,7 +78,7 @@ export default function Page() {
               <Text style={mobileStyles.title}>{element.title}</Text>
               <Text style={mobileStyles.caption}>{element.caption}</Text>
               <View style={mobileStyles.imageContainer}>
-                <Image source={{ uri: element.gif }} style={mobileStyles.image} resizeMode="contain" />
+                <Image source={{ uri: element.picture }} style={mobileStyles.image} resizeMode="contain" />
               </View>
               {element.inProgress && (<InProgress/>)} 
               <Text style={mobileStyles.breakdown}>{element.breakdown}</Text>

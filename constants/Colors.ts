@@ -7,13 +7,13 @@ const tintColorLight = '#4B718A'; // blue-gray
 const tintColorDark = '#a96710'; // secondary
 const accentColorLight = '#723B80'; // dark purple
 
-export default {
+const Colors = {
   light: {
     text: '#11181C', // black
     background: '#ae54c4', // purple
     secondary: '#afeef7', // light blue
     accent: accentColorLight, // dark purple
-    tint: tintColorLight, 
+    tint: tintColorLight,
     icon: '#687076', // gray
     tabIconDefault: accentColorLight, // accent
     tabIconSelected: tintColorLight,
@@ -29,4 +29,7 @@ export default {
     accent: '#321e3bb9', // dark purple
   },
 };
+
+export { Colors };
+export default Colors;
 

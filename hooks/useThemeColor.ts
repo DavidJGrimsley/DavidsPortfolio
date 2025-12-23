@@ -12,11 +12,17 @@ export function useThemeColor(
   colorName: keyof typeof Colors.light & keyof typeof Colors.dark
 ) {
   const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
+  const colorFromProps = props ? (props as any)[theme] : undefined;
 
   if (colorFromProps) {
     return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
   }
+
+  // Defensive: ensure Colors exists and has the requested theme/key
+  if (Colors && Colors[theme] && Colors[theme][colorName]) {
+    return Colors[theme][colorName as keyof typeof Colors.light];
+  }
+
+  // Fallback color to avoid runtime crash
+  return theme === 'dark' ? '#FFFFFF' : '#000000';
 }

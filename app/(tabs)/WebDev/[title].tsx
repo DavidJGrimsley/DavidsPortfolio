@@ -7,6 +7,7 @@ import rawPieces from '@/assets/json/pieces.json';
 import { HighlightView, HorizontalLinks, InProgress, Piece, Pieces, OtherSectionsLinks } from '@/components/CustomComponents'
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";
+import { HelloWave } from '@/components/QuantumAnimation';
 
 // Normalize pieces to ensure proper structure
 function normalizePieces(raw: any): Pieces {
@@ -67,6 +68,7 @@ export default function Page() {
               <View style={mobileStyles.imageContainer}>
                 <Image source={{ uri: element.picture }} style={mobileStyles.image} resizeMode="contain" />
               </View>
+              {element.title.includes('Quantum') && (<HelloWave />)}
               {element.inProgress && (<InProgress/>)} 
               <Text style={mobileStyles.breakdown}>{element.breakdown}</Text>
               <View style={mobileStyles.YTView}>

@@ -127,7 +127,7 @@ const MyCards = ({ pageCategory }: { pageCategory: string }) => {
                     const card = (
                         <Col key={element.title} style={styles.cardsCol as React.CSSProperties}>
                             <Card style={styles.card as React.CSSProperties}>
-                                <Card.Img variant="top" src={element.picture} />
+                                <Card.Img variant="top" src={element.gif} />
                                 <Card.Body>
                                     <Card.Title>{element.title}</Card.Title>
                                     <Card.Text>{element.caption}</Card.Text>
