@@ -1,0 +1,64 @@
+openapi: 3.0.3
+info:
+  title: Quantum API
+  version: "1.0.0"
+  description: |
+    Quantum API — general-purpose quantum services for games and applications:
+    simulations, text transformations, gate operations, and more.
+    This API is evolving and will gain more endpoints over time.
+    See https://quantum-api.davidjgrimsley.com for docs and interactive exploration.
+servers:
+  - url: https://quantum-api.davidjgrimsley.com
+paths:
+  /:
+    get:
+      summary: Service info
+      responses:
+        '200':
+          description: Service metadata
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Health OK
+  /quantum_text:
+    post:
+      summary: Transform text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        '200':
+          description: Transformation result
+  /quantum_gate:
+    post:
+      summary: Apply a quantum gate operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gate:
+                  type: string
+                rotation_angle:
+                  type: number
+      responses:
+        '200':
+          description: Gate application result
+  /quantum_echo_types:
+    get:
+      summary: List available transformation types
+      responses:
+        '200':
+          description: List of types
+components:
+  schemas: {}

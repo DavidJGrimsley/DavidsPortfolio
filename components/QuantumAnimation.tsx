@@ -14,7 +14,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 
 
 export function HelloWave() {
-  const quantumBaseUrl = __DEV__ ? 'https://localhost:8000' : 'https://108.175.12.95:8000';
+  const quantumBaseUrl = __DEV__ ? 'http://localhost:8000' : 'https://davidjgrimsley.com/api/quantum';
   const quantumEndpoint = `${quantumBaseUrl}/quantum_gate`;
   const rotationAnimation = useSharedValue(0);
   const scaleAnimation = useSharedValue(1);

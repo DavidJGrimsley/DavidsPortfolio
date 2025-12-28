@@ -141,6 +141,16 @@ const TabLayout = ({  }) => {
           ),
         }}
       />
+      <Tabs.Screen
+        name="API"
+        options={{
+          headerShown: false,
+          title: 'Public APIs',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'cloud' : 'cloud-outline'} color={color} />
+          ),
+        }}
+      />
       {/* Pokemon screen is accessible via header button only, not in tab bar */}
       <Tabs.Screen
         name="Pokemon"
