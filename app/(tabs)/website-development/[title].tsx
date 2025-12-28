@@ -2,15 +2,16 @@ import { View, Text, Button, ScrollView, Image, Pressable, Alert, Dimensions } f
 import { useLocalSearchParams } from "expo-router";
 import { mobileStyles, MobileDetailsBackgroundGradient } from "@/constants/mobileStyles";
 import { styles } from "@/constants/styles";
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import rawPieces from '@/assets/json/pieces.json';
-import { InProgress, Piece, Pieces, HighlightView, HorizontalLinks, OtherSectionsLinks} from '@/components/CustomComponents'
+import { HighlightView, HorizontalLinks, InProgress, Piece, Pieces, OtherSectionsLinks } from '@/components/CustomComponents'
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";
+import { HelloWave } from '@/components/QuantumAnimation';
 
 // Normalize pieces to ensure proper structure
 function normalizePieces(raw: any): Pieces {
-  const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [], SoftwareDevelopment: [] };
+  const result: Pieces = { "mobile-apps": [], "game-design": [], "website-development": [], "software-development": [] };
   Object.keys(result).forEach(category => {
     if (Array.isArray(raw[category])) {
       result[category] = raw[category].map((piece: any) => {
@@ -31,24 +32,20 @@ function normalizePieces(raw: any): Pieces {
 
 const piecesData: Pieces = normalizePieces(rawPieces);
 
-
 export async function generateStaticParams(): Promise<Record<string, string>[]> {
   let params: Record<string, string>[] = [];
-  piecesData.GameDesign.forEach((element: Piece) => {
+  piecesData["website-development"].forEach((element: Piece) => {
     params.push({ title: element.title });
   });
-  // const directory = await fs.readdir(path.join(process.cwd(), './(tabs)/MobileApps', category));
+  // const directory = await fs.readdir(path.join(process.cwd(), './(tabs)/website-development', category));
   return params;
 }
 
-
 export default function Page() {
   const { title } =useLocalSearchParams();
+  let titleString = title ? title.toString() : "";
   const [data, setData] = React.useState<React.ReactElement<any, any> | null>(null);
   const [playing, setPlaying] = React.useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [navVisible, setNavVisible] = useState(true);
-  const screenHeight = Dimensions.get('window').height;
   
   const onStateChange = useCallback((state: string) => {
     if (state === 'ended') {
@@ -60,26 +57,18 @@ export default function Page() {
   const togglePlaying = useCallback(() => {
     setPlaying((prev) => !prev);
   }, []);
-
-
-
-  const handleScroll = (event: { nativeEvent: { contentOffset: { y: any; }; }; }) => {
-    const yOffset = event.nativeEvent.contentOffset.y;
-    setScrollY(yOffset);
-    setNavVisible(yOffset < 50); // Hide nav bar if scrolled more than 50 pixels
-    console.log('Scroll Y:', yOffset); // Debugging scroll position
-  };
     
     React.useEffect(() => {
-        const element = piecesData.GameDesign.find((piece) => piece.title === title);
+        const element = piecesData["website-development"].find((piece) => piece.title === title);
         if (element) {
           const page = (
-            <View> 
-              <Text style={mobileStyles.title}>{element.title}</Text>
+            <View>
+              <Text style={mobileStyles.title}>{element.displayTitle || element.title}</Text>
               <Text style={mobileStyles.caption}>{element.caption}</Text>
               <View style={mobileStyles.imageContainer}>
                 <Image source={{ uri: element.picture }} style={mobileStyles.image} resizeMode="contain" />
               </View>
+              {(element.displayTitle || element.title).includes('Quantum') && (<HelloWave />)}
               {element.inProgress && (<InProgress/>)} 
               <Text style={mobileStyles.breakdown}>{element.breakdown}</Text>
               <View style={mobileStyles.YTView}>
@@ -112,7 +101,7 @@ export default function Page() {
                   />
               </View>
               {element.github || element.site || element.steam ? (
-                  <HorizontalLinks github={element.github} site={element.site} steam={element.steam} />
+                <HorizontalLinks github={element.github} site={element.site} steam={element.steam} />
               ) : null}
               {element.highlights && (<HighlightView highlights={element.highlights} />)}
               {element.otherSections && (<OtherSectionsLinks otherSections={element.otherSections} />)}
@@ -124,12 +113,7 @@ export default function Page() {
         }
     }, [title]);
     return (
-      <ScrollView 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={mobileStyles.scroll}
-        onScroll={handleScroll}
-        scrollEventThrottle={20}
-      >
+      <ScrollView showsHorizontalScrollIndicator={false} contentContainerStyle={mobileStyles.scroll}>
         <View style={mobileStyles.scroll}>
           <MobileDetailsBackgroundGradient/>
           <View style={mobileStyles.page}>{data}</View>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Pressable, Linking, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -20,6 +20,26 @@ export default function QuantumAPIPage() {
   const textColor = useThemeColor({}, 'text');
   const [isHowToUseExpanded, setIsHowToUseExpanded] = useState(false);
   const [isQuantumMechanicsExpanded, setIsQuantumMechanicsExpanded] = useState(false);
+  const [apiHealth, setApiHealth] = useState<{ version: string; status: string; service: string } | null>(null);
+  const [isLoadingHealth, setIsLoadingHealth] = useState(true);
+
+  useEffect(() => {
+    // Fetch health endpoint on mount
+    const fetchHealth = async () => {
+      try {
+        const response = await fetch(`${QUANTUM_BASE_URL}/health`);
+        const data = await response.json();
+        setApiHealth(data);
+      } catch (error) {
+        console.error('Failed to fetch API health:', error);
+        setApiHealth({ version: apisData.apis[0].version, status: 'unknown', service: 'Quantum API' });
+      } finally {
+        setIsLoadingHealth(false);
+      }
+    };
+
+    fetchHealth();
+  }, []);
 
   return (
     <View style={[styles.page, { backgroundColor }]}>
@@ -64,21 +84,25 @@ export default function QuantumAPIPage() {
               >
                 {apisData.apis[0].name}
               </ThemedText>
-              <ThemedText
-                style={{
-                  fontSize: RFPercentage(1.6),
-                  opacity: 0.6,
-                  marginTop: 2,
-                }}
-              >
-                v{apisData.apis[0].version}
-              </ThemedText>
+              {isLoadingHealth ? (
+                <ActivityIndicator size="small" color={tintColor} style={{ marginLeft: 8, marginTop: 8 }} />
+              ) : (
+                <ThemedText
+                  style={{
+                    fontSize: RFPercentage(1.6),
+                    opacity: 0.6,
+                    marginTop: 2,
+                  }}
+                >
+                  v{apiHealth?.version || apisData.apis[0].version}
+                </ThemedText>
+              )}
             </View>
 
             {/* Live badge */}
             <View
               style={{
-                backgroundColor: '#10b981',
+                backgroundColor: apiHealth?.status === 'healthy' ? '#10b981' : '#ef4444',
                 paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRadius: 12,
@@ -185,39 +209,41 @@ export default function QuantumAPIPage() {
             method="POST"
             path="/quantum_gate"
             summary="Apply quantum gate operation"
-            description="Execute a quantum gate operation on a single qubit. Supports rotation gates (RY) with custom angles. The qubit starts in |0⟩ state, gets rotated, then measured to collapse the wavefunction."
+            description="Execute a quantum gate operation on a single qubit. The qubit starts in |0⟩ state, the gate is applied, then measured to collapse the wavefunction.\n\n🔄 Rotation (RY): Creates quantum superposition. Angle 0°→always 0, 45°→50/50 chance, 90°→maximum superposition, 180°→always 1. Measurement is probabilistic!\n\n⚡ Bit Flip (Pauli-X): Quantum NOT gate. Deterministically flips |0⟩→|1⟩. Always measures 1, no superposition.\n\n🌊 Phase Flip (Pauli-Z): Flips phase of |1⟩ while leaving |0⟩ unchanged. Always measures 0 from |0⟩ state, no superposition."
             parameters={[
               {
-                name: 'gate_type',
+                name: 'gate',
                 type: 'string',
                 required: true,
-                description: 'Type of quantum gate to apply (currently supports "rotation")',
-                example: 'rotation'
+                description: 'Type of quantum gate to apply',
+                example: 'rotation',
+                enum: ['rotation', 'bit_flip', 'phase_flip']
               },
               {
                 name: 'rotation_angle',
                 type: 'number',
-                required: true,
-                description: 'Angle in radians for RY rotation gate (0 to π). Higher angles create more superposition.',
-                example: 1.5708
+                required: false,
+                description: 'Angle in degrees for RY rotation gate (0 to 180). Required only when gate="rotation". Higher angles create more superposition.',
+                example: 50,
+                dependsOn: 'rotation'
               }
             ]}
             requestBody={{
-              description: 'Quantum gate configuration',
+              description: 'Quantum gate configuration. Include rotation_angle only for rotation gate.',
               example: {
-                gate_type: 'rotation',
-                rotation_angle: 1.5708
+                gate: 'rotation',
+                rotation_angle: 50
               }
             }}
             responses={[
               {
                 code: '200',
-                description: 'Quantum gate result',
+                description: 'Quantum gate result. measurement: collapsed state (0 or 1, random for rotation). success: true if measured 0. superposition_strength: how quantum the state is (0=classical, higher=more quantum). For rotation gates, measurement varies randomly based on quantum probability!',
                 example: {
-                  measurement: 1,
-                  superposition_strength: 0.9245,
-                  rotation_angle: 1.5708,
-                  quantum_state: '|ψ⟩ = cos(0.785)|0⟩ + sin(0.785)|1⟩'
+                  gate_type: 'rotation',
+                  measurement: 0,
+                  success: true,
+                  superposition_strength: 0.866
                 }
               },
               {
@@ -258,10 +284,11 @@ export default function QuantumAPIPage() {
                 code: '200',
                 description: 'Transformed text result',
                 example: {
+                  coverage_percent: 50,
                   original: 'Hello Quantum World',
-                  transformed: 'ⒽⒺⓁⓁⓄ ⓆⓊⒶⓃⓉⓊⓂ ⓌⓄⓇⓁⒹ',
-                  transformation_type: 'circled',
-                  quantum_seed: 42
+                  quantum_words: 2,
+                  total_words: 3,
+                  transformed: 'ⓗⓔⓛⓛⓞ ⓆⓊⒶⓃⓉⓊⓂ World'
                 }
               }
             ]}
@@ -345,6 +372,39 @@ export default function QuantumAPIPage() {
                   (superposition), be mysteriously connected across distances (entanglement), and change when observed 
                   (measurement collapse). It's weird, mind-bending, and completely real.
                 </ThemedText>
+              </View>
+
+              <View>
+                <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.8), marginBottom: 8 }}>
+                  Quantum vs Classical Computing
+                </ThemedText>
+                <View style={{ gap: 8 }}>
+                  <View style={{ flexDirection: 'row' }}>
+                    <ThemedText style={{ fontSize: RFPercentage(1.5), fontWeight: 'bold', flex: 1 }}>Aspect</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.5), fontWeight: 'bold', flex: 1 }}>Classical Bit</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.5), fontWeight: 'bold', flex: 1 }}>Quantum Qubit</ThemedText>
+                  </View>
+                  <View style={{ flexDirection: 'row', backgroundColor: backgroundColor, padding: 8, borderRadius: 6 }}>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>State</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>0 or 1</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>0 AND 1 superposition</ThemedText>
+                  </View>
+                  <View style={{ flexDirection: 'row', padding: 8 }}>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Gates</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Deterministic</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Can be probabilistic</ThemedText>
+                  </View>
+                  <View style={{ flexDirection: 'row', backgroundColor: backgroundColor, padding: 8, borderRadius: 6 }}>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Measurement</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Read current value</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Collapses randomly</ThemedText>
+                  </View>
+                  <View style={{ flexDirection: 'row', padding: 8 }}>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Rotation</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Not possible</ThemedText>
+                    <ThemedText style={{ fontSize: RFPercentage(1.4), flex: 1, opacity: 0.85 }}>Creates superposition</ThemedText>
+                  </View>
+                </View>
               </View>
 
               <View>

@@ -13,7 +13,7 @@ export default function MobileApps() {
           contentContainerStyle={styles.scrollCards}
           >
           <View style={styles.content}>
-            <MyCards pageCategory={"MobileApps"}></MyCards>
+            <MyCards pageCategory={"mobile-apps"}></MyCards>
           </View>
           <Foot></Foot>
         </ScrollView>

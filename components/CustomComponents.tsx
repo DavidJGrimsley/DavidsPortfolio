@@ -29,6 +29,7 @@ interface OtherSection {
 
 interface Piece {
     title: string;
+    displayTitle?: string;
     isFeatured: boolean;
     inProgress: boolean;
     caption: string;
@@ -47,14 +48,14 @@ interface Piece {
 
 interface Pieces {
     [key: string]: Piece[];
-    MobileApps: Piece[];
-    GameDesign: Piece[];
-    WebDev: Piece[];
-    SoftwareDevelopment: Piece[];
+    "mobile-apps": Piece[];
+    "game-design": Piece[];
+    "website-development": Piece[];
+    "software-development": Piece[];
 }
 // Preprocess pieces to ensure highlightPictures is always an array if present
 function normalizePieces(raw: any): Pieces {
-    const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [], SoftwareDevelopment: [] };
+    const result: Pieces = { "mobile-apps": [], "game-design": [], "website-development": [], "software-development": [] };
     Object.keys(result).forEach(category => {
         if (Array.isArray(raw[category])) {
             result[category] = raw[category].map((piece: any) => {
@@ -129,7 +130,7 @@ const MyCards = ({ pageCategory }: { pageCategory: string }) => {
                             <Card style={styles.card as React.CSSProperties}>
                                 <Card.Img variant="top" src={element.gif} />
                                 <Card.Body>
-                                    <Card.Title>{element.title}</Card.Title>
+                                    <Card.Title>{element.displayTitle || element.title}</Card.Title>
                                     <Card.Text>{element.caption}</Card.Text>
                                     {/* // Have the card button link to a new page with more information at app/(tabs)/MobileDev/[id].tsx where id is the "title" of the element */}
                                     
@@ -178,7 +179,7 @@ const FeaturedCard = () => {
                             <Card key={element.title} style={{ width: screenWidth / 1.8 }}>
                                 <Card.Img variant="top" src={element.gif} />
                                 <Card.Body>
-                                    <Card.Title>{element.title}</Card.Title>
+                                    <Card.Title>{element.displayTitle || element.title}</Card.Title>
                                     <Card.Text>{element.caption}</Card.Text>
                                     {/* // Have the card button link to a new page with more information at app/(tabs)/MobileDev/[id].tsx where id is the "title" of the element */}
                                     <Button variant="primary" onClick={() => router.push(`/${category}/${element.title}` as Href<`/${string}/${string}`>)}>

@@ -13,7 +13,7 @@ export default function WebDev() {
       contentContainerStyle={styles.scrollCards}
       >
       {/* <Container style={styles.cardsContainer}> */}
-        <MyCards pageCategory={"WebDev"}></MyCards>
+        <MyCards pageCategory={"website-development"}></MyCards>
       {/* </Container> */}
       <Foot></Foot>
     </ScrollView>

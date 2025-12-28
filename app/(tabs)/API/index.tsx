@@ -18,7 +18,7 @@ export default function APIIndexPage() {
   const tintColor = useThemeColor({}, 'tint');
 
   const handleAPIPress = (apiId: string) => {
-    router.push(`/API/${apiId}` as any);
+    router.push(`/api/${apiId}` as any);
   };
 
   return (

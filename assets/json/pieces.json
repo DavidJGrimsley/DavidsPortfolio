@@ -1,7 +1,8 @@
 {
-    "MobileApps": [
+    "mobile-apps": [
         {
-            "title": "Star Wars Galaxies",
+            "title": "star-wars-galaxies",
+            "displayTitle": "Star Wars Galaxies",
             "isFeatured": false,
             "inProgress": false,
             "caption": "Access to all the Star Wars information at your fingertips.",
@@ -59,7 +60,8 @@
             ]
         },
         {
-          "title": "PokePages (Reboot)",
+          "title": "pokepages-reboot",
+          "displayTitle": "PokePages (Reboot)",
           "isFeatured": true,
           "inProgress": true,
           "caption": "The ultimate Pokémon companion app.",
@@ -143,7 +145,8 @@
           ]
         },
         {
-            "title": "PokePages (Archive)",
+            "title": "pokepages-archive",
+            "displayTitle": "PokePages (Archive)",
             "isFeatured": false,
             "inProgress": false,
             "caption": "An app designed to connect Pokémon Go players in your area..",
@@ -156,7 +159,8 @@
             "skillsLearned": ["App Development", "App Store Publishing", "User Experience Design", "User Interface Design", "Database infrastructure"]
         },        
         {
-            "title": "xCard",
+            "title": "xcard",
+            "displayTitle": "xCard",
             "isFeatured": false,
             "inProgress": false,
             "caption": "A social media app built to empower local business networking.",
@@ -169,9 +173,10 @@
             "skillsLearned": ["Collaborative Development", "Figma", "Prototyping", "User Testing"]
         }
     ],  
-    "GameDesign": [
+    "game-design": [
         {
-            "title": "Quantum Jam 2025: Echoes of Light",
+            "title": "quantum-jam-2025-echoes-of-light",
+            "displayTitle": "Quantum Jam 2025: Echoes of Light",
             "isFeatured": false,
             "inProgress": false,
             "caption": "Godot game integration with quantum API - HTTP client and fallback logic.",
@@ -213,7 +218,8 @@
             ]
         },
         {
-            "title": "Adventure",
+            "title": "adventure",
+            "displayTitle": "Adventure",
             "isFeatured": false,
             "inProgress": true,
             "caption": "Exciting gameplay set in a mountainous landscape with climbing, chasms, and interactive elements",
@@ -233,7 +239,8 @@
             ]
         },
         {
-            "title": "Off the Coast",
+            "title": "off-the-coast",
+            "displayTitle": "Off the Coast",
             "isFeatured": false,
             "inProgress": false,
             "caption": "Rocket Racing Track | Fortnite Custom Map Design | High-Speed Thrills & Epic Stunts!",
@@ -253,7 +260,8 @@
             ]
         },
         {
-            "title": "Nimbus Ride",
+            "title": "nimbus-ride",
+            "displayTitle": "Nimbus Ride",
             "isFeatured": false,
             "inProgress": false,
             "caption": "An exciting exploration of C++ classes in Unreal Engine, featuring a unique Nimbus Ride mechanic.",
@@ -280,7 +288,8 @@
             ]
         },
         {
-            "title": "Tile By Numbers",
+            "title": "tile-by-numbers",
+            "displayTitle": "Tile By Numbers",
             "isFeatured": false,
             "inProgress": true,
             "caption": "A strategic tile-based game where players must navigate a grid of number tiles whiles going indoor skydiving.",
@@ -305,9 +314,10 @@
             ]
         }              
     ],
-    "WebDev": [
+    "website-development": [
         {
-            "title": "This Website!",
+            "title": "this-website",
+            "displayTitle": "This Website!",
             "isFeatured": false,
             "inProgress": true,
             "caption": "A modern portfolio website showcasing mobile apps, game design, and web development projects.",
@@ -382,9 +392,10 @@
             ]
         }
     ],
-    "SoftwareDevelopment": [
+    "software-development": [
         {
-            "title": "Quantum Jam 2025: Echoes of Light",
+            "title": "quantum-jam-2025-echoes-of-light",
+            "displayTitle": "Quantum Jam 2025: Echoes of Light",
             "isFeatured": true,
             "inProgress": false,
             "caption": "Quantum backend project: Python Qiskit server with VPS deployment.",

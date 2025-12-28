@@ -15,12 +15,12 @@ const piecesData: Pieces = pieces;
 export async function generateStaticParams(): Promise<Record<string, string>[]> {
   let params: Record<string, string>[] = [];
   Object.keys(piecesData).forEach((category) => {
-    if (category === "MobileApps") {
+    if (category === "mobile-apps") {
     piecesData[category].forEach((element: Piece) => {
       params.push({ title: element.title });
     });}
   });
-  // const directory = await fs.readdir(path.join(process.cwd(), './(tabs)/MobileApps', category));
+  // const directory = await fs.readdir(path.join(process.cwd(), './(tabs)/mobile-apps', category));
   return params;
 }
 
@@ -49,7 +49,7 @@ export default function Page() {
           let pic: string = `${element.picture}`;
           const page = (
             <View>
-                        <Text style={mobileStyles.title}>{element.title}</Text>
+                        <Text style={mobileStyles.title}>{element.displayTitle || element.title}</Text>
                         {/* Display the image associated with the path at element.picture */}
                         <Text style={mobileStyles.caption}>{element.caption}</Text>
                         <View style={mobileStyles.imageContainer}>

@@ -25,7 +25,7 @@ const TabLayout = ({  }) => {
                      routeSegments.join('/') === '';
   
   // Fix: Check for main section pages (not including structural segments)
-  const mainSections = ['MobileApps', 'GameDesign', 'WebDev', 'SoftwareDevelopment', 'About', 'Learn', 'Pokemon'];
+  const mainSections = ['mobile-apps', 'game-design', 'website-development', 'software-development', 'about', 'learn', 'pokemon', 'api'];
   
   // More robust section detection
   let currentSection = null;
@@ -69,7 +69,7 @@ const TabLayout = ({  }) => {
           headerStyle: styles.headerBackground,
           headerRight: () => (
             <Pressable
-              onPress={() => router.replace('/Pokemon' as Href<string>)}
+              onPress={() => router.replace('/pokemon' as Href<string>)}
               style={{ marginRight: 15, padding: 5 }}
             >
               <PokemonButton size={RFPercentage(2.4)} />
@@ -82,7 +82,7 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="MobileApps"
+        name="mobile-apps"
         options={{
           headerShown: false,
           title: 'Mobile Apps',
@@ -92,7 +92,7 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="GameDesign"
+        name="game-design"
         options={{
           headerShown: false,
           title: 'Game Design',
@@ -102,7 +102,7 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="WebDev"
+        name="website-development"
         options={{
           headerShown: false,
           title: 'Website Development',
@@ -112,7 +112,7 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="SoftwareDevelopment"
+        name="software-development"
         options={{
           headerShown: false,
           title: 'Software Dev',
@@ -122,7 +122,7 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="Learn"
+        name="learn"
         options={{
           headerShown: false,
           title: 'Learn',
@@ -132,7 +132,7 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="About"
+        name="about"
         options={{
           headerShown: false,
           title: 'About & Contact',
@@ -142,7 +142,7 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="API"
+        name="api"
         options={{
           headerShown: false,
           title: 'Public APIs',
@@ -153,7 +153,7 @@ const TabLayout = ({  }) => {
       />
       {/* Pokemon screen is accessible via header button only, not in tab bar */}
       <Tabs.Screen
-        name="Pokemon"
+        name="pokemon"
         options={{
           headerShown: false,
           title: 'Pokemon',

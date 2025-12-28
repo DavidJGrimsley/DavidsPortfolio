@@ -1,18 +1,18 @@
 import { Foot, MyCards, TitleOfPage } from "@/components/CustomComponents";
 import { ScrollView, View } from "react-native";
-import { GameBackgroundGradient, MobileBackgroundGradient, styles } from '../../../constants/styles';
+import { GameBackgroundGradient, styles } from '../../../constants/styles';
 
-export default function GameDesign() {
+export default function SoftwareDevelopment() {
   return (
     <View style={styles.page}>
       <GameBackgroundGradient></GameBackgroundGradient>
-      <TitleOfPage titleA="Game" titleB="Design"></TitleOfPage>      
+      <TitleOfPage titleA="Software" titleB="Development"></TitleOfPage>      
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollCards}
         >
-        <MyCards pageCategory={"GameDesign"}></MyCards>
+        <MyCards pageCategory={"software-development"}></MyCards>
        
         <Foot></Foot>
       </ScrollView>

@@ -11,7 +11,7 @@ import YoutubePlayer from "react-native-youtube-iframe";
 
 // Normalize pieces to ensure proper structure
 function normalizePieces(raw: any): Pieces {
-    const result: Pieces = { MobileApps: [], GameDesign: [], WebDev: [], SoftwareDevelopment: [] };
+    const result: Pieces = { "mobile-apps": [], "game-design": [], "website-development": [], "software-development": [] };
     Object.keys(result).forEach(category => {
         if (Array.isArray(raw[category])) {
             result[category] = raw[category].map((piece: any) => {
@@ -36,12 +36,12 @@ const piecesData: Pieces = normalizePieces(rawPieces);
 export async function generateStaticParams(): Promise<Record<string, string>[]> {
   let params: Record<string, string>[] = [];
   Object.keys(piecesData).forEach((category) => {
-    if (category === "SoftwareDevelopment") {
+    if (category === "software-development") {
     piecesData[category].forEach((element: Piece) => {
       params.push({ title: element.title });
     });}
   });
-  // const directory = await fs.readdir(path.join(process.cwd(), './(tabs)/MobileApps', category));
+  // const directory = await fs.readdir(path.join(process.cwd(), './(tabs)/software-development', category));
   return params;
 }
 
@@ -76,18 +76,18 @@ export default function Page() {
     
     React.useEffect(() => {
           console.log('[SoftwareDev detail] route param title:', title);
-          const element = piecesData.SoftwareDevelopment.find((piece) => piece.title === title);
-          console.log('[SoftwareDev detail] found element:', !!element, element?.title);
+          const element = piecesData["software-development"].find((piece) => piece.title === title);
+          console.log('[SoftwareDev detail] found element:', !!element, element?.displayTitle || element?.title);
 
           if (element) {
             const page = (
             <View> 
-              <Text style={mobileStyles.title}>{element.title}</Text>
+              <Text style={mobileStyles.title}>{element.displayTitle || element.title}</Text>
               <Text style={mobileStyles.caption}>{element.caption}</Text>
               <View style={mobileStyles.imageContainer}>
                 <Image source={{ uri: element.picture }} style={mobileStyles.image} resizeMode="contain" />
               </View>
-              {element.title === 'Quantum Jam 2025: Echoes of Light' && (
+              {(element.displayTitle || element.title).includes('Quantum') && (
                 <View style={{ marginVertical: 12 }}>
                   <HelloWave />
                 </View>
@@ -140,7 +140,7 @@ export default function Page() {
           );
           setData(page);
         } else {
-          console.log('[SoftwareDev detail] no element match; available titles:', piecesData.SoftwareDevelopment.map(p => p.title));
+          console.log('[SoftwareDev detail] no element match; available titles:', piecesData["software-development"].map(p => p.title));
           setData(null);
         }
 
