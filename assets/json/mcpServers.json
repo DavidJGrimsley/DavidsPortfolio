@@ -1,0 +1,18 @@
+{
+  "mcpServers": [
+    {
+      "id": "mrdj-app-mcp",
+      "name": "mrdj-app-mcp",
+      "version": "0.1.0",
+      "icon": "🔌",
+      "description": "Model Context Protocol server exposing React Native, Expo Router, and full-stack development guides as structured resources for AI-powered code assistance.",
+      "github": "https://github.com/DavidJGrimsley/mrdj-app-mcp",
+      "status": "active",
+      "featured": true,
+      "tags": ["MCP", "React Native", "Expo Router", "AI Tools", "Developer Guides"],
+      "resources": 11,
+      "tools": 1,
+      "prompts": 3
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { View, Text, Button, ScrollView, Image, Pressable, Alert, Dimensions } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { mobileStyles, MobileDetailsBackgroundGradient } from "@/constants/mobileStyles";
+import { useMobileStyles, MobileDetailsBackgroundGradient } from "@/constants/mobileStyles";
 import { styles } from "@/constants/styles";
 import React, { useCallback } from "react";
 import rawPieces from '@/assets/json/pieces.json';
@@ -43,6 +43,7 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 
 export default function Page() {
   const { title } =useLocalSearchParams();
+  const mobileStyles = useMobileStyles();
   let titleString = title ? title.toString() : "";
   const [data, setData] = React.useState<React.ReactElement<any, any> | null>(null);
   const [playing, setPlaying] = React.useState(false);
@@ -111,7 +112,7 @@ export default function Page() {
         } else {
           setData(null);
         }
-    }, [title]);
+    }, [title, mobileStyles]);
     return (
       <ScrollView showsHorizontalScrollIndicator={false} contentContainerStyle={mobileStyles.scroll}>
         <View style={mobileStyles.scroll}>

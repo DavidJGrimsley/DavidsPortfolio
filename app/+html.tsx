@@ -13,6 +13,16 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name='impact-site-verification' content='a180ff90-b21a-4a80-93fc-36696aad5bdb'/>
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        
+        {/* Default SEO Meta Tags */}
+        <meta name="author" content="David Grimsley" />
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow" />
+        <link rel="canonical" href="https://davidjgrimsley.com" />
+        
+        {/* Theme Color */}
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
         {/*
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.

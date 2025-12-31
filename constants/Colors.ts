@@ -7,7 +7,13 @@ const tintColorLight = '#4B718A'; // blue-gray
 const tintColorDark = '#a96710'; // secondary
 const accentColorLight = '#723B80'; // dark purple
 
+const white = '#F4F4F4';
+const black = '#040404';
+
 const Colors = {
+  white: white,
+  black: black,
+  transparent: 'transparent',
   light: {
     text: '#11181C', // black
     background: '#ae54c4', // purple
@@ -17,6 +23,7 @@ const Colors = {
     icon: '#687076', // gray
     tabIconDefault: accentColorLight, // accent
     tabIconSelected: tintColorLight,
+    whiteOrBlack: white
   },
   dark: {
     text: '#FEFEFE', // white
@@ -27,6 +34,7 @@ const Colors = {
     tabIconDefault: '#321e3bb9', // accent
     tabIconSelected: tintColorDark,
     accent: '#321e3bb9', // dark purple
+    whiteOrBlack: black
   },
 };
 

@@ -5,9 +5,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { styles } from '@/constants/styles';
+import { MobileDetailsBackgroundGradient } from '@/constants/mobileStyles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import { EndpointCard } from '@/components/APIComponents';
 import { ExternalLink } from '@/components/ExternalLink';
+import { GreyView } from '@/components/GreyView';
 import { HelloWave } from '@/components/QuantumAnimation';
 import apisData from '@/assets/json/apis.json';
 
@@ -42,14 +44,15 @@ export default function QuantumAPIPage() {
   }, []);
 
   return (
-    <View style={[styles.page, { backgroundColor }]}>
-      <ScrollView 
-        contentContainerStyle={{ 
-          paddingHorizontal: 20,
-          paddingVertical: 30,
-          paddingBottom: 60,
-        }}
-      >
+    <ScrollView 
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ 
+        flexGrow: 1,
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <MobileDetailsBackgroundGradient />
+        <View style={[styles.page, { backgroundColor: 'transparent', paddingHorizontal: 20, paddingVertical: 30, paddingBottom: 60 }]}>
         {/* Header */}
         <View style={{ marginBottom: 30 }}>
           <View
@@ -125,7 +128,8 @@ export default function QuantumAPIPage() {
             fontSize: RFPercentage(1.9),
             lineHeight: RFPercentage(2.7),
             opacity: 0.85,
-            marginBottom: 16
+            marginBottom: 16,
+            color: '#000'
           }}>
             General-purpose quantum computing services for games and applications. 
             Run real quantum circuits using Qiskit Aer Simulator to generate truly 
@@ -138,7 +142,7 @@ export default function QuantumAPIPage() {
               Features
             </ThemedText>
             <View style={{ paddingLeft: 8 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.6), lineHeight: RFPercentage(2.4), opacity: 0.85 }}>
+              <ThemedText style={{ fontSize: RFPercentage(1.6), lineHeight: RFPercentage(2.4), opacity: 0.85, color: '#000' }}>
                 • True Randomness - Quantum measurement provides genuine randomness, not pseudo-random algorithms{'\n'}
                 • Qiskit Backend - Powered by IBM Qiskit Aer Simulator running on Python server{'\n'}
                 • Low Latency - Optimized for fast responses with connection pooling{'\n'}
@@ -950,7 +954,8 @@ print(f"Superposition: {result['superposition_strength']}")`}
             </ThemedText>
           </View>
         </View>
-      </ScrollView>
-    </View>
+        </View>
+      </View>
+    </ScrollView>
   );
 }

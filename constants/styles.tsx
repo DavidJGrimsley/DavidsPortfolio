@@ -112,7 +112,7 @@ export const styles = StyleSheet.create({
     },
     // styles for the header
     headerBackground: {
-        backgroundColor: Colors[colorScheme ?? 'light'].background,
+        backgroundColor: Colors[colorScheme ?? 'light'].whiteOrBlack,
         color: Colors[colorScheme ?? 'light'].secondary, 
     },
     // styles for the footer

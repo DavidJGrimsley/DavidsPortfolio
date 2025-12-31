@@ -1,6 +1,6 @@
 import { View, Text, Button, ScrollView, Image, Pressable, Alert, Dimensions } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { mobileStyles, MobileDetailsBackgroundGradient } from "@/constants/mobileStyles";
+import { useMobileStyles, MobileDetailsBackgroundGradient } from "@/constants/mobileStyles";
 import { styles } from "@/constants/styles";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import React, { useCallback } from "react";
@@ -25,8 +25,7 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 }
 
 export default function Page() {
-  const { title } = useLocalSearchParams();
-  let titleString = title ? title.toString() : "";
+  const { title } = useLocalSearchParams();  const mobileStyles = useMobileStyles();  let titleString = title ? title.toString() : "";
   const [data, setData] = React.useState<React.ReactElement<any, any> | null>(null);
   const [playing, setPlaying] = React.useState(false);
   
@@ -112,7 +111,7 @@ export default function Page() {
                 });
               });
               setData(newData);
-            }, [title]);
+            }, [title, mobileStyles]);
             return (
       <ScrollView showsHorizontalScrollIndicator={false} >
         <View style={mobileStyles.scroll}>

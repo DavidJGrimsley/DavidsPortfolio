@@ -3,9 +3,9 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import Colors from "./Colors";
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { LinearGradient } from "expo-linear-gradient";
+import { useMemo } from "react";
 
 
-const colorScheme = useColorScheme();
 const getScreenWidth = () => Dimensions.get('window').width;
 const isSmallScreen = () => getScreenWidth() < 768;
 
@@ -25,7 +25,7 @@ const b = bigint & 255;
 return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
-export const mobileStyles = StyleSheet.create({
+const createMobileStyles = (colorScheme: 'light' | 'dark') => StyleSheet.create({
     // Styles for pages with cards on them
     background: {
         position: 'absolute',
@@ -33,7 +33,7 @@ export const mobileStyles = StyleSheet.create({
         left: 0,
         right: 0,
         top: 0,
-        bottom: RFPercentage(30),
+        bottom: 0,
     },
     scroll: {
         backgroundColor: Colors[colorScheme ?? 'light'].background,
@@ -178,11 +178,19 @@ export const mobileStyles = StyleSheet.create({
     
 });
 
+// Hook to get memoized styles based on current color scheme
+export const useMobileStyles = () => {
+    const colorScheme = useColorScheme();
+    return useMemo(() => createMobileStyles(colorScheme ?? 'light'), [colorScheme]);
+};
+
 export const MobileDetailsBackgroundGradient = () => {
+    const colorScheme = useColorScheme();
+    const mobileStyles = useMobileStyles();
+    
     return (
         <LinearGradient
-            // Background Linear Gradient
-            colors={['white', Colors[colorScheme ?? 'light'].secondary, Colors[colorScheme ?? 'light'].background]}
+            colors={[Colors[colorScheme ?? 'light'].whiteOrBlack, Colors[colorScheme ?? 'light'].secondary, Colors[colorScheme ?? 'light'].background]}
             style={mobileStyles.background}
         />
     );
