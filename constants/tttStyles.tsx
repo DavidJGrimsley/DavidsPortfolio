@@ -2,10 +2,10 @@
 import { StyleSheet, Dimensions } from 'react-native';
 import Colors from './Colors';
 import { DeviceType, getDeviceTypeAsync } from 'expo-device';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { RFPercentage } from "react-native-responsive-fontsize";
 
-const colorScheme = useColorScheme();
+// Note: Using static 'light' theme for SSR compatibility
+const colorScheme = 'light';
 const getScreenWidth = () => Dimensions.get('window').width;
 const isSmallScreen = () => getScreenWidth() < 768;
 let isMobileDevice = false;

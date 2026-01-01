@@ -3,10 +3,11 @@ import { StyleSheet, Dimensions } from 'react-native';
 import Colors from './Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { DeviceType, getDeviceTypeAsync } from 'expo-device';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { RFPercentage } from "react-native-responsive-fontsize";
 
-const colorScheme = useColorScheme();
+// Note: This styles file uses static 'light' theme for SSR compatibility
+// For dynamic theming, components should use useThemeColor hook or useMobileStyles
+const colorScheme = 'light';
 
 // Dynamic dimension getters to handle window resizing
 const getScreenDimensions = () => Dimensions.get('window');

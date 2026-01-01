@@ -13,8 +13,8 @@ const getImageHeight = () => {
 const { width } = getDimensions();
 const IMG_HEIGHT = getImageHeight();
 
-const scrollRef = useAnimatedRef<Animated.ScrollView>();
-const scrollOffset = useScrollViewOffset(scrollRef);
+// Note: These hooks need to be called inside components, not at module level
+// Components using these should call useAnimatedRef and useScrollViewOffset directly
 
 // This makes the affected scroll up faster than the scroll itself
   // translateY: interpolate(
@@ -49,4 +49,6 @@ export const imageAnimatedStyle = useAnimatedStyle(() => {
     }
   })
 
-export { scrollRef };
+// Note: scrollRef and scrollOffset should be created in components using:
+// const scrollRef = useAnimatedRef<Animated.ScrollView>();
+// const scrollOffset = useScrollViewOffset(scrollRef);
