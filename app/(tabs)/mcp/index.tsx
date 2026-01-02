@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import Head from 'expo-router/head';
@@ -18,9 +18,72 @@ export default function MCPIndexPage() {
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
 
+  const [syncedMetaById, setSyncedMetaById] = useState<
+    Record<
+      string,
+      | {
+          version?: string;
+          resources?: number;
+          tools?: number;
+          prompts?: number;
+          isSynced: boolean;
+        }
+      | undefined
+    >
+  >({});
+
   const handleMCPPress = (mcpId: string) => {
     router.push(`/mcp/${mcpId}` as any);
   };
+
+  const servers = useMemo(() => mcpServersData.mcpServers ?? [], []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncServerMeta = async (serverId: string) => {
+      const portfolioUrl = `https://davidjgrimsley.com/mcp/${serverId}/portfolio.json`;
+      try {
+        const response = await fetch(portfolioUrl, { method: 'GET' });
+
+        const finalResponse =
+          response.status === 304
+            ? await fetch(`${portfolioUrl}?_=${Date.now()}`, {
+                method: 'GET',
+                cache: 'no-store' as any,
+              })
+            : response;
+
+        if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
+        const data = await finalResponse.json();
+        if (!isMounted) return;
+
+        const version = data?.server?.version;
+        const resources = Array.isArray(data?.resources) ? data.resources.length : undefined;
+        const tools = Array.isArray(data?.tools) ? data.tools.length : undefined;
+        const prompts = Array.isArray(data?.prompts) ? data.prompts.length : undefined;
+
+        setSyncedMetaById((prev) => ({
+          ...prev,
+          [serverId]: { version, resources, tools, prompts, isSynced: true },
+        }));
+      } catch {
+        if (!isMounted) return;
+        setSyncedMetaById((prev) => ({
+          ...prev,
+          [serverId]: { isSynced: false },
+        }));
+      }
+    };
+
+    servers.forEach((server) => {
+      if (server?.id) syncServerMeta(server.id);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [servers]);
 
   const seoTitle = 'MCP Servers | Model Context Protocol | David Grimsley Portfolio';
   const seoDescription = 
@@ -116,7 +179,18 @@ export default function MCPIndexPage() {
             gap: 16
           }}
         >
-          {mcpServersData.mcpServers.map((server) => (
+          {servers.map((server) => {
+            const synced = syncedMetaById[server.id];
+            const version = synced?.version ?? server.version;
+            const resources = synced?.resources ?? server.resources;
+            const tools = synced?.tools ?? server.tools;
+            const prompts = synced?.prompts ?? server.prompts;
+
+            const isSynced = synced?.isSynced === true;
+            const isOffline = synced?.isSynced === false;
+            const isLive = server.status === 'active' && !isOffline;
+
+            return (
             <Pressable
               key={server.id}
               onPress={() => handleMCPPress(server.id)}
@@ -143,14 +217,14 @@ export default function MCPIndexPage() {
                       {server.name}
                     </ThemedText>
                     <ThemedText style={{ fontSize: RFPercentage(1.5), opacity: 0.6 }}>
-                      v{server.version}
+                      v{version}
                     </ThemedText>
                   </View>
                 </View>
                 
                 {/* Status Badge */}
                 <View style={{
-                  backgroundColor: server.status === 'active' ? '#10b981' : '#ef4444',
+                  backgroundColor: isLive ? '#10b981' : '#ef4444',
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 12,
@@ -160,7 +234,7 @@ export default function MCPIndexPage() {
                     color: '#fff',
                     fontWeight: 'bold'
                   }}>
-                    {server.status === 'active' ? '● LIVE' : '● OFFLINE'}
+                    {isLive ? '● LIVE' : '● OFFLINE'}
                   </ThemedText>
                 </View>
               </View>
@@ -189,7 +263,7 @@ export default function MCPIndexPage() {
                   borderRadius: 8,
                 }}>
                   <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
-                    📚 {server.resources} resources
+                    📚 {resources} resources
                   </ThemedText>
                 </View>
                 <View style={{ 
@@ -199,7 +273,7 @@ export default function MCPIndexPage() {
                   borderRadius: 8,
                 }}>
                   <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
-                    🔧 {server.tools} {server.tools === 1 ? 'tool' : 'tools'}
+                    🔧 {tools} {tools === 1 ? 'tool' : 'tools'}
                   </ThemedText>
                 </View>
                 <View style={{ 
@@ -209,7 +283,7 @@ export default function MCPIndexPage() {
                   borderRadius: 8,
                 }}>
                   <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
-                    💬 {server.prompts} prompts
+                    💬 {prompts} prompts
                   </ThemedText>
                 </View>
               </View>
@@ -261,7 +335,8 @@ export default function MCPIndexPage() {
                 </ThemedText>
               </View>
             </Pressable>
-          ))}
+            );
+          })}
 
           {/* What is MCP? Info Card */}
           <View style={{

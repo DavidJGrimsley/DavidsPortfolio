@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,25 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { styles } from '@/constants/styles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import apisData from '@/assets/json/apis.json';
+
+const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/api/quantum';
+const APIS_INDEX_META_URL = `${QUANTUM_BASE_URL}/portfolio/apis.json`;
+
+type PortfolioApisIndex = {
+  apis: Array<{
+    id: string;
+    name: string;
+    version: string;
+    icon: string;
+    description: string;
+    baseUrl: string;
+    status: string;
+    featured?: boolean;
+    tags: string[];
+    endpoints: number;
+    uptime: string;
+  }>;
+};
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -17,9 +36,84 @@ export default function APIIndexPage() {
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
 
+  const [portfolioApis, setPortfolioApis] = useState<PortfolioApisIndex | null>(null);
+
   const handleAPIPress = (apiId: string) => {
     router.push(`/api/${apiId}` as any);
   };
+
+  const fallbackApis = useMemo(() => apisData.apis ?? [], []);
+  const apis = portfolioApis?.apis?.length ? portfolioApis.apis : fallbackApis;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchApisIndex = async () => {
+      try {
+        if (__DEV__) {
+          console.log('[APIIndex] Fetching portfolio apis index', {
+            url: APIS_INDEX_META_URL,
+            fallbackCount: fallbackApis.length,
+          });
+        }
+
+        const response = await fetch(APIS_INDEX_META_URL, {
+          method: 'GET',
+          cache: 'no-store' as any,
+        });
+
+        if (__DEV__) {
+          console.log('[APIIndex] Initial response', {
+            status: response.status,
+            ok: response.ok,
+          });
+        }
+
+        const finalResponse =
+          response.status === 304
+            ? await fetch(`${APIS_INDEX_META_URL}?_=${Date.now()}`, {
+                method: 'GET',
+                cache: 'no-store' as any,
+              })
+            : response;
+
+        if (__DEV__ && finalResponse !== response) {
+          console.log('[APIIndex] Retried after 304 with cache-bust', {
+            status: finalResponse.status,
+            ok: finalResponse.ok,
+          });
+        }
+
+        if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
+        const data = (await finalResponse.json()) as PortfolioApisIndex;
+
+        if (__DEV__) {
+          const apiCount = Array.isArray(data?.apis) ? data.apis.length : -1;
+          console.log('[APIIndex] Parsed payload', {
+            apiCount,
+            firstApiId: data?.apis?.[0]?.id,
+            firstApiVersion: data?.apis?.[0]?.version,
+          });
+        }
+
+        if (!isMounted) return;
+        setPortfolioApis(data);
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('[APIIndex] Failed to fetch portfolio apis index; using local fallback', {
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
+        if (!isMounted) return;
+        setPortfolioApis(null);
+      }
+    };
+
+    fetchApisIndex();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <View style={[styles.page, { backgroundColor }]}>
@@ -40,7 +134,7 @@ export default function APIIndexPage() {
           gap: 16
         }}
       >
-        {apisData.apis.map((api) => (
+        {apis.map((api) => (
           <Pressable
             key={api.id}
             onPress={() => handleAPIPress(api.id)}

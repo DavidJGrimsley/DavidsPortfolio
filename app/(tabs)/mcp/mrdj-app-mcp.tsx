@@ -23,6 +23,20 @@ import {
 const MCP_BASE_URL = 'https://davidjgrimsley.com/mcp/app/mrdj-app-mcp';
 const MCP_ENDPOINT = 'https://davidjgrimsley.com/mcp/mrdj-app-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-app-mcp';
+const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/mcp/mrdj-app-mcp/portfolio.json';
+
+type MCPPortfolioMeta = {
+  server: {
+    id: string;
+    name: string;
+    version: string;
+    mcpEndpointUrl: string;
+    githubRepoUrl: string;
+  };
+  resources: Array<{ id: string; title: string; fileName: string; description: string }>;
+  tools: Array<{ name: string; title: string; description: string; schema: any }>;
+  prompts: Array<{ name: string; title: string; description: string; args: string[] }>;
+};
 
 export default function MCPAppPage() {
   const backgroundColor = useThemeColor({}, 'background');
@@ -31,9 +45,11 @@ export default function MCPAppPage() {
   const textColor = useThemeColor({}, 'text');
 
   const [copied, setCopied] = useState(false);
+  const [portfolioMeta, setPortfolioMeta] = useState<MCPPortfolioMeta | null>(null);
+  const [isMetaSynced, setIsMetaSynced] = useState(false);
 
   const handleCopyEndpoint = () => {
-    Clipboard.setString(MCP_ENDPOINT);
+    Clipboard.setString(portfolioMeta?.server?.mcpEndpointUrl ?? MCP_ENDPOINT);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -46,8 +62,8 @@ export default function MCPAppPage() {
   const seoImage = 'https://davidjgrimsley.com/images/mcp-app-preview.png';
   const seoUrl = 'https://davidjgrimsley.com/mcp/app';
 
-  // MCP Resources (guides) from mrdj-app-mcp
-  const mcpResources = [
+  // MCP Resources (guides) fallback (local)
+  const fallbackMcpResources = [
     {
       id: 'architecture',
       title: 'Architecture',
@@ -116,8 +132,8 @@ export default function MCPAppPage() {
     },
   ];
 
-  // MCP Tools
-  const mcpTools = [
+  // MCP Tools fallback (local)
+  const fallbackMcpTools = [
     {
       name: 'list-guides',
       title: 'List Copilot Guides',
@@ -126,8 +142,8 @@ export default function MCPAppPage() {
     },
   ];
 
-  // MCP Prompts
-  const mcpPrompts = [
+  // MCP Prompts fallback (local)
+  const fallbackMcpPrompts = [
     {
       name: 'architecture-help',
       title: 'Architecture and DB helper',
@@ -147,6 +163,49 @@ export default function MCPAppPage() {
       args: ['route'],
     },
   ];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchPortfolioMeta = async () => {
+      try {
+        const response = await fetch(MCP_PORTFOLIO_META_URL, { method: 'GET' });
+
+        // Some servers/CDNs return 304 for conditional requests; fetch() then has no body.
+        // Recover by doing a one-time cache-busted request.
+        const finalResponse =
+          response.status === 304
+            ? await fetch(`${MCP_PORTFOLIO_META_URL}?_=${Date.now()}`, {
+                method: 'GET',
+                cache: 'no-store' as any,
+              })
+            : response;
+
+        if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
+        const data = (await finalResponse.json()) as MCPPortfolioMeta;
+        if (!isMounted) return;
+        setPortfolioMeta(data);
+        setIsMetaSynced(true);
+      } catch (error) {
+        if (!isMounted) return;
+        setPortfolioMeta(null);
+        setIsMetaSynced(false);
+      }
+    };
+
+    fetchPortfolioMeta();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const mcpEndpointUrl = portfolioMeta?.server?.mcpEndpointUrl ?? MCP_ENDPOINT;
+  const githubRepoUrl = portfolioMeta?.server?.githubRepoUrl ?? GITHUB_REPO;
+  const serverVersion = portfolioMeta?.server?.version ?? '0.1.0';
+
+  const mcpResources = portfolioMeta?.resources ?? fallbackMcpResources;
+  const mcpTools = portfolioMeta?.tools ?? fallbackMcpTools;
+  const mcpPrompts = portfolioMeta?.prompts ?? fallbackMcpPrompts;
 
   return (
     <>
@@ -253,7 +312,7 @@ export default function MCPAppPage() {
                     marginLeft: 8,
                   }}
                 >
-                  v0.1.0
+                  v{serverVersion}
                 </ThemedText>
               </View>
 
@@ -338,7 +397,7 @@ export default function MCPAppPage() {
                       flex: 1,
                     }}
                   >
-                    {MCP_ENDPOINT}
+                    {mcpEndpointUrl}
                   </ThemedText>
                   <Pressable
                     onPress={handleCopyEndpoint}
@@ -380,7 +439,7 @@ export default function MCPAppPage() {
                       fontWeight: '600',
                     }}
                   >
-                    {GITHUB_REPO}
+                    {githubRepoUrl}
                   </ThemedText>
                 </ExternalLink>
               </View>
@@ -539,7 +598,7 @@ export default function MCPAppPage() {
                   marginTop: 8,
                 }}
               >
-                {MCP_ENDPOINT}
+                {mcpEndpointUrl}
               </ThemedText>
             </View>
 
@@ -569,7 +628,7 @@ export default function MCPAppPage() {
 {
   "mcpServers": {
     "mrdj-app-mcp": {
-      "url": "${MCP_ENDPOINT}",
+      "url": "${mcpEndpointUrl}",
       "transport": "sse"
     }
   }
@@ -588,7 +647,7 @@ export default function MCPAppPage() {
 {
   "mcpServers": {
     "mrdj-app-mcp": {
-      "url": "${MCP_ENDPOINT}"
+      "url": "${mcpEndpointUrl}"
     }
   }
 }`}
@@ -637,7 +696,7 @@ export default function MCPAppPage() {
             <MCPCodeBlock
               language="bash"
               code={`# Clone the repository
-git clone ${GITHUB_REPO}.git
+git clone ${githubRepoUrl}.git
 cd mrdj-app-mcp
 
 # Install dependencies
@@ -795,7 +854,7 @@ npm start`}
                 <ThemedText style={{ fontWeight: '600' }}>Environment:</ThemedText> VPS (Plesk) with Nginx reverse proxy
               </ThemedText>
               <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8, marginBottom: 8 }}>
-                <ThemedText style={{ fontWeight: '600' }}>Endpoint:</ThemedText> {MCP_ENDPOINT}
+                <ThemedText style={{ fontWeight: '600' }}>Endpoint:</ThemedText> {mcpEndpointUrl}
               </ThemedText>
               <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8, marginBottom: 8 }}>
                 <ThemedText style={{ fontWeight: '600' }}>Transport:</ThemedText> Server-Sent Events (SSE)
@@ -952,7 +1011,7 @@ npm start`}
             </ThemedText>
 
             <Pressable
-              onPress={() => Linking.openURL(GITHUB_REPO)}
+              onPress={() => Linking.openURL(githubRepoUrl)}
               style={{
                 backgroundColor: accentColor,
                 borderRadius: 10,
@@ -1018,6 +1077,31 @@ npm start`}
               </View>
               <Ionicons name="open-outline" size={20} color={textColor} style={{ opacity: 0.5 }} />
             </Pressable>
+          </View>
+
+          {/* Portfolio Data Sync Note */}
+          <View
+            style={{
+              marginTop: 24,
+              backgroundColor: accentColor,
+              borderRadius: 10,
+              padding: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Ionicons
+              name={isMetaSynced ? 'cloud-done-outline' : 'cloud-offline-outline'}
+              size={18}
+              color={isMetaSynced ? tintColor : textColor}
+              style={{ opacity: 0.9 }}
+            />
+            <ThemedText style={{ fontSize: RFPercentage(1.5), opacity: 0.75, flex: 1 }}>
+              {isMetaSynced
+                ? `Synced from ${MCP_PORTFOLIO_META_URL}`
+                : 'Using local portfolio metadata (offline / fetch failed)'}
+            </ThemedText>
           </View>
         </View>
         </View>
