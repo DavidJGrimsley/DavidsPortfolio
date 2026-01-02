@@ -14,16 +14,22 @@ import { HelloWave } from '@/components/QuantumAnimation';
 import apisData from '@/assets/json/apis.json';
 
 const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/api/quantum';
-const QUANTUM_PORTFOLIO_DETAIL_URL = `${QUANTUM_BASE_URL}/portfolio/quantum.json`;
+const QUANTUM_PORTFOLIO_URL = `${QUANTUM_BASE_URL}/portfolio.json`;
 
 type QuantumPortfolioDetail = {
   api: {
     id: string;
     name: string;
     version: string;
+    icon?: string;
+    description?: string;
     baseUrl: string;
     docsUrl: string;
+    healthUrl?: string;
     status: string;
+    featured?: boolean;
+    tags?: string[];
+    uptime?: string;
   };
   endpoints: Array<{
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
@@ -61,11 +67,11 @@ export default function QuantumAPIPage() {
       try {
         if (__DEV__) {
           console.log('[Quantum] Fetching portfolio detail', {
-            url: QUANTUM_PORTFOLIO_DETAIL_URL,
+            url: QUANTUM_PORTFOLIO_URL,
           });
         }
 
-        const response = await fetch(QUANTUM_PORTFOLIO_DETAIL_URL, {
+        const response = await fetch(QUANTUM_PORTFOLIO_URL, {
           method: 'GET',
           cache: 'no-store' as any,
         });
@@ -79,7 +85,7 @@ export default function QuantumAPIPage() {
 
         const finalResponse =
           response.status === 304
-            ? await fetch(`${QUANTUM_PORTFOLIO_DETAIL_URL}?_=${Date.now()}`, {
+            ? await fetch(`${QUANTUM_PORTFOLIO_URL}?_=${Date.now()}`, {
                 method: 'GET',
                 cache: 'no-store' as any,
               })
@@ -1070,7 +1076,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
           />
           <ThemedText style={{ fontSize: RFPercentage(1.5), opacity: 0.75, flex: 1 }}>
             {isDetailSynced
-              ? `Synced from ${QUANTUM_PORTFOLIO_DETAIL_URL}`
+              ? `Synced from ${QUANTUM_PORTFOLIO_URL}`
               : 'Using local portfolio metadata (offline / fetch failed)'}
           </ThemedText>
         </View>

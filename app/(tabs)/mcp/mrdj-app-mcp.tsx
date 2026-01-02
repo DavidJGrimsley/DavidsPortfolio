@@ -25,6 +25,16 @@ const MCP_ENDPOINT = 'https://davidjgrimsley.com/mcp/mrdj-app-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-app-mcp';
 const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/mcp/mrdj-app-mcp/portfolio.json';
 
+type MCPEndpointMeta = {
+  id: string;
+  title: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
+  url: string;
+  description?: string;
+  transport?: string;
+  contentType?: string;
+};
+
 type MCPPortfolioMeta = {
   server: {
     id: string;
@@ -36,6 +46,7 @@ type MCPPortfolioMeta = {
   resources: Array<{ id: string; title: string; fileName: string; description: string }>;
   tools: Array<{ name: string; title: string; description: string; schema: any }>;
   prompts: Array<{ name: string; title: string; description: string; args: string[] }>;
+  endpoints?: MCPEndpointMeta[];
 };
 
 export default function MCPAppPage() {
@@ -45,6 +56,7 @@ export default function MCPAppPage() {
   const textColor = useThemeColor({}, 'text');
 
   const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [portfolioMeta, setPortfolioMeta] = useState<MCPPortfolioMeta | null>(null);
   const [isMetaSynced, setIsMetaSynced] = useState(false);
 
@@ -52,6 +64,12 @@ export default function MCPAppPage() {
     Clipboard.setString(portfolioMeta?.server?.mcpEndpointUrl ?? MCP_ENDPOINT);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyUrl = (url: string) => {
+    Clipboard.setString(url);
+    setCopiedUrl(url);
+    setTimeout(() => setCopiedUrl(null), 2000);
   };
 
   const seoTitle = 'Model Context Protocol (MCP) Server | mrdj-app-mcp | David Grimsley';
@@ -169,7 +187,10 @@ export default function MCPAppPage() {
 
     const fetchPortfolioMeta = async () => {
       try {
-        const response = await fetch(MCP_PORTFOLIO_META_URL, { method: 'GET' });
+        const response = await fetch(MCP_PORTFOLIO_META_URL, {
+          method: 'GET',
+          cache: 'no-store' as any,
+        });
 
         // Some servers/CDNs return 304 for conditional requests; fetch() then has no body.
         // Recover by doing a one-time cache-busted request.
@@ -206,6 +227,38 @@ export default function MCPAppPage() {
   const mcpResources = portfolioMeta?.resources ?? fallbackMcpResources;
   const mcpTools = portfolioMeta?.tools ?? fallbackMcpTools;
   const mcpPrompts = portfolioMeta?.prompts ?? fallbackMcpPrompts;
+
+  const fallbackMcpEndpoints: MCPEndpointMeta[] = [
+    {
+      id: 'mcp-endpoint',
+      title: 'MCP Endpoint',
+      method: 'GET',
+      url: mcpEndpointUrl,
+      description: 'Primary MCP server endpoint (SSE transport).',
+      transport: 'sse',
+      contentType: 'text/event-stream',
+    },
+    {
+      id: 'portfolio-meta',
+      title: 'Portfolio Metadata',
+      method: 'GET',
+      url: MCP_PORTFOLIO_META_URL,
+      description: 'JSON metadata used by this screen for resources/tools/prompts.',
+      contentType: 'application/json',
+    },
+    {
+      id: 'github-repo',
+      title: 'GitHub Repository',
+      method: 'GET',
+      url: githubRepoUrl,
+      description: 'Source code and documentation for the MCP server.',
+    },
+  ];
+
+  const mcpEndpoints =
+    Array.isArray(portfolioMeta?.endpoints) && portfolioMeta!.endpoints.length > 0
+      ? portfolioMeta!.endpoints
+      : fallbackMcpEndpoints;
 
   return (
     <>
@@ -506,6 +559,122 @@ export default function MCPAppPage() {
                 </ExternalLink>
               </ThemedText>
             </GreyView>
+          </MCPCollapsibleSection>
+
+          {/* Endpoints Section */}
+          <MCPCollapsibleSection title="Endpoints" icon="link">
+            <GreyView style={{ marginBottom: 16 }}>
+              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+                These are the public endpoints associated with this MCP server. This section is synced from
+                <ThemedText style={{ fontFamily: 'monospace' }}> portfolio.json</ThemedText> when available, with a local
+                fallback.
+              </ThemedText>
+            </GreyView>
+
+            {mcpEndpoints.map((endpoint) => (
+              <View
+                key={endpoint.id || endpoint.url}
+                style={{
+                  backgroundColor: accentColor,
+                  borderRadius: 10,
+                  padding: 16,
+                  marginBottom: 12,
+                  borderLeftWidth: 3,
+                  borderLeftColor: tintColor,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <View
+                    style={{
+                      backgroundColor: tintColor,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                      marginRight: 12,
+                    }}
+                  >
+                    <ThemedText style={{ fontSize: RFPercentage(1.2), color: '#fff', fontWeight: 'bold' }}>
+                      {String(endpoint.method ?? 'GET').toUpperCase()}
+                    </ThemedText>
+                  </View>
+                  <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', flex: 1, color: textColor }}>
+                    {endpoint.title}
+                  </ThemedText>
+                </View>
+
+                {endpoint.description ? (
+                  <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.75, marginBottom: 10, color: textColor }}>
+                    {endpoint.description}
+                  </ThemedText>
+                ) : null}
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <ExternalLink href={endpoint.url}>
+                    <ThemedText
+                      style={{
+                        fontSize: RFPercentage(1.7),
+                        fontFamily: 'monospace',
+                        color: tintColor,
+                        fontWeight: '600',
+                      }}
+                    >
+                      {endpoint.url}
+                    </ThemedText>
+                  </ExternalLink>
+
+                  <Pressable
+                    onPress={() => handleCopyUrl(endpoint.url)}
+                    style={({ pressed }) => ({
+                      backgroundColor: copiedUrl === endpoint.url ? tintColor : tintColor + '20',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 8,
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                  >
+                    <Ionicons
+                      name={copiedUrl === endpoint.url ? 'checkmark' : 'copy-outline'}
+                      size={20}
+                      color={copiedUrl === endpoint.url ? '#fff' : tintColor}
+                    />
+                  </Pressable>
+                </View>
+
+                {(endpoint.transport || endpoint.contentType) && (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                    {endpoint.transport ? (
+                      <View
+                        style={{
+                          backgroundColor: tintColor + '20',
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                          borderRadius: 8,
+                        }}
+                      >
+                        <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.85, color: textColor }}>
+                          Transport: <ThemedText style={{ fontWeight: '600' }}>{endpoint.transport}</ThemedText>
+                        </ThemedText>
+                      </View>
+                    ) : null}
+
+                    {endpoint.contentType ? (
+                      <View
+                        style={{
+                          backgroundColor: tintColor + '20',
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                          borderRadius: 8,
+                        }}
+                      >
+                        <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.85, color: textColor }}>
+                          Content-Type: <ThemedText style={{ fontWeight: '600' }}>{endpoint.contentType}</ThemedText>
+                        </ThemedText>
+                      </View>
+                    ) : null}
+                  </View>
+                )}
+              </View>
+            ))}
           </MCPCollapsibleSection>
 
           {/* Available Resources Section */}

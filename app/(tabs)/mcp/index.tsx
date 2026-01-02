@@ -164,10 +164,10 @@ export default function MCPIndexPage() {
       <View style={[styles.page, { backgroundColor }]}>
         {/* Title Section */}
         <View style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 20 }}>
-          <ThemedText type="title" style={{ fontSize: RFPercentage(4), marginBottom: 8 }}>
+          <ThemedText type="title" style={{ fontSize: RFPercentage(4), lineHeight: RFPercentage(4.8), marginBottom: 8 }}>
             MCP Servers
           </ThemedText>
-          <ThemedText style={{ fontSize: RFPercentage(2), opacity: 0.7 }}>
+          <ThemedText style={{ fontSize: RFPercentage(2), lineHeight: RFPercentage(2.8), opacity: 0.7 }}>
             Model Context Protocol servers exposing structured development knowledge for AI tools
           </ThemedText>
         </View>
@@ -374,7 +374,7 @@ export default function MCPIndexPage() {
             <ThemedText type="subtitle" style={{ fontSize: RFPercentage(2.5), marginBottom: 8 }}>
               More MCP Servers Coming Soon
             </ThemedText>
-            <ThemedText style={{ fontSize: RFPercentage(1.8), opacity: 0.7 }}>
+            <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2), opacity: 0.7 }}>
               Additional MCP servers in development covering API design, testing patterns, deployment workflows, and more development knowledge bases.
             </ThemedText>
           </View>

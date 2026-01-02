@@ -9,21 +9,28 @@ import { RFPercentage } from 'react-native-responsive-fontsize';
 import apisData from '@/assets/json/apis.json';
 
 const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/api/quantum';
-const APIS_INDEX_META_URL = `${QUANTUM_BASE_URL}/portfolio/apis.json`;
+const QUANTUM_PORTFOLIO_URL = `${QUANTUM_BASE_URL}/portfolio.json`;
 
-type PortfolioApisIndex = {
-  apis: Array<{
+type QuantumPortfolio = {
+  api: {
     id: string;
     name: string;
     version: string;
     icon: string;
     description: string;
     baseUrl: string;
+    docsUrl?: string;
+    healthUrl?: string;
     status: string;
     featured?: boolean;
     tags: string[];
-    endpoints: number;
     uptime: string;
+  };
+  endpoints: Array<{
+    method: string;
+    path: string;
+    summary: string;
+    description?: string;
   }>;
 };
 
@@ -36,14 +43,21 @@ export default function APIIndexPage() {
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
 
-  const [portfolioApis, setPortfolioApis] = useState<PortfolioApisIndex | null>(null);
+  const [portfolioQuantum, setPortfolioQuantum] = useState<QuantumPortfolio | null>(null);
 
   const handleAPIPress = (apiId: string) => {
     router.push(`/api/${apiId}` as any);
   };
 
   const fallbackApis = useMemo(() => apisData.apis ?? [], []);
-  const apis = portfolioApis?.apis?.length ? portfolioApis.apis : fallbackApis;
+  const apis = portfolioQuantum?.api
+    ? [
+        {
+          ...portfolioQuantum.api,
+          endpoints: Array.isArray(portfolioQuantum.endpoints) ? portfolioQuantum.endpoints.length : 0,
+        },
+      ]
+    : fallbackApis;
 
   useEffect(() => {
     let isMounted = true;
@@ -51,13 +65,13 @@ export default function APIIndexPage() {
     const fetchApisIndex = async () => {
       try {
         if (__DEV__) {
-          console.log('[APIIndex] Fetching portfolio apis index', {
-            url: APIS_INDEX_META_URL,
+          console.log('[APIIndex] Fetching quantum portfolio metadata', {
+            url: QUANTUM_PORTFOLIO_URL,
             fallbackCount: fallbackApis.length,
           });
         }
 
-        const response = await fetch(APIS_INDEX_META_URL, {
+        const response = await fetch(QUANTUM_PORTFOLIO_URL, {
           method: 'GET',
           cache: 'no-store' as any,
         });
@@ -71,7 +85,7 @@ export default function APIIndexPage() {
 
         const finalResponse =
           response.status === 304
-            ? await fetch(`${APIS_INDEX_META_URL}?_=${Date.now()}`, {
+            ? await fetch(`${QUANTUM_PORTFOLIO_URL}?_=${Date.now()}`, {
                 method: 'GET',
                 cache: 'no-store' as any,
               })
@@ -85,27 +99,26 @@ export default function APIIndexPage() {
         }
 
         if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
-        const data = (await finalResponse.json()) as PortfolioApisIndex;
+        const data = (await finalResponse.json()) as QuantumPortfolio;
 
         if (__DEV__) {
-          const apiCount = Array.isArray(data?.apis) ? data.apis.length : -1;
           console.log('[APIIndex] Parsed payload', {
-            apiCount,
-            firstApiId: data?.apis?.[0]?.id,
-            firstApiVersion: data?.apis?.[0]?.version,
+            apiId: data?.api?.id,
+            apiVersion: data?.api?.version,
+            endpointCount: Array.isArray(data?.endpoints) ? data.endpoints.length : -1,
           });
         }
 
         if (!isMounted) return;
-        setPortfolioApis(data);
+        setPortfolioQuantum(data);
       } catch (error) {
         if (__DEV__) {
-          console.warn('[APIIndex] Failed to fetch portfolio apis index; using local fallback', {
+          console.warn('[APIIndex] Failed to fetch quantum portfolio metadata; using local fallback', {
             message: error instanceof Error ? error.message : String(error),
           });
         }
         if (!isMounted) return;
-        setPortfolioApis(null);
+        setPortfolioQuantum(null);
       }
     };
 
@@ -119,10 +132,10 @@ export default function APIIndexPage() {
     <View style={[styles.page, { backgroundColor }]}>
       {/* Title Section */}
       <View style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 20 }}>
-        <ThemedText type="title" style={{ fontSize: RFPercentage(4), marginBottom: 8 }}>
+        <ThemedText type="title" style={{ fontSize: RFPercentage(4), lineHeight: RFPercentage(4.8), marginBottom: 8 }}>
           Public APIs
         </ThemedText>
-        <ThemedText style={{ fontSize: RFPercentage(2), opacity: 0.7 }}>
+        <ThemedText style={{ fontSize: RFPercentage(2), lineHeight: RFPercentage(2.8), opacity: 0.7 }}>
           Open APIs hosted by David Grimsley for public use
         </ThemedText>
       </View>
@@ -283,7 +296,7 @@ export default function APIIndexPage() {
           <ThemedText type="subtitle" style={{ fontSize: RFPercentage(2.5), marginBottom: 8 }}>
             More APIs Coming Soon
           </ThemedText>
-          <ThemedText style={{ fontSize: RFPercentage(1.8), opacity: 0.7 }}>
+          <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2), opacity: 0.7 }}>
             Stay tuned for additional public APIs covering authentication, data processing, and more.
           </ThemedText>
         </View>
