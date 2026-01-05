@@ -11,7 +11,7 @@ const Page = () => {
     <View style={styles.page}>
       <MobileBackgroundGradient />
       <TitleOfPage titleA="Learning" titleB="Center" />
-      <View style={localStyles.content}>
+      <View className="flex-row flex-1 w-[85%]">
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={localStyles.scroll}
@@ -73,7 +73,7 @@ const Page = () => {
             </Text>
             </View>
         </ScrollView>
-        <View style={localStyles.contact}>
+        <View className="justify-center w-[40%]">
           <Text style={localStyles.caption}>Summer classes are currently open!</Text>
           <Pressable style={styles.button} onPress={() => router.push('/(tabs)/Learn/SignUp' as Href)}>
             <Text style={styles.buttonText}>Sign Up</Text>
@@ -89,12 +89,6 @@ const Page = () => {
 export default Page;
 
 const localStyles = StyleSheet.create({
-  content: {
-    flexDirection: 'row',
-    // alignItems: 'center',
-    flex: 1,
-    width: '85%',
-  },
   section: {
     marginBottom: RFPercentage(2),
   },
@@ -112,10 +106,6 @@ const localStyles = StyleSheet.create({
     fontSize: RFPercentage(1.75),
     fontStyle: 'italic',
     marginBottom: RFPercentage(0.5),
-  },
-  contact: {
-    justifyContent: 'center',
-    width: '40%',
   },
   caption: {
     fontSize: RFPercentage(1.75),

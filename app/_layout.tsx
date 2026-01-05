@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import * as Device from 'expo-device';
+import '../global.css';
 
 const isMobileDevice = ((Device.deviceType === Device.DeviceType.PHONE) || (Device.deviceType === Device.DeviceType.TABLET));
 

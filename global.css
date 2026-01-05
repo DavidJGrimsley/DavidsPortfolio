@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+/* Theme tokens matching your Colors.ts */
+@layer theme {
+  :root {
+    @variant light {
+      --color-text: #11181C;
+      --color-background: #ae54c4;
+      --color-secondary: #afeef7;
+      --color-accent: #723B80;
+      --color-tint: #4B718A;
+      --color-icon: #687076;
+      --color-tab-icon-default: #723B80;
+      --color-tab-icon-selected: #4B718A;
+      --color-white-or-black: #F4F4F4;
+    }
+
+    @variant dark {
+      --color-text: #FEFEFE;
+      --color-background: #20182d;
+      --color-secondary: #a96710;
+      --color-accent: #321e3bb9;
+      --color-tint: #a96710;
+      --color-icon: #9BA1A6;
+      --color-tab-icon-default: #321e3bb9;
+      --color-tab-icon-selected: #a96710;
+      --color-white-or-black: #040404;
+    }
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .text-themed {
+    @apply text-[var(--color-text)];
+  }
+
+  .bg-themed {
+    @apply bg-[var(--color-background)];
+  }
+
+  .text-secondary {
+    @apply text-[var(--color-secondary)];
+  }
+
+  .bg-secondary {
+    @apply bg-[var(--color-secondary)];
+  }
+
+  .text-accent {
+    @apply text-[var(--color-accent)];
+  }
+
+  .bg-accent {
+    @apply bg-[var(--color-accent)];
+  }
+
+  .text-tint {
+    @apply text-[var(--color-tint)];
+  }
+
+  .bg-tint {
+    @apply bg-[var(--color-tint)];
+  }
+}
