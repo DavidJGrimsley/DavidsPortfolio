@@ -18,6 +18,7 @@ import {
   MCPCollapsibleSection,
   MCPCodeBlock,
 } from '@/components/mcp/MCPComponents';
+import { MCPHeroSection, MCPWhatIsSection } from '@/components/mcp/MCPPageSections';
 
 // Server URLs
 const MCP_BASE_URL = 'https://davidjgrimsley.com/mcp/app/mrdj-app-mcp';
@@ -323,243 +324,32 @@ export default function MCPAppPage() {
         <View style={{ flex: 1 }}>
           <MobileDetailsBackgroundGradient />
           <View style={[styles.page, { backgroundColor: 'transparent', paddingHorizontal: 20, paddingVertical: 30, paddingBottom: 60 }]}>
-          {/* Header Section */}
-          <View style={{ marginBottom: 30 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              {/* Icon box */}
-              <View
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 20,
-                  backgroundColor: tintColor + '33',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 16,
-                }}
-              >
-                <Ionicons name="git-network" size={40} color={tintColor} />
-              </View>
+          <MCPHeroSection
+            title="mrdj-app-mcp"
+            version={serverVersion}
+            description={
+              'Model Context Protocol (MCP) server that surfaces React Native, Expo Router, and full-stack development\n' +
+              'guides as structured resources. Now live and publicly accessible! AI tools can query the\n' +
+              'same documentation I use for building production applications, either locally or via the hosted endpoint.'
+            }
+            keyFeatures={[
+              '11 comprehensive development guides (architecture, routing, state, DB, styling, performance)',
+              'MCP resources for AI-powered code assistance',
+              'Interactive prompts for architecture, stores, and routing',
+              'Plesk-friendly deployment (also Docker, VPS, serverless)',
+            ]}
+            mcpEndpointUrl={mcpEndpointUrl}
+            githubRepoUrl={githubRepoUrl}
+            copiedEndpoint={copied}
+            onCopyEndpoint={handleCopyEndpoint}
+            tintColor={tintColor}
+            accentColor={accentColor}
+            textColor={textColor}
+            iconName="git-network"
+            endpointLabel="🌐 Live MCP Endpoint (SSE):"
+          />
 
-              {/* Title + version */}
-              <View style={{ flex: 1, flexDirection: 'row', marginRight: 8 }}>
-                <ThemedText
-                  type="title"
-                  style={{
-                    fontSize: RFPercentage(3.5),
-                  }}
-                >
-                  mrdj-app-mcp
-                </ThemedText>
-                <ThemedText
-                  style={{
-                    fontSize: RFPercentage(1.6),
-                    opacity: 0.6,
-                    marginTop: 2,
-                    marginLeft: 8,
-                  }}
-                >
-                  v{serverVersion}
-                </ThemedText>
-              </View>
-
-              {/* Status Badge */}
-              <View
-                style={{
-                  backgroundColor: '#10b981',
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 12,
-                  marginLeft: 8,
-                }}
-              >
-                <ThemedText
-                  style={{
-                    fontSize: RFPercentage(1.4),
-                    color: '#fff',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  🔌 LIVE
-                </ThemedText>
-              </View>
-            </View>
-
-            {/* Description */}
-            <ThemedText style={{ fontSize: RFPercentage(1.9), lineHeight: RFPercentage(2.8), marginBottom: 16, color: textColor }}>
-              Model Context Protocol (MCP) server that surfaces React Native, Expo Router, and full-stack development
-              guides as structured resources. Now live and publicly accessible! AI tools can query the
-              same documentation I use for building production applications, either locally or via the hosted endpoint.
-            </ThemedText>
-
-            {/* Key Features */}
-            <View style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 10, color: textColor }}>
-                ✨ Key Features
-              </ThemedText>
-              <View style={{ paddingLeft: 8 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2.6), marginBottom: 6, opacity: 0.8, color: textColor }}>
-                  • 11 comprehensive development guides (architecture, routing, state, DB, styling, performance)
-                </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2.6), marginBottom: 6, opacity: 0.8, color: textColor }}>
-                  • MCP resources for AI-powered code assistance
-                </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2.6), marginBottom: 6, opacity: 0.8, color: textColor }}>
-                  • Interactive prompts for architecture, stores, and routing
-                </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2.6), marginBottom: 6, opacity: 0.8, color: textColor }}>
-                  • Plesk-friendly deployment (also Docker, VPS, serverless)
-                </ThemedText>
-              </View>
-            </View>
-
-            {/* Server URLs */}
-            <View style={{ gap: 12 }}>
-              <View
-                style={{
-                  backgroundColor: accentColor,
-                  borderRadius: 10,
-                  padding: 16,
-                  borderLeftWidth: 3,
-                  borderLeftColor: '#10b981',
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                  <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7, flex: 1 }}>
-                    🌐 Live MCP Endpoint (SSE):
-                  </ThemedText>
-                  <View style={{ backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-                    <ThemedText style={{ fontSize: RFPercentage(1.2), color: '#fff', fontWeight: 'bold' }}>
-                      LIVE
-                    </ThemedText>
-                  </View>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <ThemedText
-                    style={{
-                      fontSize: RFPercentage(1.8),
-                      fontFamily: 'monospace',
-                      color: tintColor,
-                      fontWeight: '600',
-                      flex: 1,
-                    }}
-                  >
-                    {mcpEndpointUrl}
-                  </ThemedText>
-                  <Pressable
-                    onPress={handleCopyEndpoint}
-                    style={({ pressed }) => ({
-                      backgroundColor: copied ? '#10b981' : tintColor + '20',
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 8,
-                      opacity: pressed ? 0.7 : 1,
-                    })}
-                  >
-                    <Ionicons
-                      name={copied ? 'checkmark' : 'copy-outline'}
-                      size={20}
-                      color={copied ? '#fff' : tintColor}
-                    />
-                  </Pressable>
-                </View>
-              </View>
-
-              <View
-                style={{
-                  backgroundColor: accentColor,
-                  borderRadius: 10,
-                  padding: 16,
-                  borderLeftWidth: 3,
-                  borderLeftColor: tintColor,
-                }}
-              >
-                <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7, marginBottom: 6 }}>
-                  💻 Source Code (GitHub):
-                </ThemedText>
-                <ExternalLink href={GITHUB_REPO}>
-                  <ThemedText
-                    style={{
-                      fontSize: RFPercentage(1.8),
-                      fontFamily: 'monospace',
-                      color: tintColor,
-                      fontWeight: '600',
-                    }}
-                  >
-                    {githubRepoUrl}
-                  </ThemedText>
-                </ExternalLink>
-              </View>
-            </View>
-          </View>
-
-          {/* What is MCP? Section */}
-          <MCPCollapsibleSection title="What is MCP?" icon="help-circle">
-            <GreyView>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), lineHeight: RFPercentage(2.8), marginBottom: 16 }}>
-                The <ThemedText style={{ fontWeight: '600' }}>Model Context Protocol</ThemedText> (MCP) is an open
-                standard that enables AI assistants (like Claude, ChatGPT, or GitHub Copilot) to securely connect to
-                external data sources, tools, and services.
-              </ThemedText>
-
-              <ThemedText
-                style={{
-                  fontSize: RFPercentage(2),
-                  fontWeight: '600',
-                  marginBottom: 12,
-                }}
-              >
-                Why MCP Matters
-              </ThemedText>
-            </GreyView>
-
-            <MCPFeatureCard
-              icon="cube"
-              title="Structured Knowledge"
-              description="Exposes documentation and guides as structured resources that AI can query efficiently"
-            />
-
-            <MCPFeatureCard
-              icon="code-working"
-              title="Context-Aware Assistance"
-              description="AI tools can access your exact architecture patterns, conventions, and best practices"
-            />
-
-            <MCPFeatureCard
-              icon="construct"
-              title="Interactive Tools"
-              description="Provides prompts and tools that AI can invoke to generate boilerplate or answer questions"
-            />
-
-            <MCPFeatureCard
-              icon="shield-checkmark"
-              title="Secure & Local"
-              description="Runs locally or on your infrastructure, keeping your proprietary knowledge under your control"
-            />
-
-            <GreyView style={{ marginTop: 12 }}>
-              <ThemedText
-                style={{
-                  fontSize: RFPercentage(1.8),
-                  lineHeight: RFPercentage(2.6),
-                  opacity: 0.8,
-                }}
-              >
-                Learn more about MCP at{' '}
-                <ExternalLink href="https://modelcontextprotocol.io">
-                  <ThemedText style={{ color: tintColor, fontWeight: '600' }}>
-                    modelcontextprotocol.io
-                  </ThemedText>
-                </ExternalLink>
-              </ThemedText>
-            </GreyView>
-          </MCPCollapsibleSection>
+          <MCPWhatIsSection tintColor={tintColor} />
 
           {/* Endpoints Section */}
           <MCPCollapsibleSection title="Endpoints" icon="link">

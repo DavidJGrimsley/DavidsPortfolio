@@ -24,6 +24,15 @@ export default function MCPLayout() {
           headerTintColor: Colors[colorScheme ?? 'light'].text,
         }}
       />
+      <Stack.Screen
+        name="mrdj-pokemon-mcp"
+        options={{
+          headerTitle: 'mrdj-pokemon-mcp Documentation',
+          headerShadowVisible: false,
+          headerStyle: styles.headerBackground,
+          headerTintColor: Colors[colorScheme ?? 'light'].text,
+        }}
+      />
     </Stack>
   );
 }

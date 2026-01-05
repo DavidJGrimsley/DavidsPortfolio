@@ -13,6 +13,20 @@
       "resources": 11,
       "tools": 1,
       "prompts": 3
+    },
+    {
+      "id": "mrdj-pokemon-mcp",
+      "name": "mrdj-pokemon-mcp",
+      "version": "0.1.0",
+      "icon": "⚡",
+      "description": "Model Context Protocol server exposing Pokémon strategy guides and local PokéAPI-style data tools (lookup, search, type effectiveness, counters, team suggestions) for AI-powered assistants.",
+      "github": "https://github.com/DavidJGrimsley/mrdj-pokemon-mcp",
+      "status": "active",
+      "featured": false,
+      "tags": ["MCP", "Pokémon", "PokeAPI", "AI Tools", "Strategy Guides"],
+      "resources": 3,
+      "tools": 7,
+      "prompts": 0
     }
   ]
 }
