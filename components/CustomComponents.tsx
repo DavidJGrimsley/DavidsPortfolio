@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, Dimensions, Platform, Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { styles } from '../constants/styles';
 import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import pieces from '../assets/json/pieces.json';
@@ -84,11 +83,11 @@ const screenWidth = Dimensions.get('window').width;
 //Footer component
 function Foot() {
     return (
-        <View style={styles.footer}>
-            <Text style={styles.footerText}>
+        <View className="border-[0.2%] border-accent min-h-[5%] m-[1%] p-[1.5%] rounded-[0.5%] items-center justify-center w-[90%] max-w-150 self-center">
+            <Text className="text-accent text-[1.4%] text-center">
                 Contact me at: <a href="mailto:DavidJGrimsley@Gmail.com">DavidJGrimsley@Gmail.com</a>
             </Text >
-            <Text style={styles.footerText}>Made by David 'Mr. DJ' Grimsley</Text>
+            <Text className="text-accent text-[1.4%] text-center">Made by David 'Mr. DJ' Grimsley</Text>
         </View>
     );
 }
@@ -96,11 +95,11 @@ function Foot() {
 //Title of the page component
 const TitleOfPage = ({ titleA = 'Featured', titleB = 'Project' }) => {
     return (
-        <View style={styles.mainTitle}>
-            <Text style={styles.mainTitleText}>
+        <View className="text-center pb-[1.2%] pt-[1.2%] px-[1%] -z-10">
+            <Text className="relative uppercase text-[4%] font-bold font-[Rubik] text-themed">
                 {titleA}
-                <Text style={styles.mainTitleTextSpan}> {titleB}</Text>
-                <Text style={styles.mainTitleTextBg}>
+                <Text className="text-secondary"> {titleB}</Text>
+                <Text style={{ position: 'absolute', top: '50%', left: '50%', color: 'var(--color-accent)', zIndex: -1, transform: 'translate(-50%, -50%)', fontWeight: '800', opacity: 0.5, fontSize: '6%' }}>
                     {titleA}
                     {titleB}
                 </Text>
@@ -126,8 +125,8 @@ const MyCards = ({ pageCategory }: { pageCategory: string }) => {
                 piecesData[category].forEach((element: Piece) => {
                     // Create a bootstrap card for each element in the array
                     const card = (
-                        <Col key={element.title} style={styles.cardsCol as React.CSSProperties}>
-                            <Card style={styles.card as React.CSSProperties}>
+                        <Col key={element.title} className="w-full items-center">
+                            <Card className="m-[2%] w-[90%] max-w-200" style={{} as React.CSSProperties}>
                                 <Card.Img variant="top" src={element.gif} />
                                 <Card.Body>
                                     <Card.Title>{element.displayTitle || element.title}</Card.Title>
@@ -152,8 +151,8 @@ const MyCards = ({ pageCategory }: { pageCategory: string }) => {
     
     // Return the data array
     return (
-        <Container style={styles.cardsContainer}>
-            <Row style={styles.cardsRow}>
+        <Container className="flex flex-wrap justify-center items-center">
+            <Row className="items-center flex-row flex-wrap w-full">
                 {data}
             </Row>
         </Container>
@@ -251,17 +250,17 @@ const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {
     return (
         <View>
             {highlights.map((highlight, index) => (
-                <View key={index} style={styles.highlightView}>
-                    <Text style={styles.highlightTitle}>{highlight.highlightTitle}</Text>
-                    <View style={styles.highlightHeader}>
+                <View key={index} className="flex items-center justify-center bg-tint/50 rounded-[0.5%] p-[1%] m-[1%] w-[95%] self-center">
+                    <Text className="text-themed text-center text-[2.2%] font-bold">{highlight.highlightTitle}</Text>
+                    <View className="flex items-center justify-center flex-row flex-wrap">
                         {highlight.highlightPictures && Array.isArray(highlight.highlightPictures) && highlight.highlightPictures.length > 0 && (
                             <HighlightImageCarousel pictures={highlight.highlightPictures} />
                         )}
                         {highlight.highlightCaption && (
-                            <Text style={styles.highlightCaption}>{highlight.highlightCaption}</Text>
+                            <Text className="text-accent text-center p-[0.5%] text-[1.4%] bg-secondary/15">{highlight.highlightCaption}</Text>
                         )}
                     </View>
-                    <Text style={styles.highlightDescription}>{highlight.description}</Text>
+                    <Text className="text-themed text-center text-[1.6%] mb-[1%] px-[1%]">{highlight.description}</Text>
                     {highlight.video && (
                         <YoutubePlayer
                             height={Dimensions.get('window').width * 0.5 * 0.5625}
@@ -271,8 +270,8 @@ const HighlightView = ({ highlights }: { highlights: Highlight[] }) => {
                         />
                     )}
                     {highlight.code && (
-                        <View style={styles.codeContainer}>
-                            <Text style={styles.codeText}>{highlight.code}</Text>
+                        <View style={{ backgroundColor: '#f5f5f5', borderRadius: 5, padding: 10, marginVertical: 10, borderWidth: 1, borderColor: '#ddd', width: '90%', maxWidth: 800, alignSelf: 'center' }}>
+                            <Text style={{ fontFamily: 'Courier New', fontSize: 13, color: '#333', lineHeight: 19 }}>{highlight.code}</Text>
                         </View>
                     )}
                 </View>
@@ -287,7 +286,7 @@ const backgroundGradient = () => {
         <LinearGradient
         // Background Linear Gradient
         colors={['rgba(0,0,0,0.8)', 'transparent']}
-        style={styles.background}
+        style={{ position: 'absolute', zIndex: -5, left: 0, right: 0, top: 0, bottom: 0 }}
         />
     )
 }
@@ -304,8 +303,8 @@ const UnderConstruction = () => {
 
 const InProgress = () => { 
     return (
-        <View style={styles.inProgress}>
-            <Text style={styles.inProgressText}>
+        <View className="bg-accent p-[1%] rounded-[0.5%] m-[1%]">
+            <Text className="text-secondary text-center text-[1.2%]">
                 ⚠️ This portfolio piece is still in progress. I'm working around the clock to get my projects updated and continually polishing when I can. Check back regularly for updates! ⚠️
             </Text>
         </View>
@@ -316,31 +315,31 @@ const IframeEmbed = ({ src }: { src: string }) => {
     const isWeb = Platform.OS === 'web';
     
     return isWeb ? (
-        <iframe src={src} style={styles.webview} />
+        <iframe src={src} style={{ height: '85%' }} />
     ) : (
         <WebView
             source={{ uri: src }}
-            style={styles.webview}
+            style={{ height: '85%' }}
         />
     );
 }
 
 const HorizontalLinks = ({ github, site, steam }: { github?: string; site?: string; steam?: string }) => {
     return (
-        <View style={styles.horizontalLinksContainer}>
+        <View className="flex-row justify-center items-center my-[10px]">
             {github && (
-                <Pressable style={styles.button} onPress={() => window.open(github)}>
-                    <Text style={styles.buttonText}>Github</Text>
+                <Pressable className="bg-accent p-[1%] rounded-[1%] m-[1%] w-[20%] self-center" onPress={() => window.open(github)}>
+                    <Text className="text-secondary text-center text-[2%]">Github</Text>
                 </Pressable>
             )}
             {site && (
-                <Pressable style={styles.button} onPress={() => window.open(site)}>
-                    <Text style={styles.buttonText}>Info Website</Text>
+                <Pressable className="bg-accent p-[1%] rounded-[1%] m-[1%] w-[20%] self-center" onPress={() => window.open(site)}>
+                    <Text className="text-secondary text-center text-[2%]">Info Website</Text>
                 </Pressable>
             )}
             {steam && (
-                <Pressable style={styles.button} onPress={() => window.open(steam)}>
-                    <Text style={styles.buttonText}>See it here!</Text>
+                <Pressable className="bg-accent p-[1%] rounded-[1%] m-[1%] w-[20%] self-center" onPress={() => window.open(steam)}>
+                    <Text className="text-secondary text-center text-[2%]">See it here!</Text>
                 </Pressable>
             )}
         </View>
@@ -359,15 +358,15 @@ const OtherSectionsLinks = ({ otherSections }: { otherSections?: OtherSection[] 
     };
 
     return (
-        <View style={styles.otherSectionsContainer}>
-            <Text style={styles.otherSectionsTitle}>Related Projects:</Text>
+        <View style={{ marginVertical: 20, paddingVertical: 15, paddingHorizontal: 20, borderTopWidth: 2, borderTopColor: 'var(--color-tint)', alignItems: 'center' }}>
+            <Text style={{ fontSize: '3%', fontWeight: 'bold', color: 'var(--color-text)', marginBottom: 10 }}>Related Projects:</Text>
             {otherSections.map((section, index) => (
                 <Pressable 
                     key={index} 
-                    style={styles.otherSectionButton} 
+                    style={{ backgroundColor: 'var(--color-tint)', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, marginVertical: 5, width: '100%', maxWidth: 600, alignItems: 'center' }}
                     onPress={() => handlePress(section.category, section.title)}
                 >
-                    <Text style={styles.otherSectionText}>
+                    <Text style={{ color: 'var(--color-secondary)', fontSize: '2%', fontWeight: '600', textAlign: 'center' }}>
                         {section.caption} →
                     </Text>
                 </Pressable>

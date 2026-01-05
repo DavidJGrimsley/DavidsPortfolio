@@ -1,6 +1,13 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Color constants for the app.
+ * 
+ * MIGRATION NOTE: These colors are now available as CSS variables in global.css:
+ * - Use className utilities like: text-themed, bg-themed, text-secondary, etc.
+ * - For custom values, use: text-[var(--color-text)], bg-[var(--color-background)], etc.
+ * 
+ * Example migrations:
+ *   style={{ color: Colors[colorScheme].text }} → className="text-themed"
+ *   style={{ backgroundColor: Colors[colorScheme].accent }} → className="bg-accent"
  */
 
 const tintColorLight = '#4B718A'; // blue-gray

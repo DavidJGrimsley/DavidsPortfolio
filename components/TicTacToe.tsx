@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Button, Pressable } from 'react-native';
-import { tttStyles } from '@/constants/tttStyles';
+import { View, Text, Pressable } from 'react-native';
 
 interface SquareProps {
   value: string | null;
@@ -9,10 +8,9 @@ interface SquareProps {
 
 function Square({ value, onSquareClick }: SquareProps) {
   return (
-    <View style={tttStyles.tttSquare}>
-
-      <Pressable style={tttStyles.tttSquare} onPress={onSquareClick}>
-        <Text style={tttStyles.tttSquareText}>{value}</Text>
+    <View className="bg-accent flex justify-center items-center w-[9%] h-[9%] p-[1%] m-[0.5%] rounded-[0.5%]">
+      <Pressable className="bg-accent flex justify-center items-center w-[9%] h-[9%] p-[1%] m-[0.5%] rounded-[0.5%]" onPress={onSquareClick}>
+        <Text className="text-secondary text-[5.5%]">{value}</Text>
       </Pressable>
       {/* <Button 
         title={value || ''} 
@@ -55,19 +53,19 @@ function Board({ xIsNext, squares, onPlay }: BoardProps) {
 
   return (
     <>
-      <Text style={tttStyles.status}>{status}</Text>
-      <View style={tttStyles.tttBoard}>
-        <View style={tttStyles.tttRow}>
+      <Text className="text-themed text-[2.2%] font-bold mb-[1%] text-center">{status}</Text>
+      <View className="flex flex-col justify-center items-center p-[1%] rounded-[0.5%]">
+        <View className="bg-secondary flex flex-row justify-center items-center">
           <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
           <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
           <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
         </View>
-        <View style={tttStyles.tttRow}>
+        <View className="bg-secondary flex flex-row justify-center items-center">
           <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
           <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
           <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
         </View>
-        <View style={tttStyles.tttRow}>
+        <View className="bg-secondary flex flex-row justify-center items-center">
           <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
           <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
           <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
@@ -121,13 +119,13 @@ export default function Game() {
       if (move === 0) {
         return (
           <View key={move}>
-            <Text style={tttStyles.tttHistoryText}>Game start</Text>
+            <Text className="text-[2%]">Game start</Text>
           </View>
         )
       } else {
       return (
         <View>
-          <Text style={tttStyles.tttHistoryText}>Turn #{move}</Text>
+          <Text className="text-[2%]">Turn #{move}</Text>
         </View>
       )
       }
@@ -138,7 +136,7 @@ export default function Game() {
     }
     return (
       <View key={move}>
-        <Pressable style={tttStyles.tttHistoryButton} onPress={() => jumpTo(move)}>
+        <Pressable className="bg-themed text-themed p-[0.2%] m-[0.5%] rounded-[0.2%] text-[2%]" onPress={() => jumpTo(move)}>
           <Text>{description}</Text>
         </Pressable>
         {/* <Button title={description} onPress={() => jumpTo(move)} /> */}
@@ -154,7 +152,7 @@ export default function Game() {
       </View>
       <View>
         {moves.map((move, index) => (
-          <View style={tttStyles.tttHistory} key={index}>
+          <View className="items-center" key={index}>
             <Text>{move}</Text>
           </View>
         ))}

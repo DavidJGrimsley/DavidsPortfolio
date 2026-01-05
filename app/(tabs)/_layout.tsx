@@ -4,7 +4,6 @@ import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { PokemonButton } from '@/components/PokemonButton';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { styles } from '@/constants/styles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import * as Device from 'expo-device';
 import { Pressable, Text, View, Dimensions } from 'react-native';
@@ -66,7 +65,8 @@ const TabLayout = ({  }) => {
         options={{
           headerShadowVisible: false,
           title: 'David \'DJ\' Grimsley',
-          headerStyle: styles.headerBackground,
+          headerStyle: { backgroundColor: Colors[colorScheme ?? 'light'].whiteOrBlack },
+          headerTitleStyle: { color: Colors[colorScheme ?? 'light'].secondary },
           headerRight: () => (
             <Pressable
               onPress={() => router.replace('/pokemon' as Href<string>)}
@@ -182,11 +182,11 @@ const NavButton = ({ title, route, icon, focusedIcon }: { title: string, route: 
   const isActive = (routeName: string) => routeName === newRoute.name;
   
   return (
-    <Pressable style={styles.sideNav} onPress={() => {
+    <Pressable className="side-nav" onPress={() => {
       router.dismissAll();
       router.replace(route as Href<string>);
     }}>
-      <Text style={styles.sideNavText}>{title}</Text>
+      <Text className="side-nav-text">{title}</Text>
       <TabBarIcon name={isActive(route) ? icon as any : focusedIcon as any}  />
     </Pressable>
   );

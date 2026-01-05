@@ -1,16 +1,16 @@
 import { Foot, MyCards, TitleOfPage } from "@/components/CustomComponents";
 import { ScrollView, View } from "react-native";
-import { MobileBackgroundGradient, styles, WebBackgroundGradient } from '../../../constants/styles';
+import { WebBackgroundGradient } from '../../../constants/styles';
 
 export default function WebDev() {
   return (
-    <View style={styles.page}>
+    <View className="flex-1 items-center w-full px-[1%]">
     <WebBackgroundGradient></WebBackgroundGradient>
     <TitleOfPage titleA="Web" titleB="Development"></TitleOfPage>      
     <ScrollView 
       showsVerticalScrollIndicator={false} 
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.scrollCards}
+      className="grow justify-evenly items-center py-5"
       >
       {/* <Container style={styles.cardsContainer}> */}
         <MyCards pageCategory={"website-development"}></MyCards>
