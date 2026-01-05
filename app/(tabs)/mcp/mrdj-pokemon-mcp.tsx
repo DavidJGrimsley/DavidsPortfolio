@@ -2,20 +2,20 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, Clipboard } from 'react-native';
 import Head from 'expo-router/head';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { styles } from '@/constants/styles';
 import { MobileDetailsBackgroundGradient } from '@/constants/mobileStyles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
-import { ExternalLink } from '@/components/ExternalLink';
-import { GreyView } from '@/components/GreyView';
+import { ExternalLink } from '@/components/UI/ExternalLink';
+import { GreyView } from '@/components/UI/GreyView';
 import {
   MCPCollapsibleSection,
   MCPResourceCard,
   MCPToolCard,
   MCPPromptCard,
-} from '@/components/mcp/MCPComponents';
-import { MCPHeroSection, MCPWhatIsSection } from '@/components/mcp/MCPPageSections';
+} from '@/components/SoftwareDev/mcp/MCPComponents';
+import { MCPHeroSection, MCPWhatIsSection } from '@/components/SoftwareDev/mcp/MCPPageSections';
 
 const MCP_ENDPOINT = 'https://davidjgrimsley.com/mcp/mrdj-pokemon-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-pokemon-mcp';

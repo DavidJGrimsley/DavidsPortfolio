@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/UI/ThemedText';
+import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import Ionicons from '@expo/vector-icons/Ionicons';

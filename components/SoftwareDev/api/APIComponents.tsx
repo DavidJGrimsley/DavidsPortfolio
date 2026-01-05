@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Pressable, TextInput, ActivityIndicator, ScrollView } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import { Picker } from '@react-native-picker/picker';
@@ -414,7 +414,7 @@ export function EndpointCard({
                     
                     // Check if this field should be shown based on dependencies
                     if (param?.dependsOn) {
-                      const dependentParam = parameters?.find(p => p.enum?.includes(param.dependsOn));
+                      const dependentParam = parameters?.find(p => p.enum?.includes(param.dependsOn!));
                       if (dependentParam && testParams[dependentParam.name] !== param.dependsOn) {
                         return null; // Hide this field
                       }

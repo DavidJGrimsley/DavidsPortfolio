@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable, Linking, Clipboard } from 'react-native';
 import Head from 'expo-router/head';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/UI/ThemedText';
+import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { styles } from '@/constants/styles';
 import { MobileDetailsBackgroundGradient } from '@/constants/mobileStyles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
-import { ExternalLink } from '@/components/ExternalLink';
-import { GreyView } from '@/components/GreyView';
+import { ExternalLink } from '@/components/UI/ExternalLink';
+import { GreyView } from '@/components/UI/GreyView';
 import {
   MCPResourceCard,
   MCPToolCard,
@@ -17,8 +17,8 @@ import {
   MCPFeatureCard,
   MCPCollapsibleSection,
   MCPCodeBlock,
-} from '@/components/mcp/MCPComponents';
-import { MCPHeroSection, MCPWhatIsSection } from '@/components/mcp/MCPPageSections';
+} from '@/components/SoftwareDev/mcp/MCPComponents';
+import { MCPHeroSection, MCPWhatIsSection } from '@/components/SoftwareDev/mcp/MCPPageSections';
 
 // Server URLs
 const MCP_BASE_URL = 'https://davidjgrimsley.com/mcp/app/mrdj-app-mcp';

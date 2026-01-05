@@ -1,5 +1,6 @@
 import { Text, View, ScrollView, Pressable } from 'react-native';
-import { Foot, TitleOfPage } from "@/components/CustomComponents";
+import { Foot } from "@/components/Foot";
+import { TitleOfPage } from "@/components/Categories/TitleOfPage";
 import { MobileBackgroundGradient, styles } from "@/constants/styles";
 import { Href, router } from 'expo-router';
 

@@ -1,7 +1,7 @@
 import { Dimensions, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
-import { IframeEmbed } from "@/components/CustomComponents";
+import { IframeEmbed } from "@/components/UI/IframeEmbed";
 import { styles } from '../../../../constants/styles';
 import Animated, { useAnimatedRef, useScrollViewOffset, useAnimatedStyle, interpolate } from 'react-native-reanimated';
 

@@ -8,9 +8,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import LottieView from 'lottie-react-native';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { ExternalLink } from '@/components/ExternalLink';
+import { ThemedText } from '@/components/UI/ThemedText';
+import { ThemedView } from '@/components/UI/ThemedView';
+import { ExternalLink } from '@/components/UI/ExternalLink';
 import { Colors } from '@/constants/Colors';
 
 

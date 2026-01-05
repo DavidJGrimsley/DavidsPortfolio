@@ -1,6 +1,8 @@
 import { Text, View, ScrollView, Dimensions } from "react-native";
 import React, { useState } from 'react';
-import  { FeaturedCard, Foot, TitleOfPage } from "../../components/CustomComponents";
+import { FeaturedCard } from "@/components/FeaturedCard";
+import { Foot } from "@/components/Foot";
+import { TitleOfPage } from "@/components/Categories/TitleOfPage";
 import Game from "@/components/TicTacToe";
 import { BackgroundGradient }  from "../../constants/styles";
 import { Container } from "react-bootstrap";

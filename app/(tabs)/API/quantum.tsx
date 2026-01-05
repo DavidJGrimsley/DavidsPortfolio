@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable, Linking } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/UI/ThemedText';
+import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { styles } from '@/constants/styles';
 import { MobileDetailsBackgroundGradient } from '@/constants/mobileStyles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
-import { EndpointCard } from '@/components/APIComponents';
-import { ExternalLink } from '@/components/ExternalLink';
-import { GreyView } from '@/components/GreyView';
+import { EndpointCard } from '@/components/SoftwareDev/api/APIComponents';
+import { ExternalLink } from '@/components/UI/ExternalLink';
+import { GreyView } from '@/components/UI/GreyView';
 import { HelloWave } from '@/components/QuantumAnimation';
 import apisData from '@/assets/json/apis.json';
 

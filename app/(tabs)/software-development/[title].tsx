@@ -4,7 +4,11 @@ import { useMobileStyles, MobileDetailsBackgroundGradient } from "@/constants/mo
 import { styles } from "@/constants/styles";
 import React, { useCallback, useState } from "react";
 import rawPieces from '@/assets/json/pieces.json';
-import { InProgress, Piece, Pieces, HighlightView, HorizontalLinks, OtherSectionsLinks} from '@/components/CustomComponents'
+import { InProgress } from '@/components/Categories/InProgress';
+import { HighlightView } from '@/components/Categories/HighlightView';
+import { HorizontalLinks } from '@/components/Categories/HorizontalLinks';
+import { OtherSectionsLinks } from '@/components/Categories/OtherSectionsLinks';
+import { Piece, Pieces } from '@/types/portfolio';
 import { HelloWave } from '@/components/QuantumAnimation';
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";

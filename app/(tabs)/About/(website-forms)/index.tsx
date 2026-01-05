@@ -1,4 +1,6 @@
-import { TitleOfPage, UnderConstruction, Foot } from "@/components/CustomComponents";
+import { Foot } from "@/components/Foot";
+import { TitleOfPage } from "@/components/Categories/TitleOfPage";
+import { UnderConstruction } from "@/components/UI/UnderConstruction";
 import { styles, GameBackgroundGradient } from "@/constants/styles";
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";

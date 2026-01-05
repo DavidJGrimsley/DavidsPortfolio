@@ -1,19 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, Dimensions } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import Head from 'expo-router/head';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { styles } from '@/constants/styles';
 import { RFPercentage } from 'react-native-responsive-fontsize';
+import { SoftwareCard } from '@/components/SoftwareDev/SoftwareCard';
+import { ComingSoonCard } from '@/components/SoftwareDev/ComingSoonCard';
+import { WhatIsMCPCard } from '@/components/SoftwareDev/mcp/WhatIsMCPCard';
 import mcpServersData from '@/assets/json/mcpServers.json';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 export default function MCPIndexPage() {
   const router = useRouter();
-  const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
@@ -191,193 +190,31 @@ export default function MCPIndexPage() {
             const isLive = server.status === 'active' && !isOffline;
 
             return (
-            <Pressable
-              key={server.id}
-              onPress={() => handleMCPPress(server.id)}
-              style={({ pressed }) => ({
-                backgroundColor: accentColor,
-                borderRadius: 12,
-                padding: 20,
-                opacity: pressed ? 0.8 : 1,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              })}
-            >
-              {/* Header with Icon and Status */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-                  <ThemedText style={{ fontSize: RFPercentage(4) }}>
-                    {server.icon}
-                  </ThemedText>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText type="subtitle" style={{ fontSize: RFPercentage(2.5) }}>
-                      {server.name}
-                    </ThemedText>
-                    <ThemedText style={{ fontSize: RFPercentage(1.5), opacity: 0.6 }}>
-                      v{version}
-                    </ThemedText>
-                  </View>
-                </View>
-                
-                {/* Status Badge */}
-                <View style={{
-                  backgroundColor: isLive ? '#10b981' : '#ef4444',
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 12,
-                }}>
-                  <ThemedText style={{ 
-                    fontSize: RFPercentage(1.4), 
-                    color: '#fff',
-                    fontWeight: 'bold'
-                  }}>
-                    {isLive ? '● LIVE' : '● OFFLINE'}
-                  </ThemedText>
-                </View>
-              </View>
-
-              {/* Description */}
-              <ThemedText style={{ 
-                fontSize: RFPercentage(1.8), 
-                marginBottom: 16,
-                lineHeight: RFPercentage(2.5),
-                opacity: 0.8
-              }}>
-                {server.description}
-              </ThemedText>
-
-              {/* Stats Row */}
-              <View style={{ 
-                flexDirection: 'row', 
-                flexWrap: 'wrap',
-                gap: 12,
-                marginBottom: 12
-              }}>
-                <View style={{ 
-                  backgroundColor: backgroundColor,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                }}>
-                  <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
-                    📚 {resources} resources
-                  </ThemedText>
-                </View>
-                <View style={{ 
-                  backgroundColor: backgroundColor,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                }}>
-                  <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
-                    🔧 {tools} {tools === 1 ? 'tool' : 'tools'}
-                  </ThemedText>
-                </View>
-                <View style={{ 
-                  backgroundColor: backgroundColor,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                }}>
-                  <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
-                    💬 {prompts} prompts
-                  </ThemedText>
-                </View>
-              </View>
-
-              {/* Tags */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {server.tags.map((tag, index) => (
-                  <View 
-                    key={index}
-                    style={{
-                      backgroundColor: tintColor + '20',
-                      borderColor: tintColor + '40',
-                      borderWidth: 1,
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderRadius: 6,
-                    }}
-                  >
-                    <ThemedText style={{ 
-                      fontSize: RFPercentage(1.3),
-                      color: tintColor,
-                      fontWeight: '600'
-                    }}>
-                      {tag}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
-
-              {/* Call to Action */}
-              <View style={{
-                marginTop: 16,
-                paddingTop: 16,
-                borderTopWidth: 1,
-                borderTopColor: backgroundColor + '40',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <ThemedText style={{ 
-                  fontSize: RFPercentage(1.6),
-                  color: tintColor,
-                  fontWeight: 'bold'
-                }}>
-                  View Documentation →
-                </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.5), opacity: 0.6 }}>
-                  Open-source MCP implementation
-                </ThemedText>
-              </View>
-            </Pressable>
+              <SoftwareCard
+                key={server.id}
+                item={{
+                  ...server,
+                  version,
+                  status: isLive ? 'active' : 'inactive',
+                }}
+                stats={[
+                  { emoji: '📚', label: `${resources} resources` },
+                  { emoji: '🔧', label: `${tools} ${tools === 1 ? 'tool' : 'tools'}` },
+                  { emoji: '💬', label: `${prompts} prompts` },
+                ]}
+                onPress={() => handleMCPPress(server.id)}
+              />
             );
           })}
 
           {/* What is MCP? Info Card */}
-          <View style={{
-            backgroundColor: accentColor,
-            borderRadius: 12,
-            padding: 20,
-            borderWidth: 2,
-            borderColor: tintColor + '60',
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <ThemedText style={{ fontSize: RFPercentage(3), marginRight: 10 }}>
-                💡
-              </ThemedText>
-              <ThemedText type="subtitle" style={{ fontSize: RFPercentage(2.5) }}>
-                What is MCP?
-              </ThemedText>
-            </View>
-            <ThemedText style={{ fontSize: RFPercentage(1.8), opacity: 0.8, lineHeight: RFPercentage(2.5), marginBottom: 12 }}>
-              The Model Context Protocol (MCP) is an open standard that enables AI assistants (like Claude, ChatGPT, or GitHub Copilot) to securely connect to external data sources, tools, and services.
-            </ThemedText>
-            <ThemedText style={{ fontSize: RFPercentage(1.8), opacity: 0.8, lineHeight: RFPercentage(2.5) }}>
-              These MCP servers expose structured development guides, architecture patterns, and best practices that AI tools can query to provide context-aware code assistance.
-            </ThemedText>
-          </View>
+          <WhatIsMCPCard />
 
           {/* Coming Soon Card */}
-          <View style={{
-            backgroundColor: accentColor,
-            borderRadius: 12,
-            padding: 20,
-            borderWidth: 2,
-            borderColor: tintColor + '40',
-            borderStyle: 'dashed',
-          }}>
-            <ThemedText type="subtitle" style={{ fontSize: RFPercentage(2.5), marginBottom: 8 }}>
-              More MCP Servers Coming Soon
-            </ThemedText>
-            <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2), opacity: 0.7 }}>
-              Additional MCP servers in development covering API design, testing patterns, deployment workflows, and more development knowledge bases.
-            </ThemedText>
-          </View>
+          <ComingSoonCard
+            title="More MCP Servers Coming Soon"
+            description="Additional MCP servers in development covering API design, testing patterns, deployment workflows, and more development knowledge bases."
+          />
         </ScrollView>
       </View>
     </>

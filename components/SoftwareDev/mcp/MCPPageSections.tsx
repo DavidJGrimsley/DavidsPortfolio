@@ -3,10 +3,10 @@ import { View, Pressable } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ExternalLink } from '@/components/ExternalLink';
-import { GreyView } from '@/components/GreyView';
-import { MCPCollapsibleSection, MCPFeatureCard } from '@/components/mcp/MCPComponents';
+import { ThemedText } from '@/components/UI/ThemedText';
+import { ExternalLink } from '@/components/UI/ExternalLink';
+import { GreyView } from '@/components/UI/GreyView';
+import { MCPCollapsibleSection, MCPFeatureCard } from '@/components/SoftwareDev/mcp/MCPComponents';
 
 export type MCPHeroSectionProps = {
   title: string;

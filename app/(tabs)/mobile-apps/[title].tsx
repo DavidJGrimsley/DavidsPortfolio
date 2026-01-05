@@ -2,10 +2,14 @@ import { View, Text, Button, ScrollView, Image, Pressable, Alert, Dimensions } f
 import { useLocalSearchParams } from "expo-router";
 import { useMobileStyles, MobileDetailsBackgroundGradient } from "@/constants/mobileStyles";
 import { styles } from "@/constants/styles";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
+import ParallaxScrollView from "@/components/UI/ParallaxScrollView";
 import React, { useCallback } from "react";
 import pieces from '@/assets/json/pieces.json';
-import { HighlightView, InProgress, Piece, Pieces, HorizontalLinks, OtherSectionsLinks } from '@/components/CustomComponents'
+import { InProgress } from '@/components/Categories/InProgress';
+import { HighlightView } from '@/components/Categories/HighlightView';
+import { HorizontalLinks } from '@/components/Categories/HorizontalLinks';
+import { OtherSectionsLinks } from '@/components/Categories/OtherSectionsLinks';
+import { Piece, Pieces } from '@/types/portfolio';
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Foot, TitleOfPage } from "@/components/CustomComponents";
+import { Foot } from "@/components/Foot";
+import { TitleOfPage } from "@/components/Categories/TitleOfPage";
 import { PokemonButtonCredit } from "@/components/PokemonButton";
 import { GameBackgroundGradient, styles } from "@/constants/styles";
 import Colors from '@/constants/Colors';
