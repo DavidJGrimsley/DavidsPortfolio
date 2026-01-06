@@ -1,14 +1,13 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "jsx": "react-native",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
     "strict": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@json/*": ["/assets/json/*"],
-      "@img/*": ["./public/img/*"],
+      "~/*": ["./*"],
+      "@/*": ["./src/*"],
+      "@json/*": ["./src/constants/json/*"],
+      "@img/*": ["./public/img/*"]
     }
   },
   "include": [
