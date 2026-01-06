@@ -5,7 +5,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { MobileDetailsBackgroundGradient } from '@/components/Gradients';
-import { RFPercentage } from 'react-native-responsive-fontsize';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
 import {
@@ -302,49 +301,34 @@ export default function MRDJPokemonMcpPage() {
             {mcpEndpoints.map((endpoint) => (
               <View
                 key={endpoint.id || endpoint.url}
-                style={{
-                  backgroundColor: accentColor,
-                  borderRadius: 10,
-                  padding: 16,
-                  marginBottom: 12,
-                  borderLeftWidth: 3,
-                  borderLeftColor: tintColor,
-                }}
+                className="rounded-[10px] p-4 mb-3 border-l-[3px]"
+                style={{ backgroundColor: accentColor, borderLeftColor: tintColor }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <View className="flex-row items-center mb-2">
                   <View
-                    style={{
-                      backgroundColor: tintColor,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                      borderRadius: 8,
-                      marginRight: 12,
-                    }}
+                    className="px-2.5 py-1.5 rounded-lg mr-3"
+                    style={{ backgroundColor: tintColor }}
                   >
-                    <ThemedText style={{ fontSize: RFPercentage(1.2), color: '#fff', fontWeight: 'bold' }}>
+                    <ThemedText className="text-[1.2%] text-white font-bold">
                       {String(endpoint.method ?? 'GET').toUpperCase()}
                     </ThemedText>
                   </View>
-                  <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', flex: 1, color: textColor }}>
+                  <ThemedText className="text-[2%] font-semibold flex-1" style={{ color: textColor }}>
                     {endpoint.title}
                   </ThemedText>
                 </View>
 
                 {endpoint.description ? (
-                  <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.75, marginBottom: 10, color: textColor }}>
+                  <ThemedText className="text-[1.7%] opacity-75 mb-2.5" style={{ color: textColor }}>
                     {endpoint.description}
                   </ThemedText>
                 ) : null}
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View className="flex-row items-center gap-2">
                   <ExternalLink href={endpoint.url}>
                     <ThemedText
-                      style={{
-                        fontSize: RFPercentage(1.7),
-                        fontFamily: 'monospace',
-                        color: tintColor,
-                        fontWeight: '600',
-                      }}
+                      className="text-[1.7%] font-mono font-semibold"
+                      style={{ color: tintColor }}
                     >
                       {endpoint.url}
                     </ThemedText>
@@ -370,33 +354,25 @@ export default function MRDJPokemonMcpPage() {
                 </View>
 
                 {(endpoint.transport || endpoint.contentType) && (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                  <View className="flex-row flex-wrap gap-2 mt-3">
                     {endpoint.transport ? (
                       <View
-                        style={{
-                          backgroundColor: tintColor + '20',
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderRadius: 8,
-                        }}
+                        className="px-2.5 py-1.5 rounded-lg"
+                        style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.85, color: textColor }}>
-                          Transport: <ThemedText style={{ fontWeight: '600' }}>{endpoint.transport}</ThemedText>
+                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                          Transport: <ThemedText className="font-semibold">{endpoint.transport}</ThemedText>
                         </ThemedText>
                       </View>
                     ) : null}
 
                     {endpoint.contentType ? (
                       <View
-                        style={{
-                          backgroundColor: tintColor + '20',
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderRadius: 8,
-                        }}
+                        className="px-2.5 py-1.5 rounded-lg"
+                        style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.85, color: textColor }}>
-                          Content-Type: <ThemedText style={{ fontWeight: '600' }}>{endpoint.contentType}</ThemedText>
+                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                          Content-Type: <ThemedText className="font-semibold">{endpoint.contentType}</ThemedText>
                         </ThemedText>
                       </View>
                     ) : null}
@@ -407,8 +383,8 @@ export default function MRDJPokemonMcpPage() {
           </MCPCollapsibleSection>
 
           <MCPCollapsibleSection title="Available Resources" icon="library">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 These guides are exposed as MCP resources. AI tools can read and reference them when answering Pokémon
                 questions.
               </ThemedText>
@@ -420,8 +396,8 @@ export default function MRDJPokemonMcpPage() {
           </MCPCollapsibleSection>
 
           <MCPCollapsibleSection title="Tools" icon="construct">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 Tools are functions an AI assistant can invoke (lookup, search, matchup math, counters, team suggestions).
               </ThemedText>
             </GreyView>
@@ -432,21 +408,18 @@ export default function MRDJPokemonMcpPage() {
           </MCPCollapsibleSection>
 
           <MCPCollapsibleSection title="Prompts" icon="chatbubbles">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 This server currently does not ship custom prompts (it focuses on resources + tools).
               </ThemedText>
             </GreyView>
 
             {mcpPrompts.length === 0 ? (
               <View
-                style={{
-                  backgroundColor: tintColor + '20',
-                  borderRadius: 10,
-                  padding: 16,
-                }}
+                className="rounded-[10px] p-4"
+                style={{ backgroundColor: tintColor + '20' }}
               >
-                <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.85 }}>
+                <ThemedText className="text-[1.7%] opacity-85">
                   No prompts available.
                 </ThemedText>
               </View>

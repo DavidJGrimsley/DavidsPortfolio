@@ -11,7 +11,6 @@ import { Piece, Pieces } from '@/types/portfolio';
 import { HelloWave } from '@/components/QuantumAnimation';
 import { FlashList } from "@shopify/flash-list";
 import YoutubePlayer from "react-native-youtube-iframe";
-import { useMobileStyles } from '@/hooks/useMobileStyles';
 
 // Normalize pieces to ensure proper structure
 function normalizePieces(raw: any): Pieces {
@@ -52,7 +51,6 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 
 export default function Page() {
   const { title } =useLocalSearchParams();
-  const mobileStyles = useMobileStyles();
   const [data, setData] = React.useState<React.ReactElement<any, any> | null>(null);
   const [playing, setPlaying] = React.useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -87,19 +85,19 @@ export default function Page() {
           if (element) {
             const page = (
             <View> 
-              <Text style={mobileStyles.title}>{element.displayTitle || element.title}</Text>
-              <Text style={mobileStyles.caption}>{element.caption}</Text>
-              <View style={mobileStyles.imageContainer}>
-                <Image source={{ uri: element.picture }} style={mobileStyles.image} resizeMode="contain" />
+              <Text className="text-[4%] md:text-[5%] text-left font-bold text-tint ml-[2%]">{element.displayTitle || element.title}</Text>
+              <Text className="text-[2%] text-right text-themed mr-[2%] ml-[2%] opacity-85">{element.caption}</Text>
+              <View className="flex-row justify-center items-center mx-[2%] my-[2%] w-full self-center h-[40%]">
+                <Image source={{ uri: element.picture }} className="w-full h-full" resizeMode="contain" />
               </View>
               {(element.displayTitle || element.title).includes('Quantum') && (
-                <View style={{ marginVertical: 12 }}>
+                <View className="my-3">
                   <HelloWave />
                 </View>
               )}
               {element.inProgress && (<InProgress/>)} 
-              <Text style={mobileStyles.breakdown}>{element.breakdown}</Text>
-              <View style={mobileStyles.YTView}>
+              <Text className="text-[2.2%] text-left text-themed mb-[1%]">{element.breakdown}</Text>
+              <View className="justify-center items-center my-[2%]">
                 {element.youtubeID && (<YoutubePlayer
                   height={Dimensions.get('window').width * 0.7 * 0.5625}
                   width={Dimensions.get('window').width * 0.7}
@@ -108,17 +106,17 @@ export default function Page() {
                   onChangeState={onStateChange}
                 />)}
               </View>
-              <View style={{backgroundColor: 'black', height: 1, width: '100%', marginVertical: 20}}></View>
+              <View className="bg-black h-px w-full my-5" />
               {element.highlights && (<HighlightView highlights={element.highlights}/>)}
-              <View style={{backgroundColor: 'black', height: 1, width: '100%', marginVertical: 20}}></View>
+              <View className="bg-black h-px w-full my-5" />
               {element.skillsUsed && (
                   <>
-                  <Text style={mobileStyles.subtitle}>Skills Used</Text>
+                  <Text className="text-[3%] text-left font-bold text-tint mt-[2%] mb-[1%]">Skills Used</Text>
                   <FlashList
                       data={element.skillsUsed}
                       numColumns={2}
                       renderItem={({ item }: { item: string }) => (
-                      <Text style={mobileStyles.skillsUsed}>{item}</Text>
+                      <Text className="text-left text-[1.8%] text-themed p-[1%] mx-[0.5%] my-[0.5%] rounded-[0.5%] border border-tint">{item}</Text>
                       )}
                       keyExtractor={(item, index) => `${item}-${index}`}
                   />
@@ -126,12 +124,12 @@ export default function Page() {
               )}
               {element.skillsLearned && (
                   <>
-                  <Text style={mobileStyles.subtitle}>Skills Learned</Text>
+                  <Text className="text-[3%] text-left font-bold text-tint mt-[2%] mb-[1%]">Skills Learned</Text>
                   <FlashList
                       data={element.skillsLearned}
                       numColumns={2}
                       renderItem={({ item }: { item: string }) => (
-                      <Text style={mobileStyles.skillsLearned}>{item}</Text>
+                      <Text className="text-left text-[1.8%] text-themed p-[1%] mx-[0.5%] my-[0.5%] rounded-[0.5%] border border-accent">{item}</Text>
                       )}
                       keyExtractor={(item, index) => `${item}-${index}`}
                   />
@@ -149,19 +147,19 @@ export default function Page() {
 
         return () => {};
 
-    }, [title, mobileStyles]);
+    }, [title]);
 
 
   return (
     <ScrollView 
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={mobileStyles.scroll}
+      contentContainerClassName="bg-themed"
       onScroll={handleScroll}
       scrollEventThrottle={20}
     >
-      <View style={mobileStyles.scroll}>
+      <View className="bg-themed">
         <MobileDetailsBackgroundGradient/>
-        <View style={mobileStyles.page}>{data}</View>
+        <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-[1200px] self-center justify-around">{data}</View>
       </View>
     </ScrollView>
 

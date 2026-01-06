@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import Head from 'expo-router/head';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { RFPercentage } from 'react-native-responsive-fontsize';
 import { SoftwareCard } from '@/components/SoftwareDev/SoftwareCard';
 import { ComingSoonCard } from '@/components/SoftwareDev/ComingSoonCard';
 import { WhatIsMCPCard } from '@/components/SoftwareDev/mcp/WhatIsMCPCard';
@@ -87,7 +86,7 @@ export default function MCPIndexPage() {
   const seoDescription = 
     'Explore MCP (Model Context Protocol) servers by David Grimsley. Open-source implementations exposing development guides, architecture patterns, and structured resources for AI-powered code assistance. MCP servers for React Native, Expo Router, full-stack development, and more.';
   const seoKeywords = 
-    'MCP, Model Context Protocol, MCP server, AI tools, developer resources, React Native MCP, Expo Router MCP, AI code assistance, structured knowledge, open-source MCP, developer documentation, software engineering, David Grimsley, mrdj-app-mcp, AI assistant integration';
+    'MCP, Model Context Protocol, MCP server, AI tools, Pokémon MCP, developer resources, React Native MCP, Expo Router MCP, AI code assistance, structured knowledge, open-source MCP, developer documentation, software engineering, David Grimsley, mrdj-app-mcp, AI assistant integration';
   const seoImage = 'https://davidjgrimsley.com/images/mcp-servers-preview.png';
   const seoUrl = 'https://davidjgrimsley.com/mcp';
 
@@ -161,21 +160,17 @@ export default function MCPIndexPage() {
 
       <View className="flex-1" style={{ backgroundColor }}>
         {/* Title Section */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 20 }}>
-          <ThemedText type="title" style={{ fontSize: RFPercentage(4), lineHeight: RFPercentage(4.8), marginBottom: 8 }}>
+        <View className="px-5 pt-10 pb-5">
+          <ThemedText type="title" className="text-[4%] leading-[4.8%] mb-2">
             MCP Servers
           </ThemedText>
-          <ThemedText style={{ fontSize: RFPercentage(2), lineHeight: RFPercentage(2.8), opacity: 0.7 }}>
+          <ThemedText className="text-[2%] leading-[2.8%] opacity-70">
             Model Context Protocol servers exposing structured development knowledge for AI tools
           </ThemedText>
         </View>
 
         <ScrollView 
-          contentContainerStyle={{ 
-            paddingHorizontal: 20, 
-            paddingBottom: 40,
-            gap: 16
-          }}
+          contentContainerClassName="px-5 pb-10 gap-4"
         >
           {servers.map((server) => {
             const synced = syncedMetaById[server.id];

@@ -2,8 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Image, Alert, Dimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { MobileDetailsBackgroundGradient } from '@/components/Gradients';
-import { RFPercentage } from 'react-native-responsive-fontsize';
-import { useThemeColor } from '@/hooks/useThemeColor';
 import { InProgress } from '@/components/Categories/InProgress';
 import { HighlightView } from '@/components/Categories/HighlightView';
 import { HorizontalLinks } from '@/components/Categories/HorizontalLinks';
@@ -12,7 +10,6 @@ import { Piece, Pieces, normalizePieces } from '@/types/portfolio';
 import { FlashList } from '@shopify/flash-list';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import rawPieces from '@json/pieces.json';
-import { useMobileStyles } from '@/hooks/useMobileStyles';
 
 const piecesData: Pieces = normalizePieces(rawPieces);
 
@@ -28,7 +25,6 @@ export function CategoryDetailWrapper({
     enableScrollTracking = false 
 }: CategoryDetailWrapperProps) {
     const { title } = useLocalSearchParams();
-    const mobileStyles = useMobileStyles();
     const [data, setData] = useState<React.ReactElement | null>(null);
     const [playing, setPlaying] = useState(false);
     const [scrollY, setScrollY] = useState(0);
@@ -56,10 +52,10 @@ export function CategoryDetailWrapper({
         if (element) {
             const page = (
                 <View>
-                    <Text style={mobileStyles.title}>{element.displayTitle || element.title}</Text>
-                    <Text style={mobileStyles.caption}>{element.caption}</Text>
-                    <View style={mobileStyles.imageContainer}>
-                        <Image source={{ uri: element.picture }} style={mobileStyles.image} resizeMode="contain" />
+                    <Text className="text-[4%] md:text-[5%] text-left font-bold text-tint ml-[2%]">{element.displayTitle || element.title}</Text>
+                    <Text className="text-[2%] text-right text-themed mr-[2%] ml-[2%] opacity-85">{element.caption}</Text>
+                    <View className="flex-row justify-center items-center mx-[2%] my-[2%] w-full self-center h-[40%]">
+                        <Image source={{ uri: element.picture }} className="w-full h-full" resizeMode="contain" />
                     </View>
                     
                     {/* Render any extra category-specific content */}
@@ -67,9 +63,9 @@ export function CategoryDetailWrapper({
                     
                     {element.inProgress && <InProgress />}
                     
-                    <Text style={mobileStyles.breakdown}>{element.breakdown}</Text>
+                    <Text className="text-[2.2%] text-left text-themed mb-[1%]">{element.breakdown}</Text>
                     
-                    <View style={mobileStyles.YTView}>
+                    <View className="justify-center items-center my-[2%]">
                         {element.youtubeID && (
                             <YoutubePlayer
                                 height={Dimensions.get('window').width * 0.7 * 0.5625}
@@ -81,12 +77,12 @@ export function CategoryDetailWrapper({
                         )}
                     </View>
                     
-                    <View style={mobileStyles.listView}>
+                    <View className="my-[1%] bg-secondary rounded-[1%] p-[1.5%] w-full justify-around opacity-40">
                         {element.skillsUsed && (
                             <FlashList
                                 data={element.skillsUsed}
-                                ListHeaderComponent={<Text style={mobileStyles.listHeader}>Skills Used:</Text>}
-                                renderItem={({ item }) => <Text style={mobileStyles.skills}>{item}</Text>}
+                                ListHeaderComponent={<Text className="text-[3.2%] text-left font-bold text-accent">Skills Used:</Text>}
+                                renderItem={({ item }) => <Text className="text-left text-[2.2%] text-themed font-bold">{item}</Text>}
                                 horizontal={false}
                                 numColumns={3}
                                 showsHorizontalScrollIndicator={false}
@@ -96,8 +92,8 @@ export function CategoryDetailWrapper({
                         {element.skillsLearned && (
                             <FlashList
                                 data={element.skillsLearned}
-                                ListHeaderComponent={<Text style={mobileStyles.listHeader}>Skills Learned:</Text>}
-                                renderItem={({ item }) => <Text style={mobileStyles.skills}>{item}</Text>}
+                                ListHeaderComponent={<Text className="text-[3.2%] text-left font-bold text-accent">Skills Learned:</Text>}
+                                renderItem={({ item }) => <Text className="text-left text-[2.2%] text-themed font-bold">{item}</Text>}
                                 horizontal={false}
                                 numColumns={3}
                                 showsHorizontalScrollIndicator={false}
@@ -117,18 +113,18 @@ export function CategoryDetailWrapper({
         } else {
             setData(null);
         }
-    }, [title, mobileStyles, category, renderExtraContent]);
+    }, [title, category, renderExtraContent]);
 
     return (
         <ScrollView
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={mobileStyles.scroll}
+            contentContainerClassName="bg-themed"
             onScroll={enableScrollTracking ? handleScroll : undefined}
             scrollEventThrottle={enableScrollTracking ? 20 : undefined}
         >
-            <View style={mobileStyles.scroll}>
+            <View className="bg-themed">
                 <MobileDetailsBackgroundGradient />
-                <View style={mobileStyles.page}>{data}</View>
+                <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-[1200px] self-center justify-around">{data}</View>
             </View>
         </ScrollView>
     );

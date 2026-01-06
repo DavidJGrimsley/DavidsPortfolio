@@ -6,7 +6,6 @@ import { ThemedText } from '@/components/UI/ThemedText';
 import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { MobileDetailsBackgroundGradient } from '@/components/Gradients';
-import { RFPercentage } from 'react-native-responsive-fontsize';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
 import {
@@ -350,10 +349,10 @@ export default function MCPAppPage() {
 
           {/* Endpoints Section */}
           <MCPCollapsibleSection title="Endpoints" icon="link">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 These are the public endpoints associated with this MCP server. This section is synced from
-                <ThemedText style={{ fontFamily: 'monospace' }}> portfolio.json</ThemedText> when available, with a local
+                <ThemedText className="font-mono"> portfolio.json</ThemedText> when available, with a local
                 fallback.
               </ThemedText>
             </GreyView>
@@ -361,49 +360,34 @@ export default function MCPAppPage() {
             {mcpEndpoints.map((endpoint) => (
               <View
                 key={endpoint.id || endpoint.url}
-                style={{
-                  backgroundColor: accentColor,
-                  borderRadius: 10,
-                  padding: 16,
-                  marginBottom: 12,
-                  borderLeftWidth: 3,
-                  borderLeftColor: tintColor,
-                }}
+                className="rounded-[10px] p-4 mb-3 border-l-[3px]"
+                style={{ backgroundColor: accentColor, borderLeftColor: tintColor }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <View className="flex-row items-center mb-2">
                   <View
-                    style={{
-                      backgroundColor: tintColor,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                      borderRadius: 8,
-                      marginRight: 12,
-                    }}
+                    className="px-2.5 py-1.5 rounded-lg mr-3"
+                    style={{ backgroundColor: tintColor }}
                   >
-                    <ThemedText style={{ fontSize: RFPercentage(1.2), color: '#fff', fontWeight: 'bold' }}>
+                    <ThemedText className="text-[1.2%] text-white font-bold">
                       {String(endpoint.method ?? 'GET').toUpperCase()}
                     </ThemedText>
                   </View>
-                  <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', flex: 1, color: textColor }}>
+                  <ThemedText className="text-[2%] font-semibold flex-1" style={{ color: textColor }}>
                     {endpoint.title}
                   </ThemedText>
                 </View>
 
                 {endpoint.description ? (
-                  <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.75, marginBottom: 10, color: textColor }}>
+                  <ThemedText className="text-[1.7%] opacity-75 mb-2.5" style={{ color: textColor }}>
                     {endpoint.description}
                   </ThemedText>
                 ) : null}
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View className="flex-row items-center gap-2">
                   <ExternalLink href={endpoint.url}>
                     <ThemedText
-                      style={{
-                        fontSize: RFPercentage(1.7),
-                        fontFamily: 'monospace',
-                        color: tintColor,
-                        fontWeight: '600',
-                      }}
+                      className="text-[1.7%] font-mono font-semibold"
+                      style={{ color: tintColor }}
                     >
                       {endpoint.url}
                     </ThemedText>
@@ -428,33 +412,25 @@ export default function MCPAppPage() {
                 </View>
 
                 {(endpoint.transport || endpoint.contentType) && (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                  <View className="flex-row flex-wrap gap-2 mt-3">
                     {endpoint.transport ? (
                       <View
-                        style={{
-                          backgroundColor: tintColor + '20',
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderRadius: 8,
-                        }}
+                        className="px-2.5 py-1.5 rounded-lg"
+                        style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.85, color: textColor }}>
-                          Transport: <ThemedText style={{ fontWeight: '600' }}>{endpoint.transport}</ThemedText>
+                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                          Transport: <ThemedText className="font-semibold">{endpoint.transport}</ThemedText>
                         </ThemedText>
                       </View>
                     ) : null}
 
                     {endpoint.contentType ? (
                       <View
-                        style={{
-                          backgroundColor: tintColor + '20',
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderRadius: 8,
-                        }}
+                        className="px-2.5 py-1.5 rounded-lg"
+                        style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.85, color: textColor }}>
-                          Content-Type: <ThemedText style={{ fontWeight: '600' }}>{endpoint.contentType}</ThemedText>
+                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                          Content-Type: <ThemedText className="font-semibold">{endpoint.contentType}</ThemedText>
                         </ThemedText>
                       </View>
                     ) : null}
@@ -466,8 +442,8 @@ export default function MCPAppPage() {
 
           {/* Available Resources Section */}
           <MCPCollapsibleSection title="Available Resources" icon="library">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 The following guides are exposed as MCP resources. AI tools can read and reference these documents when
                 assisting with development tasks.
               </ThemedText>
@@ -478,20 +454,16 @@ export default function MCPAppPage() {
             ))}
 
             <View
-              style={{
-                backgroundColor: tintColor + '20',
-                borderRadius: 10,
-                padding: 16,
-                marginTop: 8,
-              }}
+              className="rounded-[10px] p-4 mt-2"
+              style={{ backgroundColor: tintColor + '20' }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="information-circle" size={20} color={tintColor} style={{ marginRight: 8 }} />
-                <ThemedText style={{ fontSize: RFPercentage(1.8), fontWeight: '600' }}>
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="information-circle" size={20} color={tintColor} className="mr-2" />
+                <ThemedText className="text-[1.8%] font-semibold">
                   Resource Access
                 </ThemedText>
               </View>
-              <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.8 }}>
+              <ThemedText className="text-[1.6%] opacity-80">
                 AI assistants can read any of these resources by their ID (e.g., "architecture", "routing"). Each
                 resource returns markdown documentation with code examples, best practices, and architectural patterns.
               </ThemedText>
@@ -500,8 +472,8 @@ export default function MCPAppPage() {
 
           {/* Tools Section */}
           <MCPCollapsibleSection title="Tools" icon="construct">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 Tools are functions that AI assistants can invoke to perform specific operations.
               </ThemedText>
             </GreyView>
@@ -513,8 +485,8 @@ export default function MCPAppPage() {
 
           {/* Prompts Section */}
           <MCPCollapsibleSection title="Prompts" icon="chatbubbles">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 Prompts are pre-configured message templates that guide AI assistants in using the resources effectively.
               </ThemedText>
             </GreyView>
@@ -527,53 +499,36 @@ export default function MCPAppPage() {
           {/* How to Use Section */}
           <MCPCollapsibleSection title="How to Use" icon="book">
             <View
-              style={{
-                backgroundColor: '#dcfce7',
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 20,
-                borderLeftWidth: 4,
-                borderLeftColor: '#10b981',
-              }}
+              className="bg-[#dcfce7] rounded-[10px] p-4 mb-5 border-l-4 border-l-[#10b981]"
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="rocket" size={20} color="#10b981" style={{ marginRight: 8 }} />
-                <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', color: '#166534' }}>
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="rocket" size={20} color="#10b981" className="mr-2" />
+                <ThemedText className="text-[2%] font-semibold text-[#166534]">
                   Quick Start: Use the Public Endpoint
                 </ThemedText>
               </View>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), color: '#166534' }}>
+              <ThemedText className="text-[1.7%] text-[#166534]">
                 No installation needed! Connect your AI client directly to the live endpoint:
               </ThemedText>
               <ThemedText
-                style={{
-                  fontSize: RFPercentage(1.6),
-                  fontFamily: 'monospace',
-                  color: '#10b981',
-                  fontWeight: '600',
-                  marginTop: 8,
-                }}
+                className="text-[1.6%] font-mono text-[#10b981] font-semibold mt-2"
               >
                 {mcpEndpointUrl}
               </ThemedText>
             </View>
 
-            <GreyView style={{ marginBottom: 12 }}>
+            <GreyView className="mb-3">
               <ThemedText
-                style={{
-                  fontSize: RFPercentage(2),
-                  fontWeight: '600',
-                  marginBottom: 12,
-                }}
+                className="text-[2%] font-semibold mb-3"
               >
-                Option 1: Use the Live Public Endpoint (Recommended)
+                Option 1: Use the Live Public Endpoint (Recommended but has limitations for scanning entire codebase - stdio mode recommended for full access)
               </ThemedText>
 
-              <ThemedText style={{ fontSize: RFPercentage(1.8), marginBottom: 12, opacity: 0.8 }}>
+              <ThemedText className="text-[1.8%] mb-3 opacity-80">
                 Connect to the hosted MCP server running on my VPS. Works with VS Code, Claude Desktop, and any MCP-compatible client.
               </ThemedText>
 
-              <ThemedText style={{ fontSize: RFPercentage(1.8), opacity: 0.8 }}>
+              <ThemedText className="text-[1.8%] opacity-80">
                 For VS Code with Cline or other MCP extensions:
               </ThemedText>
             </GreyView>
@@ -591,8 +546,8 @@ export default function MCPAppPage() {
 }`}
             />
 
-            <GreyView style={{ marginBottom: 12 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.8), marginBottom: 12, opacity: 0.8 }}>
+            <GreyView className="mb-3">
+              <ThemedText className="text-[1.8%] mb-3 opacity-80">
                 For Claude Desktop:
               </ThemedText>
             </GreyView>
@@ -610,26 +565,18 @@ export default function MCPAppPage() {
             />
 
             <View
-              style={{
-                backgroundColor: '#dbeafe',
-                borderRadius: 10,
-                padding: 16,
-                marginTop: 12,
-                marginBottom: 20,
-                borderLeftWidth: 3,
-                borderLeftColor: '#3b82f6',
-              }}
+              className="bg-[#dbeafe] rounded-[10px] p-4 mt-3 mb-5 border-l-[3px] border-l-[#3b82f6]"
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="information-circle" size={20} color="#3b82f6" style={{ marginRight: 8 }} />
-                <ThemedText style={{ fontSize: RFPercentage(1.8), fontWeight: '600', color: '#1e40af' }}>
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="information-circle" size={20} color="#3b82f6" className="mr-2" />
+                <ThemedText className="text-[1.8%] font-semibold text-[#1e40af]">
                   More Information
                 </ThemedText>
               </View>
-              <ThemedText style={{ fontSize: RFPercentage(1.6), color: '#1e40af' }}>
+              <ThemedText className="text-[1.6%] text-[#1e40af]">
                 Visit{' '}
                 <ExternalLink href={MCP_BASE_URL}>
-                  <ThemedText style={{ fontWeight: '600', color: '#2563eb' }}>
+                  <ThemedText className="font-semibold text-[#2563eb]">
                     davidjgrimsley.com/mcp/mrdj-app-mcp
                   </ThemedText>
                 </ExternalLink>
@@ -637,13 +584,9 @@ export default function MCPAppPage() {
               </ThemedText>
             </View>
 
-            <GreyView style={{ marginBottom: 12 }}>
+            <GreyView className="mb-3">
               <ThemedText
-                style={{
-                  fontSize: RFPercentage(2),
-                  fontWeight: '600',
-                  marginBottom: 12,
-                }}
+                className="text-[2%] font-semibold mb-3"
               >
                 Option 2: Run Locally (stdio mode)
               </ThemedText>
@@ -665,19 +608,15 @@ npm run build
 npm start`}
             />
 
-            <GreyView style={{ marginTop: 16, marginBottom: 12 }}>
+            <GreyView className="mt-4 mb-3">
               <ThemedText
-                style={{
-                  fontSize: RFPercentage(2),
-                  fontWeight: '600',
-                  marginBottom: 12,
-                }}
+                className="text-[2%] font-semibold mb-3"
               >
                 2. Configure Your AI Tool
               </ThemedText>
 
-              <ThemedText style={{ fontSize: RFPercentage(1.8), opacity: 0.8 }}>
-                For Claude Desktop, add to your <ThemedText style={{ fontFamily: 'monospace' }}>claude_desktop_config.json</ThemedText>:
+              <ThemedText className="text-[1.8%] opacity-80">
+                For Claude Desktop, add to your <ThemedText className="font-mono">claude_desktop_config.json</ThemedText>:
               </ThemedText>
             </GreyView>
 
@@ -693,53 +632,43 @@ npm start`}
 }`}
             />
 
-            <GreyView style={{ marginTop: 16, marginBottom: 16 }}>
+            <GreyView className="mt-4 mb-4">
               <ThemedText
-                style={{
-                  fontSize: RFPercentage(2),
-                  fontWeight: '600',
-                  marginBottom: 12,
-                }}
+                className="text-[2%] font-semibold mb-3"
               >
                 3. Use in AI Conversations
               </ThemedText>
 
-              <ThemedText style={{ fontSize: RFPercentage(1.8), marginBottom: 8, opacity: 0.8 }}>
+              <ThemedText className="text-[1.8%] mb-2 opacity-80">
                 Once configured, your AI assistant can:
               </ThemedText>
 
-              <View style={{ paddingLeft: 8 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+              <View className="pl-2">
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Read architecture guides when discussing app structure
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Generate Zustand stores following your patterns
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Create routing checklists for new screens
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Answer database design questions with your conventions
                 </ThemedText>
               </View>
             </GreyView>
 
             <View
-              style={{
-                backgroundColor: '#fef3c7',
-                borderRadius: 10,
-                padding: 16,
-                borderLeftWidth: 3,
-                borderLeftColor: '#f59e0b',
-              }}
+              className="bg-[#fef3c7] rounded-[10px] p-4 border-l-[3px] border-l-[#f59e0b]"
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="bulb" size={20} color="#f59e0b" style={{ marginRight: 8 }} />
-                <ThemedText style={{ fontSize: RFPercentage(1.8), fontWeight: '600', color: '#92400e' }}>
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="bulb" size={20} color="#f59e0b" className="mr-2" />
+                <ThemedText className="text-[1.8%] font-semibold text-[#92400e]">
                   Pro Tip
                 </ThemedText>
               </View>
-              <ThemedText style={{ fontSize: RFPercentage(1.6), color: '#92400e' }}>
+              <ThemedText className="text-[1.6%] text-[#92400e]">
                 You don't need to explicitly mention the MCP server in your prompts. Once configured, the AI will
                 automatically use the resources when relevant to your questions.
               </ThemedText>
@@ -748,8 +677,8 @@ npm start`}
 
           {/* Hosting Options Section */}
           <MCPCollapsibleSection title="Hosting & Deployment" icon="cloud-upload">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.9), opacity: 0.8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[1.9%] opacity-80">
                 This MCP server can be deployed in multiple ways:
               </ThemedText>
             </GreyView>
@@ -778,50 +707,41 @@ npm start`}
               description="Add HTTP transport wrapper for serverless deployment"
             />
 
-            <GreyView style={{ marginTop: 16, marginBottom: 12 }}>
+            <GreyView className="mt-4 mb-3">
               <ThemedText
-                style={{
-                  fontSize: RFPercentage(2),
-                  fontWeight: '600',
-                }}
+                className="text-[2%] font-semibold"
               >
                 This Server's Deployment
               </ThemedText>
             </GreyView>
 
             <View
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 12,
-                borderLeftWidth: 4,
-                borderLeftColor: '#10b981',
-              }}
+              className="rounded-[10px] p-4 mb-3 border-l-4 border-l-[#10b981]"
+              style={{ backgroundColor: accentColor }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                <View style={{ backgroundColor: '#10b981', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 }}>
-                  <ThemedText style={{ fontSize: RFPercentage(1.4), color: '#fff', fontWeight: 'bold' }}>
+              <View className="flex-row items-center mb-3">
+                <View className="bg-[#10b981] px-2.5 py-1.5 rounded-xl">
+                  <ThemedText className="text-[1.4%] text-white font-bold">
                     🟢 LIVE IN PRODUCTION
                   </ThemedText>
                 </View>
               </View>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8, marginBottom: 8 }}>
-                <ThemedText style={{ fontWeight: '600' }}>Environment:</ThemedText> VPS (Plesk) with Nginx reverse proxy
+              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+                <ThemedText className="font-semibold">Environment:</ThemedText> VPS (Plesk) with Nginx reverse proxy
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8, marginBottom: 8 }}>
-                <ThemedText style={{ fontWeight: '600' }}>Endpoint:</ThemedText> {mcpEndpointUrl}
+              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+                <ThemedText className="font-semibold">Endpoint:</ThemedText> {mcpEndpointUrl}
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8, marginBottom: 8 }}>
-                <ThemedText style={{ fontWeight: '600' }}>Transport:</ThemedText> Server-Sent Events (SSE)
+              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+                <ThemedText className="font-semibold">Transport:</ThemedText> Server-Sent Events (SSE)
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8, marginBottom: 8 }}>
-                <ThemedText style={{ fontWeight: '600' }}>Accessibility:</ThemedText> Public - Anyone can connect
+              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+                <ThemedText className="font-semibold">Accessibility:</ThemedText> Public - Anyone can connect
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8 }}>
-                <ThemedText style={{ fontWeight: '600' }}>Info Page:</ThemedText>{' '}
+              <ThemedText className="text-[1.7%] opacity-80">
+                <ThemedText className="font-semibold">Info Page:</ThemedText>{' '}
                 <ExternalLink href={MCP_BASE_URL}>
-                  <ThemedText style={{ color: tintColor, fontWeight: '600' }}>
+                  <ThemedText className="font-semibold" style={{ color: tintColor }}>
                     davidjgrimsley.com/mcp/mrdj-app-mcp
                   </ThemedText>
                 </ExternalLink>
@@ -832,68 +752,52 @@ npm start`}
           {/* Use Cases Section */}
           <MCPCollapsibleSection title="Use Cases" icon="apps">
             <View
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 12,
-              }}
+              className="rounded-[10px] p-4 mb-3"
+              style={{ backgroundColor: accentColor }}
             >
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 8 }}>
+              <ThemedText className="text-[2%] font-semibold mb-2">
                 🎓 Learning & Education
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8 }}>
+              <ThemedText className="text-[1.7%] opacity-80">
                 Students and developers can explore modern React Native patterns, Expo Router conventions, and
                 full-stack architecture through AI-assisted learning.
               </ThemedText>
             </View>
 
             <View
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 12,
-              }}
+              className="rounded-[10px] p-4 mb-3"
+              style={{ backgroundColor: accentColor }}
             >
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 8 }}>
+              <ThemedText className="text-[2%] font-semibold mb-2">
                 🚀 Rapid Development
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8 }}>
+              <ThemedText className="text-[1.7%] opacity-80">
                 Generate boilerplate code, scaffolding, and configuration files that follow established patterns,
                 reducing setup time for new features.
               </ThemedText>
             </View>
 
             <View
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 12,
-              }}
+              className="rounded-[10px] p-4 mb-3"
+              style={{ backgroundColor: accentColor }}
             >
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 8 }}>
+              <ThemedText className="text-[2%] font-semibold mb-2">
                 👔 Portfolio & Hiring
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8 }}>
+              <ThemedText className="text-[1.7%] opacity-80">
                 Employers can see documented proof of architectural thinking, best practices knowledge, and commitment
                 to maintainable, scalable code.
               </ThemedText>
             </View>
 
             <View
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 12,
-              }}
+              className="rounded-[10px] p-4 mb-3"
+              style={{ backgroundColor: accentColor }}
             >
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 8 }}>
+              <ThemedText className="text-[2%] font-semibold mb-2">
                 🔧 Team Standardization
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8 }}>
+              <ThemedText className="text-[1.7%] opacity-80">
                 Teams can fork and customize this MCP server to encode their own conventions, ensuring consistency
                 across projects and team members.
               </ThemedText>
@@ -902,52 +806,52 @@ npm start`}
 
           {/* Tech Stack Section */}
           <MCPCollapsibleSection title="Tech Stack" icon="code-slash">
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[2%] font-semibold mb-2">
                 Runtime & Build
               </ThemedText>
-              <View style={{ paddingLeft: 8 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+              <View className="pl-2">
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Node.js 18+ (ES modules)
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • TypeScript with tsc compiler
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Single entrypoint: build/index.js
                 </ThemedText>
               </View>
             </GreyView>
 
-            <GreyView style={{ marginBottom: 16 }}>
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 8 }}>
+            <GreyView className="mb-4">
+              <ThemedText className="text-[2%] font-semibold mb-2">
                 MCP SDK
               </ThemedText>
-              <View style={{ paddingLeft: 8 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+              <View className="pl-2">
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • @modelcontextprotocol/sdk 1.25.x
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Zod for schema validation
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Stdio transport (local development)
                 </ThemedText>
               </View>
             </GreyView>
 
             <GreyView>
-              <ThemedText style={{ fontSize: RFPercentage(2), fontWeight: '600', marginBottom: 8 }}>
+              <ThemedText className="text-[2%] font-semibold mb-2">
                 Content
               </ThemedText>
-              <View style={{ paddingLeft: 8 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+              <View className="pl-2">
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • File-based markdown guides
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • 11 comprehensive development guides
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.7), marginBottom: 6, opacity: 0.8 }}>
+                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
                   • Covers: React Native, Expo Router, Zustand, Drizzle, Supabase, deployment
                 </ThemedText>
               </View>
@@ -955,105 +859,77 @@ npm start`}
           </MCPCollapsibleSection>
 
           {/* Resources & Links Section */}
-          <View style={{ marginTop: 20 }}>
+          <View className="mt-5">
             <ThemedText
-              style={{
-                fontSize: RFPercentage(2.4),
-                fontWeight: '600',
-                marginBottom: 16,
-              }}
+              className="text-[2.4%] font-semibold mb-4"
             >
               Resources & Links
             </ThemedText>
 
             <Pressable
               onPress={() => Linking.openURL(githubRepoUrl)}
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
+              className="rounded-[10px] p-4 mb-3 flex-row items-center"
+              style={{ backgroundColor: accentColor }}
             >
-              <Ionicons name="logo-github" size={24} color={textColor} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.9), fontWeight: '600' }}>
+              <Ionicons name="logo-github" size={24} color={textColor} className="mr-3" />
+              <View className="flex-1">
+                <ThemedText className="text-[1.9%] font-semibold">
                   GitHub Repository
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7 }}>
+                <ThemedText className="text-[1.6%] opacity-70">
                   Source code, guides, and documentation
                 </ThemedText>
               </View>
-              <Ionicons name="open-outline" size={20} color={textColor} style={{ opacity: 0.5 }} />
+              <Ionicons name="open-outline" size={20} color={textColor} className="opacity-50" />
             </Pressable>
 
             <Pressable
               onPress={() => Linking.openURL('https://modelcontextprotocol.io')}
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                marginBottom: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
+              className="rounded-[10px] p-4 mb-3 flex-row items-center"
+              style={{ backgroundColor: accentColor }}
             >
-              <Ionicons name="document-text" size={24} color={textColor} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.9), fontWeight: '600' }}>
+              <Ionicons name="document-text" size={24} color={textColor} className="mr-3" />
+              <View className="flex-1">
+                <ThemedText className="text-[1.9%] font-semibold">
                   MCP Documentation
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7 }}>
+                <ThemedText className="text-[1.6%] opacity-70">
                   Official Model Context Protocol docs
                 </ThemedText>
               </View>
-              <Ionicons name="open-outline" size={20} color={textColor} style={{ opacity: 0.5 }} />
+              <Ionicons name="open-outline" size={20} color={textColor} className="opacity-50" />
             </Pressable>
 
             <Pressable
               onPress={() => Linking.openURL('https://davidjgrimsley.com')}
-              style={{
-                backgroundColor: accentColor,
-                borderRadius: 10,
-                padding: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
+              className="rounded-[10px] p-4 flex-row items-center"
+              style={{ backgroundColor: accentColor }}
             >
-              <Ionicons name="person-circle" size={24} color={textColor} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.9), fontWeight: '600' }}>
+              <Ionicons name="person-circle" size={24} color={textColor} className="mr-3" />
+              <View className="flex-1">
+                <ThemedText className="text-[1.9%] font-semibold">
                   David Grimsley
                 </ThemedText>
-                <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7 }}>
+                <ThemedText className="text-[1.6%] opacity-70">
                   Portfolio and other projects
                 </ThemedText>
               </View>
-              <Ionicons name="open-outline" size={20} color={textColor} style={{ opacity: 0.5 }} />
+              <Ionicons name="open-outline" size={20} color={textColor} className="opacity-50" />
             </Pressable>
           </View>
 
           {/* Portfolio Data Sync Note */}
           <View
-            style={{
-              marginTop: 24,
-              backgroundColor: accentColor,
-              borderRadius: 10,
-              padding: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}
+            className="mt-6 rounded-[10px] p-3.5 flex-row items-center gap-2.5"
+            style={{ backgroundColor: accentColor }}
           >
             <Ionicons
               name={isMetaSynced ? 'cloud-done-outline' : 'cloud-offline-outline'}
               size={18}
               color={isMetaSynced ? tintColor : textColor}
-              style={{ opacity: 0.9 }}
+              className="opacity-90"
             />
-            <ThemedText style={{ fontSize: RFPercentage(1.5), opacity: 0.75, flex: 1 }}>
+            <ThemedText className="text-[1.5%] opacity-75 flex-1">
               {isMetaSynced
                 ? `Synced from ${MCP_PORTFOLIO_META_URL}`
                 : 'Using local portfolio metadata (offline / fetch failed)'}
@@ -1065,4 +941,5 @@ npm start`}
     </>
   );
 }
+
 
