@@ -17,6 +17,7 @@ export default function APIStackLayout() {
         name="quantum" 
         options={{
           headerTitle: "Quantum API Documentation",
+          headerShown: false,
           headerShadowVisible: false,
           headerTintColor: textColor,
         }}

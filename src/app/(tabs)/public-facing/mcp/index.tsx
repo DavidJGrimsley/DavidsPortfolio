@@ -30,7 +30,7 @@ export default function MCPIndexPage() {
   >({});
 
   const handleMCPPress = (mcpId: string) => {
-    router.push(`/mcp/${mcpId}` as any);
+    router.push(`/public-facing/mcp/${mcpId}` as any);
   };
 
   const servers = useMemo(() => mcpServersData.mcpServers ?? [], []);
@@ -39,7 +39,7 @@ export default function MCPIndexPage() {
     let isMounted = true;
 
     const syncServerMeta = async (serverId: string) => {
-      const portfolioUrl = `https://davidjgrimsley.com/mcp/${serverId}/portfolio.json`;
+      const portfolioUrl = `https://davidjgrimsley.com/public-facing/mcp/${serverId}/portfolio.json`;
       try {
         const response = await fetch(portfolioUrl, { method: 'GET' });
 
@@ -88,7 +88,7 @@ export default function MCPIndexPage() {
   const seoKeywords = 
     'MCP, Model Context Protocol, MCP server, AI tools, Pokémon MCP, developer resources, React Native MCP, Expo Router MCP, AI code assistance, structured knowledge, open-source MCP, developer documentation, software engineering, David Grimsley, mrdj-app-mcp, AI assistant integration';
   const seoImage = 'https://davidjgrimsley.com/images/mcp-servers-preview.png';
-  const seoUrl = 'https://davidjgrimsley.com/mcp';
+  const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp';
 
   return (
     <>
@@ -130,7 +130,7 @@ export default function MCPIndexPage() {
             "author": {
               "@type": "Person",
               "name": "David Grimsley",
-              "url": "https://davidjgrimsley.com"
+              "url": "https://davidjgrimsley.com/"
             },
             "publisher": {
               "@type": "Person",
@@ -144,7 +144,7 @@ export default function MCPIndexPage() {
                   "@type": "ListItem",
                   "position": 1,
                   "name": "Home",
-                  "item": "https://davidjgrimsley.com"
+                  "item": "https://davidjgrimsley.com/public-facing"
                 },
                 {
                   "@type": "ListItem",

@@ -27,7 +27,7 @@ export function MyCards({ pageCategory }: MyCardsProps) {
                                 <Card.Body>
                                     <Card.Title>{element.displayTitle || element.title}</Card.Title>
                                     <Card.Text>{element.caption}</Card.Text>
-                                    <Button variant="primary" onClick={() => router.push(`/${pageCategory}/${element.title}` as any)}>
+                                    <Button variant="primary" onClick={() => router.push(`/portfolio/${pageCategory}/${element.title}` as any)}>
                                         View details
                                     </Button>
                                 </Card.Body>

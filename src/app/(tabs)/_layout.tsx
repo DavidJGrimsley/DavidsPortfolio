@@ -1,16 +1,30 @@
 import React from 'react';
 import { type Href, router, Tabs, useSegments } from 'expo-router';
-import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { TabBarIcon } from '@/components/Navigation/TabBarIcon';
 import { PokemonButton } from '@/components/PokemonButton';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import * as Device from 'expo-device';
-import { Pressable, Text, View, Dimensions } from 'react-native';
+import { Platform, Pressable, Text, View, Dimensions, useWindowDimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { VerticalTabBar } from '@/components/Navigation/VerticalTabBar';
+
+/**
+ * @EXTRACT: Desktop breakpoint for showing vertical tab bar
+ * When extracting to npm, this should be configurable via props
+ */
+const DESKTOP_BREAKPOINT = 1024;
 
 const TabLayout = ({  }) => {
   const colorScheme = useColorScheme();
   const segments = useSegments();
+  const { width: windowWidth } = useWindowDimensions();
+  
+  // Platform and viewport detection
+  // @EXTRACT: Consider making this a hook: useIsDesktopWeb()
+  const isWeb = Platform.OS === 'web';
+  const isDesktopWidth = windowWidth >= DESKTOP_BREAKPOINT;
+  const isDesktopWeb = isWeb && isDesktopWidth;
   
   // Color values based on theme
   const tintColor = colorScheme === 'light' ? '#4B718A' : '#a96710';
@@ -46,7 +60,48 @@ const TabLayout = ({  }) => {
   const isPieceLevel = routeSegments.some(seg => seg.includes('[')) ||
                        routeSegments.some(seg => seg === '[title]');
 
-  // Always render Tabs navigation for consistency
+  /**
+   * Desktop Web Layout
+   * Uses VerticalTabBar with constrained content width
+   * Grid: 5% margin | 75% content | 5% gap | 10% tabbar | 5% margin
+   * 
+   * @EXTRACT: This pattern should be documented as the recommended usage
+   */
+  if (isDesktopWeb) {
+    return (
+      <View className="flex-1 flex-row w-full">
+
+        <View style={{ width: '75%', flex: 1 }}>
+          <Tabs
+            screenOptions={{
+              // Hide the bottom tab bar on desktop - we use VerticalTabBar instead
+              tabBarStyle: { display: 'none' },
+              headerShown: false,
+            }}
+          >
+            <Tabs.Screen 
+              name="index" 
+              options={{ headerShown: false }} />
+            <Tabs.Screen name="portfolio" />
+            <Tabs.Screen name="public-facing" />
+            <Tabs.Screen name="more" />
+            <Tabs.Screen name="pokemon" options={{ href: null }} />
+          </Tabs>
+        </View>
+
+          <VerticalTabBar />
+        
+      </View>
+    );
+  }
+
+  /**
+   * Mobile/Tablet Layout (Native + Mobile Web)
+   * Uses standard bottom Tabs navigation
+   * 
+   * @EXTRACT: This is the fallback for non-desktop platforms
+   * Consider: MobileWebTabBar variant for tablet-sized web browsers
+   */
   return (
     <Tabs
       screenOptions={{
@@ -87,82 +142,32 @@ const TabLayout = ({  }) => {
         }}
       />
       <Tabs.Screen
-        name="mobile-apps"
+        name="portfolio"
         options={{
           headerShown: false,
-          title: 'Mobile Apps',
+          title: 'Portfolio',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'phone-portrait' : 'phone-portrait-outline'} color={color} />
+            <TabBarIcon name={focused ? 'briefcase' : 'briefcase-outline'} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="game-design"
+        name="public-facing"
         options={{
           headerShown: false,
-          title: 'Game Design',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'game-controller' : 'game-controller-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="website-development"
-        options={{
-          headerShown: false,
-          title: 'Website Development',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'globe' : 'globe-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="software-development"
-        options={{
-          headerShown: false,
-          title: 'Software Dev',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'server' : 'server-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="learn"
-        options={{
-          headerShown: false,
-          title: 'Learn',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'book' : 'book-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="about"
-        options={{
-          headerShown: false,
-          title: 'About & Contact',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="api"
-        options={{
-          headerShown: false,
-          title: 'Public APIs',
+          title: 'Public',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'cloud' : 'cloud-outline'} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="mcp"
+        name="more"
         options={{
           headerShown: false,
-          title: 'MCP',
+          title: 'More',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'git-network' : 'git-network-outline'} color={color} />
+            <TabBarIcon name={focused ? 'ellipsis-horizontal-circle' : 'ellipsis-horizontal-circle-outline'} color={color} />
           ),
         }}
       />
@@ -178,25 +183,5 @@ const TabLayout = ({  }) => {
     </Tabs>
   );
 }
-
-const NavButton = ({ title, route, icon, focusedIcon }: { title: string, route: string, icon: string, focusedIcon: string }) => {
-  if (!route) return null;
-  const newRoute = useRoute();
-  const navigation = useNavigation();
-  
-  const isActive = (routeName: string) => routeName === newRoute.name;
-  
-  return (
-    <Pressable className="side-nav" onPress={() => {
-      router.dismissAll();
-      router.replace(route as Href);
-    }}>
-      <Text className="side-nav-text">{title}</Text>
-      <TabBarIcon name={isActive(route) ? icon as any : focusedIcon as any}  />
-    </Pressable>
-  );
-}
-
-
 
 export default TabLayout;

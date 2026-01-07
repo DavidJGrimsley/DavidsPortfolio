@@ -12,6 +12,7 @@ export default function StackLayout() {
         }}/>
         <Stack.Screen name="[title]" options={{
             headerTitle: "Web App & Site Development",
+            headerShown: false,
             headerShadowVisible: false,
             headerTintColor: textColor,
         }}/>

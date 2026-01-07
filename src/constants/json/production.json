@@ -1,0 +1,15 @@
+{
+  "apps": [
+    {
+      "id": "pokepages",
+      "name": "PokePages",
+      "version": "1.0.0",
+      "icon": "🐾",
+      "description": "Production full-stack Pokémon community app available on the web.",
+      "status": "active",
+      "tags": ["production", "web", "pokemon"],
+      "url": "https://pokepages.app",
+      "repoUrl": "https://github.com/davidjgrimsley/pokepages"
+    }
+  ]
+}

@@ -18,6 +18,7 @@ export default function MCPLayout() {
         name="mrdj-app-mcp"
         options={{
           headerTitle: 'mrdj-app-mcp Documentation',
+          headerShown: false,
           headerShadowVisible: false,
           headerTintColor: textColor,
         }}
@@ -26,6 +27,7 @@ export default function MCPLayout() {
         name="mrdj-pokemon-mcp"
         options={{
           headerTitle: 'mrdj-pokemon-mcp Documentation',
+          headerShown: false,
           headerShadowVisible: false,
           headerTintColor: textColor,
         }}

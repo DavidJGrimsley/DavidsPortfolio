@@ -18,10 +18,12 @@ type SoftwareCardProps = {
     tags: string[];
   };
   stats: Array<{ emoji: string; label: string }>;
+  ctaLabel?: string;
+  ctaHint?: string;
   onPress: () => void;
 };
 
-export function SoftwareCard({ item, stats, onPress }: SoftwareCardProps) {
+export function SoftwareCard({ item, stats, ctaLabel, ctaHint, onPress }: SoftwareCardProps) {
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
@@ -90,10 +92,10 @@ export function SoftwareCard({ item, stats, onPress }: SoftwareCardProps) {
           color: tintColor,
           fontWeight: 'bold'
         }}>
-          View Documentation →
+          {ctaLabel ?? 'View Documentation →'}
         </ThemedText>
         <ThemedText style={{ fontSize: RFPercentage(1.5), opacity: 0.6 }}>
-          Interactive testing available
+          {ctaHint ?? 'Interactive testing available'}
         </ThemedText>
       </View>
     </Pressable>

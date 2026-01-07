@@ -19,10 +19,10 @@ import {
 import { MCPHeroSection, MCPWhatIsSection } from '@/components/SoftwareDev/mcp/MCPPageSections';
 
 // Server URLs
-const MCP_BASE_URL = 'https://davidjgrimsley.com/mcp/app/mrdj-app-mcp';
-const MCP_ENDPOINT = 'https://davidjgrimsley.com/mcp/mrdj-app-mcp/mcp';
+const MCP_BASE_URL = 'https://davidjgrimsley.com/public-facing/mcp/app/mrdj-app-mcp';
+const MCP_ENDPOINT = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-app-mcp';
-const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/mcp/mrdj-app-mcp/portfolio.json';
+const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp/portfolio.json';
 
 type MCPEndpointMeta = {
   id: string;
@@ -77,7 +77,7 @@ export default function MCPAppPage() {
   const seoKeywords =
     'MCP, Model Context Protocol, AI tools, developer resources, React Native, Expo Router, full-stack development, architecture patterns, state management, Drizzle ORM, Supabase, deployment guides, open-source, AI assistant, developer documentation, software engineering, David Grimsley';
   const seoImage = 'https://davidjgrimsley.com/images/mcp-app-preview.png';
-  const seoUrl = 'https://davidjgrimsley.com/mcp/app';
+  const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp/app';
 
   // MCP Resources (guides) fallback (local)
   const fallbackMcpResources = [
@@ -577,7 +577,7 @@ export default function MCPAppPage() {
                 Visit{' '}
                 <ExternalLink href={MCP_BASE_URL}>
                   <ThemedText className="font-semibold text-[#2563eb]">
-                    davidjgrimsley.com/mcp/mrdj-app-mcp
+                    davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp
                   </ThemedText>
                 </ExternalLink>
                 {' '}for detailed setup instructions and troubleshooting.
@@ -742,7 +742,7 @@ npm start`}
                 <ThemedText className="font-semibold">Info Page:</ThemedText>{' '}
                 <ExternalLink href={MCP_BASE_URL}>
                   <ThemedText className="font-semibold" style={{ color: tintColor }}>
-                    davidjgrimsley.com/mcp/mrdj-app-mcp
+                    davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp
                   </ThemedText>
                 </ExternalLink>
               </ThemedText>

@@ -15,9 +15,9 @@ import {
 } from '@/components/SoftwareDev/mcp/MCPComponents';
 import { MCPHeroSection, MCPWhatIsSection } from '@/components/SoftwareDev/mcp/MCPPageSections';
 
-const MCP_ENDPOINT = 'https://davidjgrimsley.com/mcp/mrdj-pokemon-mcp/mcp';
+const MCP_ENDPOINT = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-pokemon-mcp';
-const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/mcp/mrdj-pokemon-mcp/portfolio.json';
+const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp/portfolio.json';
 
 type MCPEndpointMeta = {
   id: string;
@@ -70,7 +70,7 @@ export default function MRDJPokemonMcpPage() {
   const seoKeywords =
     'MCP, Model Context Protocol, Pokemon, Pokémon, PokeAPI, type effectiveness, team builder, raid strategy, AI tools, developer resources, open-source, David Grimsley, mrdj-pokemon-mcp';
   const seoImage = 'https://davidjgrimsley.com/images/mcp-servers-preview.png';
-  const seoUrl = 'https://davidjgrimsley.com/mcp/mrdj-pokemon-mcp';
+  const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp';
 
   const fallbackMcpResources = useMemo(
     () => [
@@ -220,7 +220,7 @@ export default function MRDJPokemonMcpPage() {
       id: 'health',
       title: 'Health Check',
       method: 'GET',
-      url: 'https://davidjgrimsley.com/mcp/mrdj-pokemon-mcp/health',
+      url: 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp/health',
       description: 'Server health status endpoint.',
       contentType: 'application/json',
     },

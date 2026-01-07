@@ -1,5 +1,5 @@
 import React from "react";
-import { IframeEmbed } from "../../../components/UI/IframeEmbed";
+import { IframeEmbed } from "../../../../components/UI/IframeEmbed";
 
 
 export default function Survey() {

@@ -3,7 +3,6 @@ import { View, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { RFPercentage } from 'react-native-responsive-fontsize';
 import { SoftwareCard } from '@/components/SoftwareDev/SoftwareCard';
 import { ComingSoonCard } from '@/components/SoftwareDev/ComingSoonCard';
 import { WhatIsAPICard } from '@/components/SoftwareDev/api/WhatIsAPICard';
@@ -45,7 +44,7 @@ export default function APIIndexPage() {
   });
 
   const handleAPIPress = (apiId: string) => {
-    router.push(`/api/${apiId}` as any);
+    router.push(`/public-facing/api/${apiId}` as any);
   };
 
   const fallbackApis = useMemo(() => apisData.apis ?? [], []);
@@ -61,21 +60,17 @@ export default function APIIndexPage() {
   return (
     <View className="flex-1" style={{ backgroundColor }}>
       {/* Title Section */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 20 }}>
-        <ThemedText type="title" style={{ fontSize: RFPercentage(4), lineHeight: RFPercentage(4.8), marginBottom: 8 }}>
+      <View className="px-5 pt-10 pb-5">
+        <ThemedText type="title" className="mb-2 text-[4%] leading-[4.8%]">
           Public APIs
         </ThemedText>
-        <ThemedText style={{ fontSize: RFPercentage(2), lineHeight: RFPercentage(2.8), opacity: 0.7 }}>
+        <ThemedText className="opacity-70 text-[2%] leading-[2.8%]">
           Open APIs hosted by David Grimsley for public use
         </ThemedText>
       </View>
 
       <ScrollView 
-        contentContainerStyle={{ 
-          paddingHorizontal: 20, 
-          paddingBottom: 40,
-          gap: 16
-        }}
+        contentContainerClassName="px-5 pb-10 gap-4"
       >
         {apis.map((api) => (
           <SoftwareCard

@@ -12,6 +12,7 @@ export default function StackLayout() {
         }}/>
         <Stack.Screen name="[title]" options={{
             headerTitle: "Mobile Apps",
+            headerShown: false,
             headerShadowVisible: false,
             headerTintColor: textColor,
         }}/>

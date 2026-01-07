@@ -2,14 +2,16 @@ import React from "react";
 import { IframeEmbed } from "../../../../components/UI/IframeEmbed";
 
 
-
-export default function PortfolioIntake() {
+export default function Survey() {
   return (
     <>
-      <IframeEmbed src="https://docs.google.com/forms/d/e/1FAIpQLSemBxe0Z6JYAZi8D9ZeMBU9HTRxqC-QlsSWoBTG6LvYKGDWsA/viewform?embedded=true"/>
+      <IframeEmbed src="https://docs.google.com/forms/d/e/1FAIpQLSeq6LoKYIhVKmYN91emyal1sRk3VytMPEostzcR8hYTkDFzUw/viewform?embedded=true"/>
     </>
   )
 }
+
+
+
 
 
 
