@@ -124,7 +124,7 @@ export default function Game() {
         )
       } else {
       return (
-        <View>
+        <View key={move}>
           <Text className="text-[2%]">Turn #{move}</Text>
         </View>
       )

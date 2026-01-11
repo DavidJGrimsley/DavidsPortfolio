@@ -1,31 +1,46 @@
 @import 'tailwindcss';
 @import 'uniwind';
 
-/* Theme tokens matching your Colors.ts */
+/* 
+Colors
+#11181C - charcoal FOR Light mode Text, Dark mode White/Black
+#F8F8F8 - off-white FOR Dark mode Text, Light mode White/Black
+
+#ae54c4 - light purple FOR Light mode Background
+#20182d - eggplant FOR Dark mode Background
+
+##B0F7E3 - light aqua FOR Light mode Secondary
+#a96710 - bronze FOR Dark mode Secondary and Tint
+
+#723B80 - plum FOR Light mode Accent
+#321e3bb9 - deep purple( FOR Dark mode Tab Icon Default
+
+*/
+
 @layer theme {
   :root {
     @variant light {
-      --color-text: #11181C;
-      --color-background: #ae54c4;
-      --color-secondary: #afeef7;
-      --color-accent: #723B80;
-      --color-tint: #4B718A;
-      --color-icon: #687076;
-      --color-tab-icon-default: #723B80;
-      --color-tab-icon-selected: #4B718A;
-      --color-white-or-black: #F4F4F4;
+      --color-text: #11181C; /* Ink Black */
+      --color-background: #E9DDEE; /* Lavender Veil */
+      --color-secondary: #A2DDF6; /* Frosted Blue */
+      --color-accent: #723B80; /* Velvet Orchid */
+      --color-tint: #0E668B; /* Baltic Blue */
+      --color-icon: #687076; /* Dim Grey */
+      --color-tab-icon-default: #723B80; /* Velvet Orchid */
+      --color-tab-icon-selected: #0E668B; /* Baltic Blue */
+      --color-white-or-black: #F8F8F8; /* Bright Snow */
     }
 
     @variant dark {
-      --color-text: #FEFEFE;
-      --color-background: #20182d;
-      --color-secondary: #a96710;
-      --color-accent: #321e3bb9;
-      --color-tint: #a96710;
-      --color-icon: #9BA1A6;
-      --color-tab-icon-default: #321e3bb9;
-      --color-tab-icon-selected: #a96710;
-      --color-white-or-black: #040404;
+      --color-text: #F8F8F8; /* Bright Snow */
+      --color-background: #20182D; /* Midnight Violet */
+      --color-secondary: #A96710; /* Copperwood */
+      --color-accent: #321E3B; /* Midnight Violet */
+      --color-tint: #EEA444; /* Golden Orange */
+      --color-icon: #9BA1A6; /* Cool Steel */
+      --color-tab-icon-default: #321E3B; /* Midnight Violet */
+      --color-tab-icon-selected: #A96710; /* Copperwood */
+      --color-white-or-black: #11181C; /* Ink Black */
     }
   }
 }

@@ -124,7 +124,7 @@ export function CategoryDetailWrapper({
         >
             <View className="bg-themed">
                 <MobileDetailsBackgroundGradient />
-                <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-[1200px] self-center justify-around">{data}</View>
+                <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-300 self-center justify-around">{data}</View>
             </View>
         </ScrollView>
     );

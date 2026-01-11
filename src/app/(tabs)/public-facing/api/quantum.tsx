@@ -151,13 +151,13 @@ export default function QuantumAPIPage() {
     >
       <View className="flex-1">
         <MobileDetailsBackgroundGradient />
-        <View className="flex-1 w-full max-w-[1200px] self-center bg-transparent px-5 py-[30px] pb-[60px]">
+        <View className="flex-1 w-full max-w-300 self-center bg-transparent px-5 py-7.5 pb-15">
         {/* Header */}
-        <View className="mb-[30px]">
+        <View className="mb-7.5">
           <View className="flex-row items-center mb-3">
             {/* Icon box */}
             <View
-              className="w-[72px] h-[72px] rounded-2xl items-center justify-center mr-4"
+              className="w-18 h-18 rounded-2xl items-center justify-center mr-4"
               style={{
                 backgroundColor: tintColor + '33',
               }}
@@ -169,12 +169,11 @@ export default function QuantumAPIPage() {
             <View className="flex-1 flex-row mr-2">
               <ThemedText
                 type="title"
-                className="text-[3.5%]"
               >
                 {apiName}
               </ThemedText>
               <ThemedText
-                className="opacity-60 mt-0.5 text-[1.6%]"
+                className="opacity-60 mt-0.5 text-sm"
               >
                 v{apiVersion}
               </ThemedText>
@@ -188,14 +187,14 @@ export default function QuantumAPIPage() {
               }}
             >
               <ThemedText
-                className="font-bold text-[1.4%] text-white"
+                className="font-bold text-xs text-white"
               >
                 {isLive ? '● LIVE' : '● OFFLINE'}
               </ThemedText>
             </View>
           </View>
 
-          <ThemedText className="opacity-85 mb-4 text-[1.9%] leading-[2.7%] text-black">
+          <ThemedText className="opacity-85 mb-4 leading-6">
             General-purpose quantum computing services for games and applications. 
             Run real quantum circuits using Qiskit Aer Simulator to generate truly 
             random numbers, transform text, and create unique quantum-powered experiences.
@@ -203,11 +202,11 @@ export default function QuantumAPIPage() {
 
           {/* Features Section */}
           <View className="mb-4">
-            <ThemedText type="subtitle" className="mb-3 text-[2.5%]">
+            <ThemedText type="subtitle" className="mb-3">
               Features
             </ThemedText>
             <View className="pl-2">
-              <ThemedText className="opacity-85 text-[1.6%] leading-[2.4%] text-black">
+              <ThemedText className="opacity-85 text-sm leading-6">
                 • True Randomness - Quantum measurement provides genuine randomness, not pseudo-random algorithms{'\n'}
                 • Qiskit Backend - Powered by IBM Qiskit Aer Simulator running on Python server{'\n'}
                 • Low Latency - Optimized for fast responses with connection pooling{'\n'}
@@ -226,12 +225,12 @@ export default function QuantumAPIPage() {
                 borderLeftColor: tintColor,
               }}
             >
-              <ThemedText type="defaultSemiBold" className="mb-1.5 text-[1.5%]">
+              <ThemedText type="defaultSemiBold" className="mb-1.5 text-secondary">
                 Base URL
               </ThemedText>
               <ExternalLink 
                 href={QUANTUM_BASE_URL}
-                className="font-mono text-[1.6%]"
+                className="font-mono text-sm"
                 style={{ color: tintColor }}
               >
                 {QUANTUM_BASE_URL}
@@ -247,7 +246,7 @@ export default function QuantumAPIPage() {
               }}
             >
               <Ionicons name="document-text" size={20} color="#fff" />
-              <ThemedText className="font-bold text-white text-[1.8%]">
+              <ThemedText className="font-bold text-white text-base">
                 View Interactive API Docs (Swagger UI)
               </ThemedText>
             </ExternalLink>
@@ -255,8 +254,8 @@ export default function QuantumAPIPage() {
         </View>
 
         {/* Endpoints Section */}
-        <View className="mb-[30px]">
-          <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
+        <View className="mb-7.5">
+          <ThemedText type="subtitle" className="mb-4">
             📡 Endpoints
           </ThemedText>
 
@@ -394,7 +393,7 @@ export default function QuantumAPIPage() {
         </View>
 
         {/* Quantum Mechanics Explainer */}
-        <View className="mb-[30px]">
+        <View className="mb-7.5">
           <Pressable 
             onPress={() => setIsQuantumMechanicsExpanded(!isQuantumMechanicsExpanded)}
             className={`p-4 rounded-lg ${isQuantumMechanicsExpanded ? 'mb-4' : ''}`}
@@ -683,7 +682,7 @@ export default function QuantumAPIPage() {
         </View>
 
         {/* How to Use Section */}
-        <View className="mb-[30px]">
+        <View className="mb-7.5">
           <Pressable 
             onPress={() => setIsHowToUseExpanded(!isHowToUseExpanded)}
             className={`p-4 rounded-lg ${isHowToUseExpanded ? 'mb-4' : ''}`}
@@ -778,7 +777,7 @@ export default function QuantumAPIPage() {
         </View>
 
         {/* Code Examples Section */}
-        <View className="mb-[30px]">
+        <View className="mb-7.5">
           <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
             💻 Code Examples
           </ThemedText>
@@ -855,7 +854,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
         </View>
 
         {/* Technical Details Section */}
-        <View className="mb-[30px]">
+        <View className="mb-7.5">
           <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
             🔬 Technical Details
           </ThemedText>
@@ -904,7 +903,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
         </View>
 
         {/* Use Cases Section */}
-        <View className="mb-[30px]">
+        <View className="mb-7.5">
           <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
             🎯 Use Cases
           </ThemedText>

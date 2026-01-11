@@ -18,11 +18,11 @@ export default function Index() {
         contentContainerClassName="flex-grow items-center justify-center py-5 px-5"
       >
         {/* pressable to go to website creation intake */}
-        <Pressable className="w-full max-w-[720px] p-4 rounded-xl mb-4" onPress={() => router.push('/(tabs)/about/(website-forms)/website-intake' as Routes)}>
+        <Pressable className="w-full max-w-180 p-4 rounded-xl mb-4" onPress={() => router.push('/(tabs)/about/(website-forms)/website-intake' as Routes)}>
           <Text className="text-base text-center">Get your portfolio or website created here! Click to fill out the website intake form.</Text>
         </Pressable>
         {/* pressable to go to portfolio piece intake */}
-        <Pressable className="w-full max-w-[720px] p-4 rounded-xl" onPress={() => router.push('/(tabs)/about/(website-forms)/portfolio-intake' as Routes)}>
+        <Pressable className="w-full max-w-180 p-4 rounded-xl" onPress={() => router.push('/(tabs)/about/(website-forms)/portfolio-intake' as Routes)}>
           <Text className="text-base text-center">Click here to enter the information for each of your portfolio pieces after you have filled out the website intake form.</Text>
         </Pressable>
         <Foot />

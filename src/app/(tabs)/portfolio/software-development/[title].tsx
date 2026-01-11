@@ -106,9 +106,9 @@ export default function Page() {
                   onChangeState={onStateChange}
                 />)}
               </View>
-              <View className="bg-black h-px w-full my-5" />
+              <View className="bg-secondary h-px w-full my-5" />
               {element.highlights && (<HighlightView highlights={element.highlights}/>)}
-              <View className="bg-black h-px w-full my-5" />
+              <View className="bg-secondary h-px w-full my-5" />
               {element.skillsUsed && (
                   <>
                   <Text className="text-[3%] text-left font-bold text-tint mt-[2%] mb-[1%]">Skills Used</Text>
@@ -159,7 +159,7 @@ export default function Page() {
     >
       <View className="bg-themed">
         <MobileDetailsBackgroundGradient/>
-        <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-[1200px] self-center justify-around">{data}</View>
+        <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-300 self-center justify-around">{data}</View>
       </View>
     </ScrollView>
 

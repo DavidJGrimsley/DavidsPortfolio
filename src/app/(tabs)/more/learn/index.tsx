@@ -70,8 +70,8 @@ const Page = () => {
         </ScrollView>
         <View className="justify-center w-[40%]">
           <Text className="text-[1.75%] text-center italic mb-[0.5%]">Summer classes are currently open!</Text>
-          <Pressable className="self-center px-4 py-2.5 rounded-[10px] mb-2.5" onPress={() => router.push('/(tabs)/learn/SignUp' as Href)}>
-            <Text className="font-bold text-center">Sign Up</Text>
+          <Pressable className="self-center px-4 py-2.5 rounded-2.5 mb-2.5" onPress={() => router.push('/(tabs)/learn/SignUp' as Href)}>
+            <Text className="font-bold text-themed text-center">Sign Up</Text>
           </Pressable>
           <Text className="text-[1.25%] ml-[0.5%] mb-[0.25%]">Please browse the rest of this website for projects that you could learn how to make.</Text>
         </View>

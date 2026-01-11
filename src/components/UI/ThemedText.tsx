@@ -18,16 +18,16 @@ export function ThemedText({
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
   const typeClassName = 
-    type === 'title' ? 'text-[32px] font-bold leading-[32px]' :
+    type === 'title' ? 'text-8 font-bold leading-8' :
     type === 'defaultSemiBold' ? 'text-base leading-6 font-semibold' :
     type === 'subtitle' ? 'text-xl font-bold' :
-    type === 'link' ? 'text-base leading-[30px] text-[#0a7ea4]' :
+    type === 'link' ? 'text-base leading-7.5 text-tint' :
     'text-base leading-6';
 
   return (
     <Text
       style={[{ color }, style]}
-      className={`${typeClassName} ${className || ''}`}
+      className={`text-themed ${typeClassName} ${className || ''}`}
       {...rest}
     />
   );

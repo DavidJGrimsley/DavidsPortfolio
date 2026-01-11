@@ -319,7 +319,7 @@ export default function MCPAppPage() {
       >
         <View className="flex-1">
           <MobileDetailsBackgroundGradient />
-          <View className="flex-1 w-full max-w-[1200px] self-center bg-transparent px-5 py-[30px] pb-[60px]">
+          <View className="flex-1 w-full max-w-300 self-center bg-transparent px-5 py-7.5 pb-15">
           <MCPHeroSection
             title="mrdj-app-mcp"
             version={serverVersion}
@@ -360,7 +360,7 @@ export default function MCPAppPage() {
             {mcpEndpoints.map((endpoint) => (
               <View
                 key={endpoint.id || endpoint.url}
-                className="rounded-[10px] p-4 mb-3 border-l-[3px]"
+                className="rounded-2.5 p-4 mb-3 border-l-4"
                 style={{ backgroundColor: accentColor, borderLeftColor: tintColor }}
               >
                 <View className="flex-row items-center mb-2">
@@ -454,7 +454,7 @@ export default function MCPAppPage() {
             ))}
 
             <View
-              className="rounded-[10px] p-4 mt-2"
+              className="rounded-2.5 p-4 mt-2"
               style={{ backgroundColor: tintColor + '20' }}
             >
               <View className="flex-row items-center mb-2">
@@ -498,20 +498,19 @@ export default function MCPAppPage() {
 
           {/* How to Use Section */}
           <MCPCollapsibleSection title="How to Use" icon="book">
-            <View
-              className="bg-[#dcfce7] rounded-[10px] p-4 mb-5 border-l-4 border-l-[#10b981]"
-            >
+            <View className="bg-secondary/15 rounded-2.5 p-4 mb-5 border-l-4 border-l-tint">
               <View className="flex-row items-center mb-2">
-                <Ionicons name="rocket" size={20} color="#10b981" className="mr-2" />
-                <ThemedText className="text-[2%] font-semibold text-[#166534]">
+                <Ionicons name="rocket" size={20} color={tintColor} className="mr-2" />
+                <ThemedText className="text-[2%] font-semibold">
                   Quick Start: Use the Public Endpoint
                 </ThemedText>
               </View>
-              <ThemedText className="text-[1.7%] text-[#166534]">
+              <ThemedText className="text-[1.7%]">
                 No installation needed! Connect your AI client directly to the live endpoint:
               </ThemedText>
               <ThemedText
-                className="text-[1.6%] font-mono text-[#10b981] font-semibold mt-2"
+                className="text-[1.6%] font-mono font-semibold mt-2"
+                style={{ color: tintColor }}
               >
                 {mcpEndpointUrl}
               </ThemedText>
@@ -564,19 +563,17 @@ export default function MCPAppPage() {
 }`}
             />
 
-            <View
-              className="bg-[#dbeafe] rounded-[10px] p-4 mt-3 mb-5 border-l-[3px] border-l-[#3b82f6]"
-            >
+            <View className="bg-tint/15 rounded-2.5 p-4 mt-3 mb-5 border-l-4 border-l-tint">
               <View className="flex-row items-center mb-2">
-                <Ionicons name="information-circle" size={20} color="#3b82f6" className="mr-2" />
-                <ThemedText className="text-[1.8%] font-semibold text-[#1e40af]">
+                <Ionicons name="information-circle" size={20} color={tintColor} className="mr-2" />
+                <ThemedText className="text-[1.8%] font-semibold">
                   More Information
                 </ThemedText>
               </View>
-              <ThemedText className="text-[1.6%] text-[#1e40af]">
+              <ThemedText className="text-[1.6%]">
                 Visit{' '}
                 <ExternalLink href={MCP_BASE_URL}>
-                  <ThemedText className="font-semibold text-[#2563eb]">
+                  <ThemedText className="font-semibold" style={{ color: tintColor }}>
                     davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp
                   </ThemedText>
                 </ExternalLink>
@@ -659,16 +656,14 @@ npm start`}
               </View>
             </GreyView>
 
-            <View
-              className="bg-[#fef3c7] rounded-[10px] p-4 border-l-[3px] border-l-[#f59e0b]"
-            >
+            <View className="bg-accent/15 rounded-2.5 p-4 border-l-4 border-l-tint">
               <View className="flex-row items-center mb-2">
-                <Ionicons name="bulb" size={20} color="#f59e0b" className="mr-2" />
-                <ThemedText className="text-[1.8%] font-semibold text-[#92400e]">
+                <Ionicons name="bulb" size={20} color={tintColor} className="mr-2" />
+                <ThemedText className="text-[1.8%] font-semibold">
                   Pro Tip
                 </ThemedText>
               </View>
-              <ThemedText className="text-[1.6%] text-[#92400e]">
+              <ThemedText className="text-[1.6%]">
                 You don't need to explicitly mention the MCP server in your prompts. Once configured, the AI will
                 automatically use the resources when relevant to your questions.
               </ThemedText>
@@ -716,7 +711,7 @@ npm start`}
             </GreyView>
 
             <View
-              className="rounded-[10px] p-4 mb-3 border-l-4 border-l-[#10b981]"
+              className="rounded-2.5 p-4 mb-3 border-l-4 border-l-[#10b981]"
               style={{ backgroundColor: accentColor }}
             >
               <View className="flex-row items-center mb-3">
@@ -752,7 +747,7 @@ npm start`}
           {/* Use Cases Section */}
           <MCPCollapsibleSection title="Use Cases" icon="apps">
             <View
-              className="rounded-[10px] p-4 mb-3"
+              className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
               <ThemedText className="text-[2%] font-semibold mb-2">
@@ -765,7 +760,7 @@ npm start`}
             </View>
 
             <View
-              className="rounded-[10px] p-4 mb-3"
+              className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
               <ThemedText className="text-[2%] font-semibold mb-2">
@@ -778,7 +773,7 @@ npm start`}
             </View>
 
             <View
-              className="rounded-[10px] p-4 mb-3"
+              className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
               <ThemedText className="text-[2%] font-semibold mb-2">
@@ -791,7 +786,7 @@ npm start`}
             </View>
 
             <View
-              className="rounded-[10px] p-4 mb-3"
+              className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
               <ThemedText className="text-[2%] font-semibold mb-2">
@@ -868,7 +863,7 @@ npm start`}
 
             <Pressable
               onPress={() => Linking.openURL(githubRepoUrl)}
-              className="rounded-[10px] p-4 mb-3 flex-row items-center"
+              className="rounded-2.5 p-4 mb-3 flex-row items-center"
               style={{ backgroundColor: accentColor }}
             >
               <Ionicons name="logo-github" size={24} color={textColor} className="mr-3" />
@@ -885,7 +880,7 @@ npm start`}
 
             <Pressable
               onPress={() => Linking.openURL('https://modelcontextprotocol.io')}
-              className="rounded-[10px] p-4 mb-3 flex-row items-center"
+              className="rounded-2.5 p-4 mb-3 flex-row items-center"
               style={{ backgroundColor: accentColor }}
             >
               <Ionicons name="document-text" size={24} color={textColor} className="mr-3" />
@@ -902,7 +897,7 @@ npm start`}
 
             <Pressable
               onPress={() => Linking.openURL('https://davidjgrimsley.com')}
-              className="rounded-[10px] p-4 flex-row items-center"
+              className="rounded-2.5 p-4 flex-row items-center"
               style={{ backgroundColor: accentColor }}
             >
               <Ionicons name="person-circle" size={24} color={textColor} className="mr-3" />
@@ -920,7 +915,7 @@ npm start`}
 
           {/* Portfolio Data Sync Note */}
           <View
-            className="mt-6 rounded-[10px] p-3.5 flex-row items-center gap-2.5"
+            className="mt-6 rounded-2.5 p-3.5 flex-row items-center gap-2.5"
             style={{ backgroundColor: accentColor }}
           >
             <Ionicons

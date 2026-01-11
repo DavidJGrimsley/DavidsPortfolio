@@ -9,7 +9,7 @@ type HorizontalLinksProps = {
 
 export function HorizontalLinks({ github, site, steam }: HorizontalLinksProps) {
     return (
-        <View className="flex-row justify-center items-center my-[10px]">
+        <View className="flex-row justify-center items-center my-2.5">
             {github && (
                 <Pressable className="bg-accent p-[1%] rounded-[1%] m-[1%] w-[20%] self-center" onPress={() => window.open(github)}>
                     <Text className="text-secondary text-center text-[2%]">Github</Text>

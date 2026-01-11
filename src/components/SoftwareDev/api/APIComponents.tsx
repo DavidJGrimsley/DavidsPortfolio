@@ -47,6 +47,7 @@ export function EndpointCard({
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
+  const secondaryColor = useThemeColor({}, 'secondary');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testParams, setTestParams] = useState<Record<string, any>>({});
@@ -142,9 +143,22 @@ export function EndpointCard({
     }
   };
 
+  const withOpacity = (color: string, opacity: number) => {
+    const alpha = Math.max(0, Math.min(1, opacity));
+    const hex = color.replace('#', '');
+    if (hex.length !== 6 && hex.length !== 8) return color;
+
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   return (
     <View style={{
-      backgroundColor: accentColor,
+      backgroundColor: withOpacity(accentColor, 0.18),
+      borderWidth: 1,
+      borderColor: withOpacity(accentColor, 0.35),
       borderRadius: 12,
       padding: 16,
       marginBottom: 12,
@@ -170,7 +184,8 @@ export function EndpointCard({
           <ThemedText type="defaultSemiBold" style={{ 
             fontSize: RFPercentage(1.8),
             fontFamily: 'monospace',
-            flex: 1
+            flex: 1,
+            color: secondaryColor,
           }}>
             {path}
           </ThemedText>
@@ -178,7 +193,7 @@ export function EndpointCard({
             {isExpanded ? '▼' : '▶'}
           </ThemedText>
         </View>
-        <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.8 }}>
+        <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.85, color: secondaryColor }}>
           {summary}
         </ThemedText>
       </Pressable>
@@ -191,7 +206,7 @@ export function EndpointCard({
               <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.6), marginBottom: 4 }}>
                 Description
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.8 }}>
+              <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.85, color: secondaryColor }}>
                 {description}
               </ThemedText>
             </View>

@@ -46,7 +46,7 @@ export default function ParallaxScrollView({
     <ThemedView className="flex-1">
       <Animated.ScrollView ref={scrollRef} scrollEventThrottle={16}>
         <Animated.View
-          className="h-[250px] overflow-hidden"
+          className="h-62.5 overflow-hidden"
           style={[
             { backgroundColor: headerBackgroundColor[colorScheme] },
             headerAnimatedStyle,

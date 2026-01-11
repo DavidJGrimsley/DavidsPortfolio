@@ -689,6 +689,27 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
     return 'scale-1';
   }, [hoveredIndex]);
 
+  // Compute if any group is showing expansion message (manually expanded, not via active child)
+  const hasExpandedGroupWithMessage = useMemo(() => {
+    if (!expandedGroup) return false;
+    const group = tabs.find(t => isTabGroup(t) && t.name === expandedGroup) as TabGroup | undefined;
+    if (!group) return false;
+    const hasActiveChild = group.items.some(item => isRouteActive(activeRoute, item.route));
+    return !hasActiveChild; // Message shows only when no active child
+  }, [expandedGroup, tabs, activeRoute]);
+
+  const handleOverlayPressWithMessage = useCallback(() => {
+    // Close expanded group if that's why overlay is showing
+    if (hasExpandedGroupWithMessage) {
+      setExpandedGroup(null);
+    }
+    // Also handle nested page collapse
+    if (showOverlay) {
+      setIsCollapsed(true);
+      setShowOverlay(false);
+    }
+  }, [hasExpandedGroupWithMessage, showOverlay]);
+
   // Don't render on non-web platforms
   if (Platform.OS !== 'web') {
     return null;
@@ -714,15 +735,6 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
     minWidth: 110,
   };
 
-  // Compute if any group is showing expansion message (manually expanded, not via active child)
-  const hasExpandedGroupWithMessage = useMemo(() => {
-    if (!expandedGroup) return false;
-    const group = tabs.find(t => isTabGroup(t) && t.name === expandedGroup) as TabGroup | undefined;
-    if (!group) return false;
-    const hasActiveChild = group.items.some(item => isRouteActive(activeRoute, item.route));
-    return !hasActiveChild; // Message shows only when no active child
-  }, [expandedGroup, tabs, activeRoute]);
-
   // Single overlay: show when nested page overlay OR when expansion message is visible
   const shouldShowOverlay = showOverlay || hasExpandedGroupWithMessage;
 
@@ -737,18 +749,6 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
     pointerEvents: shouldShowOverlay ? 'auto' : 'none',
     transition: 'opacity 0.3s ease',
   };
-
-  const handleOverlayPressWithMessage = useCallback(() => {
-    // Close expanded group if that's why overlay is showing
-    if (hasExpandedGroupWithMessage) {
-      setExpandedGroup(null);
-    }
-    // Also handle nested page collapse
-    if (showOverlay) {
-      setIsCollapsed(true);
-      setShowOverlay(false);
-    }
-  }, [hasExpandedGroupWithMessage, showOverlay]);
 
   return (
     <>

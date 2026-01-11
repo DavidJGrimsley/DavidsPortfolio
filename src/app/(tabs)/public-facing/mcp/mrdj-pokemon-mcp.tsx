@@ -268,9 +268,7 @@ export default function MRDJPokemonMcpPage() {
       >
         <View className="flex-1">
           <MobileDetailsBackgroundGradient />
-          <View
-            className="flex-1 w-full max-w-[1200px] self-center bg-transparent px-5 py-[30px] pb-[60px]"
-          >
+          <View className="flex-1 w-full max-w-300 self-center bg-transparent px-5 py-7.5 pb-15">
             <MCPHeroSection
               title="mrdj-pokemon-mcp"
               version={serverVersion}
@@ -301,7 +299,7 @@ export default function MRDJPokemonMcpPage() {
             {mcpEndpoints.map((endpoint) => (
               <View
                 key={endpoint.id || endpoint.url}
-                className="rounded-[10px] p-4 mb-3 border-l-[3px]"
+                className="rounded-2.5 p-4 mb-3 border-l-4"
                 style={{ backgroundColor: accentColor, borderLeftColor: tintColor }}
               >
                 <View className="flex-row items-center mb-2">
@@ -416,7 +414,7 @@ export default function MRDJPokemonMcpPage() {
 
             {mcpPrompts.length === 0 ? (
               <View
-                className="rounded-[10px] p-4"
+                className="rounded-2.5 p-4"
                 style={{ backgroundColor: tintColor + '20' }}
               >
                 <ThemedText className="text-[1.7%] opacity-85">
