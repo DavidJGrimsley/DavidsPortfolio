@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, Clipboard } from 'react-native';
+import { View, Pressable, Clipboard } from 'react-native';
 import Head from 'expo-router/head';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { BackgroundGradient } from '@/components/Gradients';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
 import {
@@ -14,6 +13,7 @@ import {
   MCPPromptCard,
 } from '~/src/components/PublicFacing/mcp/MCPComponents';
 import { MCPHeroSection, MCPWhatIsSection } from '~/src/components/PublicFacing/mcp/MCPPageSections';
+import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
 
 const MCP_ENDPOINT = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-pokemon-mcp';
@@ -262,172 +262,163 @@ export default function MRDJPokemonMcpPage() {
         <meta name="robots" content="index, follow" />
       </Head>
 
-      <ScrollView
-        showsHorizontalScrollIndicator={false}
-        contentContainerClassName="flex-grow"
-      >
-        <View className="flex-1">
-          <BackgroundGradient />
-          <View className="flex-1 w-full max-w-300 self-center bg-transparent px-5 py-7.5 pb-15">
-            <MCPHeroSection
-              title="mrdj-pokemon-mcp"
-              version={serverVersion}
-              description={
-                'MCP server exposing Pokémon strategy guides and PokéAPI-style tools: Pokémon lookup/search, type\n' +
-                'effectiveness, counter suggestions, and team coverage helpers. Now live and publicly accessible.'
-              }
-              keyFeatures={[
-                'Built-in Pokémon strategy guides as MCP resources',
-                'Pokémon lookup/search from a local PokeAPI data sync',
-                'Type effectiveness calculator (1–2 defending types)',
-                'Counters + team defensive coverage suggestions',
-              ]}
-              mcpEndpointUrl={mcpEndpointUrl}
-              githubRepoUrl={githubRepoUrl}
-              copiedEndpoint={copied}
-              onCopyEndpoint={handleCopyEndpoint}
-              tintColor={tintColor}
-              accentColor={accentColor}
-              textColor={textColor}
-              iconName="paw"
-              endpointLabel="🌐 Live MCP Endpoint (Streamable HTTP):"
-            />
+      <PublicFacingDetailWrapper>
+        <MCPHeroSection
+          title="mrdj-pokemon-mcp"
+          version={serverVersion}
+          description={
+            'MCP server exposing Pokémon strategy guides and PokéAPI-style tools: Pokémon lookup/search, type\n' +
+            'effectiveness, counter suggestions, and team coverage helpers. Now live and publicly accessible.'
+          }
+          keyFeatures={[
+            'Built-in Pokémon strategy guides as MCP resources',
+            'Pokémon lookup/search from a local PokeAPI data sync',
+            'Type effectiveness calculator (1–2 defending types)',
+            'Counters + team defensive coverage suggestions',
+          ]}
+          mcpEndpointUrl={mcpEndpointUrl}
+          githubRepoUrl={githubRepoUrl}
+          copiedEndpoint={copied}
+          onCopyEndpoint={handleCopyEndpoint}
+          tintColor={tintColor}
+          accentColor={accentColor}
+          textColor={textColor}
+          iconName="paw"
+          endpointLabel="🌐 Live MCP Endpoint (Streamable HTTP):"
+        />
 
-            <MCPWhatIsSection tintColor={tintColor} />
+        <MCPWhatIsSection tintColor={tintColor} />
 
-            <MCPCollapsibleSection title="Endpoints" icon="link">
-            {mcpEndpoints.map((endpoint) => (
-              <View
-                key={endpoint.id || endpoint.url}
-                className="rounded-2.5 p-4 mb-3 border-l-4"
-                style={{ backgroundColor: accentColor, borderLeftColor: tintColor }}
-              >
-                <View className="flex-row items-center mb-2">
-                  <View
-                    className="px-2.5 py-1.5 rounded-lg mr-3"
-                    style={{ backgroundColor: tintColor }}
-                  >
-                    <ThemedText className="badge-text text-white">
-                      {String(endpoint.method ?? 'GET').toUpperCase()}
-                    </ThemedText>
-                  </View>
-                  <ThemedText className="detail-subheader flex-1" style={{ color: textColor }}>
-                    {endpoint.title}
+        <MCPCollapsibleSection title="Endpoints" icon="link">
+          {mcpEndpoints.map((endpoint) => (
+            <View
+              key={endpoint.id || endpoint.url}
+              className="rounded-2.5 p-4 mb-3 border-l-4"
+              style={{ backgroundColor: accentColor, borderLeftColor: tintColor }}
+            >
+              <View className="flex-row items-center mb-2">
+                <View
+                  className="px-2.5 py-1.5 rounded-lg mr-3"
+                  style={{ backgroundColor: tintColor }}
+                >
+                  <ThemedText className="badge-text text-white">
+                    {String(endpoint.method ?? 'GET').toUpperCase()}
                   </ThemedText>
                 </View>
-
-                {endpoint.description ? (
-                  <ThemedText className="detail-body opacity-75 mb-2.5" style={{ color: textColor }}>
-                    {endpoint.description}
-                  </ThemedText>
-                ) : null}
-
-                <View className="flex-row items-center gap-2">
-                  <ExternalLink href={endpoint.url}>
-                    <ThemedText
-                      className="detail-body font-mono font-semibold"
-                      style={{ color: tintColor }}
-                    >
-                      {endpoint.url}
-                    </ThemedText>
-                  </ExternalLink>
-
-                  <Pressable
-                    onPress={() => handleCopyUrl(endpoint.url)}
-                    style={({ pressed }) => ({
-                      backgroundColor: copiedUrl === endpoint.url ? tintColor : tintColor + '20',
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 8,
-                      opacity: pressed ? 0.7 : 1,
-                    })}
-                    accessibilityLabel={`Copy ${endpoint.title} URL`}
-                  >
-                    <Ionicons
-                      name={copiedUrl === endpoint.url ? 'checkmark' : 'copy-outline'}
-                      size={20}
-                      color={copiedUrl === endpoint.url ? '#fff' : tintColor}
-                    />
-                  </Pressable>
-                </View>
-
-                {(endpoint.transport || endpoint.contentType) && (
-                  <View className="flex-row flex-wrap gap-2 mt-3">
-                    {endpoint.transport ? (
-                      <View
-                        className="px-2.5 py-1.5 rounded-lg"
-                        style={{ backgroundColor: tintColor + '20' }}
-                      >
-                        <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
-                          Transport: <ThemedText className="font-semibold">{endpoint.transport}</ThemedText>
-                        </ThemedText>
-                      </View>
-                    ) : null}
-
-                    {endpoint.contentType ? (
-                      <View
-                        className="px-2.5 py-1.5 rounded-lg"
-                        style={{ backgroundColor: tintColor + '20' }}
-                      >
-                        <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
-                          Content-Type: <ThemedText className="font-semibold">{endpoint.contentType}</ThemedText>
-                        </ThemedText>
-                      </View>
-                    ) : null}
-                  </View>
-                )}
-              </View>
-            ))}
-          </MCPCollapsibleSection>
-
-          <MCPCollapsibleSection title="Available Resources" icon="library">
-            <GreyView className="mb-4">
-              <ThemedText className="detail-body opacity-80">
-                These guides are exposed as MCP resources. AI tools can read and reference them when answering Pokémon
-                questions.
-              </ThemedText>
-            </GreyView>
-
-            {mcpResources.map((resource) => (
-              <MCPResourceCard key={resource.id} {...resource} />
-            ))}
-          </MCPCollapsibleSection>
-
-          <MCPCollapsibleSection title="Tools" icon="construct">
-            <GreyView className="mb-4">
-              <ThemedText className="detail-body opacity-80">
-                Tools are functions an AI assistant can invoke (lookup, search, matchup math, counters, team suggestions).
-              </ThemedText>
-            </GreyView>
-
-            {mcpTools.map((tool) => (
-              <MCPToolCard key={tool.name} {...tool} />
-            ))}
-          </MCPCollapsibleSection>
-
-          <MCPCollapsibleSection title="Prompts" icon="chatbubbles">
-            <GreyView className="mb-4">
-              <ThemedText className="detail-body opacity-80">
-                This server currently does not ship custom prompts (it focuses on resources + tools).
-              </ThemedText>
-            </GreyView>
-
-            {mcpPrompts.length === 0 ? (
-              <View
-                className="rounded-2.5 p-4"
-                style={{ backgroundColor: tintColor + '20' }}
-              >
-                <ThemedText className="detail-body opacity-85">
-                  No prompts available.
+                <ThemedText className="detail-subheader flex-1" style={{ color: textColor }}>
+                  {endpoint.title}
                 </ThemedText>
               </View>
-            ) : (
-              mcpPrompts.map((prompt) => <MCPPromptCard key={prompt.name} {...prompt} />)
-            )}
-          </MCPCollapsibleSection>
-          </View>
-        </View>
-      </ScrollView>
+
+              {endpoint.description ? (
+                <ThemedText className="detail-body opacity-75 mb-2.5" style={{ color: textColor }}>
+                  {endpoint.description}
+                </ThemedText>
+              ) : null}
+
+              <View className="flex-row items-center gap-2">
+                <ExternalLink href={endpoint.url}>
+                  <ThemedText
+                    className="detail-body font-mono font-semibold"
+                    style={{ color: tintColor }}
+                  >
+                    {endpoint.url}
+                  </ThemedText>
+                </ExternalLink>
+
+                <Pressable
+                  onPress={() => handleCopyUrl(endpoint.url)}
+                  style={({ pressed }) => ({
+                    backgroundColor: copiedUrl === endpoint.url ? tintColor : tintColor + '20',
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 8,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                  accessibilityLabel={`Copy ${endpoint.title} URL`}
+                >
+                  <Ionicons
+                    name={copiedUrl === endpoint.url ? 'checkmark' : 'copy-outline'}
+                    size={20}
+                    color={copiedUrl === endpoint.url ? '#fff' : tintColor}
+                  />
+                </Pressable>
+              </View>
+
+              {(endpoint.transport || endpoint.contentType) && (
+                <View className="flex-row flex-wrap gap-2 mt-3">
+                  {endpoint.transport ? (
+                    <View
+                      className="px-2.5 py-1.5 rounded-lg"
+                      style={{ backgroundColor: tintColor + '20' }}
+                    >
+                      <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
+                        Transport: <ThemedText className="font-semibold">{endpoint.transport}</ThemedText>
+                      </ThemedText>
+                    </View>
+                  ) : null}
+
+                  {endpoint.contentType ? (
+                    <View
+                      className="px-2.5 py-1.5 rounded-lg"
+                      style={{ backgroundColor: tintColor + '20' }}
+                    >
+                      <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
+                        Content-Type: <ThemedText className="font-semibold">{endpoint.contentType}</ThemedText>
+                      </ThemedText>
+                    </View>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          ))}
+        </MCPCollapsibleSection>
+
+        <MCPCollapsibleSection title="Available Resources" icon="library">
+          <GreyView className="mb-4">
+            <ThemedText className="detail-body opacity-80">
+              These guides are exposed as MCP resources. AI tools can read and reference them when answering Pokémon questions.
+            </ThemedText>
+          </GreyView>
+
+          {mcpResources.map((resource) => (
+            <MCPResourceCard key={resource.id} {...resource} />
+          ))}
+        </MCPCollapsibleSection>
+
+        <MCPCollapsibleSection title="Tools" icon="construct">
+          <GreyView className="mb-4">
+            <ThemedText className="detail-body opacity-80">
+              Tools are functions an AI assistant can invoke (lookup, search, matchup math, counters, team suggestions).
+            </ThemedText>
+          </GreyView>
+
+          {mcpTools.map((tool) => (
+            <MCPToolCard key={tool.name} {...tool} />
+          ))}
+        </MCPCollapsibleSection>
+
+        <MCPCollapsibleSection title="Prompts" icon="chatbubbles">
+          <GreyView className="mb-4">
+            <ThemedText className="detail-body opacity-80">
+              This server currently does not ship custom prompts (it focuses on resources + tools).
+            </ThemedText>
+          </GreyView>
+
+          {mcpPrompts.length === 0 ? (
+            <View
+              className="rounded-2.5 p-4"
+              style={{ backgroundColor: tintColor + '20' }}
+            >
+              <ThemedText className="detail-body opacity-85">
+                No prompts available.
+              </ThemedText>
+            </View>
+          ) : (
+            mcpPrompts.map((prompt) => <MCPPromptCard key={prompt.name} {...prompt} />)
+          )}
+        </MCPCollapsibleSection>
+      </PublicFacingDetailWrapper>
     </>
   );
 }

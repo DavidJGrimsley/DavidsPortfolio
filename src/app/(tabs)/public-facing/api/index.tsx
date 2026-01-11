@@ -1,11 +1,9 @@
 import React, { useMemo } from 'react';
-import { View, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ThemedText } from '@/components/UI/ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsAPICard } from '~/src/components/PublicFacing/api/WhatIsAPICard';
+import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
 import { useFetchPortfolio } from '@/hooks/useFetchPortfolio';
 import apisData from '@json/apis.json';
 
@@ -37,7 +35,6 @@ type QuantumPortfolio = {
 
 export default function APIIndexPage() {
   const router = useRouter();
-  const backgroundColor = useThemeColor({}, 'background');
 
   const { data: portfolioQuantum } = useFetchPortfolio<QuantumPortfolio>(QUANTUM_PORTFOLIO_URL, {
     retryOn304: true,
@@ -58,39 +55,28 @@ export default function APIIndexPage() {
     : fallbackApis;
 
   return (
-    <View className="flex-1" style={{ backgroundColor }}>
-      {/* Title Section */}
-      <View className="px-5 pt-10 pb-5">
-        <ThemedText type="title" className="mb-2 text-[4%] leading-[4.8%]">
-          Public APIs
-        </ThemedText>
-        <ThemedText className="opacity-70 text-[2%] leading-[2.8%]">
-          Open APIs hosted by David Grimsley for public use
-        </ThemedText>
-      </View>
-
-      <ScrollView 
-        contentContainerClassName="px-5 pb-10 gap-4"
-      >
-        {apis.map((api) => (
-          <SoftwareCard
-            key={api.id}
-            item={api}
-            stats={[
-              { emoji: '📡', label: `${api.endpoints} endpoints` },
-              { emoji: '⚡', label: `${api.uptime} uptime` },
-            ]}
-            onPress={() => handleAPIPress(api.id)}
-          />
-        ))}
-
-        <WhatIsAPICard />
-
-        <ComingSoonCard
-          title="More APIs Coming Soon"
-          description="Stay tuned for additional public APIs covering authentication, data processing, and more."
+    <PublicFacingIndexWrapper
+      title="Public APIs"
+      subtitle="Open APIs hosted by David Grimsley for public use"
+    >
+      {apis.map((api) => (
+        <SoftwareCard
+          key={api.id}
+          item={api}
+          stats={[
+            { emoji: '📡', label: `${api.endpoints} endpoints` },
+            { emoji: '⚡', label: `${api.uptime} uptime` },
+          ]}
+          onPress={() => handleAPIPress(api.id)}
         />
-      </ScrollView>
-    </View>
+      ))}
+
+      <WhatIsAPICard />
+
+      <ComingSoonCard
+        title="More APIs Coming Soon"
+        description="Stay tuned for additional public APIs covering authentication, data processing, and more."
+      />
+    </PublicFacingIndexWrapper>
   );
 }

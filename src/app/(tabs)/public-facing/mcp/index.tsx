@@ -1,19 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import Head from 'expo-router/head';
-import { ThemedText } from '@/components/UI/ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsMCPCard } from '~/src/components/PublicFacing/mcp/WhatIsMCPCard';
+import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
 import mcpServersData from '@json/mcpServers.json';
 
 export default function MCPIndexPage() {
   const router = useRouter();
-  const backgroundColor = useThemeColor({}, 'background');
-  const accentColor = useThemeColor({}, 'accent');
-  const tintColor = useThemeColor({}, 'tint');
 
   const [syncedMetaById, setSyncedMetaById] = useState<
     Record<
@@ -157,60 +152,49 @@ export default function MCPIndexPage() {
           })}
         </script>
       </Head>
+      
+      <PublicFacingIndexWrapper
+        title="MCP Servers"
+        subtitle="Model Context Protocol servers exposing structured development knowledge for AI tools"
+      >
+        {servers.map((server) => {
+          const synced = syncedMetaById[server.id];
+          const version = synced?.version ?? server.version;
+          const resources = synced?.resources ?? server.resources;
+          const tools = synced?.tools ?? server.tools;
+          const prompts = synced?.prompts ?? server.prompts;
 
-      <View className="flex-1" style={{ backgroundColor }}>
-        {/* Title Section */}
-        <View className="px-5 pt-10 pb-5">
-          <ThemedText type="title" className="text-[4%] leading-[4.8%] mb-2">
-            MCP Servers
-          </ThemedText>
-          <ThemedText className="text-[2%] leading-[2.8%] opacity-70">
-            Model Context Protocol servers exposing structured development knowledge for AI tools
-          </ThemedText>
-        </View>
+          const isSynced = synced?.isSynced === true;
+          const isOffline = synced?.isSynced === false;
+          const isLive = server.status === 'active' && !isOffline;
 
-        <ScrollView 
-          contentContainerClassName="px-5 pb-10 gap-4"
-        >
-          {servers.map((server) => {
-            const synced = syncedMetaById[server.id];
-            const version = synced?.version ?? server.version;
-            const resources = synced?.resources ?? server.resources;
-            const tools = synced?.tools ?? server.tools;
-            const prompts = synced?.prompts ?? server.prompts;
+          return (
+            <SoftwareCard
+              key={server.id}
+              item={{
+                ...server,
+                version,
+                status: isLive ? 'active' : 'inactive',
+              }}
+              stats={[
+                { emoji: '📚', label: `${resources} resources` },
+                { emoji: '🔧', label: `${tools} ${tools === 1 ? 'tool' : 'tools'}` },
+                { emoji: '💬', label: `${prompts} prompts` },
+              ]}
+              onPress={() => handleMCPPress(server.id)}
+            />
+          );
+        })}
 
-            const isSynced = synced?.isSynced === true;
-            const isOffline = synced?.isSynced === false;
-            const isLive = server.status === 'active' && !isOffline;
+        {/* What is MCP? Info Card */}
+        <WhatIsMCPCard />
 
-            return (
-              <SoftwareCard
-                key={server.id}
-                item={{
-                  ...server,
-                  version,
-                  status: isLive ? 'active' : 'inactive',
-                }}
-                stats={[
-                  { emoji: '📚', label: `${resources} resources` },
-                  { emoji: '🔧', label: `${tools} ${tools === 1 ? 'tool' : 'tools'}` },
-                  { emoji: '💬', label: `${prompts} prompts` },
-                ]}
-                onPress={() => handleMCPPress(server.id)}
-              />
-            );
-          })}
-
-          {/* What is MCP? Info Card */}
-          <WhatIsMCPCard />
-
-          {/* Coming Soon Card */}
-          <ComingSoonCard
-            title="More MCP Servers Coming Soon"
-            description="Additional MCP servers in development covering API design, testing patterns, deployment workflows, and more development knowledge bases."
-          />
-        </ScrollView>
-      </View>
+        {/* Coming Soon Card */}
+        <ComingSoonCard
+          title="More MCP Servers Coming Soon"
+          description="Additional MCP servers in development covering API design, testing patterns, deployment workflows, and more development knowledge bases."
+        />
+      </PublicFacingIndexWrapper>
     </>
   );
 }

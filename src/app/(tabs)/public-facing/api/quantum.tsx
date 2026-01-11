@@ -4,11 +4,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { BackgroundGradient } from '@/components/Gradients';
 import { EndpointCard } from '~/src/components/PublicFacing/api/APIComponents';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
 import { HelloWave } from '@/components/QuantumAnimation';
+import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
 import apisData from '@json/apis.json';
 
 const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/api/quantum';
@@ -145,13 +145,7 @@ export default function QuantumAPIPage() {
   };
 
   return (
-    <ScrollView 
-      showsHorizontalScrollIndicator={false}
-      contentContainerClassName="flex-grow"
-    >
-      <View className="flex-1">
-        <BackgroundGradient />
-        <View className="flex-1 w-full max-w-300 self-center bg-transparent px-5 py-7.5 pb-15">
+    <PublicFacingDetailWrapper>
         {/* Header */}
         <View className="mb-7.5">
           <View className="flex-row items-center mb-3">
@@ -980,10 +974,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
               : 'Using local portfolio metadata (offline / fetch failed)'}
           </ThemedText>
         </View>
-
-        </View>
-      </View>
-    </ScrollView>
+      </PublicFacingDetailWrapper>
   );
 }
 

@@ -11,15 +11,20 @@ type CategoryIndexWrapperProps = {
 
 export function CategoryIndexWrapper({ titleA, titleB, category }: CategoryIndexWrapperProps) {
   return (
-    <View className="flex-1 items-center w-full px-[1%] bg-themed">
-      <TitleOfPage titleA={titleA} titleB={titleB} />
+    <View className="flex-1 items-center w-full bg-themed">
+      <View className="w-full max-w-[90%] px-[1%]">
+        <TitleOfPage titleA={titleA} titleB={titleB} />
+      </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        className="grow justify-evenly items-center py-5"
+        className="grow w-full"
+        contentContainerClassName="items-center"
       >
-        <MyCards pageCategory={category} />
-        <Foot />
+        <View className="w-full max-w-[90%] px-[1%] py-5">
+          <MyCards pageCategory={category} />
+          <Foot />
+        </View>
       </ScrollView>
     </View>
   );
