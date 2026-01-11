@@ -3,17 +3,20 @@
 
 /* 
 Colors
-#11181C - charcoal FOR Light mode Text, Dark mode White/Black
-#F8F8F8 - off-white FOR Dark mode Text, Light mode White/Black
+#11181C - Ink Black FOR Light mode Text, Dark mode White/Black
+#F8F8F8 - Bright Snow FOR Dark mode Text, Light mode White/Black
 
-#ae54c4 - light purple FOR Light mode Background
-#20182d - eggplant FOR Dark mode Background
+#E9DDEE - Lavender Veil FOR Light mode Background
+#20182D - Midnight Violet FOR Dark mode Background
 
-##B0F7E3 - light aqua FOR Light mode Secondary
-#a96710 - bronze FOR Dark mode Secondary and Tint
+#A2DDF6 - Frosted Blue FOR Light mode Secondary and Tab Icon Selected
+#A96710 - Copperwood FOR Dark mode Secondary and Tab Icon Selected
 
-#723B80 - plum FOR Light mode Accent
-#321e3bb9 - deep purple( FOR Dark mode Tab Icon Default
+#723B80 - Velvet Orchid FOR Light mode Accent and tab Icon Default
+#321E3B - Midnight Violet FOR Dark mode Accent and tab Icon Default
+
+#0E668B - Baltic Blue FOR Light mode Tint
+#EEA444 - Golden Orange FOR Dark mode Tint
 
 */
 
@@ -27,7 +30,7 @@ Colors
       --color-tint: #0E668B; /* Baltic Blue */
       --color-icon: #687076; /* Dim Grey */
       --color-tab-icon-default: #723B80; /* Velvet Orchid */
-      --color-tab-icon-selected: #0E668B; /* Baltic Blue */
+      --color-tab-icon-selected: #A2DDF6; /* Frosted Blue */
       --color-white-or-black: #F8F8F8; /* Bright Snow */
     }
 
@@ -270,6 +273,7 @@ Colors
     padding: 12px 8px;
     border-radius: 24px;
     background: rgba(128, 128, 128, 0.25);
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     gap: 8px;
     position: fixed;

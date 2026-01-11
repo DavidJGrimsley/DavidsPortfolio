@@ -8,26 +8,26 @@ import { useColorScheme } from 'react-native';
 // Theme tokens matching global.css + temp/Colors.ts
 const lightColors = {
   text: '#11181C',
-  background: '#ae54c4',
-  secondary: '#afeef7',
+  background: '#E9DDEE',
+  secondary: '#A2DDF6',
   accent: '#723B80',
-  tint: '#4B718A',
+  tint: '#0E668B',
   icon: '#687076',
   tabIconDefault: '#723B80',
-  tabIconSelected: '#4B718A',
-  whiteOrBlack: '#F4F4F4',
+  tabIconSelected: '#0E668B',
+  whiteOrBlack: '#F8F8F8',
 };
 
 const darkColors = {
-  text: '#FEFEFE',
-  background: '#20182d',
-  secondary: '#a96710',
-  accent: '#321e3bb9',
-  tint: '#a96710',
+  text: '#F8F8F8',
+  background: '#20182D',
+  secondary: '#A96710',
+  accent: '#321E3B',
+  tint: '#EEA444',
   icon: '#9BA1A6',
-  tabIconDefault: '#321e3bb9',
-  tabIconSelected: '#a96710',
-  whiteOrBlack: '#040404',
+  tabIconDefault: '#321E3B',
+  tabIconSelected: '#A96710',
+  whiteOrBlack: '#11181C',
 };
 
 export function useThemeColor(

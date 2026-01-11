@@ -4,8 +4,8 @@ import { FeaturedCard } from "../../components/FeaturedCard";
 import { Foot } from "../../components/Foot";
 import { TitleOfPage } from "../../components/Categories/TitleOfPage";
 import Game from "../../components/TicTacToe";
-import { BackgroundGradient } from "@/components/Gradients";
 import { Container } from "react-bootstrap";
+import { HomeScreenGradient } from '@/components/Gradients';
 
 
 
@@ -14,8 +14,8 @@ export default function Index() {
 
 
   return (
-    <View className="flex-1 mb-[1%]">
-      <BackgroundGradient/>
+    <View className="flex-1 mb-[1%] bg-themed">
+      <HomeScreenGradient />
       
       <ScrollView 
         showsVerticalScrollIndicator={false} 

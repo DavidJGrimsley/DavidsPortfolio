@@ -5,7 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { MobileDetailsBackgroundGradient } from '@/components/Gradients';
+import { BackgroundGradient } from '@/components/Gradients';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
 import {
@@ -318,7 +318,7 @@ export default function MCPAppPage() {
         contentContainerClassName="flex-grow"
       >
         <View className="flex-1">
-          <MobileDetailsBackgroundGradient />
+          <BackgroundGradient />
           <View className="flex-1 w-full max-w-300 self-center bg-transparent px-5 py-7.5 pb-15">
           <MCPHeroSection
             title="mrdj-app-mcp"

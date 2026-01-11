@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Foot } from "@/components/Foot";
 import { TitleOfPage } from "@/components/Categories/TitleOfPage";
 import { PokemonButtonCredit } from "@/components/PokemonButton";
-import { GameBackgroundGradient } from "@/components/Gradients";
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import { Text, View, ScrollView, Pressable, Linking } from "react-native";
@@ -20,8 +19,7 @@ Remember, we get extra rewards for every 100,000 defeats beyond the first millio
 
 export default function Pokemon() {
   return (
-    <View className="flex-1">
-      <GameBackgroundGradient />
+    <View className="flex-1 bg-themed">
       <TitleOfPage titleA="Pokemon" titleB="Center" />
       <View className="flex-1 items-center justify-center" style={{ minHeight: 400 }}> 
         <View style={{ backgroundColor: 'rgba(40,40,40,0.82)', borderRadius: 18, padding: 28, maxWidth: 600, width: '100%', alignItems: 'center' }}>

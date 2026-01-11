@@ -1,17 +1,15 @@
 import { Foot } from "@/components/Foot";
 import { TitleOfPage } from "@/components/Categories/TitleOfPage";
-import { GameBackgroundGradient } from "@/components/Gradients";
 import React from "react";
 import { Pressable, ScrollView, Text, View, Dimensions } from "react-native";
-import { router } from "expo-router";
+import { type Href, router } from "expo-router";
 
 const screenWidth = Dimensions.get('window').width;
 const isMobile = screenWidth < 768;
 
 export default function Index() {
   return (
-    <View className="flex-1">
-      <GameBackgroundGradient />
+    <View className="flex-1 bg-themed">
       <TitleOfPage titleA="About" titleB="me" />      
       <ScrollView 
         className="flex-1 w-full"
@@ -34,7 +32,7 @@ export default function Index() {
             {/* Website services section */}
             <View className="w-full max-w-130 p-4 rounded-xl my-5">
               <Text className="text-base text-themed text-center">If you are interested in having a website made, please
-              <Pressable className="self-center px-3 py-2 rounded-2.5 my-2.5" onPress={() => router.push('/(tabs)/about/(website-forms)')}>
+              <Pressable className="self-center px-3 py-2 rounded-2.5 my-2.5" onPress={() => router.push('/(tabs)/more/about/(website-forms)' as Href)}>
                 <Text className="text-base font-bold text-themed">Click Here!</Text>
               </Pressable>
               and I will get back to you as soon as possible.</Text>
@@ -43,7 +41,7 @@ export default function Index() {
             {/* Survey section */}
             <View className="w-full max-w-130 p-4 rounded-xl my-5">
               <Text className="text-base text-themed text-center mb-3">After you have visited the site for a while or have fulfilled your purpose of coming here, please take 2 minutes to fill out this usability survey so that I might take your suggestions and make a better website and experience.</Text>
-              <Pressable className="self-center px-4 py-2.5 rounded-2.5" onPress={() => router.push('/(tabs)/about/survey')}>
+              <Pressable className="self-center px-4 py-2.5 rounded-2.5" onPress={() => router.push('/(tabs)/more/about/survey' as Href)}>
                 <Text className="text-base font-bold text-themed">Survey</Text>
               </Pressable>
             </View>

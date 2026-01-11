@@ -67,7 +67,7 @@ const TabLayout = ({  }) => {
    * 
    * @EXTRACT: This pattern should be documented as the recommended usage
    */
-  if (isDesktopWeb) {
+  // if (isDesktopWeb) {
     return (
       <View className="flex-1 flex-row w-full">
 
@@ -102,86 +102,86 @@ const TabLayout = ({  }) => {
    * @EXTRACT: This is the fallback for non-desktop platforms
    * Consider: MobileWebTabBar variant for tablet-sized web browsers
    */
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: tintColor,
-        tabBarInactiveTintColor: tabIconDefault,
-        tabBarAllowFontScaling: true,
-        tabBarLabelPosition: 'below-icon',
-        tabBarStyle: {
-          backgroundColor: secondaryColor,
-          borderTopColor: accentColor,
-          height: RFPercentage(5),
-        },
-        tabBarActiveBackgroundColor: accentColor,
-        tabBarLabelStyle: {
-          fontSize: RFPercentage(1),
-        }
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          headerShadowVisible: false,
-          title: 'David \'DJ\' Grimsley',
-          headerStyle: { backgroundColor: headerBg },
-          headerTitleStyle: { color: secondaryColor },
-          headerRight: () => (
-            <Pressable
-              onPress={() => router.replace('/(tabs)/pokemon' as Href)}
-              style={{ marginRight: 15, padding: 5 }}
-            >
-              <PokemonButton size={RFPercentage(2.4)} />
-            </Pressable>
-          ),
-          tabBarLabel: '',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="portfolio"
-        options={{
-          headerShown: false,
-          title: 'Portfolio',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'briefcase' : 'briefcase-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="public-facing"
-        options={{
-          headerShown: false,
-          title: 'Public',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'cloud' : 'cloud-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          headerShown: false,
-          title: 'More',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'ellipsis-horizontal-circle' : 'ellipsis-horizontal-circle-outline'} color={color} />
-          ),
-        }}
-      />
-      {/* Pokemon screen is accessible via header button only, not in tab bar */}
-      <Tabs.Screen
-        name="pokemon"
-        options={{
-          headerShown: false,
-          title: 'Pokemon',
-          href: null, // This removes it from the tab bar
-        }}
-      />
-    </Tabs>
-  );
-}
+  // return (
+  //   <Tabs
+  //     screenOptions={{
+  //       tabBarActiveTintColor: tintColor,
+  //       tabBarInactiveTintColor: tabIconDefault,
+  //       tabBarAllowFontScaling: true,
+  //       tabBarLabelPosition: 'below-icon',
+  //       tabBarStyle: {
+  //         backgroundColor: secondaryColor,
+  //         borderTopColor: accentColor,
+  //         height: RFPercentage(5),
+  //       },
+  //       tabBarActiveBackgroundColor: accentColor,
+  //       tabBarLabelStyle: {
+  //         fontSize: RFPercentage(1),
+  //       }
+  //     }}
+  //   >
+  //     <Tabs.Screen
+  //       name="index"
+  //       options={{
+  //         headerShadowVisible: false,
+  //         title: 'David \'DJ\' Grimsley',
+  //         headerStyle: { backgroundColor: headerBg },
+  //         headerTitleStyle: { color: secondaryColor },
+  //         headerRight: () => (
+  //           <Pressable
+  //             onPress={() => router.replace('/(tabs)/pokemon' as Href)}
+  //             style={{ marginRight: 15, padding: 5 }}
+  //           >
+  //             <PokemonButton size={RFPercentage(2.4)} />
+  //           </Pressable>
+  //         ),
+  //         tabBarLabel: '',
+  //         tabBarIcon: ({ color, focused }) => (
+  //           <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+  //         ),
+  //       }}
+  //     />
+  //     <Tabs.Screen
+  //       name="portfolio"
+  //       options={{
+  //         headerShown: false,
+  //         title: 'Portfolio',
+  //         tabBarIcon: ({ color, focused }) => (
+  //           <TabBarIcon name={focused ? 'briefcase' : 'briefcase-outline'} color={color} />
+  //         ),
+  //       }}
+  //     />
+  //     <Tabs.Screen
+  //       name="public-facing"
+  //       options={{
+  //         headerShown: false,
+  //         title: 'Public',
+  //         tabBarIcon: ({ color, focused }) => (
+  //           <TabBarIcon name={focused ? 'cloud' : 'cloud-outline'} color={color} />
+  //         ),
+  //       }}
+  //     />
+  //     <Tabs.Screen
+  //       name="more"
+  //       options={{
+  //         headerShown: false,
+  //         title: 'More',
+  //         tabBarIcon: ({ color, focused }) => (
+  //           <TabBarIcon name={focused ? 'ellipsis-horizontal-circle' : 'ellipsis-horizontal-circle-outline'} color={color} />
+  //         ),
+  //       }}
+  //     />
+  //     {/* Pokemon screen is accessible via header button only, not in tab bar */}
+  //     <Tabs.Screen
+  //       name="pokemon"
+  //       options={{
+  //         headerShown: false,
+  //         title: 'Pokemon',
+  //         href: null, // This removes it from the tab bar
+  //       }}
+  //     />
+  //   </Tabs>
+  // );
+// }
 
 export default TabLayout;

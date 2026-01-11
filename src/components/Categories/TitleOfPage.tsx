@@ -8,7 +8,7 @@ type TitleOfPageProps = {
 
 export function TitleOfPage({ titleA = 'Featured', titleB = 'Project' }: TitleOfPageProps) {
     return (
-        <View className="text-center pb-[1.2%] pt-[1.2%] px-[1%] -z-10">
+        <View className="text-center pb-[1.2%] pt-[1.2%] px-[1%]">
             <Text className="relative uppercase text-[4%] font-bold font-[Rubik] text-themed">
                 {titleA}
                 <Text className="text-secondary"> {titleB}</Text>

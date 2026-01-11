@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { MobileDetailsBackgroundGradient } from '@/components/Gradients';
+import { BackgroundGradient } from '@/components/Gradients';
 import { EndpointCard } from '@/components/SoftwareDev/api/APIComponents';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
@@ -150,7 +150,7 @@ export default function QuantumAPIPage() {
       contentContainerClassName="flex-grow"
     >
       <View className="flex-1">
-        <MobileDetailsBackgroundGradient />
+        <BackgroundGradient />
         <View className="flex-1 w-full max-w-300 self-center bg-transparent px-5 py-7.5 pb-15">
         {/* Header */}
         <View className="mb-7.5">
@@ -525,7 +525,7 @@ export default function QuantumAPIPage() {
                     </ThemedText>
                     <ThemedText className="opacity-85 text-[1.5%] leading-[2.2%]">
                       The <ThemedText className="font-bold">math is 100% quantum</ThemedText> - it follows the same 
-                      rules as real quantum hardware. But the <ThemedText className="font-bold">physical process is classical</ThemedText>. 
+                      rules as real quantum hardware. But the <ThemedText className="font-bold">physical process is classical.</ThemedText>
                       Think of it like: playing a racing game (simulator) vs actually driving a car (hardware). The game uses real 
                       physics equations, but you're not experiencing actual G-forces.
                     </ThemedText>

@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Image, Alert, Dimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { MobileDetailsBackgroundGradient } from '@/components/Gradients';
+import { BackgroundGradient } from '@/components/Gradients';
 import { InProgress } from '@/components/Categories/InProgress';
 import { HighlightView } from '@/components/Categories/HighlightView';
 import { HorizontalLinks } from '@/components/Categories/HorizontalLinks';
@@ -123,7 +123,7 @@ export function CategoryDetailWrapper({
             scrollEventThrottle={enableScrollTracking ? 20 : undefined}
         >
             <View className="bg-themed">
-                <MobileDetailsBackgroundGradient />
+                <BackgroundGradient />
                 <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-300 self-center justify-around">{data}</View>
             </View>
         </ScrollView>

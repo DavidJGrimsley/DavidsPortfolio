@@ -1,13 +1,11 @@
 import { Text, View, ScrollView, Pressable } from 'react-native';
 import { Foot } from "@/components/Foot";
 import { TitleOfPage } from "@/components/Categories/TitleOfPage";
-import { MobileBackgroundGradient } from "@/components/Gradients";
 import { type Href, router } from 'expo-router';
 
 const Page = () => {
   return (
-    <View className="flex-1">
-      <MobileBackgroundGradient />
+    <View className="flex-1 bg-themed">
       <TitleOfPage titleA="Learning" titleB="Center" />
       <View className="flex-row flex-1 w-[85%]">
         <ScrollView showsVerticalScrollIndicator={false}>

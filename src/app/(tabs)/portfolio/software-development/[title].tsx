@@ -1,6 +1,6 @@
 import { View, Text, Button, ScrollView, Image, Pressable, Alert, Dimensions } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { MobileDetailsBackgroundGradient } from "@/components/Gradients";
+import { BackgroundGradient } from "@/components/Gradients";
 import React, { useCallback, useState } from "react";
 import rawPieces from '@json/pieces.json';
 import { InProgress } from '@/components/Categories/InProgress';
@@ -158,7 +158,7 @@ export default function Page() {
       scrollEventThrottle={20}
     >
       <View className="bg-themed">
-        <MobileDetailsBackgroundGradient/>
+        <BackgroundGradient />
         <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-300 self-center justify-around">{data}</View>
       </View>
     </ScrollView>
