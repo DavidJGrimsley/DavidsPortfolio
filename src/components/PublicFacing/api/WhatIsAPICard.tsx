@@ -1,5 +1,5 @@
 import React from 'react';
-import { InfoCard } from '@/components/SoftwareDev/InfoCard';
+import { InfoCard } from '~/src/components/PublicFacing/InfoCard';
 
 export function WhatIsAPICard() {
   return (

@@ -6,7 +6,7 @@ import { RFPercentage } from 'react-native-responsive-fontsize';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
-import { MCPCollapsibleSection, MCPFeatureCard } from '@/components/SoftwareDev/mcp/MCPComponents';
+import { MCPCollapsibleSection, MCPFeatureCard } from '~/src/components/PublicFacing/mcp/MCPComponents';
 
 export type MCPHeroSectionProps = {
   title: string;

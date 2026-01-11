@@ -4,9 +4,9 @@ import { useRouter } from 'expo-router';
 import Head from 'expo-router/head';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { SoftwareCard } from '@/components/SoftwareDev/SoftwareCard';
-import { ComingSoonCard } from '@/components/SoftwareDev/ComingSoonCard';
-import { WhatIsMCPCard } from '@/components/SoftwareDev/mcp/WhatIsMCPCard';
+import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
+import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
+import { WhatIsMCPCard } from '~/src/components/PublicFacing/mcp/WhatIsMCPCard';
 import mcpServersData from '@json/mcpServers.json';
 
 export default function MCPIndexPage() {

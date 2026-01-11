@@ -104,7 +104,7 @@ Colors
   }
 
   .side-nav-text {
-    @apply text-center opacity-50 text-(--color-text) text-[1.2%] font-light;
+    @apply text-center opacity-50 text-(--color-text) text-xs md:text-sm font-light;
   }
 
   .main-title {
@@ -112,7 +112,7 @@ Colors
   }
 
   .main-title-text {
-    @apply relative uppercase text-[4%] font-bold font-[Rubik] text-(--color-text);
+    @apply relative uppercase text-3xl md:text-4xl font-bold font-[Rubik] text-(--color-text);
   }
 
   .main-title-text-span {
@@ -141,20 +141,21 @@ Colors
 
   /* Button styles */
   .btn-primary {
-    @apply bg-(--color-accent) p-[1%] rounded-[1%] m-[1%] w-[20%] self-center;
+    @apply bg-(--color-accent) p-[1%] rounded-lg overflow-hidden m-[1%] w-[20%] self-center;
   }
 
   .btn-primary-text {
-    @apply text-(--color-secondary) text-center text-[2%];
+    @apply text-(--color-secondary) text-center text-base md:text-lg;
   }
 
   /* Footer styles */
   .footer {
-    @apply border-[0.2%] border-(--color-accent) min-h-[5%] m-[1%] p-[1.5%] rounded-[0.5%] items-center justify-center w-[90%] max-w-150 self-center;
+    @apply border-[0.2%] min-h-[5%] m-[1%] p-[1.5%] rounded-[0.5%] items-center justify-center w-[90%] max-w-150 self-center;
+    border-color: var(--color-accent);
   }
 
   .footer-text {
-    @apply text-(--color-accent) text-[1.4%] text-center;
+    @apply text-(--color-accent) text-sm md:text-base text-center;
   }
 
   /* Home page styles */
@@ -172,69 +173,87 @@ Colors
 
   /* Highlight component styles */
   .highlight-view {
-    @apply flex items-center justify-center bg-(--color-tint)/50 rounded-[0.5%] p-[1%] m-[1%] w-[95%] self-center;
+    @apply flex items-center justify-center bg-(--color-tint)/50 rounded-lg overflow-hidden p-[1%] m-[1%] w-[95%] self-center;
   }
 
   .highlight-title {
-    @apply text-(--color-text) text-center text-[2.2%] font-bold;
+    @apply text-(--color-text) text-center text-lg md:text-xl font-bold;
   }
 
   .highlight-caption {
-    @apply text-(--color-accent) text-center p-[0.5%] text-[1.4%] bg-(--color-secondary)/15;
+    @apply text-(--color-accent) text-center p-[0.5%] text-sm md:text-base bg-(--color-secondary)/15 rounded-md;
   }
 
   .highlight-description {
-    @apply text-(--color-text) text-center text-[1.6%] mb-[1%] px-[1%];
+    @apply text-(--color-text) text-center text-base md:text-lg mb-[1%] px-[1%];
   }
 
   /* About page styles */
   .website-container {
-    @apply flex flex-row p-[1%] m-[1%] rounded-[0.5%] border-[0.1%] border-(--color-accent) items-center justify-center w-[85%] max-w-150 self-center bg-(--color-background)/20;
+    @apply flex flex-row p-[1%] m-[1%] rounded-[0.5%] border-[0.1%] items-center justify-center w-[85%] max-w-150 self-center bg-(--color-background)/20;
+    border-color: var(--color-accent);
   }
 
   .website-text {
-    @apply text-(--color-accent) text-center text-[1.4%];
+    @apply text-(--color-accent) text-center text-sm md:text-base;
   }
 
   .website-button {
-    @apply bg-(--color-accent) text-(--color-secondary) text-center text-[2%] p-[0.5%] rounded-[0.5%];
+    @apply bg-(--color-accent) text-(--color-secondary) text-center text-base md:text-lg p-[0.5%] rounded-[0.5%];
   }
 
   .about-text {
-    @apply text-(--color-text) text-center text-[1.6%] w-[90%] px-[1%];
+    @apply text-(--color-text) text-center text-base md:text-lg w-[90%] px-[1%];
   }
 
-  /* Mobile detail page styles */
-  .mobile-title {
-    @apply text-[5%] text-left font-bold text-(--color-tint) ml-[2%];
+  /* Detail page typography (shared across portfolio + public-facing detail pages) */
+  .detail-title {
+    @apply text-2xl md:text-4xl text-left font-bold text-(--color-tint) ml-[2%];
   }
 
-  .mobile-caption {
-    @apply text-[2%] text-right bg-(--color-background) mr-[2%] ml-[2%];
+  .detail-caption {
+    @apply text-base md:text-lg text-right text-(--color-text) mr-[2%] ml-[2%] opacity-85;
   }
 
-  .mobile-image-container {
+  .detail-subheader {
+    @apply text-lg md:text-xl text-left text-(--color-text) font-semibold;
+  }
+
+  .detail-body {
+    @apply text-base md:text-lg text-left text-(--color-text);
+  }
+
+  .detail-muted {
+    @apply opacity-80;
+  }
+
+  .detail-image-container {
     @apply flex-row flex justify-center items-center mx-[2%] my-[2%] w-full self-center h-[40%];
   }
 
-  .mobile-breakdown {
-    @apply text-[2.2%] text-left text-(--color-text) mb-[1%];
+  .detail-section-header {
+    @apply text-xl md:text-2xl text-left font-bold text-(--color-accent);
   }
 
-  .mobile-list-header {
-    @apply text-[3.2%] text-left font-bold text-(--color-accent);
+  .detail-skill-item {
+    @apply text-left text-sm md:text-base text-(--color-text) font-bold;
   }
 
-  .mobile-skills {
-    @apply text-left text-[2.2%] text-(--color-background) font-bold;
+  .detail-meta {
+    @apply text-sm md:text-base;
   }
 
-  .mobile-skills-used {
-    @apply text-left text-[1.8%] text-(--color-text) p-[1%] mx-[0.5%] my-[0.5%] bg-(--color-tint)/20 rounded-[0.5%];
+  .badge-text {
+    @apply text-xs md:text-sm font-bold;
   }
 
-  .mobile-skills-learned {
-    @apply text-left text-[1.8%] text-(--color-text) p-[1%] mx-[0.5%] my-[0.5%] bg-(--color-accent)/20 rounded-[0.5%];
+  /* Callouts */
+  .notice {
+    @apply bg-(--color-accent) p-[1%] rounded-[0.5%] m-[1%];
+  }
+
+  .notice-text {
+    @apply text-(--color-secondary) text-center text-sm md:text-base;
   }
 
   /* ==========================================================================

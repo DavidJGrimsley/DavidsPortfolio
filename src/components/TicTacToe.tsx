@@ -10,7 +10,7 @@ function Square({ value, onSquareClick }: SquareProps) {
   return (
     <View className="bg-accent flex justify-center items-center w-[9%] h-[9%] p-[1%] m-[0.5%] rounded-[0.5%]">
       <Pressable className="bg-accent flex justify-center items-center w-[9%] h-[9%] p-[1%] m-[0.5%] rounded-[0.5%]" onPress={onSquareClick}>
-        <Text className="text-secondary text-[5.5%]">{value}</Text>
+        <Text className="text-secondary text-2xl md:text-3xl">{value}</Text>
       </Pressable>
       {/* <Button 
         title={value || ''} 
@@ -53,7 +53,7 @@ function Board({ xIsNext, squares, onPlay }: BoardProps) {
 
   return (
     <>
-      <Text className="text-themed text-[2.2%] font-bold mb-[1%] text-center">{status}</Text>
+      <Text className="detail-subheader text-center mb-[1%]">{status}</Text>
       <View className="flex flex-col justify-center items-center p-[1%] rounded-[0.5%]">
         <View className="bg-secondary flex flex-row justify-center items-center">
           <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
@@ -119,13 +119,13 @@ export default function Game() {
       if (move === 0) {
         return (
           <View key={move}>
-            <Text className="text-[2%]">Game start</Text>
+            <Text className="detail-body">Game start</Text>
           </View>
         )
       } else {
       return (
         <View key={move}>
-          <Text className="text-[2%]">Turn #{move}</Text>
+          <Text className="detail-body">Turn #{move}</Text>
         </View>
       )
       }
@@ -136,7 +136,7 @@ export default function Game() {
     }
     return (
       <View key={move}>
-        <Pressable className="bg-themed text-themed p-[0.2%] m-[0.5%] rounded-[0.2%] text-[2%]" onPress={() => jumpTo(move)}>
+        <Pressable className="bg-themed text-themed p-[0.2%] m-[0.5%] rounded-[0.2%]" onPress={() => jumpTo(move)}>
           <Text>{description}</Text>
         </Pressable>
         {/* <Button title={description} onPress={() => jumpTo(move)} /> */}

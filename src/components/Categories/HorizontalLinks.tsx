@@ -11,18 +11,18 @@ export function HorizontalLinks({ github, site, steam }: HorizontalLinksProps) {
     return (
         <View className="flex-row justify-center items-center my-2.5">
             {github && (
-                <Pressable className="bg-accent p-[1%] rounded-[1%] m-[1%] w-[20%] self-center" onPress={() => window.open(github)}>
-                    <Text className="text-secondary text-center text-[2%]">Github</Text>
+                <Pressable className="btn-primary" onPress={() => window.open(github)}>
+                    <Text className="btn-primary-text">Github</Text>
                 </Pressable>
             )}
             {site && (
-                <Pressable className="bg-accent p-[1%] rounded-[1%] m-[1%] w-[20%] self-center" onPress={() => window.open(site)}>
-                    <Text className="text-secondary text-center text-[2%]">Info Website</Text>
+                <Pressable className="btn-primary" onPress={() => window.open(site)}>
+                    <Text className="btn-primary-text">Info Website</Text>
                 </Pressable>
             )}
             {steam && (
-                <Pressable className="bg-accent p-[1%] rounded-[1%] m-[1%] w-[20%] self-center" onPress={() => window.open(steam)}>
-                    <Text className="text-secondary text-center text-[2%]">See it here!</Text>
+                <Pressable className="btn-primary" onPress={() => window.open(steam)}>
+                    <Text className="btn-primary-text">See it here!</Text>
                 </Pressable>
             )}
         </View>

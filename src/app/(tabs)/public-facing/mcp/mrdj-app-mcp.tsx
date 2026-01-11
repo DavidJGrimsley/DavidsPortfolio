@@ -3,7 +3,6 @@ import { View, ScrollView, Pressable, Linking, Clipboard } from 'react-native';
 import Head from 'expo-router/head';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
-import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { BackgroundGradient } from '@/components/Gradients';
 import { ExternalLink } from '@/components/UI/ExternalLink';
@@ -15,8 +14,8 @@ import {
   MCPFeatureCard,
   MCPCollapsibleSection,
   MCPCodeBlock,
-} from '@/components/SoftwareDev/mcp/MCPComponents';
-import { MCPHeroSection, MCPWhatIsSection } from '@/components/SoftwareDev/mcp/MCPPageSections';
+} from '~/src/components/PublicFacing/mcp/MCPComponents';
+import { MCPHeroSection, MCPWhatIsSection } from '~/src/components/PublicFacing/mcp/MCPPageSections';
 
 // Server URLs
 const MCP_BASE_URL = 'https://davidjgrimsley.com/public-facing/mcp/app/mrdj-app-mcp';
@@ -42,14 +41,13 @@ type MCPPortfolioMeta = {
     mcpEndpointUrl: string;
     githubRepoUrl: string;
   };
-  resources: Array<{ id: string; title: string; fileName: string; description: string }>;
-  tools: Array<{ name: string; title: string; description: string; schema: any }>;
-  prompts: Array<{ name: string; title: string; description: string; args: string[] }>;
+  resources: { id: string; title: string; fileName: string; description: string }[];
+  tools: { name: string; title: string; description: string; schema: any }[];
+  prompts: { name: string; title: string; description: string; args: string[] }[];
   endpoints?: MCPEndpointMeta[];
 };
 
 export default function MCPAppPage() {
-  const backgroundColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
@@ -206,7 +204,7 @@ export default function MCPAppPage() {
         if (!isMounted) return;
         setPortfolioMeta(data);
         setIsMetaSynced(true);
-      } catch (error) {
+      } catch {
         if (!isMounted) return;
         setPortfolioMeta(null);
         setIsMetaSynced(false);
@@ -350,7 +348,7 @@ export default function MCPAppPage() {
           {/* Endpoints Section */}
           <MCPCollapsibleSection title="Endpoints" icon="link">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 These are the public endpoints associated with this MCP server. This section is synced from
                 <ThemedText className="font-mono"> portfolio.json</ThemedText> when available, with a local
                 fallback.
@@ -368,17 +366,17 @@ export default function MCPAppPage() {
                     className="px-2.5 py-1.5 rounded-lg mr-3"
                     style={{ backgroundColor: tintColor }}
                   >
-                    <ThemedText className="text-[1.2%] text-white font-bold">
+                    <ThemedText className="badge-text text-white">
                       {String(endpoint.method ?? 'GET').toUpperCase()}
                     </ThemedText>
                   </View>
-                  <ThemedText className="text-[2%] font-semibold flex-1" style={{ color: textColor }}>
+                  <ThemedText className="detail-subheader flex-1" style={{ color: textColor }}>
                     {endpoint.title}
                   </ThemedText>
                 </View>
 
                 {endpoint.description ? (
-                  <ThemedText className="text-[1.7%] opacity-75 mb-2.5" style={{ color: textColor }}>
+                  <ThemedText className="detail-body opacity-75 mb-2.5" style={{ color: textColor }}>
                     {endpoint.description}
                   </ThemedText>
                 ) : null}
@@ -386,7 +384,7 @@ export default function MCPAppPage() {
                 <View className="flex-row items-center gap-2">
                   <ExternalLink href={endpoint.url}>
                     <ThemedText
-                      className="text-[1.7%] font-mono font-semibold"
+                      className="detail-body font-mono font-semibold"
                       style={{ color: tintColor }}
                     >
                       {endpoint.url}
@@ -418,7 +416,7 @@ export default function MCPAppPage() {
                         className="px-2.5 py-1.5 rounded-lg"
                         style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                        <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
                           Transport: <ThemedText className="font-semibold">{endpoint.transport}</ThemedText>
                         </ThemedText>
                       </View>
@@ -429,7 +427,7 @@ export default function MCPAppPage() {
                         className="px-2.5 py-1.5 rounded-lg"
                         style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                        <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
                           Content-Type: <ThemedText className="font-semibold">{endpoint.contentType}</ThemedText>
                         </ThemedText>
                       </View>
@@ -443,7 +441,7 @@ export default function MCPAppPage() {
           {/* Available Resources Section */}
           <MCPCollapsibleSection title="Available Resources" icon="library">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 The following guides are exposed as MCP resources. AI tools can read and reference these documents when
                 assisting with development tasks.
               </ThemedText>
@@ -459,11 +457,11 @@ export default function MCPAppPage() {
             >
               <View className="flex-row items-center mb-2">
                 <Ionicons name="information-circle" size={20} color={tintColor} className="mr-2" />
-                <ThemedText className="text-[1.8%] font-semibold">
+                <ThemedText className="detail-subheader">
                   Resource Access
                 </ThemedText>
               </View>
-              <ThemedText className="text-[1.6%] opacity-80">
+              <ThemedText className="detail-meta opacity-80">
                 AI assistants can read any of these resources by their ID (e.g., "architecture", "routing"). Each
                 resource returns markdown documentation with code examples, best practices, and architectural patterns.
               </ThemedText>
@@ -473,7 +471,7 @@ export default function MCPAppPage() {
           {/* Tools Section */}
           <MCPCollapsibleSection title="Tools" icon="construct">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 Tools are functions that AI assistants can invoke to perform specific operations.
               </ThemedText>
             </GreyView>
@@ -486,7 +484,7 @@ export default function MCPAppPage() {
           {/* Prompts Section */}
           <MCPCollapsibleSection title="Prompts" icon="chatbubbles">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 Prompts are pre-configured message templates that guide AI assistants in using the resources effectively.
               </ThemedText>
             </GreyView>
@@ -501,15 +499,15 @@ export default function MCPAppPage() {
             <View className="bg-secondary/15 rounded-2.5 p-4 mb-5 border-l-4 border-l-tint">
               <View className="flex-row items-center mb-2">
                 <Ionicons name="rocket" size={20} color={tintColor} className="mr-2" />
-                <ThemedText className="text-[2%] font-semibold">
+                <ThemedText className="detail-subheader">
                   Quick Start: Use the Public Endpoint
                 </ThemedText>
               </View>
-              <ThemedText className="text-[1.7%]">
+              <ThemedText className="detail-body">
                 No installation needed! Connect your AI client directly to the live endpoint:
               </ThemedText>
               <ThemedText
-                className="text-[1.6%] font-mono font-semibold mt-2"
+                className="detail-meta font-mono font-semibold mt-2"
                 style={{ color: tintColor }}
               >
                 {mcpEndpointUrl}
@@ -518,16 +516,16 @@ export default function MCPAppPage() {
 
             <GreyView className="mb-3">
               <ThemedText
-                className="text-[2%] font-semibold mb-3"
+                className="detail-subheader mb-3"
               >
                 Option 1: Use the Live Public Endpoint (Recommended but has limitations for scanning entire codebase - stdio mode recommended for full access)
               </ThemedText>
 
-              <ThemedText className="text-[1.8%] mb-3 opacity-80">
+              <ThemedText className="detail-body mb-3 opacity-80">
                 Connect to the hosted MCP server running on my VPS. Works with VS Code, Claude Desktop, and any MCP-compatible client.
               </ThemedText>
 
-              <ThemedText className="text-[1.8%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 For VS Code with Cline or other MCP extensions:
               </ThemedText>
             </GreyView>
@@ -546,7 +544,7 @@ export default function MCPAppPage() {
             />
 
             <GreyView className="mb-3">
-              <ThemedText className="text-[1.8%] mb-3 opacity-80">
+              <ThemedText className="detail-body mb-3 opacity-80">
                 For Claude Desktop:
               </ThemedText>
             </GreyView>
@@ -566,11 +564,11 @@ export default function MCPAppPage() {
             <View className="bg-tint/15 rounded-2.5 p-4 mt-3 mb-5 border-l-4 border-l-tint">
               <View className="flex-row items-center mb-2">
                 <Ionicons name="information-circle" size={20} color={tintColor} className="mr-2" />
-                <ThemedText className="text-[1.8%] font-semibold">
+                <ThemedText className="detail-subheader">
                   More Information
                 </ThemedText>
               </View>
-              <ThemedText className="text-[1.6%]">
+              <ThemedText className="detail-meta">
                 Visit{' '}
                 <ExternalLink href={MCP_BASE_URL}>
                   <ThemedText className="font-semibold" style={{ color: tintColor }}>
@@ -583,7 +581,7 @@ export default function MCPAppPage() {
 
             <GreyView className="mb-3">
               <ThemedText
-                className="text-[2%] font-semibold mb-3"
+                className="detail-subheader mb-3"
               >
                 Option 2: Run Locally (stdio mode)
               </ThemedText>
@@ -607,12 +605,12 @@ npm start`}
 
             <GreyView className="mt-4 mb-3">
               <ThemedText
-                className="text-[2%] font-semibold mb-3"
+                className="detail-subheader mb-3"
               >
                 2. Configure Your AI Tool
               </ThemedText>
 
-              <ThemedText className="text-[1.8%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 For Claude Desktop, add to your <ThemedText className="font-mono">claude_desktop_config.json</ThemedText>:
               </ThemedText>
             </GreyView>
@@ -631,26 +629,26 @@ npm start`}
 
             <GreyView className="mt-4 mb-4">
               <ThemedText
-                className="text-[2%] font-semibold mb-3"
+                className="detail-subheader mb-3"
               >
                 3. Use in AI Conversations
               </ThemedText>
 
-              <ThemedText className="text-[1.8%] mb-2 opacity-80">
+              <ThemedText className="detail-body mb-2 opacity-80">
                 Once configured, your AI assistant can:
               </ThemedText>
 
               <View className="pl-2">
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Read architecture guides when discussing app structure
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Generate Zustand stores following your patterns
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Create routing checklists for new screens
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Answer database design questions with your conventions
                 </ThemedText>
               </View>
@@ -659,11 +657,11 @@ npm start`}
             <View className="bg-accent/15 rounded-2.5 p-4 border-l-4 border-l-tint">
               <View className="flex-row items-center mb-2">
                 <Ionicons name="bulb" size={20} color={tintColor} className="mr-2" />
-                <ThemedText className="text-[1.8%] font-semibold">
+                <ThemedText className="detail-subheader">
                   Pro Tip
                 </ThemedText>
               </View>
-              <ThemedText className="text-[1.6%]">
+              <ThemedText className="detail-meta">
                 You don't need to explicitly mention the MCP server in your prompts. Once configured, the AI will
                 automatically use the resources when relevant to your questions.
               </ThemedText>
@@ -673,7 +671,7 @@ npm start`}
           {/* Hosting Options Section */}
           <MCPCollapsibleSection title="Hosting & Deployment" icon="cloud-upload">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 This MCP server can be deployed in multiple ways:
               </ThemedText>
             </GreyView>
@@ -704,7 +702,7 @@ npm start`}
 
             <GreyView className="mt-4 mb-3">
               <ThemedText
-                className="text-[2%] font-semibold"
+                className="detail-subheader"
               >
                 This Server's Deployment
               </ThemedText>
@@ -716,24 +714,24 @@ npm start`}
             >
               <View className="flex-row items-center mb-3">
                 <View className="bg-[#10b981] px-2.5 py-1.5 rounded-xl">
-                  <ThemedText className="text-[1.4%] text-white font-bold">
+                  <ThemedText className="badge-text text-white">
                     🟢 LIVE IN PRODUCTION
                   </ThemedText>
                 </View>
               </View>
-              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+              <ThemedText className="detail-body opacity-80 mb-2">
                 <ThemedText className="font-semibold">Environment:</ThemedText> VPS (Plesk) with Nginx reverse proxy
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+              <ThemedText className="detail-body opacity-80 mb-2">
                 <ThemedText className="font-semibold">Endpoint:</ThemedText> {mcpEndpointUrl}
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+              <ThemedText className="detail-body opacity-80 mb-2">
                 <ThemedText className="font-semibold">Transport:</ThemedText> Server-Sent Events (SSE)
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80 mb-2">
+              <ThemedText className="detail-body opacity-80 mb-2">
                 <ThemedText className="font-semibold">Accessibility:</ThemedText> Public - Anyone can connect
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 <ThemedText className="font-semibold">Info Page:</ThemedText>{' '}
                 <ExternalLink href={MCP_BASE_URL}>
                   <ThemedText className="font-semibold" style={{ color: tintColor }}>
@@ -750,10 +748,10 @@ npm start`}
               className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
-              <ThemedText className="text-[2%] font-semibold mb-2">
+              <ThemedText className="detail-subheader mb-2">
                 🎓 Learning & Education
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 Students and developers can explore modern React Native patterns, Expo Router conventions, and
                 full-stack architecture through AI-assisted learning.
               </ThemedText>
@@ -763,10 +761,10 @@ npm start`}
               className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
-              <ThemedText className="text-[2%] font-semibold mb-2">
+              <ThemedText className="detail-subheader mb-2">
                 🚀 Rapid Development
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 Generate boilerplate code, scaffolding, and configuration files that follow established patterns,
                 reducing setup time for new features.
               </ThemedText>
@@ -776,10 +774,10 @@ npm start`}
               className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
-              <ThemedText className="text-[2%] font-semibold mb-2">
+              <ThemedText className="detail-subheader mb-2">
                 👔 Portfolio & Hiring
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 Employers can see documented proof of architectural thinking, best practices knowledge, and commitment
                 to maintainable, scalable code.
               </ThemedText>
@@ -789,10 +787,10 @@ npm start`}
               className="rounded-2.5 p-4 mb-3"
               style={{ backgroundColor: accentColor }}
             >
-              <ThemedText className="text-[2%] font-semibold mb-2">
+              <ThemedText className="detail-subheader mb-2">
                 🔧 Team Standardization
               </ThemedText>
-              <ThemedText className="text-[1.7%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 Teams can fork and customize this MCP server to encode their own conventions, ensuring consistency
                 across projects and team members.
               </ThemedText>
@@ -802,51 +800,51 @@ npm start`}
           {/* Tech Stack Section */}
           <MCPCollapsibleSection title="Tech Stack" icon="code-slash">
             <GreyView className="mb-4">
-              <ThemedText className="text-[2%] font-semibold mb-2">
+              <ThemedText className="detail-subheader mb-2">
                 Runtime & Build
               </ThemedText>
               <View className="pl-2">
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Node.js 18+ (ES modules)
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • TypeScript with tsc compiler
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Single entrypoint: build/index.js
                 </ThemedText>
               </View>
             </GreyView>
 
             <GreyView className="mb-4">
-              <ThemedText className="text-[2%] font-semibold mb-2">
+              <ThemedText className="detail-subheader mb-2">
                 MCP SDK
               </ThemedText>
               <View className="pl-2">
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • @modelcontextprotocol/sdk 1.25.x
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Zod for schema validation
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Stdio transport (local development)
                 </ThemedText>
               </View>
             </GreyView>
 
             <GreyView>
-              <ThemedText className="text-[2%] font-semibold mb-2">
+              <ThemedText className="detail-subheader mb-2">
                 Content
               </ThemedText>
               <View className="pl-2">
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • File-based markdown guides
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • 11 comprehensive development guides
                 </ThemedText>
-                <ThemedText className="text-[1.7%] mb-1.5 opacity-80">
+                <ThemedText className="detail-body mb-1.5 opacity-80">
                   • Covers: React Native, Expo Router, Zustand, Drizzle, Supabase, deployment
                 </ThemedText>
               </View>
@@ -856,7 +854,7 @@ npm start`}
           {/* Resources & Links Section */}
           <View className="mt-5">
             <ThemedText
-              className="text-[2.4%] font-semibold mb-4"
+              className="detail-section-header mb-4"
             >
               Resources & Links
             </ThemedText>
@@ -868,10 +866,10 @@ npm start`}
             >
               <Ionicons name="logo-github" size={24} color={textColor} className="mr-3" />
               <View className="flex-1">
-                <ThemedText className="text-[1.9%] font-semibold">
+                <ThemedText className="detail-subheader">
                   GitHub Repository
                 </ThemedText>
-                <ThemedText className="text-[1.6%] opacity-70">
+                <ThemedText className="detail-meta opacity-70">
                   Source code, guides, and documentation
                 </ThemedText>
               </View>
@@ -885,10 +883,10 @@ npm start`}
             >
               <Ionicons name="document-text" size={24} color={textColor} className="mr-3" />
               <View className="flex-1">
-                <ThemedText className="text-[1.9%] font-semibold">
+                <ThemedText className="detail-subheader">
                   MCP Documentation
                 </ThemedText>
-                <ThemedText className="text-[1.6%] opacity-70">
+                <ThemedText className="detail-meta opacity-70">
                   Official Model Context Protocol docs
                 </ThemedText>
               </View>
@@ -902,10 +900,10 @@ npm start`}
             >
               <Ionicons name="person-circle" size={24} color={textColor} className="mr-3" />
               <View className="flex-1">
-                <ThemedText className="text-[1.9%] font-semibold">
+                <ThemedText className="detail-subheader">
                   David Grimsley
                 </ThemedText>
-                <ThemedText className="text-[1.6%] opacity-70">
+                <ThemedText className="detail-meta opacity-70">
                   Portfolio and other projects
                 </ThemedText>
               </View>
@@ -924,7 +922,7 @@ npm start`}
               color={isMetaSynced ? tintColor : textColor}
               className="opacity-90"
             />
-            <ThemedText className="text-[1.5%] opacity-75 flex-1">
+            <ThemedText className="detail-meta opacity-75 flex-1">
               {isMetaSynced
                 ? `Synced from ${MCP_PORTFOLIO_META_URL}`
                 : 'Using local portfolio metadata (offline / fetch failed)'}

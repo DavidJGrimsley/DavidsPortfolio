@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/UI/ThemedText';
 import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { BackgroundGradient } from '@/components/Gradients';
-import { EndpointCard } from '@/components/SoftwareDev/api/APIComponents';
+import { EndpointCard } from '~/src/components/PublicFacing/api/APIComponents';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { GreyView } from '@/components/UI/GreyView';
 import { HelloWave } from '@/components/QuantumAnimation';

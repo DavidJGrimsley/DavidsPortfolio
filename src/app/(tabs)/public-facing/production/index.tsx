@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, ScrollView, Linking } from 'react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { SoftwareCard } from '@/components/SoftwareDev/SoftwareCard';
+import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import productionData from '@json/production.json';
 
 type ProductionApp = {

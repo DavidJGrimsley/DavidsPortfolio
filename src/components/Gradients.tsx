@@ -6,7 +6,7 @@ import type { ComponentType } from 'react';
 const styles = StyleSheet.create({
   fill: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: -5,
+    zIndex: 0,
   },
 });
 
@@ -15,8 +15,23 @@ export const BackgroundGradient = () => {
   const secondaryColor = useThemeColor({}, 'secondary');
   const whiteOrBlackColor = useThemeColor({}, 'whiteOrBlack');
 
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        pointerEvents="none"
+        style={[
+          styles.fill,
+          {
+            backgroundImage: `linear-gradient(${whiteOrBlackColor}, ${secondaryColor}, ${backgroundColor})`,
+          } as any,
+        ]}
+      />
+    );
+  }
+
   return (
     <LinearGradient
+      pointerEvents="none"
       colors={[whiteOrBlackColor, secondaryColor, backgroundColor]}
       style={styles.fill}
     />
@@ -27,11 +42,11 @@ export const HomeScreenGradient = () => {
   const { width, height } = useWindowDimensions();
   const whiteOrBlackColor = useThemeColor({}, 'whiteOrBlack');
   const secondaryColor = useThemeColor({}, 'secondary');
+  const tintColor = useThemeColor({}, 'tint');
   const backgroundColor = useThemeColor({}, 'background');
 
   // A "small" top-left glow that quickly blends into the page background.
   const radius = Math.max(180, Math.min(width, height) * 0.55);
-  const stops = [0, 0.18, 1];
 
   // `react-native-radial-gradient` is native-only; use a CSS fallback on web.
   if (Platform.OS === 'web') {
@@ -43,7 +58,7 @@ export const HomeScreenGradient = () => {
           {
             // Small circle at top-left.
             // RN-web supports backgroundImage passthrough.
-            backgroundImage: `radial-gradient(circle at top left, ${whiteOrBlackColor} 0.01%, ${secondaryColor} 2%, ${backgroundColor} 4%, ${whiteOrBlackColor} 10%, ${backgroundColor} 25%, ${whiteOrBlackColor} 100%)`,
+            backgroundImage: `radial-gradient(circle at top left, ${tintColor} 0.01%, ${secondaryColor} 1.5%, ${backgroundColor} 5%, ${whiteOrBlackColor} 10%, ${backgroundColor} 25%, ${whiteOrBlackColor} 100%)`,
           } as any,
         ]}
       />
@@ -60,14 +75,14 @@ export const HomeScreenGradient = () => {
       style={styles.fill}
       // Match the web CSS radial-gradient sequence exactly.
       colors={[
-        whiteOrBlackColor,
+        tintColor,
         secondaryColor,
         backgroundColor,
         whiteOrBlackColor,
         backgroundColor,
         whiteOrBlackColor,
       ]}
-      stops={[0.0001, 0.02, 0.04, 0.1, 0.25, 1]}
+      stops={[0.0001, 0.015, 0.05, 0.1, 0.25, 1]}
       // Center at top-left corner.
       center={[0, 0]}
       radius={radius}

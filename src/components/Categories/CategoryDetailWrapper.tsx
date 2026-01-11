@@ -26,9 +26,9 @@ export function CategoryDetailWrapper({
 }: CategoryDetailWrapperProps) {
     const { title } = useLocalSearchParams();
     const [data, setData] = useState<React.ReactElement | null>(null);
-    const [playing, setPlaying] = useState(false);
-    const [scrollY, setScrollY] = useState(0);
-    const [navVisible, setNavVisible] = useState(true);
+    const [, setPlaying] = useState(false);
+    const [, setScrollY] = useState(0);
+    const [, setNavVisible] = useState(true);
 
     const onStateChange = useCallback((state: string) => {
         if (state === 'ended') {
@@ -52,9 +52,9 @@ export function CategoryDetailWrapper({
         if (element) {
             const page = (
                 <View>
-                    <Text className="text-[4%] md:text-[5%] text-left font-bold text-tint ml-[2%]">{element.displayTitle || element.title}</Text>
-                    <Text className="text-[2%] text-right text-themed mr-[2%] ml-[2%] opacity-85">{element.caption}</Text>
-                    <View className="flex-row justify-center items-center mx-[2%] my-[2%] w-full self-center h-[40%]">
+                    <Text className="detail-title">{element.displayTitle || element.title}</Text>
+                    <Text className="detail-caption">{element.caption}</Text>
+                    <View className="detail-image-container">
                         <Image source={{ uri: element.picture }} className="w-full h-full" resizeMode="contain" />
                     </View>
                     
@@ -63,7 +63,7 @@ export function CategoryDetailWrapper({
                     
                     {element.inProgress && <InProgress />}
                     
-                    <Text className="text-[2.2%] text-left text-themed mb-[1%]">{element.breakdown}</Text>
+                    <Text className="detail-body mb-[1%]">{element.breakdown}</Text>
                     
                     <View className="justify-center items-center my-[2%]">
                         {element.youtubeID && (
@@ -81,8 +81,8 @@ export function CategoryDetailWrapper({
                         {element.skillsUsed && (
                             <FlashList
                                 data={element.skillsUsed}
-                                ListHeaderComponent={<Text className="text-[3.2%] text-left font-bold text-accent">Skills Used:</Text>}
-                                renderItem={({ item }) => <Text className="text-left text-[2.2%] text-themed font-bold">{item}</Text>}
+                                ListHeaderComponent={<Text className="detail-section-header">Skills Used:</Text>}
+                                renderItem={({ item }) => <Text className="detail-skill-item">{item}</Text>}
                                 horizontal={false}
                                 numColumns={3}
                                 showsHorizontalScrollIndicator={false}
@@ -92,8 +92,8 @@ export function CategoryDetailWrapper({
                         {element.skillsLearned && (
                             <FlashList
                                 data={element.skillsLearned}
-                                ListHeaderComponent={<Text className="text-[3.2%] text-left font-bold text-accent">Skills Learned:</Text>}
-                                renderItem={({ item }) => <Text className="text-left text-[2.2%] text-themed font-bold">{item}</Text>}
+                                ListHeaderComponent={<Text className="detail-section-header">Skills Learned:</Text>}
+                                renderItem={({ item }) => <Text className="detail-skill-item">{item}</Text>}
                                 horizontal={false}
                                 numColumns={3}
                                 showsHorizontalScrollIndicator={false}
@@ -113,18 +113,19 @@ export function CategoryDetailWrapper({
         } else {
             setData(null);
         }
-    }, [title, category, renderExtraContent]);
+    }, [title, category, renderExtraContent, onStateChange]);
 
     return (
         <ScrollView
             showsHorizontalScrollIndicator={false}
+            className="bg-themed"
             contentContainerClassName="bg-themed"
             onScroll={enableScrollTracking ? handleScroll : undefined}
             scrollEventThrottle={enableScrollTracking ? 20 : undefined}
         >
-            <View className="bg-themed">
-                <BackgroundGradient />
-                <View className="flex-1 mx-[2%] my-[3%] w-[95%] max-w-300 self-center justify-around">{data}</View>
+            <BackgroundGradient />
+            <View className="w-full max-w-[90%] self-center bg-transparent px-5 py-7.5 pb-15">
+                {data}
             </View>
         </ScrollView>
     );

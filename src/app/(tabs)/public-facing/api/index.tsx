@@ -3,9 +3,9 @@ import { View, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { SoftwareCard } from '@/components/SoftwareDev/SoftwareCard';
-import { ComingSoonCard } from '@/components/SoftwareDev/ComingSoonCard';
-import { WhatIsAPICard } from '@/components/SoftwareDev/api/WhatIsAPICard';
+import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
+import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
+import { WhatIsAPICard } from '~/src/components/PublicFacing/api/WhatIsAPICard';
 import { useFetchPortfolio } from '@/hooks/useFetchPortfolio';
 import apisData from '@json/apis.json';
 

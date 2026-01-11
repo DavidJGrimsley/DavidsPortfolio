@@ -1,5 +1,5 @@
-import { Text, View, ScrollView, Dimensions } from "react-native";
-import React, { useState } from 'react';
+import { Text, View, ScrollView } from "react-native";
+import React from 'react';
 import { FeaturedCard } from "../../components/FeaturedCard";
 import { Foot } from "../../components/Foot";
 import { TitleOfPage } from "../../components/Categories/TitleOfPage";
@@ -31,7 +31,7 @@ export default function Index() {
           
           <Container className="flex justify-center items-center flex-row flex-wrap w-full px-[1%]">
             <View className="mr-[2%] mb-[2%] w-[90%] max-w-150 bg-themed rounded-[2%] opacity-60 flex justify-center items-center">
-          <Text className="p-[2%] text-[2.5%] text-center text-secondary">Have a little fun playing Tic-Tac-Toe. This uses React's state property to store all the data about the game and only update needed components. It shows how closely related software development and game design are.</Text>
+          <Text className="p-[2%] detail-body text-center text-secondary">Have a little fun playing Tic-Tac-Toe. This uses React's state property to store all the data about the game and only update needed components. It shows how closely related software development and game design are.</Text>
             </View>
             <View className="flex justify-center items-center bg-tint rounded-[1%] p-[1%] text-center w-[95%] max-w-100 self-center">
           <Game></Game>

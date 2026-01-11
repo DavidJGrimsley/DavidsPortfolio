@@ -9,6 +9,7 @@ export default function StackLayout() {
         }}/>
         <Stack.Screen name="[title]" options={{
             headerTitle: "Game Design",
+            headerShown: false,
             headerShadowVisible: false
         }}/>
     </Stack>

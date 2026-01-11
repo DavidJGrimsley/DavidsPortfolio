@@ -12,8 +12,8 @@ import {
   MCPResourceCard,
   MCPToolCard,
   MCPPromptCard,
-} from '@/components/SoftwareDev/mcp/MCPComponents';
-import { MCPHeroSection, MCPWhatIsSection } from '@/components/SoftwareDev/mcp/MCPPageSections';
+} from '~/src/components/PublicFacing/mcp/MCPComponents';
+import { MCPHeroSection, MCPWhatIsSection } from '~/src/components/PublicFacing/mcp/MCPPageSections';
 
 const MCP_ENDPOINT = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-pokemon-mcp';
@@ -37,9 +37,9 @@ type MCPPortfolioMeta = {
     mcpEndpointUrl: string;
     githubRepoUrl: string;
   };
-  resources: Array<{ id: string; title: string; fileName: string; description: string }>;
-  tools: Array<{ name: string; title: string; description: string; schema: any }>;
-  prompts: Array<{ name: string; title: string; description: string; args?: string[] }>;
+  resources: { id: string; title: string; fileName: string; description: string }[];
+  tools: { name: string; title: string; description: string; schema: any }[];
+  prompts: { name: string; title: string; description: string; args?: string[] }[];
   endpoints?: MCPEndpointMeta[];
 };
 
@@ -307,17 +307,17 @@ export default function MRDJPokemonMcpPage() {
                     className="px-2.5 py-1.5 rounded-lg mr-3"
                     style={{ backgroundColor: tintColor }}
                   >
-                    <ThemedText className="text-[1.2%] text-white font-bold">
+                    <ThemedText className="badge-text text-white">
                       {String(endpoint.method ?? 'GET').toUpperCase()}
                     </ThemedText>
                   </View>
-                  <ThemedText className="text-[2%] font-semibold flex-1" style={{ color: textColor }}>
+                  <ThemedText className="detail-subheader flex-1" style={{ color: textColor }}>
                     {endpoint.title}
                   </ThemedText>
                 </View>
 
                 {endpoint.description ? (
-                  <ThemedText className="text-[1.7%] opacity-75 mb-2.5" style={{ color: textColor }}>
+                  <ThemedText className="detail-body opacity-75 mb-2.5" style={{ color: textColor }}>
                     {endpoint.description}
                   </ThemedText>
                 ) : null}
@@ -325,7 +325,7 @@ export default function MRDJPokemonMcpPage() {
                 <View className="flex-row items-center gap-2">
                   <ExternalLink href={endpoint.url}>
                     <ThemedText
-                      className="text-[1.7%] font-mono font-semibold"
+                      className="detail-body font-mono font-semibold"
                       style={{ color: tintColor }}
                     >
                       {endpoint.url}
@@ -358,7 +358,7 @@ export default function MRDJPokemonMcpPage() {
                         className="px-2.5 py-1.5 rounded-lg"
                         style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                        <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
                           Transport: <ThemedText className="font-semibold">{endpoint.transport}</ThemedText>
                         </ThemedText>
                       </View>
@@ -369,7 +369,7 @@ export default function MRDJPokemonMcpPage() {
                         className="px-2.5 py-1.5 rounded-lg"
                         style={{ backgroundColor: tintColor + '20' }}
                       >
-                        <ThemedText className="text-[1.4%] opacity-85" style={{ color: textColor }}>
+                        <ThemedText className="detail-meta opacity-85" style={{ color: textColor }}>
                           Content-Type: <ThemedText className="font-semibold">{endpoint.contentType}</ThemedText>
                         </ThemedText>
                       </View>
@@ -382,7 +382,7 @@ export default function MRDJPokemonMcpPage() {
 
           <MCPCollapsibleSection title="Available Resources" icon="library">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 These guides are exposed as MCP resources. AI tools can read and reference them when answering Pokémon
                 questions.
               </ThemedText>
@@ -395,7 +395,7 @@ export default function MRDJPokemonMcpPage() {
 
           <MCPCollapsibleSection title="Tools" icon="construct">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 Tools are functions an AI assistant can invoke (lookup, search, matchup math, counters, team suggestions).
               </ThemedText>
             </GreyView>
@@ -407,7 +407,7 @@ export default function MRDJPokemonMcpPage() {
 
           <MCPCollapsibleSection title="Prompts" icon="chatbubbles">
             <GreyView className="mb-4">
-              <ThemedText className="text-[1.9%] opacity-80">
+              <ThemedText className="detail-body opacity-80">
                 This server currently does not ship custom prompts (it focuses on resources + tools).
               </ThemedText>
             </GreyView>
@@ -417,7 +417,7 @@ export default function MRDJPokemonMcpPage() {
                 className="rounded-2.5 p-4"
                 style={{ backgroundColor: tintColor + '20' }}
               >
-                <ThemedText className="text-[1.7%] opacity-85">
+                <ThemedText className="detail-body opacity-85">
                   No prompts available.
                 </ThemedText>
               </View>
