@@ -228,7 +228,7 @@ Colors
   }
 
   .detail-image-container {
-    @apply flex-row flex justify-center items-center mx-[2%] my-[2%] w-full self-center h-[40%];
+    @apply flex-row flex justify-center items-center mx-[2%] my-[2%] w-full self-center h-[15%];
   }
 
   .detail-section-header {

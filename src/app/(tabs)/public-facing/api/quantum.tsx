@@ -396,10 +396,10 @@ export default function QuantumAPIPage() {
             }}
           >
             <View className="flex-row items-center justify-between">
-              <ThemedText type="subtitle" className="text-[2.5%]">
+              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl">
                 What is Quantum Mechanics?
               </ThemedText>
-              <ThemedText className="text-[2%]">
+              <ThemedText className="detail-body text-lg md:text-xl">
                 {isQuantumMechanicsExpanded ? '▼' : '▶'}
               </ThemedText>
             </View>
@@ -413,10 +413,10 @@ export default function QuantumAPIPage() {
               }}
             >
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader text-xl md:text-2xl mb-2">
                   Understanding Quantum Mechanics
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Quantum mechanics is the physics of the very small - atoms, electrons, and photons. At this scale, 
                   particles behave very differently than in our everyday world. They can exist in multiple states at once 
                   (superposition), be mysteriously connected across distances (entanglement), and change when observed 
@@ -425,43 +425,43 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader text-xl md:text-2xl mb-2">
                   Quantum vs Classical Computing
                 </ThemedText>
                 <View className="gap-2">
                   <View className="flex-row">
-                    <ThemedText className="font-bold flex-1 text-[1.5%]">Aspect</ThemedText>
-                    <ThemedText className="font-bold flex-1 text-[1.5%]">Classical Bit</ThemedText>
-                    <ThemedText className="font-bold flex-1 text-[1.5%]">Quantum Qubit</ThemedText>
+                    <ThemedText className="font-bold flex-1 detail-body text-base md:text-lg">Aspect</ThemedText>
+                    <ThemedText className="font-bold flex-1 detail-body text-base md:text-lg">Classical Bit</ThemedText>
+                    <ThemedText className="font-bold flex-1 detail-body text-base md:text-lg">Quantum Qubit</ThemedText>
                   </View>
                   <View className="flex-row p-2 rounded-md" style={{ backgroundColor: backgroundColor }}>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">State</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">0 or 1</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">0 AND 1 superposition</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">State</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">0 or 1</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">0 AND 1 superposition</ThemedText>
                   </View>
                   <View className="flex-row p-2">
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Gates</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Deterministic</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Can be probabilistic</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Gates</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Deterministic</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Can be probabilistic</ThemedText>
                   </View>
                   <View className="flex-row p-2 rounded-md" style={{ backgroundColor: backgroundColor }}>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Measurement</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Read current value</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Collapses randomly</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Measurement</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Read current value</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Collapses randomly</ThemedText>
                   </View>
                   <View className="flex-row p-2">
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Rotation</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Not possible</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.4%]">Creates superposition</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Rotation</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Not possible</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-base">Creates superposition</ThemedText>
                   </View>
                 </View>
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader text-xl md:text-2xl mb-2">
                   What is Quantum Computing?
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Traditional computers use bits (0 or 1). Quantum computers use qubits that can be 0, 1, or BOTH 
                   simultaneously (superposition). This lets them explore many possibilities at once. When you "measure" 
                   a qubit, it collapses to either 0 or 1 - but which one it becomes is fundamentally random and influenced 
@@ -470,10 +470,10 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader text-xl md:text-2xl mb-2">
                   How This API Works
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   This API uses IBM's Qiskit library to simulate quantum circuits. When you call the /quantum_gate endpoint, 
                   the server creates a quantum circuit, applies a rotation gate (RY) at your chosen angle, then measures the 
                   qubit. The measurement forces the quantum state to collapse into either 0 or 1, giving you TRUE quantum 
@@ -489,22 +489,22 @@ export default function QuantumAPIPage() {
               }}>
                 <View className="flex-row items-center mb-2">
                   <ThemedText className="mr-2 text-[2%]">⚠️</ThemedText>
-                  <ThemedText type="defaultSemiBold" className="text-[1.8%]">
+                  <ThemedText type="defaultSemiBold" className="detail-subheader text-[2%]">
                     Important: Simulator vs Real Quantum Hardware
                   </ThemedText>
                 </View>
                 
-                <ThemedText className="opacity-85 mb-3 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 mb-3 text-[1.9%] leading-[2.6%]">
                   Currently, this API uses the <ThemedText className="font-bold">Qiskit Aer Simulator</ThemedText> - 
                   a classical computer simulating quantum behavior. Here's what that means:
                 </ThemedText>
 
                 <View className="pl-3 gap-2.5 mb-3">
                   <View>
-                    <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                    <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                       What the Simulator Does
                     </ThemedText>
-                    <ThemedText className="opacity-85 text-[1.5%] leading-[2.2%]">
+                    <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
                       The simulator mathematically calculates what a quantum computer WOULD do. It uses the actual quantum 
                       mechanics equations (Schrödinger equation, unitary matrices) to compute superposition states and 
                       measurement probabilities. The randomness comes from Python's pseudo-random number generator weighted 
@@ -514,10 +514,10 @@ export default function QuantumAPIPage() {
                   </View>
 
                   <View>
-                    <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                    <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                       Is It "Really" Quantum?
                     </ThemedText>
-                    <ThemedText className="opacity-85 text-[1.5%] leading-[2.2%]">
+                    <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
                       The <ThemedText className="font-bold">math is 100% quantum</ThemedText> - it follows the same 
                       rules as real quantum hardware. But the <ThemedText className="font-bold">physical process is classical.</ThemedText>
                       Think of it like: playing a racing game (simulator) vs actually driving a car (hardware). The game uses real 
@@ -526,10 +526,10 @@ export default function QuantumAPIPage() {
                   </View>
 
                   <View>
-                    <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                    <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                       What Makes Real Quantum Hardware Different
                     </ThemedText>
-                    <ThemedText className="opacity-85 text-[1.5%] leading-[2.2%]">
+                    <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
                       Real quantum hardware uses <ThemedText className="font-bold">actual physical qubits</ThemedText> - 
                       superconducting circuits, trapped ions, or photons - operating at near absolute zero (-273°C). When you 
                       measure these, the wavefunction collapse is a REAL physical event governed by quantum mechanics, not 
@@ -539,10 +539,10 @@ export default function QuantumAPIPage() {
                   </View>
 
                   <View>
-                    <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                    <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                       Future Plans
                     </ThemedText>
-                    <ThemedText className="opacity-85 text-[1.5%] leading-[2.2%]">
+                    <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
                       I plan to integrate <ThemedText className="font-bold">IBM Quantum's real hardware</ThemedText> via 
                       their cloud API. This will let this API run circuits on actual quantum processors (like their 127-qubit Eagle 
                       or 433-qubit Osprey chips). The results will be TRULY quantum - fundamentally random, with real quantum 
@@ -552,7 +552,7 @@ export default function QuantumAPIPage() {
                   </View>
                 </View>
 
-                <ThemedText className="opacity-75 italic text-[1.4%] leading-[2.1%]">
+                <ThemedText className="detail-body opacity-80 italic text-[1.7%] leading-[2.4%]">
                   💡 Bottom line: This simulator is perfect for learning, development, and applications where quantum-correct 
                   probability distributions matter more than fundamental randomness. For cryptographic security or quantum 
                   research, real hardware would be necessary.
@@ -560,14 +560,14 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-[2%]">
                   What's Possible with Quantum Computing
                 </ThemedText>
-                <ThemedText className="opacity-85 mb-3 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 mb-3 text-[1.9%] leading-[2.6%]">
                   Quantum computing has incredible potential for:
                 </ThemedText>
                 <View className="pl-3 gap-2">
-                  <ThemedText className="opacity-85 text-[1.5%] leading-[2.2%]">
+                  <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
                     • Breaking encryption and creating unbreakable quantum encryption{"\n"}
                     • Simulating molecules for drug discovery and materials science{"\n"}
                     • Optimizing complex systems (logistics, finance, AI training){"\n"}
@@ -579,10 +579,10 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-[2%]">
                   My Quantum Computing Journey
                 </ThemedText>
-                <ThemedText className="opacity-85 mb-3 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 mb-3 text-[1.9%] leading-[2.6%]">
                   Here's what I've built and what I'm planning:
                 </ThemedText>
                 
@@ -594,64 +594,64 @@ export default function QuantumAPIPage() {
                 >
                   {/* Completed Items */}
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 text-[1.6%] text-[#10b981]">✓</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.5%]">
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-[#10b981]">✓</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Quantum Gate API - RY rotation gates for true randomness
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 text-[1.6%] text-[#10b981]">✓</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.5%]">
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-[#10b981]">✓</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Quantum Text Transformation - Unicode effects powered by quantum randomness
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 text-[1.6%] text-[#10b981]">✓</ThemedText>
-                    <ThemedText className="flex-1 opacity-85 text-[1.5%]">
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-[#10b981]">✓</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Portfolio Integration - Live quantum animation in Quantum Echo project
                     </ThemedText>
                   </View>
                   
                   {/* To-Do Items */}
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-50 text-[1.6%]">☐</ThemedText>
-                    <ThemedText className="flex-1 opacity-70 text-[1.5%]">
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Multi-qubit circuits for more complex quantum states
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-50 text-[1.6%]">☐</ThemedText>
-                    <ThemedText className="flex-1 opacity-70 text-[1.5%]">
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum entanglement demonstration API
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-50 text-[1.6%]">☐</ThemedText>
-                    <ThemedText className="flex-1 opacity-70 text-[1.5%]">
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Grover's algorithm for quantum search
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-50 text-[1.6%]">☐</ThemedText>
-                    <ThemedText className="flex-1 opacity-70 text-[1.5%]">
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum random number generator (QRNG) endpoint
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-50 text-[1.6%]">☐</ThemedText>
-                    <ThemedText className="flex-1 opacity-70 text-[1.5%]">
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum game mechanics for procedural generation
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-50 text-[1.6%]">☐</ThemedText>
-                    <ThemedText className="flex-1 opacity-70 text-[1.5%]">
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum circuit visualization in the API response
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-50 text-[1.6%]">☐</ThemedText>
-                    <ThemedText className="flex-1 opacity-70 text-[1.5%]">
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Real quantum hardware access via IBM Quantum cloud
                     </ThemedText>
                   </View>
@@ -665,7 +665,7 @@ export default function QuantumAPIPage() {
                   borderColor: tintColor + '40',
                 }}
               >
-                <ThemedText className="opacity-90 italic text-[1.5%] leading-[2.2%]">
+                <ThemedText className="detail-body opacity-90 italic text-[1.8%] leading-[2.5%]">
                   💡 Fun fact: The randomness from quantum measurement is the ONLY truly random process in the universe. 
                   Everything else (dice rolls, coin flips, random() functions) is technically predictable if you know all 
                   the variables. Quantum randomness is fundamentally unpredictable - even in theory.
@@ -685,10 +685,10 @@ export default function QuantumAPIPage() {
             }}
           >
             <View className="flex-row items-center justify-between">
-              <ThemedText type="subtitle" className="text-[2.5%]">
+              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl">
                 How to Use This API
               </ThemedText>
-              <ThemedText className="text-[2%]">
+              <ThemedText className="detail-body text-lg md:text-xl">
                 {isHowToUseExpanded ? '▼' : '▶'}
               </ThemedText>
             </View>
@@ -702,10 +702,10 @@ export default function QuantumAPIPage() {
               }}
             >
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
                   1. What is an API?
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   An API (Application Programming Interface) lets your code talk to a server on the internet. 
                   Think of it like ordering food - you send a request ("I want quantum randomness"), and the server 
                   sends back a response (the random result).
@@ -713,12 +713,12 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
                   2. Making Requests
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Use the base URL + endpoint path. For example:{"\n\n"}
-                  <ThemedText className="font-mono text-[1.5%]">
+                  <ThemedText className="font-mono text-sm md:text-base">
                     {QUANTUM_BASE_URL}/quantum_gate
                   </ThemedText>
                   {"\n\n"}
@@ -728,10 +728,10 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
                   3. Understanding the Response
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   The server always responds with JSON data (a structured text format). You'll get back information 
                   like the quantum measurement result, superposition strength, and more. Use the interactive "Try It Out" 
                   sections above to see real responses!
@@ -739,10 +739,10 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
                   4. No Authentication or Rate Limits
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   This API is completely free and open - no API keys, no signup, no login. Just start making requests!{"\n\n"}
                   <ThemedText className="font-bold">Fair Use Policy:</ThemedText> Please be respectful and don't spam the server. 
                   Excessive requests may be rate-limited. Recommended limit: ~100 requests/minute per IP.
@@ -750,14 +750,14 @@ export default function QuantumAPIPage() {
               </View>
 
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
                   5. Quick Start
                 </ThemedText>
-                <ThemedText className="opacity-85 text-[1.6%] leading-[2.3%]">
+                <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Try visiting this URL in your browser right now:{"\n\n"}
                   <ExternalLink 
                     href={`${QUANTUM_BASE_URL}/quantum_echo_types`}
-                    className="underline font-mono text-[1.5%]"
+                    className="underline font-mono text-sm md:text-base"
                     style={{ color: tintColor }}
                   >
                     {QUANTUM_BASE_URL}/quantum_echo_types
@@ -772,17 +772,17 @@ export default function QuantumAPIPage() {
 
         {/* Code Examples Section */}
         <View className="mb-7.5">
-          <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
+          <ThemedText type="subtitle" className="detail-section-header mb-4 text-2xl md:text-3xl">
             💻 Code Examples
           </ThemedText>
           {/* JavaScript Example */}
           <View className="mb-5">
-            <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+            <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
               JavaScript / TypeScript
             </ThemedText>
             <View className="p-4 rounded-lg bg-[#1e1e1e]">
               <ScrollView horizontal>
-                <ThemedText className="font-mono text-[1.4%] text-[#d4d4d4]">
+                <ThemedText className="font-mono text-sm md:text-base text-[#d4d4d4] leading-relaxed">
 {`const response = await fetch(
   'https://davidjgrimsley.com/api/quantum/quantum_gate',
   {
@@ -805,12 +805,12 @@ console.log('Superposition:', result.superposition_strength);`}
 
           {/* Python Example */}
           <View className="mb-5">
-            <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+            <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
               Python
             </ThemedText>
             <View className="p-4 rounded-lg bg-[#1e1e1e]">
               <ScrollView horizontal>
-                <ThemedText className="font-mono text-[1.4%] text-[#d4d4d4]">
+                <ThemedText className="font-mono text-sm md:text-base text-[#d4d4d4] leading-relaxed">
 {`import requests
 import math
 
@@ -832,12 +832,12 @@ print(f"Superposition: {result['superposition_strength']}")`}
 
           {/* cURL Example */}
           <View>
-            <ThemedText type="defaultSemiBold" className="mb-2 text-[1.8%]">
+            <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
               cURL
             </ThemedText>
             <View className="p-4 rounded-lg bg-[#1e1e1e]">
               <ScrollView horizontal>
-                <ThemedText className="font-mono text-[1.4%] text-[#d4d4d4]">
+                <ThemedText className="font-mono text-sm md:text-base text-[#d4d4d4] leading-relaxed">
 {`curl -X POST https://davidjgrimsley.com/api/quantum/quantum_gate \\
   -H "Content-Type: application/json" \\
   -d '{"gate_type":"rotation","rotation_angle":1.5708}'`}
@@ -849,7 +849,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
 
         {/* Technical Details Section */}
         <View className="mb-7.5">
-          <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
+          <ThemedText type="subtitle" className="detail-section-header mb-4 text-[2.2%]">
             🔬 Technical Details
           </ThemedText>
           
@@ -861,34 +861,34 @@ print(f"Superposition: {result['superposition_strength']}")`}
           >
             <View className="gap-3">
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                   Backend Technology
                 </ThemedText>
-                <ThemedText className="opacity-80 text-[1.5%]">
+                <ThemedText className="detail-body opacity-85 text-[1.8%]">
                   Python 3.11 with FastAPI framework
                 </ThemedText>
               </View>
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                   Quantum Simulator
                 </ThemedText>
-                <ThemedText className="opacity-80 text-[1.5%]">
+                <ThemedText className="detail-body opacity-85 text-[1.8%]">
                   IBM Qiskit Aer Simulator (latest version)
                 </ThemedText>
               </View>
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                   Hosting
                 </ThemedText>
-                <ThemedText className="opacity-80 text-[1.5%]">
+                <ThemedText className="detail-body opacity-85 text-[1.8%]">
                   Self-hosted VPS with Nginx reverse proxy
                 </ThemedText>
               </View>
               <View>
-                <ThemedText type="defaultSemiBold" className="mb-1 text-[1.6%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                   Protocol
                 </ThemedText>
-                <ThemedText className="opacity-80 text-[1.5%]">
+                <ThemedText className="detail-body opacity-85 text-[1.8%]">
                   HTTPS (SSL/TLS encryption)
                 </ThemedText>
               </View>
@@ -898,7 +898,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
 
         {/* Use Cases Section */}
         <View className="mb-7.5">
-          <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
+          <ThemedText type="subtitle" className="detail-section-header mb-4 text-[2.2%]">
             🎯 Use Cases
           </ThemedText>
           
@@ -917,10 +917,10 @@ print(f"Superposition: {result['superposition_strength']}")`}
                   backgroundColor: accentColor,
                 }}
               >
-                <ThemedText type="defaultSemiBold" className="mb-1 text-[1.7%]">
+                <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
                   {useCase.title}
                 </ThemedText>
-                <ThemedText className="opacity-80 text-[1.5%]">
+                <ThemedText className="detail-body opacity-85 text-[1.8%]">
                   {useCase.desc}
                 </ThemedText>
               </View>
@@ -930,7 +930,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
 
         {/* Live API Demo */}
         <View className="mb-5">
-          <ThemedText type="subtitle" className="mb-4 text-[2.5%]">
+          <ThemedText type="subtitle" className="detail-section-header mb-4 text-2xl md:text-3xl">
             🎮 Live Demo
           </ThemedText>
           <View 
@@ -939,7 +939,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
               backgroundColor: accentColor,
             }}
           >
-            <ThemedText className="opacity-90 text-center mb-4 text-[1.7%] leading-[2.4%]">
+            <ThemedText className="detail-body opacity-90 text-center mb-4 text-lg md:text-xl leading-relaxed">
               💡 This is the actual quantum animation from my Quantum Echo project. 
               It's making a LIVE call to this API right now! Watch it run a 30-second 
               quantum circuit simulation with real Qiskit code.
@@ -948,7 +948,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
             {/* Live Quantum Animation */}
             <HelloWave />
             
-            <ThemedText className="opacity-70 text-center mt-4 italic text-[1.5%] leading-[2.1%]">
+            <ThemedText className="detail-body opacity-85 text-center mt-4 italic text-base md:text-lg leading-relaxed">
               Every time this loads, it calls POST /quantum_gate with a random rotation angle, 
               runs a quantum simulation, measures the qubit, and uses the result to control 
               the animation's behavior. This is quantum computing in action!
@@ -968,7 +968,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
             color={isDetailSynced ? tintColor : textColor}
             className="opacity-90"
           />
-          <ThemedText className="opacity-75 flex-1 text-[1.5%]">
+          <ThemedText className="detail-body opacity-80 flex-1 text-base md:text-lg">
             {isDetailSynced
               ? `Synced from ${QUANTUM_PORTFOLIO_URL}`
               : 'Using local portfolio metadata (offline / fetch failed)'}

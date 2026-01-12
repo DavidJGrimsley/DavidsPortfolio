@@ -27,7 +27,10 @@ export function PublicFacingIndexWrapper({ title, subtitle, children, contentCla
 				showsVerticalScrollIndicator={false}
 				contentContainerClassName={`${containerClassName} px-5 pb-10 gap-4 ${contentClassName ?? ''}`.trim()}
 			>
-				{children}
+				<View className='flex-row flex-1'>
+          <View className="flex-col flex-1">{children}</View>
+          <View className="w-[0%] lg:w-[10%]"></View>
+        </View>
 			</ScrollView>
 		</View>
 	);

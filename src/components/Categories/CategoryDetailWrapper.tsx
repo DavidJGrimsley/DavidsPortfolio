@@ -65,7 +65,7 @@ export function CategoryDetailWrapper({
                     
                     <Text className="detail-body mb-[1%]">{element.breakdown}</Text>
                     
-                    <View className="justify-center items-center my-[2%]">
+                    <View className="justify-center items-center my-[2.5%]">
                         {element.youtubeID && (
                             <YoutubePlayer
                                 height={Dimensions.get('window').width * 0.7 * 0.5625}
@@ -77,7 +77,7 @@ export function CategoryDetailWrapper({
                         )}
                     </View>
                     
-                    <View className="my-[1%] bg-secondary rounded-[1%] p-[1.5%] w-full justify-around opacity-40">
+                    <View className="my-[2%] bg-secondary rounded-[1%] p-[2.25%] w-full justify-around opacity-80 gap-[1%]">
                         {element.skillsUsed && (
                             <FlashList
                                 data={element.skillsUsed}
@@ -124,7 +124,7 @@ export function CategoryDetailWrapper({
             scrollEventThrottle={enableScrollTracking ? 20 : undefined}
         >
             <BackgroundGradient />
-            <View className="w-full max-w-[90%] self-center bg-transparent px-5 py-7.5 pb-15">
+            <View className="w-full max-w-[90%] self-center bg-transparent px-6 py-9 pb-12">
                 {data}
             </View>
         </ScrollView>

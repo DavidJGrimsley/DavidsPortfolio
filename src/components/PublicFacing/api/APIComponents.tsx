@@ -176,24 +176,24 @@ export function EndpointCard({
             <ThemedText style={{ 
               color: '#fff', 
               fontWeight: 'bold',
-              fontSize: RFPercentage(1.4)
+              fontSize: 16
             }}>
               {method}
             </ThemedText>
           </View>
           <ThemedText type="defaultSemiBold" style={{ 
-            fontSize: RFPercentage(1.8),
+            fontSize: 20,
             fontFamily: 'monospace',
             flex: 1,
             color: secondaryColor,
           }}>
             {path}
           </ThemedText>
-          <ThemedText style={{ fontSize: RFPercentage(2) }}>
+          <ThemedText style={{ fontSize: 20 }}>
             {isExpanded ? '▼' : '▶'}
           </ThemedText>
         </View>
-        <ThemedText style={{ fontSize: RFPercentage(1.7), opacity: 0.85, color: secondaryColor }}>
+        <ThemedText style={{ fontSize: 18, opacity: 0.9, color: secondaryColor }}>
           {summary}
         </ThemedText>
       </Pressable>
@@ -203,10 +203,10 @@ export function EndpointCard({
         <View style={{ marginTop: 16, gap: 16 }}>
           {description && (
             <View>
-              <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.6), marginBottom: 4 }}>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 4 }}>
                 Description
               </ThemedText>
-              <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.85, color: secondaryColor }}>
+              <ThemedText style={{ fontSize: 16, opacity: 0.9, color: secondaryColor }}>
                 {description}
               </ThemedText>
             </View>
@@ -215,7 +215,7 @@ export function EndpointCard({
           {/* Parameters */}
           {parameters && parameters.length > 0 && (
             <View>
-              <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.6), marginBottom: 8 }}>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 8 }}>
                 Parameters
               </ThemedText>
               {parameters.map((param, index) => (
@@ -229,11 +229,11 @@ export function EndpointCard({
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                    <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.5) }}>
+                    <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>
                       {param.name}
                     </ThemedText>
                     <ThemedText style={{ 
-                      fontSize: RFPercentage(1.3),
+                      fontSize: 14,
                       marginLeft: 8,
                       opacity: 0.6,
                       fontFamily: 'monospace'
@@ -250,7 +250,7 @@ export function EndpointCard({
                       }}>
                         <ThemedText style={{ 
                           color: '#fff',
-                          fontSize: RFPercentage(1.2),
+                          fontSize: 13,
                           fontWeight: 'bold'
                         }}>
                           REQUIRED
@@ -258,12 +258,12 @@ export function EndpointCard({
                       </View>
                     )}
                   </View>
-                  <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
+                  <ThemedText style={{ fontSize: 15, opacity: 0.78 }}>
                     {param.description}
                   </ThemedText>
                   {param.example && (
                     <ThemedText style={{ 
-                      fontSize: RFPercentage(1.3),
+                      fontSize: 14,
                       marginTop: 4,
                       opacity: 0.6,
                       fontStyle: 'italic'
@@ -279,7 +279,7 @@ export function EndpointCard({
           {/* Request Body */}
           {requestBody && (
             <View>
-              <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.6), marginBottom: 8 }}>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 8 }}>
                 Request Body
               </ThemedText>
               <View style={{
@@ -287,13 +287,13 @@ export function EndpointCard({
                 padding: 12,
                 borderRadius: 8,
               }}>
-                <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.8, marginBottom: 8 }}>
+                <ThemedText style={{ fontSize: 15, opacity: 0.85, marginBottom: 8 }}>
                   {requestBody.description}
                 </ThemedText>
                 <ThemedText style={{ 
                   fontFamily: 'monospace',
-                  fontSize: RFPercentage(1.3),
-                  opacity: 0.7
+                  fontSize: 14,
+                  opacity: 0.78
                 }}>
                   {JSON.stringify(requestBody.example, null, 2)}
                 </ThemedText>
@@ -303,13 +303,13 @@ export function EndpointCard({
 
           {/* Responses */}
           <View>
-            {method !== 'GET' && <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.6), marginBottom: 8 }}>
+            {method !== 'GET' && <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 8 }}>
               Example Responses
             </ThemedText>}
             {/* For GET endpoints, show LIVE response instead of static example */}
             {method === 'GET' ? (
               <>
-                <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.6), marginBottom: 8 }}>
+                <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 8 }}>
                   Live API Call Response
                 </ThemedText>
                 <View style={{
@@ -326,11 +326,11 @@ export function EndpointCard({
                       borderRadius: 4,
                       marginRight: 8,
                     }}>
-                      <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: RFPercentage(1.3) }}>
+                      <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
                         {liveError ? 'ERR' : (liveResponse ? liveResponse.status : '...')}
                       </ThemedText>
                     </View>
-                    <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.8 }}>
+                    <ThemedText style={{ fontSize: 15, opacity: 0.85 }}>
                       {liveError ? 'Live request failed' : (liveResponse ? liveResponse.statusText : 'Fetching live response...')}
                     </ThemedText>
                   </View>
@@ -338,7 +338,7 @@ export function EndpointCard({
                     <ActivityIndicator color={tintColor} />
                   )}
                   {liveError && (
-                    <ThemedText style={{ color: '#ef4444', fontSize: RFPercentage(1.3), marginTop: 4 }}>
+                    <ThemedText style={{ color: '#ef4444', fontSize: 14, marginTop: 4 }}>
                       {liveError}
                     </ThemedText>
                   )}
@@ -346,8 +346,8 @@ export function EndpointCard({
                     <ScrollView horizontal>
                       <ThemedText style={{ 
                         fontFamily: 'monospace',
-                        fontSize: RFPercentage(1.3),
-                        opacity: 0.7,
+                        fontSize: 14,
+                        opacity: 0.78,
                       }}>
                         {JSON.stringify(liveResponse.data, null, 2)}
                       </ThemedText>
@@ -380,20 +380,20 @@ export function EndpointCard({
                           <ThemedText style={{ 
                             color: '#fff',
                             fontWeight: 'bold',
-                            fontSize: RFPercentage(1.3)
+                            fontSize: 14
                           }}>
                             {response.code}
                           </ThemedText>
                         </View>
-                        <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.8 }}>
+                        <ThemedText style={{ fontSize: 15, opacity: 0.85 }}>
                           {response.description}
                         </ThemedText>
                       </View>
                       {response.example && (
                         <ThemedText style={{ 
                           fontFamily: 'monospace',
-                          fontSize: RFPercentage(1.3),
-                          opacity: 0.7,
+                          fontSize: 14,
+                          opacity: 0.78,
                           marginTop: 4
                         }}>
                           {JSON.stringify(response.example, null, 2)}
@@ -415,7 +415,7 @@ export function EndpointCard({
               borderWidth: 2,
               borderColor: tintColor + '40',
             }}>
-              <ThemedText type="defaultSemiBold" style={{ fontSize: RFPercentage(1.8), marginBottom: 12 }}>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: 20, marginBottom: 12 }}>
                 🧪 Try It Out
               </ThemedText>
 
