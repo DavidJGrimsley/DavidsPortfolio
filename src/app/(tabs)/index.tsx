@@ -1,11 +1,9 @@
 import { Text, View, ScrollView } from "react-native";
-import React from 'react';
+import React from "react";
 import { FeaturedCard } from "../../components/FeaturedCard";
 import { Foot } from "../../components/Foot";
 import { TitleOfPage } from "../../components/Categories/TitleOfPage";
-import Game from "../../components/TicTacToe";
-import { Container } from "react-bootstrap";
-import { HomeScreenGradient } from '@/components/Gradients';
+import { HomeScreenGradient } from "@/components/Gradients";
 
 
 
@@ -20,24 +18,22 @@ export default function Index() {
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         showsHorizontalScrollIndicator={false}
-        className="items-center py-[2%] flex-1"
+        className="items-center p-[10%] flex-1"
         >
         <TitleOfPage></TitleOfPage>
+        <View className="w-[95%] max-w-[75%] px-[2%] mb-[3%]" style={{ borderLeftWidth: 4, borderLeftColor: "var(--color-tint)" }}>
+          <Text className="detail-body text-themed">
+            I help teams ship polished products across mobile, web, and game experiences—pairing strong UX instincts with reliable engineering. Every project gets the same rigor: thoughtful architecture, resilient data flows, and instrumentation so we can measure what matters.
+          </Text>
+          <Text className="detail-body text-secondary mt-[1%]">
+            From rapid prototypes to production launches, I focus on maintainable systems, accessibility, and performance so features stay fast, inclusive, and easy to iterate.
+          </Text>
+        </View>
         
         {/* <View style={styles.homeContent}> */}
           <View className="items-center p-[2%] my-[2%]">
             <FeaturedCard></FeaturedCard>
           </View>
-          
-          <Container className="flex justify-center items-center flex-row flex-wrap w-full px-[1%]">
-            <View className="mr-[2%] mb-[2%] w-[90%] max-w-150 bg-themed rounded-[2%] opacity-60 flex justify-center items-center">
-          <Text className="p-[2%] detail-body text-center text-secondary">Have a little fun playing Tic-Tac-Toe. This uses React's state property to store all the data about the game and only update needed components. It shows how closely related software development and game design are.</Text>
-            </View>
-            <View className="flex justify-center items-center bg-tint rounded-[1%] p-[1%] text-center w-[95%] max-w-100 self-center">
-          <Game></Game>
-            </View>
-          </Container>
-        {/* </View> */}
         
         <Foot></Foot>
       </ScrollView>

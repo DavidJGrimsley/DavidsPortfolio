@@ -6,7 +6,7 @@ type TitleOfPageProps = {
     titleB?: string;
 };
 
-export function TitleOfPage({ titleA = 'Featured', titleB = 'Project' }: TitleOfPageProps) {
+export function TitleOfPage({ titleA = 'David', titleB = 'Grimsley' }: TitleOfPageProps) {
     return (
         <View className="main-title">
             <Text className="main-title-text">

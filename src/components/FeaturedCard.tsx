@@ -1,42 +1,55 @@
-import React from 'react';
-import { View, Dimensions } from 'react-native';
-import { Button, Card } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import pieces from '@json/pieces.json';
-import { router, Href } from 'expo-router';
-import { Pieces, normalizePieces } from '@/types/portfolio';
+import React, { useMemo } from "react";
+import { View } from "react-native";
+import { useRouter } from "expo-router";
+import pieces from "@json/pieces.json";
+import { Pieces, normalizePieces } from "@/types/portfolio";
+import { PieceCard } from "@/components/Categories/PieceCard";
 
 const piecesData: Pieces = normalizePieces(pieces);
 
 export function FeaturedCard() {
-    const [data, setData] = React.useState<React.ReactElement<any, any>[]>([]);
-    const screenWidth = Dimensions.get('window').width;
-    
-    React.useEffect(() => {
-        const newData: React.ReactElement<any, any>[] = [];
-        
+    const router = useRouter();
+
+    const featured = useMemo(() => {
+        const collected: { category: string; title: string; displayTitle?: string; caption?: string; gif?: string; picture?: string }[] = [];
         Object.keys(piecesData).forEach((category) => {
             piecesData[category].forEach((element) => {
                 if (element.isFeatured) {
-                    const card = (
-                        <Card key={element.title} style={{ width: screenWidth / 1.8 }}>
-                            <Card.Img variant="top" src={element.gif} />
-                            <Card.Body>
-                                <Card.Title>{element.displayTitle || element.title}</Card.Title>
-                                <Card.Text>{element.caption}</Card.Text>
-                                <Button variant="primary" onClick={() => router.push(`/${category}/${element.title}` as any)}>
-                                    View Details
-                                </Button>
-                            </Card.Body>
-                        </Card>
-                    );
-                    newData.push(card);
+                    collected.push({
+                        category,
+                        title: element.title,
+                        displayTitle: element.displayTitle,
+                        caption: element.caption,
+                        gif: element.gif,
+                        picture: element.picture,
+                    });
                 }
             });
         });
-        
-        setData(newData);
-    }, [screenWidth]);
-    
-    return <View>{data}</View>;
+        return collected;
+    }, []);
+
+    return (
+        <View className="w-full items-center">
+            <View className="flex flex-row flex-wrap justify-center gap-x-[3%] gap-y-[4%] w-full">
+                {featured.map((item) => {
+                    const imageSource = item.gif || item.picture;
+
+                    return (
+                        <PieceCard
+                            key={`${item.category}-${item.title}`}
+                            title={item.displayTitle || item.title}
+                            caption={item.caption}
+                            imageSource={imageSource}
+                            badgeText="Featured"
+                            onPress={() => router.push(`/portfolio/${item.category}/${item.title}` as any)}
+                            squareImage
+                            maxWidth={320}
+                            className="w-[90%] sm:w-[48%] lg:w-[31%]"
+                        />
+                    );
+                })}
+            </View>
+        </View>
+    );
 }

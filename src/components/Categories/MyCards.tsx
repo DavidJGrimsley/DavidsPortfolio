@@ -1,9 +1,9 @@
-import React from 'react';
-import { Button, Card, Col, Container, Row } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import pieces from '@json/pieces.json';
-import { router, Href } from 'expo-router';
-import { Pieces, normalizePieces } from '@/types/portfolio';
+import React, { useMemo } from "react";
+import { View } from "react-native";
+import { useRouter } from "expo-router";
+import pieces from "@json/pieces.json";
+import { Pieces, normalizePieces } from "@/types/portfolio";
+import { PieceCard } from "@/components/Categories/PieceCard";
 
 const piecesData: Pieces = normalizePieces(pieces);
 
@@ -12,41 +12,30 @@ type MyCardsProps = {
 };
 
 export function MyCards({ pageCategory }: MyCardsProps) {
-    const [data, setData] = React.useState<React.ReactElement<any, any>[]>([]);
+    const router = useRouter();
 
-    React.useEffect(() => {
-        const newData: React.ReactElement<any, any>[] = [];
-        
-        Object.keys(piecesData).forEach((category) => {
-            if (category === pageCategory) {
-                piecesData[category].forEach((element) => {
-                    const card = (
-                        <Col key={element.title} className="w-full items-center">
-                            <Card className="m-[2%] w-[90%] max-w-200" style={{} as React.CSSProperties}>
-                                <Card.Img variant="top" src={element.gif} />
-                                <Card.Body>
-                                    <Card.Title>{element.displayTitle || element.title}</Card.Title>
-                                    <Card.Text>{element.caption}</Card.Text>
-                                    <Button variant="primary" onClick={() => router.push(`/portfolio/${pageCategory}/${element.title}` as any)}>
-                                        View details
-                                    </Button>
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    );
-                    newData.push(card);
-                });
-            }
-        });
-        
-        setData(newData);
-    }, [pageCategory]);
-    
+    const cards = useMemo(() => piecesData[pageCategory] ?? [], [pageCategory]);
+
     return (
-        <Container className="flex flex-wrap justify-center items-center">
-            <Row className="items-center flex-row flex-wrap w-full">
-                {data}
-            </Row>
-        </Container>
-    );    
+        <View className="w-full">
+            <View className="flex flex-row flex-wrap justify-center gap-x-[2%] w-full">
+                {cards.map((element) => {
+                    const badge = element.isFeatured ? "Featured" : element.inProgress ? "In Progress" : null;
+                    const imageSource = element.gif || element.picture;
+
+                    return (
+                        <PieceCard
+                            key={element.title}
+                            title={element.displayTitle || element.title}
+                            caption={element.caption}
+                            imageSource={imageSource}
+                            badgeText={badge ?? undefined}
+                            onPress={() => router.push(`/portfolio/${pageCategory}/${element.title}` as any)}
+                            className="w-full sm:w-[48%] lg:w-[31%]"
+                        />
+                    );
+                })}
+            </View>
+        </View>
+    );
 }
