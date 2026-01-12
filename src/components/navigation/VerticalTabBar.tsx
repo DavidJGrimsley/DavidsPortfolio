@@ -482,6 +482,11 @@ const VertTabGroup: React.FC<VertTabGroupProps> = ({
     maxWidth: 620,
   } : { opacity: shouldShowMessage ? 1 : 0 };
 
+  // Only render the active child when not expanded so the dock looks collapsed
+  const visibleItems = isExpanded
+    ? group.items
+    : group.items.filter(item => isRouteActive(activeRoute, item.route));
+
   return (
     <View>
       <Pressable
@@ -529,13 +534,13 @@ const VertTabGroup: React.FC<VertTabGroupProps> = ({
 
       {/* Sub-menu items */}
       <View style={[styles.subMenu, webSubMenuStyle as any]}>
-        {group.items.map((item) => (
+        {visibleItems.map((item) => (
           <VertTabItem
             key={item.name}
             tab={item}
             isActive={isRouteActive(activeRoute, item.route)}
             isSubItem
-            showLabel={isExpanded}
+            showLabel={isExpanded || isRouteActive(activeRoute, item.route)}
             scaleClass="scale-1"
             activeColor={activeColor}
             inactiveColor={inactiveColor}
