@@ -26,12 +26,13 @@ const TabLayout = ({  }) => {
   const isDesktopWidth = windowWidth >= DESKTOP_BREAKPOINT;
   const isDesktopWeb = isWeb && isDesktopWidth;
   
-  // Color values based on theme
-  const tintColor = colorScheme === 'light' ? '#4B718A' : '#a96710';
-  const tabIconDefault = colorScheme === 'light' ? '#723B80' : '#321e3bb9';
-  const secondaryColor = colorScheme === 'light' ? '#afeef7' : '#a96710';
-  const accentColor = colorScheme === 'light' ? '#723B80' : '#321e3bb9';
-  const headerBg = colorScheme === 'light' ? '#F4F4F4' : '#040404';
+  // Color values based on theme - using CSS variable values for JS contexts
+  // These match the --color-* variables in global.css
+  const tintColor = colorScheme === 'light' ? '#0E668B' : '#EEA444';
+  const tabIconDefault = colorScheme === 'light' ? '#723B80' : '#321E3B';
+  const secondaryColor = colorScheme === 'light' ? '#A2DDF6' : '#A96710';
+  const accentColor = colorScheme === 'light' ? '#723B80' : '#321E3B';
+  const headerBg = colorScheme === 'light' ? '#E9DDEE' : '#20182D';
   
   // Convert segments to regular array to avoid TypeScript tuple issues
   const routeSegments = [...segments];

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Image, Pressable, Text, View, useColorScheme } from "react-native";
+import { Image, Pressable, View, useColorScheme } from "react-native";
+import { ThemedText } from "@/components/UI/ThemedText";
 
 type PieceCardProps = {
   title: string;
@@ -25,15 +26,15 @@ export function PieceCard({
   const colorScheme = useColorScheme();
   const [isHovered, setIsHovered] = useState(false);
 
-  // Keep this simple and predictable: tint-colored shadow.
+  // Use CSS variables for shadow color based on theme
   const shadowTint = useMemo(
-    () => (colorScheme === "dark" ? "#EEA444" : "#0E668B"),
+    () => (colorScheme === "dark" ? "var(--color-tint)" : "var(--color-tint)"),
     [colorScheme]
   );
 
   const containerClassName = `${isHovered ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
-  const titleClassName = `detail-title ${isHovered ? "text-white-or-black" : "text-themed"}`;
-  const captionClassName = `detail-body mt-[1%] ${isHovered ? "text-white-or-black" : "text-secondary"}`;
+  const titleClassName = `detail-title leading-relaxed ${isHovered ? "text-white-or-black" : "text-secondary"}`;
+  const captionClassName = `detail-body mt-[1%] ${isHovered ? "text-white-or-black" : "text-themed"}`;
 
   return (
     <Pressable
@@ -46,7 +47,7 @@ export function PieceCard({
         {
           maxWidth,
           marginBottom: 16,
-          shadowColor: shadowTint,
+          shadowColor: colorScheme === "dark" ? "#EEA444" : "#0E668B",
           shadowOpacity: 0.22,
           shadowRadius: 10,
           shadowOffset: { width: 0, height: 6 },
@@ -71,12 +72,12 @@ export function PieceCard({
 
       {badgeText ? (
         <View className="self-start bg-tint px-[2%] py-[1%] rounded-[0.8%] mb-[1%]">
-          <Text className="text-white-or-black text-xs font-semibold">{badgeText}</Text>
+          <ThemedText inverse className="badge-text">{badgeText}</ThemedText>
         </View>
       ) : null}
 
-      <Text className={titleClassName}>{title}</Text>
-      {caption ? <Text className={captionClassName}>{caption}</Text> : null}
+      <ThemedText className={titleClassName}>{title}</ThemedText>
+      {caption ? <ThemedText className={captionClassName}>{caption}</ThemedText> : null}
     </Pressable>
   );
 }

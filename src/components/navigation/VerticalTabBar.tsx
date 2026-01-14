@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
-    color: '#040404',
+    // Color is now applied dynamically via textColor prop
   },
   iconWrapper: {
     alignItems: 'center',
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '700',
-    color: '#FEFEFE',
+    // Color is now applied dynamically via textColor prop
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -374,7 +374,7 @@ const VertTabItem: React.FC<VertTabItemProps> = ({
       <Text
         style={[
           styles.tabLabel,
-          { opacity: shouldShowLabel ? 1 : 0 },
+          { opacity: shouldShowLabel ? 1 : 0, color: textColor },
           webLabelStyle as any,
         ]}
       >
@@ -524,7 +524,7 @@ const VertTabGroup: React.FC<VertTabGroupProps> = ({
         <Text
           style={[
             styles.tabLabel,
-            { opacity: shouldShowLabel ? 1 : 0 },
+            { opacity: shouldShowLabel ? 1 : 0, color: textColor },
             webLabelStyle as any,
           ]}
         >
@@ -618,12 +618,12 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
   const segments = useSegments();
   const router = useRouter();
   
-  // Theme colors
-  const activeColor = propActiveColor ?? (colorScheme === 'light' ? '#4B718A' : '#a96710');
+  // Theme colors - matching CSS variables in global.css
+  const activeColor = propActiveColor ?? (colorScheme === 'light' ? '#0E668B' : '#EEA444');
   const inactiveColor = propInactiveColor ?? (colorScheme === 'light' ? '#723B80' : '#9BA1A6');
-  const accentColor = colorScheme === 'light' ? '#723B80' : '#321e3bb9';
-  const textColor = colorScheme === 'light' ? '#11181C' : '#FEFEFE';
-  const secondaryColor = colorScheme === 'light' ? '#afeef7' : '#a96710';
+  const accentColor = colorScheme === 'light' ? '#723B80' : '#321E3B';
+  const textColor = colorScheme === 'light' ? '#11181C' : '#F8F8F8';
+  const secondaryColor = colorScheme === 'light' ? '#A2DDF6' : '#A96710';
   const topLevelIconSize = iconSize * 1.7; // unified size for top-level (home + groups)
 
   // State

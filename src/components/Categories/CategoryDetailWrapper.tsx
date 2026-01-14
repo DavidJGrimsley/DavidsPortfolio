@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Image, Alert, Dimensions } from 'react-native';
+import { View, ScrollView, Image, Alert, Dimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { BackgroundGradient } from '@/components/Gradients';
 import { InProgress } from '@/components/Categories/InProgress';
@@ -56,12 +56,12 @@ export function CategoryDetailWrapper({
                     <ThemedText
                         headingLevel={1}
                         visualHeadingLevel={1}
-                        className="detail-title font-londrina-shadow"
+                        className="detail-title font-noto-serif text-center mb-[2%]"
                         aria={element.displayTitle || element.title}
                     >
                         {element.displayTitle || element.title}
                     </ThemedText>
-                    <Text className="detail-caption">{element.caption}</Text>
+                    <ThemedText className="detail-caption">{element.caption}</ThemedText>
                     <View className="detail-image-container">
                         <Image source={{ uri: element.picture }} className="w-full h-full" resizeMode="contain" />
                     </View>
@@ -71,7 +71,7 @@ export function CategoryDetailWrapper({
                     
                     {element.inProgress && <InProgress />}
                     
-                    <Text className="detail-body mb-[1%]">{element.breakdown}</Text>
+                    <ThemedText className="detail-body mb-[1%]">{element.breakdown}</ThemedText>
                     
                     <View className="justify-center items-center my-[2.5%]">
                         {element.youtubeID && (
@@ -89,8 +89,8 @@ export function CategoryDetailWrapper({
                         {element.skillsUsed && (
                             <FlashList
                                 data={element.skillsUsed}
-                                ListHeaderComponent={<Text className="detail-section-header">Skills Used:</Text>}
-                                renderItem={({ item }) => <Text className="detail-skill-item">{item}</Text>}
+                                ListHeaderComponent={<ThemedText headingLevel={2} className="detail-section-header">Skills Used:</ThemedText>}
+                                renderItem={({ item }) => <ThemedText className="detail-skill-item">{item}</ThemedText>}
                                 horizontal={false}
                                 numColumns={3}
                                 showsHorizontalScrollIndicator={false}
@@ -100,8 +100,8 @@ export function CategoryDetailWrapper({
                         {element.skillsLearned && (
                             <FlashList
                                 data={element.skillsLearned}
-                                ListHeaderComponent={<Text className="detail-section-header">Skills Learned:</Text>}
-                                renderItem={({ item }) => <Text className="detail-skill-item">{item}</Text>}
+                                ListHeaderComponent={<ThemedText headingLevel={2} className="detail-section-header">Skills Learned:</ThemedText>}
+                                renderItem={({ item }) => <ThemedText className="detail-skill-item">{item}</ThemedText>}
                                 horizontal={false}
                                 numColumns={3}
                                 showsHorizontalScrollIndicator={false}

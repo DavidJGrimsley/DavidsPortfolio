@@ -41,7 +41,6 @@ export function FeaturedCard() {
                             title={item.displayTitle || item.title}
                             caption={item.caption}
                             imageSource={imageSource}
-                            badgeText="Featured"
                             onPress={() => router.push(`/portfolio/${item.category}/${item.title}` as any)}
                             squareImage
                             maxWidth={320}

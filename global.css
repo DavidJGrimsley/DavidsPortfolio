@@ -32,6 +32,17 @@ Colors
     --color-tab-icon-default: #723B80; /* Velvet Orchid */
     --color-tab-icon-selected: #A2DDF6; /* Frosted Blue */
     --color-white-or-black: #F8F8F8; /* Bright Snow */
+    
+    /* Semantic status colors */
+    --color-success: #0d9668; /* Teal Green */
+    --color-error: #c53030; /* Crimson */
+    --color-warning: #b7791f; /* Amber */
+    --color-info: #2b6cb0; /* Steel Blue */
+    
+    /* Code block colors */
+    --color-code-bg: #f5f5f5;
+    --color-code-text: #1a1a2e;
+    --color-code-border: #d1d5db;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -45,6 +56,17 @@ Colors
       --color-tab-icon-default: #321E3B; /* Midnight Violet */
       --color-tab-icon-selected: #A96710; /* Copperwood */
       --color-white-or-black: #11181C; /* Ink Black */
+      
+      /* Semantic status colors (dark mode) */
+      --color-success: #38a169; /* Emerald */
+      --color-error: #fc8181; /* Coral */
+      --color-warning: #f6ad55; /* Tangerine */
+      --color-info: #63b3ed; /* Sky */
+      
+      /* Code block colors (dark mode) */
+      --color-code-bg: #1e1e2e;
+      --color-code-text: #e2e8f0;
+      --color-code-border: #4a5568;
     }
   }
 }
@@ -99,6 +121,38 @@ Colors
     @apply bg-(--color-white-or-black);
   }
 
+  .text-success {
+    @apply text-(--color-success);
+  }
+
+  .bg-success {
+    @apply bg-(--color-success);
+  }
+
+  .text-error {
+    @apply text-(--color-error);
+  }
+
+  .bg-error {
+    @apply bg-(--color-error);
+  }
+
+  .text-warning {
+    @apply text-(--color-warning);
+  }
+
+  .bg-warning {
+    @apply bg-(--color-warning);
+  }
+
+  .text-info {
+    @apply text-(--color-info);
+  }
+
+  .bg-info {
+    @apply bg-(--color-info);
+  }
+
   /* Font families (loaded via Google Fonts on web + expo-font on native) */
   .font-noto-sans {
     font-family: "Noto Sans";
@@ -142,7 +196,12 @@ Colors
 
   .typo-title {
     @apply text-2xl md:text-4xl leading-tight font-bold;
-    font-family: "Noto Sans Display";
+    font-family: "Noto Serif Display";
+  }
+
+  .typo-display {
+    @apply text-3xl md:text-5xl leading-tight font-bold;
+    font-family: "Londrina Shadow";
   }
 
   .typo-link {
@@ -150,9 +209,22 @@ Colors
     font-family: "Noto Sans";
   }
 
+  .typo-code {
+    @apply text-sm md:text-base p-[1%] rounded-md leading-relaxed;
+    font-family: "Noto Sans Mono";
+    background-color: var(--color-code-bg);
+    color: var(--color-code-text);
+    border: 1px solid var(--color-code-border);
+  }
+
+  .typo-nav-label {
+    @apply text-xs md:text-sm font-medium text-(--color-text);
+    font-family: "Noto Sans";
+  }
+
   .typo-h1 {
-    @apply text-3xl md:text-5xl leading-tight font-bold;
-    font-family: "Noto Sans Display";
+    @apply text-3xl md:text-5xl leading-tight font-bold tracking-wide;
+    font-family: "Londrina Shadow";
   }
 
   .typo-h2 {
@@ -162,7 +234,7 @@ Colors
 
   .typo-h3 {
     @apply text-xl md:text-3xl leading-snug font-semibold;
-    font-family: "Noto Sans Display";
+    font-family: "Noto Serif Display";
   }
 
   .typo-h4 {
@@ -177,7 +249,7 @@ Colors
 
   .typo-h6 {
     @apply text-base md:text-lg leading-snug font-semibold;
-    font-family: "Noto Sans Display";
+    font-family: "Noto Sans";
   }
 
   /* Layout utilities */
@@ -228,6 +300,7 @@ Colors
 
   .btn-primary-text {
     @apply text-(--color-secondary) text-center text-base md:text-lg;
+    font-family: "Noto Sans";
   }
 
   /* Footer styles */
@@ -238,6 +311,7 @@ Colors
 
   .footer-text {
     @apply text-(--color-accent) text-sm md:text-base text-center;
+    font-family: "Noto Sans";
   }
 
   /* Home page styles */
@@ -260,14 +334,17 @@ Colors
 
   .highlight-title {
     @apply text-(--color-text) text-center text-lg md:text-xl font-bold;
+    font-family: "Noto Sans Display";
   }
 
   .highlight-caption {
     @apply text-(--color-accent) text-center p-[0.5%] text-sm md:text-base bg-(--color-secondary)/15 rounded-md;
+    font-family: "Noto Sans";
   }
 
   .highlight-description {
     @apply text-(--color-text) text-center text-base md:text-lg mb-[1%] px-[1%];
+    font-family: "Noto Sans";
   }
 
   /* About page styles */
@@ -278,27 +355,33 @@ Colors
 
   .website-text {
     @apply text-(--color-accent) text-center text-sm md:text-base;
+    font-family: "Noto Sans";
   }
 
   .website-button {
     @apply bg-(--color-accent) text-(--color-secondary) text-center text-base md:text-lg p-[0.5%] rounded-[0.5%];
+    font-family: "Noto Sans";
   }
 
   .about-text {
     @apply text-(--color-text) text-center text-base md:text-lg w-[90%] px-[1%];
+    font-family: "Noto Sans";
   }
 
   /* Detail page typography (shared across portfolio + public-facing detail pages) */
   .detail-title {
     @apply text-2xl md:text-4xl text-left font-bold text-(--color-tint) ml-[2%];
+    font-family: "Noto Serif Display";
   }
 
   .detail-caption {
     @apply text-base md:text-lg text-right text-(--color-text) mr-[2%] ml-[2%] opacity-85;
+    font-family: "Noto Sans";
   }
 
   .detail-subheader {
     @apply text-lg md:text-xl text-left text-(--color-text) font-semibold;
+    font-family: "Noto Sans Display";
   }
 
   /* FireText (web): animates GIF within text + subtle flicker */
@@ -328,10 +411,7 @@ Colors
 }
   .detail-body {
     @apply text-base md:text-lg text-left text-(--color-text);
-  }
-
-  .detail-muted {
-    @apply opacity-80;
+    font-family: "Noto Sans";
   }
 
   .detail-image-container {
@@ -340,18 +420,22 @@ Colors
 
   .detail-section-header {
     @apply text-xl md:text-2xl text-left font-bold text-(--color-accent);
+    font-family: "Noto Sans Display";
   }
 
   .detail-skill-item {
     @apply text-left text-sm md:text-base text-(--color-text) font-bold;
+    font-family: "Noto Sans";
   }
 
   .detail-meta {
     @apply text-sm md:text-base;
+    font-family: "Noto Sans";
   }
 
   .badge-text {
     @apply text-xs md:text-sm font-bold;
+    font-family: "Noto Sans";
   }
 
   /* Callouts */
@@ -361,6 +445,7 @@ Colors
 
   .notice-text {
     @apply text-(--color-secondary) text-center text-sm md:text-base;
+    font-family: "Noto Sans";
   }
 
   /* ==========================================================================
