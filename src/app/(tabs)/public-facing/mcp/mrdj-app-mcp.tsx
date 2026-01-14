@@ -703,12 +703,11 @@ npm start`}
           </GreyView>
 
           <View
-            className="rounded-2.5 p-4 mb-3 border-l-4 border-l-[#10b981]"
-            style={{ backgroundColor: accentColor }}
+            className="rounded-2.5 p-4 mb-3 border-l-4 border-l-success bg-accent"
           >
             <View className="flex-row items-center mb-3">
-              <View className="bg-[#10b981] px-2.5 py-1.5 rounded-xl">
-                <ThemedText className="badge-text text-white">
+              <View className="bg-success px-2.5 py-1.5 rounded-xl">
+                <ThemedText inverse className="badge-text">
                   🟢 LIVE IN PRODUCTION
                 </ThemedText>
               </View>

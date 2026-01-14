@@ -44,7 +44,7 @@ const TabLayout = ({  }) => {
                      routeSegments.join('/') === '';
   
   // Fix: Check for main section pages (not including structural segments)
-  const mainSections = ['mobile-apps', 'game-design', 'website-development', 'software-development', 'about', 'learn', 'pokemon', 'api', 'mcp'];
+  const mainSections = ['mobile-apps', 'game-design', 'website-development', 'software-development', 'services', 'contact', 'pokemon', 'api', 'mcp'];
   
   // More robust section detection
   let currentSection = null;

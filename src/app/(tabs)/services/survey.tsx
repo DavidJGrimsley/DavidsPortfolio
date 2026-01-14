@@ -1,15 +1,20 @@
 import React from "react";
-import { IframeEmbed } from "../../../../../components/UI/IframeEmbed";
+import { View } from "react-native";
+import { IframeEmbed } from "@/components/UI/IframeEmbed";
+import { intakeForms } from "@/constants/intakeForms";
 
-
-
-export default function PortfolioIntake() {
+export default function Survey() {
+  const surveyForm = intakeForms['survey'];
+  
   return (
-    <>
-      <IframeEmbed src="https://docs.google.com/forms/d/e/1FAIpQLSemBxe0Z6JYAZi8D9ZeMBU9HTRxqC-QlsSWoBTG6LvYKGDWsA/viewform?embedded=true"/>
-    </>
-  )
+    <View className="flex-1 bg-themed">
+      <IframeEmbed src={surveyForm?.formUrl || ""} />
+    </View>
+  );
 }
+
+
+
 
 
 

@@ -6,10 +6,14 @@ export default function RootLayout() {
       <Stack.Screen name="index" options={{
         headerShown: false,
       }}/>
-      <Stack.Screen name="(website-forms)" options={{
+      <Stack.Screen name="[intake]" options={{
         headerShown: true,
-        title: '',
-        headerTransparent: true,
+        title: 'Intake Form',
+      }}
+      />
+      <Stack.Screen name="learn" options={{
+        headerShown: true,
+        title: 'Tutoring',
       }}
       />
       <Stack.Screen name="survey" options={{

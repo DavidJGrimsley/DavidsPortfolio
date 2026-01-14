@@ -1,5 +1,6 @@
-import { View, Text, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
 import LottieView from 'lottie-react-native';
+import { ThemedText } from '@/components/UI/ThemedText';
 
 type StartupLoadingProps = {
   message?: string;
@@ -19,7 +20,7 @@ export default function StartupLoading({ message = 'Loading…' }: StartupLoadin
         />
       </View>
       {Platform.OS !== 'web' ? (
-        <Text className="text-themed mt-[2%] opacity-70">{message}</Text>
+        <ThemedText className="mt-[2%] opacity-70">{message}</ThemedText>
       ) : null}
     </View>
   );

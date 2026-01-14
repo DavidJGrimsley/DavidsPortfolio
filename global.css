@@ -32,6 +32,7 @@ Colors
     --color-tab-icon-default: #723B80; /* Velvet Orchid */
     --color-tab-icon-selected: #A2DDF6; /* Frosted Blue */
     --color-white-or-black: #F8F8F8; /* Bright Snow */
+    --color-white: #F8F8F8; /* Consistent white for overlays, matches text in dark mode */
     
     /* Semantic status colors */
     --color-success: #0d9668; /* Teal Green */

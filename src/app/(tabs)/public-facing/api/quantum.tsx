@@ -178,14 +178,9 @@ export default function QuantumAPIPage() {
 
             {/* Live badge */}
             <View
-              className="px-3 py-1.5 rounded-xl ml-2"
-              style={{
-                backgroundColor: isLive ? '#10b981' : '#ef4444',
-              }}
+              className={`px-3 py-1.5 rounded-xl ml-2 ${isLive ? 'bg-success' : 'bg-error'}`}
             >
-              <ThemedText
-                className="font-bold text-xs text-white"
-              >
+              <ThemedText inverse className="font-bold text-xs">
                 {isLive ? '● LIVE' : '● OFFLINE'}
               </ThemedText>
             </View>
@@ -597,19 +592,19 @@ export default function QuantumAPIPage() {
                 >
                   {/* Completed Items */}
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 detail-body text-[1.8%] text-[#10b981]">✓</ThemedText>
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">✓</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Quantum Gate API - RY rotation gates for true randomness
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 detail-body text-[1.8%] text-[#10b981]">✓</ThemedText>
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">✓</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Quantum Text Transformation - Unicode effects powered by quantum randomness
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 detail-body text-[1.8%] text-[#10b981]">✓</ThemedText>
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">✓</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Portfolio Integration - Live quantum animation in Quantum Echo project
                     </ThemedText>
@@ -783,9 +778,9 @@ export default function QuantumAPIPage() {
             <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
               JavaScript / TypeScript
             </ThemedText>
-            <View className="p-4 rounded-lg bg-[#1e1e1e]">
+            <View className="p-4 rounded-lg bg-(--color-code-bg)">
               <ScrollView horizontal>
-                <ThemedText className="font-mono text-sm md:text-base text-[#d4d4d4] leading-relaxed">
+                <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
 {`const response = await fetch(
   'https://davidjgrimsley.com/api/quantum/quantum_gate',
   {
@@ -811,9 +806,9 @@ console.log('Superposition:', result.superposition_strength);`}
             <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
               Python
             </ThemedText>
-            <View className="p-4 rounded-lg bg-[#1e1e1e]">
+            <View className="p-4 rounded-lg bg-(--color-code-bg)">
               <ScrollView horizontal>
-                <ThemedText className="font-mono text-sm md:text-base text-[#d4d4d4] leading-relaxed">
+                <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
 {`import requests
 import math
 
@@ -838,9 +833,9 @@ print(f"Superposition: {result['superposition_strength']}")`}
             <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
               cURL
             </ThemedText>
-            <View className="p-4 rounded-lg bg-[#1e1e1e]">
+            <View className="p-4 rounded-lg bg-(--color-code-bg)">
               <ScrollView horizontal>
-                <ThemedText className="font-mono text-sm md:text-base text-[#d4d4d4] leading-relaxed">
+                <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
 {`curl -X POST https://davidjgrimsley.com/api/quantum/quantum_gate \\
   -H "Content-Type: application/json" \\
   -d '{"gate_type":"rotation","rotation_angle":1.5708}'`}

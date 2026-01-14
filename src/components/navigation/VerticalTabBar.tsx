@@ -76,9 +76,10 @@ export interface VerticalTabBarProps {
 // │   ├── api/
 // │   ├── mcp/
 // │   └── production/
-// └── more/                        → More group
-//     ├── learn/
-//     └── about/
+// ├── services/                    → Services standalone
+// │   ├── learn/
+// │   └── survey.tsx
+// └── contact.tsx                  → Contact standalone
 // =============================================================================
 
 const DEFAULT_TABS: TabConfig[] = [
@@ -134,21 +135,26 @@ const DEFAULT_TABS: TabConfig[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // More group (matches: src/app/(tabs)/more/)
+  // Services - standalone (matches: src/app/(tabs)/services/)
   // ─────────────────────────────────────────────────────────────────────────
   {
-    name: 'more',
-    icon: 'ellipsis-horizontal-circle',
-    iconOutline: 'ellipsis-horizontal-circle-outline',
-    label: 'More',
-    expansionMessage: 'Learn more about me and my services.',
-    items: [
-      // more/learn/
-      { name: 'learn', route: '/(tabs)/more/learn', icon: 'book', iconOutline: 'book-outline', label: 'Learn' },
-      // more/about/
-      { name: 'about', route: '/(tabs)/more/about', icon: 'person', iconOutline: 'person-outline', label: 'Contact' },
-    ],
+    name: 'services',
+    route: '/(tabs)/services',
+    icon: 'construct',
+    iconOutline: 'construct-outline',
+    label: 'Services',
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Contact - standalone (matches: src/app/(tabs)/contact.tsx)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    name: 'contact',
+    route: '/(tabs)/contact',
+    icon: 'person',
+    iconOutline: 'person-outline',
+    label: 'Contact',
+  }
 ];
 
 // =============================================================================
@@ -392,6 +398,7 @@ interface VertTabGroupProps {
   activeColor: string;
   inactiveColor: string;
   textColor: string;
+  whiteOrBlackColor: string;
   accentColor: string;
   iconSize: number;       // base size for sub-items
   mainIconSize: number;   // enlarged size for group icon
@@ -409,6 +416,7 @@ const VertTabGroup: React.FC<VertTabGroupProps> = ({
   activeColor,
   inactiveColor,
   textColor,
+  whiteOrBlackColor,
   accentColor,
   iconSize,
   mainIconSize,
@@ -506,6 +514,7 @@ const VertTabGroup: React.FC<VertTabGroupProps> = ({
           <Text
             style={[
               styles.expansionMessage,
+              { color: `var(--color-text)` },
               webMessageStyle as any,
             ]}
           >
@@ -623,6 +632,8 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
   const inactiveColor = propInactiveColor ?? (colorScheme === 'light' ? '#723B80' : '#9BA1A6');
   const accentColor = colorScheme === 'light' ? '#723B80' : '#321E3B';
   const textColor = colorScheme === 'light' ? '#11181C' : '#F8F8F8';
+  const whiteOrBlackColor = colorScheme === 'light' ? '#F8F8F8' : '#11181C'; // inverse of text
+  const overlayTextColor = '#F8F8F8'; // always light for dark overlay
   const secondaryColor = colorScheme === 'light' ? '#A2DDF6' : '#A96710';
   const topLevelIconSize = iconSize * 1.7; // unified size for top-level (home + groups)
 
@@ -788,6 +799,7 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
                     activeColor={activeColor}
                     inactiveColor={inactiveColor}
                     textColor={textColor}
+                    whiteOrBlackColor={whiteOrBlackColor}
                     accentColor={accentColor}
                     iconSize={iconSize}
                     mainIconSize={topLevelIconSize}
