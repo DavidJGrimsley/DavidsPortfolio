@@ -2,8 +2,7 @@ import React from "react";
 import { ScrollView, View } from "react-native";
 import { Foot } from "@/components/Foot";
 import { MyCards } from "@/components/Categories/MyCards";
-import { TitleOfPage } from "@/components/Categories/TitleOfPage";
-import { TabContainer } from "@/components/Navigation/TabContainer";
+import { ThemedText } from "@/components/UI/ThemedText";
 
 type CategoryIndexWrapperProps = {
   titleA: string;
@@ -23,7 +22,14 @@ export function CategoryIndexWrapper({
   return (
     <View className="flex-1 items-center w-full bg-themed">
       <View className="w-full max-w-[90%] px-[1%]">
-        <TitleOfPage titleA={titleA} titleB={titleB} />
+        <ThemedText
+          headingLevel={1}
+          visualHeadingLevel={1}
+          className="text-center"
+          aria={`${titleA} ${titleB}`}
+        >
+          {titleA} {titleB}
+        </ThemedText>
       </View>
       <ScrollView
         showsVerticalScrollIndicator={false}

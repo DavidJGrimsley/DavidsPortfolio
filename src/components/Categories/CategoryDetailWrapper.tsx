@@ -10,6 +10,7 @@ import { Piece, Pieces, normalizePieces } from '@/types/portfolio';
 import { FlashList } from '@shopify/flash-list';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import rawPieces from '@json/pieces.json';
+import { ThemedText } from '@/components/UI/ThemedText';
 
 const piecesData: Pieces = normalizePieces(rawPieces);
 
@@ -52,7 +53,14 @@ export function CategoryDetailWrapper({
         if (element) {
             const page = (
                 <View>
-                    <Text className="detail-title">{element.displayTitle || element.title}</Text>
+                    <ThemedText
+                        headingLevel={1}
+                        visualHeadingLevel={1}
+                        className="detail-title font-londrina-shadow"
+                        aria={element.displayTitle || element.title}
+                    >
+                        {element.displayTitle || element.title}
+                    </ThemedText>
                     <Text className="detail-caption">{element.caption}</Text>
                     <View className="detail-image-container">
                         <Image source={{ uri: element.picture }} className="w-full h-full" resizeMode="contain" />

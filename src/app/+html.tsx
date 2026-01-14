@@ -21,8 +21,16 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="canonical" href="https://davidjgrimsley.com" />
         
         {/* Theme Color */}
-        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#20182D" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#E9DDEE" media="(prefers-color-scheme: light)" />
+
+        {/* Google Fonts (web). Native uses local fonts via expo-font. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Londrina+Shadow&family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&family=Noto+Sans+Mono:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif+Display:ital,wght@0,100..900;1,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap"
+        />
 
         {/*
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
@@ -40,11 +48,13 @@ export default function Root({ children }: PropsWithChildren) {
 }
 
 const responsiveBackground = `
-body {
-  background-color: #fff;
+html, body, #root {
+  background-color: #E9DDEE;
+  height: 100%;
 }
 @media (prefers-color-scheme: dark) {
-  body {
-    background-color: #000;
+  html, body, #root {
+    background-color: #20182D;
   }
-}`;
+}
+`;

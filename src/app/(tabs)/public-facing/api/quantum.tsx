@@ -163,6 +163,9 @@ export default function QuantumAPIPage() {
             <View className="flex-1 flex-row mr-2">
               <ThemedText
                 type="title"
+                headingLevel={1}
+                visualHeadingLevel={1}
+                className="font-londrina-shadow"
               >
                 {apiName}
               </ThemedText>

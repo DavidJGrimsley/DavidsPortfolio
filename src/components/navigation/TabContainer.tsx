@@ -28,5 +28,3 @@ export const TabContainer = ({ children }: { children: React.ReactNode }) => {
     </View>
   )
 }
-
-export default TabContainer

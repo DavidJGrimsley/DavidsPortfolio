@@ -2,8 +2,9 @@ import { Text, View, ScrollView } from "react-native";
 import React from "react";
 import { FeaturedCard } from "../../components/FeaturedCard";
 import { Foot } from "../../components/Foot";
-import { TitleOfPage } from "../../components/Categories/TitleOfPage";
+import { FireText } from "@/components/FireText";
 import { HomeScreenGradient } from "@/components/Gradients";
+import { ThemedText } from "@/components/UI/ThemedText";
 
 
 
@@ -20,7 +21,15 @@ export default function Index() {
         showsHorizontalScrollIndicator={false}
         className="items-center p-[10%] flex-1"
         >
-        <TitleOfPage></TitleOfPage>
+        <ThemedText
+          headingLevel={1}
+          visualHeadingLevel={1}
+          className="font-londrina-shadow text-center mb-[4%]"
+          aria="David Grimsley"
+        >
+          David Grimsley
+        </ThemedText>
+        {/* <FireText text="DAVID GRIMSLEY" fontSize={48} /> */}
         <View className="w-[95%] max-w-[75%] px-[2%] mb-[3%]" style={{ borderLeftWidth: 4, borderLeftColor: "var(--color-tint)" }}>
           <Text className="detail-body text-themed">
             I help teams ship polished products across mobile, web, and game experiences—pairing strong UX instincts with reliable engineering. Every project gets the same rigor: thoughtful architecture, resilient data flows, and instrumentation so we can measure what matters.

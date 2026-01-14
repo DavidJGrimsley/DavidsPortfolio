@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { ThemedText } from '@/components/UI/ThemedText';
 
 type TitleOfPageProps = {
     titleA?: string;
@@ -8,14 +9,21 @@ type TitleOfPageProps = {
 
 export function TitleOfPage({ titleA = 'David', titleB = 'Grimsley' }: TitleOfPageProps) {
     return (
-        <View className="main-title">
-            <Text className="main-title-text">
+        <View className="main-title relative">
+            <ThemedText
+                headingLevel={1}
+                visualHeadingLevel={1}
+                className="main-title-text"
+                aria={`${titleA} ${titleB}`}
+            >
                 {titleA}
                 <Text className="main-title-text-span"> {titleB}</Text>
-                <Text style={{ position: 'absolute', top: '50%', left: '50%', color: 'var(--color-accent)', zIndex: -1, transform: 'translate(-50%, -50%)', fontWeight: '800', opacity: 0.5, fontSize: 48 }}>
-                    {titleA}
-                    {titleB}
-                </Text>
+            </ThemedText>
+            <Text
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 text-accent opacity-50 font-extrabold text-5xl"
+                accessible={false}
+            >
+                {titleA} {titleB}
             </Text>
         </View>
     );

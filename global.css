@@ -22,19 +22,20 @@ Colors
 
 @layer theme {
   :root {
-    @variant light {
-      --color-text: #11181C; /* Ink Black */
-      --color-background: #E9DDEE; /* Lavender Veil */
-      --color-secondary: #A2DDF6; /* Frosted Blue */
-      --color-accent: #723B80; /* Velvet Orchid */
-      --color-tint: #0E668B; /* Baltic Blue */
-      --color-icon: #687076; /* Dim Grey */
-      --color-tab-icon-default: #723B80; /* Velvet Orchid */
-      --color-tab-icon-selected: #A2DDF6; /* Frosted Blue */
-      --color-white-or-black: #F8F8F8; /* Bright Snow */
-    }
+    /* Light defaults */
+    --color-text: #11181C; /* Ink Black */
+    --color-background: #E9DDEE; /* Lavender Veil */
+    --color-secondary: #A2DDF6; /* Frosted Blue */
+    --color-accent: #723B80; /* Velvet Orchid */
+    --color-tint: #0E668B; /* Baltic Blue */
+    --color-icon: #687076; /* Dim Grey */
+    --color-tab-icon-default: #723B80; /* Velvet Orchid */
+    --color-tab-icon-selected: #A2DDF6; /* Frosted Blue */
+    --color-white-or-black: #F8F8F8; /* Bright Snow */
+  }
 
-    @variant dark {
+  @media (prefers-color-scheme: dark) {
+    :root {
       --color-text: #F8F8F8; /* Bright Snow */
       --color-background: #20182D; /* Midnight Violet */
       --color-secondary: #A96710; /* Copperwood */
@@ -96,6 +97,87 @@ Colors
 
   .bg-white-or-black {
     @apply bg-(--color-white-or-black);
+  }
+
+  /* Font families (loaded via Google Fonts on web + expo-font on native) */
+  .font-noto-sans {
+    font-family: "Noto Sans";
+  }
+
+  .font-noto-sans-display {
+    font-family: "Noto Sans Display";
+  }
+
+  .font-noto-serif {
+    font-family: "Noto Serif";
+  }
+
+  .font-noto-serif-display {
+    font-family: "Noto Serif Display";
+  }
+
+  .font-noto-sans-mono {
+    font-family: "Noto Sans Mono";
+  }
+
+  .font-londrina-shadow {
+    font-family: "Londrina Shadow";
+  }
+
+  /* Shared typography primitives */
+  .typo-body {
+    @apply text-base leading-6;
+    font-family: "Noto Sans";
+  }
+
+  .typo-body-semibold {
+    @apply text-base leading-6 font-semibold;
+    font-family: "Noto Sans";
+  }
+
+  .typo-subtitle {
+    @apply text-xl md:text-2xl leading-snug font-semibold;
+    font-family: "Noto Sans Display";
+  }
+
+  .typo-title {
+    @apply text-2xl md:text-4xl leading-tight font-bold;
+    font-family: "Noto Sans Display";
+  }
+
+  .typo-link {
+    @apply text-base leading-6 underline text-(--color-tint);
+    font-family: "Noto Sans";
+  }
+
+  .typo-h1 {
+    @apply text-3xl md:text-5xl leading-tight font-bold;
+    font-family: "Noto Sans Display";
+  }
+
+  .typo-h2 {
+    @apply text-2xl md:text-4xl leading-tight font-bold;
+    font-family: "Noto Sans Display";
+  }
+
+  .typo-h3 {
+    @apply text-xl md:text-3xl leading-snug font-semibold;
+    font-family: "Noto Sans Display";
+  }
+
+  .typo-h4 {
+    @apply text-lg md:text-2xl leading-snug font-semibold;
+    font-family: "Noto Sans Display";
+  }
+
+  .typo-h5 {
+    @apply text-base md:text-xl leading-snug font-semibold;
+    font-family: "Noto Sans Display";
+  }
+
+  .typo-h6 {
+    @apply text-base md:text-lg leading-snug font-semibold;
+    font-family: "Noto Sans Display";
   }
 
   /* Layout utilities */
@@ -219,6 +301,31 @@ Colors
     @apply text-lg md:text-xl text-left text-(--color-text) font-semibold;
   }
 
+  /* FireText (web): animates GIF within text + subtle flicker */
+  .firetext-animate {
+    animation:
+      firetext-bgshift 2.2s linear infinite,
+      firetext-flicker 140ms ease-in-out infinite alternate;
+  }
+
+
+@keyframes firetext-bgshift {
+  0% {
+    background-position: 50% 20%;
+  }
+  100% {
+    background-position: 50% 80%;
+  }
+}
+
+@keyframes firetext-flicker {
+  0% {
+    opacity: 0.96;
+  }
+  100% {
+    opacity: 1;
+  }
+}
   .detail-body {
     @apply text-base md:text-lg text-left text-(--color-text);
   }
