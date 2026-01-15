@@ -17,14 +17,17 @@
  *   large-scale refactors. If you switch to named exports, update imports
  *   accordingly.
  */
-import { View, Text } from 'react-native'
+import { Platform, View, useWindowDimensions } from 'react-native'
 import React from 'react'
 
 export const TabContainer = ({ children }: { children: React.ReactNode }) => {
+  const { width } = useWindowDimensions();
+  const isDesktopWeb = Platform.OS === 'web' && width >= 1024;
+
   return (
     <View className="flex-1 flex-row bg-themed">
       {children}
-      <View style={{ width: '10%' }}></View>
+      {isDesktopWeb ? <View style={{ width: '10%' }} /> : null}
     </View>
   )
 }

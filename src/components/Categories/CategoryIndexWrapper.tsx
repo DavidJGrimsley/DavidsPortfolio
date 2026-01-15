@@ -2,7 +2,7 @@ import React from "react";
 import { ScrollView, View } from "react-native";
 import { Foot } from "@/components/Foot";
 import { MyCards } from "@/components/Categories/MyCards";
-import { ThemedText } from "@/components/UI/ThemedText";
+import { TitleOfPage } from "@/components/Categories/TitleOfPage";
 
 type CategoryIndexWrapperProps = {
   titleA: string;
@@ -21,30 +21,21 @@ export function CategoryIndexWrapper({
 }: CategoryIndexWrapperProps) {
   return (
     <View className="flex-1 items-center w-full bg-themed">
-      <View className="w-full max-w-[90%] px-[1%]">
-        <ThemedText
-          headingLevel={1}
-          visualHeadingLevel={1}
-          className="text-center"
-          aria={`${titleA} ${titleB}`}
+      <TitleOfPage titleA={titleA} titleB={titleB}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          className="grow w-full"
+          contentContainerClassName="items-center"
         >
-          {titleA} {titleB}
-        </ThemedText>
-      </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        className="grow w-full"
-        contentContainerClassName="items-center"
-      >
-          {introContent ? <View className="mb-[3%]">{introContent}</View> : null}
-        <View className="w-full max-w-[85%] px-[1%] py-5">
-          
+          <View className="page-content py-5">
+            {introContent ? <View className="mb-[3%]">{introContent}</View> : null}
             <MyCards pageCategory={category} />
-          {footerContent}
-          <Foot />
-        </View>
-      </ScrollView>
+            {footerContent}
+            <Foot />
+          </View>
+        </ScrollView>
+      </TitleOfPage>
     </View>
   );
 }

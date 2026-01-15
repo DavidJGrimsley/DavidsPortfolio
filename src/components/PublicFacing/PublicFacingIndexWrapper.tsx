@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { TabContainer } from '@/components/Navigation/TabContainer';
+import { TitleOfPage } from '@/components/Categories/TitleOfPage';
 
 type PublicFacingIndexWrapperProps = {
 	title: string;
@@ -13,23 +14,25 @@ type PublicFacingIndexWrapperProps = {
 
 export function PublicFacingIndexWrapper({ title, subtitle, children, contentClassName }: PublicFacingIndexWrapperProps) {
 	const backgroundColor = useThemeColor({}, 'background');
-	const containerClassName = 'w-full max-w-[90%] self-center';
+  const [titleA, ...titleRest] = title.trim().split(/\s+/);
+  const titleB = titleRest.join(' ');
 
 	return (
 		<TabContainer>
       <View className="flex-1" style={{ backgroundColor }}>
-        <View className={`${containerClassName} px-5 pt-10 pb-5`}>
-          <ThemedText type="title" className="mb-2 text-4xl">
-            {title}
-          </ThemedText>
-          {subtitle ? <ThemedText className="text-lg opacity-70">{subtitle}</ThemedText> : null}
-        </View>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerClassName={`${containerClassName} px-5 pb-10 gap-4 ${contentClassName ?? ''}`.trim()}
-        >
-          {children}
-        </ScrollView>
+        <TitleOfPage titleA={titleA ?? ''} titleB={titleB}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+					contentContainerClassName={`page-content pb-10 gap-4 ${contentClassName ?? ''}`.trim()}
+          >
+					{subtitle ? (
+						<View className="page-lead mb-2">
+							<ThemedText className="detail-body opacity-80">{subtitle}</ThemedText>
+						</View>
+					) : null}
+            {children}
+          </ScrollView>
+        </TitleOfPage>
       </View>
     </TabContainer>
 	);

@@ -7,8 +7,8 @@ import { type Href, router } from 'expo-router';
 const Page = () => {
   return (
     <View className="flex-1 bg-themed">
-      <TitleOfPage titleA="Learning" titleB="Center" />
-      <View className="flex-row flex-1 w-[85%]">
+      <TitleOfPage titleA="Learning" titleB="Center">
+        <View className="flex-row flex-1 w-[85%] self-center">
         <ScrollView showsVerticalScrollIndicator={false}>
             <View className="mb-[2%]">
               <View className="flex-row flex-wrap items-baseline">
@@ -76,6 +76,7 @@ const Page = () => {
         </View>
       </View>
       <Foot/>
+      </TitleOfPage>
     </View>
   );
 };

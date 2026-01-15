@@ -8,7 +8,7 @@ export default function SoftwareDevelopment() {
       titleB="Development"
       category="software-development"
       introContent={
-        <View className="p-[2%]" style={{ borderLeftWidth: 4, borderLeftColor: "var(--color-tint)" }}>
+        <View className="page-lead">
           <Text className="detail-body text-themed">
             I build full-stack systems that connect clean APIs, reliable data layers, and approachable interfaces. Whether it’s event-driven services, background workers, or integrations, I focus on observability, security, and predictable deployments.
           </Text>

@@ -262,16 +262,34 @@ Colors
     @apply text-center opacity-50 text-(--color-text) text-xs md:text-sm font-light;
   }
 
+  /* Shared page width + lead (border-left) blocks */
+  .page-content {
+    @apply w-full max-w-[95%] md:max-w-[80%] self-center px-5 md:px-0;
+  }
+
+  .page-lead {
+    @apply w-full py-[2%];
+    border-left: 4px solid var(--color-secondary);
+    padding-left: 2%;
+    padding-right: 2%;
+  }
+
   .main-title {
-    @apply text-center pb-[1.2%] pt-[1.2%] px-[1%] -z-10;
+    /* Title block spacing; width is controlled by `.page-content` */
+    @apply relative w-full pb-[1.2%] pt-[1.2%] text-left;
   }
 
   .main-title-text {
-    @apply relative uppercase text-3xl md:text-4xl font-bold font-[Rubik] text-(--color-text);
+    /* Let `ThemedText` provide the h1 sizing + Londrina Shadow via `typo-h1` */
+    @apply relative;
   }
 
   .main-title-text-span {
     @apply text-(--color-secondary);
+  }
+
+  .main-title-shadow {
+    @apply absolute top-1/2 left-0 -translate-y-1/2 -z-10 text-(--color-accent) opacity-10 font-extrabold text-8xl;
   }
 
   .page-container {
@@ -410,6 +428,7 @@ Colors
     opacity: 1;
   }
 }
+
   .detail-body {
     @apply text-base md:text-lg text-left text-(--color-text);
     font-family: "Noto Sans";

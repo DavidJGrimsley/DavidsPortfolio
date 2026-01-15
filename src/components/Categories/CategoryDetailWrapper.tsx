@@ -56,7 +56,7 @@ export function CategoryDetailWrapper({
                     <ThemedText
                         headingLevel={1}
                         visualHeadingLevel={1}
-                        className="detail-title font-noto-serif text-center mb-[2%]"
+                        className="detail-title font-noto-serif-display text-center mb-[2%]"
                         aria={element.displayTitle || element.title}
                     >
                         {element.displayTitle || element.title}

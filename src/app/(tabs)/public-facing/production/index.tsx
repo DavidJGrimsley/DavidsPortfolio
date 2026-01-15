@@ -37,7 +37,7 @@ export default function ProductionIndexPage() {
 
   return (
     <PublicFacingIndexWrapper
-      title="Production"
+      title="Production Applications"
       subtitle="Published apps and projects you can try right now"
     >
       {apps.map((app) => (

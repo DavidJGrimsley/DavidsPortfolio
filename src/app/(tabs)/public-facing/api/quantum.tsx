@@ -165,7 +165,7 @@ export default function QuantumAPIPage() {
                 type="title"
                 headingLevel={1}
                 visualHeadingLevel={1}
-                className="font-londrina-shadow"
+                className="font-noto-serif-display"
               >
                 {apiName}
               </ThemedText>

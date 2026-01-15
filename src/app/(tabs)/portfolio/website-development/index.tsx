@@ -8,7 +8,7 @@ export default function WebDev() {
       titleB="Development"
       category="website-development"
       introContent={
-        <View className="p-[2%]" style={{ borderLeftWidth: 4, borderLeftColor: "var(--color-tint)" }}>
+        <View className="page-lead">
           <Text className="detail-body text-themed">
             I craft fast, resilient web experiences with modern TypeScript stacks, API-first architectures, and SEO-ready rendering. From design systems to accessibility, I align UI polish with measurable performance budgets and observability.
           </Text>

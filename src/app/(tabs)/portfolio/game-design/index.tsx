@@ -9,7 +9,7 @@ export default function GameDesign() {
       titleB="Design"
       category="game-design"
       introContent={
-        <View className="p-[2%]" style={{ borderLeftWidth: 4, borderLeftColor: "var(--color-tint)" }}>
+        <View className="page-lead">
           <Text className="detail-body text-themed">
             I design gameplay systems that balance feel, readability, and technical rigor—tight input loops, performant rendering, and clean data structures for AI, UI, and narrative hooks. My work spans Godot, React Native, and custom integrations with external services to keep experiences responsive and failure-tolerant.
           </Text>
@@ -19,7 +19,7 @@ export default function GameDesign() {
         </View>
       }
       footerContent={
-        <View className="mt-[4%] p-[2%] rounded-[2%] bg-themed" style={{ borderLeftWidth: 4, borderLeftColor: "var(--color-tint)" }}>
+        <View className="mt-[4%] rounded-[2%] bg-themed page-lead">
           <Text className="detail-subheader text-themed mb-[1%]">Try the Tic-Tac-Toe demo</Text>
           <Text className="detail-body text-secondary mb-[2%]">
             A quick playable shows my approach to lightweight game loops, state management, and responsive layouts. It mirrors how I prototype mechanics before scaling them into larger systems.
