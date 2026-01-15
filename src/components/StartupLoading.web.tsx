@@ -5,9 +5,15 @@ import cosmosAnimation from '../../assets/lottie/Cosmos.json';
 
 type StartupLoadingProps = {
   message?: string;
+  showAnimation?: boolean;
+  showMessage?: boolean;
 };
 
-export default function StartupLoading({ message = 'Loading…' }: StartupLoadingProps) {
+export default function StartupLoading({
+  message = 'Loading…',
+  showAnimation = true,
+  showMessage = true,
+}: StartupLoadingProps) {
   const isSSR = typeof window === 'undefined';
   const [reduceMotion, setReduceMotion] = useState(false);
   const [Lottie, setLottie] = useState<null | React.ComponentType<any>>(null);
@@ -33,6 +39,7 @@ export default function StartupLoading({ message = 'Loading…' }: StartupLoadin
   useEffect(() => {
     if (isSSR) return;
     if (reduceMotion) return;
+    if (!showAnimation) return;
 
     let cancelled = false;
     import('lottie-react')
@@ -47,22 +54,22 @@ export default function StartupLoading({ message = 'Loading…' }: StartupLoadin
     return () => {
       cancelled = true;
     };
-  }, [isSSR, reduceMotion]);
+  }, [isSSR, reduceMotion, showAnimation]);
 
   const animationData = useMemo(() => cosmosAnimation as unknown as object, []);
 
   return (
     <View className="flex-1 items-center justify-center bg-themed">
-      {!isSSR && !reduceMotion && Lottie ? (
+      {!isSSR && !reduceMotion && showAnimation && Lottie ? (
         <View className="w-[60%] max-w-120 aspect-square">
           <Lottie animationData={animationData} loop autoplay style={{ width: '100%', height: '100%' }} />
         </View>
       ) : (
         <View className="w-[60%] max-w-120 aspect-square items-center justify-center">
-          <View className="w-[18%] aspect-square rounded-full bg-secondary opacity-40" />
+          {showAnimation ? <View className="w-[18%] aspect-square rounded-full bg-secondary opacity-40" /> : null}
         </View>
       )}
-      <Text className="text-themed mt-[2%] opacity-70">{message}</Text>
+      {showMessage ? <Text className="text-themed mt-[2%] opacity-70">{message}</Text> : null}
     </View>
   );
 }

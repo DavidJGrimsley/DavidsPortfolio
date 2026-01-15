@@ -8,7 +8,7 @@ export default function SoftwareDevelopment() {
       titleB="Development"
       category="software-development"
       introContent={
-        <View className="page-lead">
+        <View>
           <Text className="detail-body text-themed">
             I build full-stack systems that connect clean APIs, reliable data layers, and approachable interfaces. Whether it’s event-driven services, background workers, or integrations, I focus on observability, security, and predictable deployments.
           </Text>

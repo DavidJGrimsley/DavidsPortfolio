@@ -33,8 +33,8 @@ export function PieceCard({
   );
 
   const containerClassName = `${isHovered ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
-  const titleClassName = `detail-title leading-relaxed ${isHovered ? "text-white-or-black" : "text-secondary"}`;
-  const captionClassName = `detail-body mt-[1%] ${isHovered ? "text-white-or-black" : "text-themed"}`;
+  const titleClassName = `detail-title leading-tight ${isHovered ? "text-white-or-black" : "text-secondary"}`;
+  const captionClassName = `detail-body leading-relaxed mt-[1%] ${isHovered ? "text-white-or-black" : "text-themed"}`;
 
   return (
     <Pressable

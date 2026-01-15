@@ -6,6 +6,8 @@ import Animated, {
     withTiming,
     withDelay,
     interpolateColor,
+    useReducedMotion,
+    type SharedValue,
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -14,26 +16,43 @@ type TitleOfPageProps = {
     titleA?: string;
     titleB?: string;
     children?: React.ReactNode;
+    startDelayMs?: number;
+    scrollY?: SharedValue<number>;
 };
 
 const AnimatedText = Animated.createAnimatedComponent(Text);
 
-export function TitleOfPage({ titleA = 'David', titleB = 'Grimsley', children }: TitleOfPageProps) {
+export function TitleOfPage({
+    titleA = 'David',
+    titleB = 'Grimsley',
+    children,
+    startDelayMs = 0,
+    scrollY,
+}: TitleOfPageProps) {
     const textColor = useThemeColor({}, 'text');
     const secondaryColor = useThemeColor({}, 'secondary');
+    const reduceMotion = useReducedMotion();
 
     const enter = useSharedValue(0);
     const colorShift = useSharedValue(0);
     const contentEnter = useSharedValue(0);
 
     useEffect(() => {
+        if (reduceMotion) {
+            enter.value = 1;
+            contentEnter.value = 1;
+            colorShift.value = 1;
+            return;
+        }
+
+        const baseDelay = Math.max(0, startDelayMs);
         // 1) Title fades/slides in
-        enter.value = withDelay(190, withTiming(1, { duration: 875 }));
+        enter.value = withDelay(baseDelay + 220, withTiming(1, { duration: 1000 }));
         // 2) Content fades up after title
-        contentEnter.value = withDelay(875, withTiming(1, { duration: 690 }));
+        contentEnter.value = withDelay(baseDelay + 1100, withTiming(1, { duration: 850 }));
         // 3) Second word shifts to secondary after content starts
-        colorShift.value = withDelay(1315, withTiming(1, { duration: 750 }));
-    }, [enter, contentEnter, colorShift]);
+        colorShift.value = withDelay(baseDelay + 1750, withTiming(1, { duration: 950 }));
+    }, [enter, contentEnter, colorShift, reduceMotion, startDelayMs]);
 
     const containerStyle = useAnimatedStyle(() => {
         return {
@@ -60,6 +79,13 @@ export function TitleOfPage({ titleA = 'David', titleB = 'Grimsley', children }:
         };
     });
 
+    const shadowStyle = useAnimatedStyle(() => {
+        if (!scrollY || reduceMotion) return {};
+        return {
+            transform: [{ translateY: scrollY.value * 1.3 }],
+        };
+    });
+
     return (
         <>
             <Animated.View style={containerStyle} className="main-title page-content">
@@ -77,13 +103,13 @@ export function TitleOfPage({ titleA = 'David', titleB = 'Grimsley', children }:
                         </AnimatedText>
                     ) : null}
                 </ThemedText>
-                <Text className="main-title-shadow" accessible={false}>
+                <AnimatedText style={shadowStyle} className="main-title-shadow" accessible={false}>
                     {titleA}{titleB ? ` ${titleB}` : ''}
-                </Text>
+                </AnimatedText>
             </Animated.View>
 
             {children ? (
-                <Animated.View style={contentStyle} className="w-full flex-1">
+                <Animated.View style={contentStyle} className="w-full">
                     {children}
                 </Animated.View>
             ) : null}

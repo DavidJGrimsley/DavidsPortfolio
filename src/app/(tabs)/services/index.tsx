@@ -1,9 +1,7 @@
 import React from "react";
-import { ScrollView, View, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import { type Href, router } from "expo-router";
-import { TitleOfPage } from "@/components/Categories/TitleOfPage";
 import { ThemedText } from "@/components/UI/ThemedText";
-import { Foot } from "@/components/Foot";
 import { TabContainer } from "@/components/Navigation/TabContainer";
 
 interface ServiceCard {
@@ -158,81 +156,72 @@ const ServicesPage = () => {
   };
 
   return (
-    <TabContainer>
-      <View className="flex-1 bg-themed">
-        <TitleOfPage titleA="My" titleB="Services">
-          <ScrollView
-            className="flex-1"
-            contentContainerClassName="items-center py-[10%]"
-            showsVerticalScrollIndicator={false}
-          >
-            <View className="page-content">
-              <View className="page-lead mb-[5%]">
-                <ThemedText className="text-2xl font-bold mb-2">What I offer</ThemedText>
-                <ThemedText className="text-base opacity-85">
-                  I provide app development, web design, game development, tutoring, and online presence services. Pick a service and fill out the intake form to get started.
+    <TabContainer
+      titleA="My"
+      titleB="Services"
+      lead={
+        <>
+          <ThemedText className="text-2xl font-bold mb-2">What I offer</ThemedText>
+          <ThemedText className="text-base opacity-85">
+            I provide app development, web design, game development, tutoring, and online presence services. Pick a service and fill out the intake form to get started.
+          </ThemedText>
+        </>
+      }
+    >
+      {services.map((service, index) => (
+        <View
+          key={service.id}
+          className={`rounded-3xl p-[4%] border ${index < services.length - 1 ? "mb-4" : ""}`}
+          style={{
+            borderColor: service.accent,
+            backgroundColor: hexToRgba(service.accent, 0.08),
+          }}
+        >
+          <ThemedText headingLevel={2} visualHeadingLevel={2} className="text-2xl font-bold">
+            {service.title}
+          </ThemedText>
+          <ThemedText className="text-lg font-semibold text-tint mt-1 mb-2">
+            {service.tagline}
+          </ThemedText>
+          <ThemedText className="text-base opacity-90 mb-3">
+            {service.description}
+          </ThemedText>
+
+          <ThemedText className="text-xs uppercase tracking-wider font-bold mb-2 opacity-70">
+            What you get:
+          </ThemedText>
+          <View className="mb-4">
+            {service.features.map((feature) => (
+              <ThemedText key={feature} className="text-base mb-1">
+                • {feature}
+              </ThemedText>
+            ))}
+          </View>
+
+          <View className="flex-row flex-wrap gap-2">
+            <Pressable
+              className="px-4 py-2.5 rounded-2.5 bg-tint"
+              onPress={() => router.push(`/(tabs)/services/${service.primaryCtaId}` as Href)}
+            >
+              <ThemedText inverse className="font-bold text-base">
+                {service.primaryCtaLabel}
+              </ThemedText>
+            </Pressable>
+
+            {service.secondaryCtaUrl && service.secondaryCtaLabel ? (
+              <Pressable
+                className="px-4 py-2.5 rounded-2.5 border"
+                style={{ borderColor: service.accent }}
+                onPress={() => handleSecondaryAction(service.secondaryCtaUrl as string, service.secondaryCtaIsRoute ?? false)}
+              >
+                <ThemedText className="font-semibold text-base" style={{ color: service.accent }}>
+                  {service.secondaryCtaLabel}
                 </ThemedText>
-              </View>
-
-              {services.map((service, index) => (
-                <View
-                  key={service.id}
-                  className={`rounded-3xl p-[4%] border ${index < services.length - 1 ? "mb-4" : ""}`}
-                  style={{
-                    borderColor: service.accent,
-                    backgroundColor: hexToRgba(service.accent, 0.08),
-                  }}
-                >
-                  <ThemedText headingLevel={2} visualHeadingLevel={2} className="text-2xl font-bold">
-                    {service.title}
-                  </ThemedText>
-                  <ThemedText className="text-lg font-semibold text-tint mt-1 mb-2">
-                    {service.tagline}
-                  </ThemedText>
-                  <ThemedText className="text-base opacity-90 mb-3">
-                    {service.description}
-                  </ThemedText>
-
-                  <ThemedText className="text-xs uppercase tracking-wider font-bold mb-2 opacity-70">
-                    What you get:
-                  </ThemedText>
-                  <View className="mb-4">
-                    {service.features.map((feature) => (
-                      <ThemedText key={feature} className="text-base mb-1">
-                        • {feature}
-                      </ThemedText>
-                    ))}
-                  </View>
-
-                  <View className="flex-row flex-wrap gap-2">
-                    <Pressable
-                      className="px-4 py-2.5 rounded-2.5 bg-tint"
-                      onPress={() => router.push(`/(tabs)/services/${service.primaryCtaId}` as Href)}
-                    >
-                      <ThemedText inverse className="font-bold text-base">
-                        {service.primaryCtaLabel}
-                      </ThemedText>
-                    </Pressable>
-
-                    {service.secondaryCtaUrl && service.secondaryCtaLabel ? (
-                      <Pressable
-                        className="px-4 py-2.5 rounded-2.5 border"
-                        style={{ borderColor: service.accent }}
-                        onPress={() => handleSecondaryAction(service.secondaryCtaUrl as string, service.secondaryCtaIsRoute ?? false)}
-                      >
-                        <ThemedText className="font-semibold text-base" style={{ color: service.accent }}>
-                          {service.secondaryCtaLabel}
-                        </ThemedText>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-          <Foot />
-        </TitleOfPage>
-      </View>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+      ))}
     </TabContainer>
   );
 };

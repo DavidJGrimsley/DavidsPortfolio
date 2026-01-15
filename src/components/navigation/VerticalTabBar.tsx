@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, Pressable, Platform, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSegments, useRouter, Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -399,6 +399,7 @@ interface VertTabGroupProps {
   inactiveColor: string;
   textColor: string;
   whiteOrBlackColor: string;
+  overlayTextColor: string;
   accentColor: string;
   iconSize: number;       // base size for sub-items
   mainIconSize: number;   // enlarged size for group icon
@@ -417,6 +418,7 @@ const VertTabGroup: React.FC<VertTabGroupProps> = ({
   inactiveColor,
   textColor,
   whiteOrBlackColor,
+  overlayTextColor,
   accentColor,
   iconSize,
   mainIconSize,
@@ -514,7 +516,7 @@ const VertTabGroup: React.FC<VertTabGroupProps> = ({
           <Text
             style={[
               styles.expansionMessage,
-              { color: `var(--color-text)` },
+              { color: overlayTextColor },
               webMessageStyle as any,
             ]}
           >
@@ -623,6 +625,8 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
   iconSize = 24,
   onTabPress,
 }) => {
+  const { width } = useWindowDimensions();
+  const forceCollapsed = width < 768;
   const colorScheme = useColorScheme();
   const segments = useSegments();
   const router = useRouter();
@@ -649,11 +653,17 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
 
   // Auto-collapse on nested pages
   useEffect(() => {
+    if (forceCollapsed) {
+      setIsCollapsed(true);
+      setShowOverlay(false);
+      return;
+    }
+
     setIsCollapsed(isNested);
     if (!isNested) {
       setShowOverlay(false);
     }
-  }, [isNested]);
+  }, [forceCollapsed, isNested]);
 
   // Close expanded group when route changes
   useEffect(() => {
@@ -774,8 +784,8 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
         style={[styles.overlay, webOverlayStyle as any]}
       />
 
-      {/* Collapsed toggle for nested pages */}
-      {isNested && isCollapsed && !showOverlay && (
+      {/* Collapsed toggle for nested pages or small screens */}
+      {(isCollapsed && !showOverlay && (isNested || forceCollapsed)) && (
         <CollapsedToggle
           onToggle={handleCollapsedToggle}
           accentColor={accentColor}
@@ -800,6 +810,7 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
                     inactiveColor={inactiveColor}
                     textColor={textColor}
                     whiteOrBlackColor={whiteOrBlackColor}
+                    overlayTextColor={overlayTextColor}
                     accentColor={accentColor}
                     iconSize={iconSize}
                     mainIconSize={topLevelIconSize}

@@ -37,13 +37,20 @@ function AppStack() {
 }
 
 function LoadingOverlay() {
+  const [showAnimation, setShowAnimation] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowAnimation(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <View
       // Use fixed positioning on web so it covers the viewport even if the root
       // container hasn't measured yet.
       style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999 }}
     >
-      <StartupLoading message="Loading…" />
+      <StartupLoading message="Loading…" showAnimation={showAnimation} showMessage={showAnimation} />
     </View>
   );
 }

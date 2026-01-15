@@ -8,7 +8,7 @@ export default function MobileApps() {
       titleB="Applications"
       category="mobile-apps"
       introContent={
-        <View className="page-lead">
+        <View>
           <Text className="detail-body text-themed">
             I build production-ready React Native and Expo apps with offline-first data flows, responsive UI systems, and cloud-backed APIs. From standing up CI/CD with EAS to integrating native modules and real-time features, I own the full lifecycle—architecture, performance tuning, and polished interactions across iOS, Android, and web.
           </Text>

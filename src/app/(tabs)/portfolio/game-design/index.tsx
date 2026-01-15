@@ -9,7 +9,7 @@ export default function GameDesign() {
       titleB="Design"
       category="game-design"
       introContent={
-        <View className="page-lead">
+        <View>
           <Text className="detail-body text-themed">
             I design gameplay systems that balance feel, readability, and technical rigor—tight input loops, performant rendering, and clean data structures for AI, UI, and narrative hooks. My work spans Godot, React Native, and custom integrations with external services to keep experiences responsive and failure-tolerant.
           </Text>

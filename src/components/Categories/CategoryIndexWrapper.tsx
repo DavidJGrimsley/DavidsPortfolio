@@ -1,8 +1,6 @@
 import React from "react";
-import { ScrollView, View } from "react-native";
-import { Foot } from "@/components/Foot";
 import { MyCards } from "@/components/Categories/MyCards";
-import { TitleOfPage } from "@/components/Categories/TitleOfPage";
+import { TabContainer } from "@/components/Navigation/TabContainer";
 
 type CategoryIndexWrapperProps = {
   titleA: string;
@@ -20,22 +18,9 @@ export function CategoryIndexWrapper({
   footerContent,
 }: CategoryIndexWrapperProps) {
   return (
-    <View className="flex-1 items-center w-full bg-themed">
-      <TitleOfPage titleA={titleA} titleB={titleB}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          className="grow w-full"
-          contentContainerClassName="items-center"
-        >
-          <View className="page-content py-5">
-            {introContent ? <View className="mb-[3%]">{introContent}</View> : null}
-            <MyCards pageCategory={category} />
-            {footerContent}
-            <Foot />
-          </View>
-        </ScrollView>
-      </TitleOfPage>
-    </View>
+    <TabContainer titleA={titleA} titleB={titleB} lead={introContent} contentClassName="py-5">
+      <MyCards pageCategory={category} />
+      {footerContent}
+    </TabContainer>
   );
 }

@@ -264,7 +264,7 @@ Colors
 
   /* Shared page width + lead (border-left) blocks */
   .page-content {
-    @apply w-full max-w-[95%] md:max-w-[80%] self-center px-5 md:px-0;
+    @apply w-full max-w-[95%] md:max-w-[80%] self-start;
   }
 
   .page-lead {
@@ -289,7 +289,13 @@ Colors
   }
 
   .main-title-shadow {
-    @apply absolute top-1/2 left-0 -translate-y-1/2 -z-10 text-(--color-accent) opacity-10 font-extrabold text-8xl;
+    @apply absolute top-1/2 left-0 -z-10 text-(--color-accent) opacity-15 font-extrabold text-8xl;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .main-title-shadow {
+      opacity: 0.22;
+    }
   }
 
   .page-container {
@@ -389,7 +395,7 @@ Colors
 
   /* Detail page typography (shared across portfolio + public-facing detail pages) */
   .detail-title {
-    @apply text-2xl md:text-4xl text-left font-bold text-(--color-tint) ml-[2%];
+    @apply text-2xl md:text-4xl text-left font-bold text-(--color-tint) ml-[2%] leading-tight;
     font-family: "Noto Serif Display";
   }
 
@@ -430,7 +436,7 @@ Colors
 }
 
   .detail-body {
-    @apply text-base md:text-lg text-left text-(--color-text);
+    @apply text-base md:text-lg text-left text-(--color-text) leading-relaxed;
     font-family: "Noto Sans";
   }
 
