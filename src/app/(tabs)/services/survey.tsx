@@ -1,16 +1,8 @@
 import React from "react";
-import { View } from "react-native";
-import { IframeEmbed } from "@/components/UI/IframeEmbed";
-import { intakeForms } from "@/constants/intakeForms";
+import { IntakeFormScreen } from "@/components/Services/IntakeFormScreen";
 
 export default function Survey() {
-  const surveyForm = intakeForms['survey'];
-  
-  return (
-    <View className="flex-1 bg-themed">
-      <IframeEmbed src={surveyForm?.formUrl || ""} />
-    </View>
-  );
+  return <IntakeFormScreen formId="survey" />;
 }
 
 

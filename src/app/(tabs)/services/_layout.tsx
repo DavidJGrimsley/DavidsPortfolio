@@ -7,17 +7,17 @@ export default function RootLayout() {
         headerShown: false,
       }}/>
       <Stack.Screen name="[intake]" options={{
-        headerShown: true,
+        headerShown: false,
         title: 'Intake Form',
       }}
       />
       <Stack.Screen name="learn" options={{
-        headerShown: true,
+        headerShown: false,
         title: 'Tutoring',
       }}
       />
       <Stack.Screen name="survey" options={{
-        headerShown: true,
+        headerShown: false,
         title: 'Survey',
       }}
       />

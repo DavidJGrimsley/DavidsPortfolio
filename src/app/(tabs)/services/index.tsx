@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Pressable } from "react-native";
 import { type Href, router } from "expo-router";
 import { ThemedText } from "@/components/UI/ThemedText";
@@ -144,6 +144,7 @@ const hexToRgba = (hex: string, alpha: number) => {
 };
 
 const ServicesPage = () => {
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const handleSecondaryAction = (url: string, isRoute: boolean) => {
     if (isRoute) {
       router.push(url as Href);
@@ -168,15 +169,26 @@ const ServicesPage = () => {
         </>
       }
     >
-      {services.map((service, index) => (
-        <View
-          key={service.id}
-          className={`rounded-3xl p-[4%] border ${index < services.length - 1 ? "mb-4" : ""}`}
-          style={{
-            borderColor: service.accent,
-            backgroundColor: hexToRgba(service.accent, 0.08),
-          }}
-        >
+      {services.map((service, index) => {
+        const isHovered = hoveredId === service.id;
+
+        return (
+          <Pressable
+            key={service.id}
+            className={`rounded-3xl p-[4%] border ${index < services.length - 1 ? "mb-4" : ""}`}
+            style={({ pressed }) => ({
+              borderColor: service.accent,
+              backgroundColor: hexToRgba(service.accent, pressed ? 0.2 : isHovered ? 0.14 : 0.08),
+              transform: [{ scale: pressed ? 0.985 : isHovered ? 1.01 : 1 }],
+              shadowColor: service.accent,
+              shadowOpacity: isHovered ? 0.35 : 0.15,
+              shadowRadius: isHovered ? 18 : 8,
+              shadowOffset: { width: 0, height: isHovered ? 10 : 6 },
+            })}
+            onPress={() => router.push(`/(tabs)/services/${service.primaryCtaId}` as Href)}
+            onHoverIn={() => setHoveredId(service.id)}
+            onHoverOut={() => setHoveredId(null)}
+          >
           <ThemedText headingLevel={2} visualHeadingLevel={2} className="text-2xl font-bold">
             {service.title}
           </ThemedText>
@@ -198,30 +210,9 @@ const ServicesPage = () => {
             ))}
           </View>
 
-          <View className="flex-row flex-wrap gap-2">
-            <Pressable
-              className="px-4 py-2.5 rounded-2.5 bg-tint"
-              onPress={() => router.push(`/(tabs)/services/${service.primaryCtaId}` as Href)}
-            >
-              <ThemedText inverse className="font-bold text-base">
-                {service.primaryCtaLabel}
-              </ThemedText>
-            </Pressable>
-
-            {service.secondaryCtaUrl && service.secondaryCtaLabel ? (
-              <Pressable
-                className="px-4 py-2.5 rounded-2.5 border"
-                style={{ borderColor: service.accent }}
-                onPress={() => handleSecondaryAction(service.secondaryCtaUrl as string, service.secondaryCtaIsRoute ?? false)}
-              >
-                <ThemedText className="font-semibold text-base" style={{ color: service.accent }}>
-                  {service.secondaryCtaLabel}
-                </ThemedText>
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
-      ))}
+        </Pressable>
+        );
+      })}
     </TabContainer>
   );
 };

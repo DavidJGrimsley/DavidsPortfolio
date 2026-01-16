@@ -13,7 +13,7 @@ Colors
 #A96710 - Copperwood FOR Dark mode Secondary and Tab Icon Selected
 
 #723B80 - Velvet Orchid FOR Light mode Accent and tab Icon Default
-#321E3B - Midnight Violet FOR Dark mode Accent and tab Icon Default
+#321E3B - Violet FOR Dark mode Accent and tab Icon Default
 
 #0E668B - Baltic Blue FOR Light mode Tint
 #EEA444 - Golden Orange FOR Dark mode Tint
@@ -51,10 +51,10 @@ Colors
       --color-text: #F8F8F8; /* Bright Snow */
       --color-background: #20182D; /* Midnight Violet */
       --color-secondary: #A96710; /* Copperwood */
-      --color-accent: #321E3B; /* Midnight Violet */
+      --color-accent: #321E3B; /* Violet */
       --color-tint: #EEA444; /* Golden Orange */
       --color-icon: #9BA1A6; /* Cool Steel */
-      --color-tab-icon-default: #321E3B; /* Midnight Violet */
+      --color-tab-icon-default: #321E3B; /* Violet */
       --color-tab-icon-selected: #A96710; /* Copperwood */
       --color-white-or-black: #11181C; /* Ink Black */
       

@@ -5,7 +5,6 @@ import LottieView from 'lottie-react-native';
 
 import { ThemedText } from '@/components/UI/ThemedText';
 import { TabContainer } from '@/components/Navigation/TabContainer';
-import animationData from '../../assets/lottie/404_error.json';
 
 type LottieComponent = React.ComponentType<any> | null;
 
@@ -29,11 +28,10 @@ export default function NotFoundScreen() {
     };
   }, [isSSR]);
 
-  const lottieData = useMemo(() => animationData as unknown as object, []);
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
+      <Stack.Screen options={{ headerShown: false }} />
       <TabContainer
         titleA="Page"
         titleB="Not Found"
@@ -47,13 +45,14 @@ export default function NotFoundScreen() {
           <View className="w-[70%] max-w-120 aspect-square">
             {Platform.OS === 'web' ? (
               WebLottie ? (
-                <WebLottie animationData={lottieData} loop autoplay style={{ width: '100%', height: '100%' }} />
+                <WebLottie animationData={require('../../assets/lottie/404_error.json')} loop autoplay style={{ width: '100%', height: '100%' }} />
               ) : (
                 <View className="w-full h-full bg-secondary/20 rounded-2xl" />
               )
             ) : (
               <LottieView
-                source={lottieData}
+                
+                source={require('../../assets/lottie/404_error.json')}
                 autoPlay
                 loop
                 enableMergePathsAndroidForKitKatAndAbove

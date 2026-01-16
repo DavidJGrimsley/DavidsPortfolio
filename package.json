@@ -55,6 +55,7 @@
     "react": "19.1.0",
     "react-bootstrap": "^2.10.4",
     "react-dom": "19.1.0",
+    "react-hook-form": "^7.71.1",
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-radial-gradient": "^1.1.5",
