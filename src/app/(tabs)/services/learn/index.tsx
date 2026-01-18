@@ -5,7 +5,27 @@ import { TabContainer } from "@/components/Navigation/TabContainer";
 
 const Page = () => {
   return (
-    <TabContainer titleA="Learning" titleB="Center" contentClassName="py-[6%]">
+    <TabContainer
+      titleA="Learning"
+      titleB="Center"
+      contentClassName="py-[6%]"
+      seo={{
+        title: 'Tutoring: computer science, math, and game dev',
+        description:
+          'One-on-one and group tutoring in computer science, web development, game development, and mathematics. Virtual sessions available with flexible scheduling.',
+        path: '/services/learn',
+        keywords: [
+          'tutoring',
+          'computer science tutoring',
+          'AP CSA tutoring',
+          'AP CSP tutoring',
+          'web development tutoring',
+          'game development tutoring',
+          'math tutoring',
+        ],
+        type: 'website',
+      }}
+    >
       <View className="flex-row flex-1 w-full">
         <View className="flex-1 pr-6">
           <View className="mb-[2%]">

@@ -162,6 +162,44 @@ const ServicesPage = () => {
       titleB="need?"
       leadBody="It would be my pleasure to meet and discuss your goals. Whether you need a mobile app, website, game, or other software, I’ll get to know the why before I start to code. The greater purpose of your business or organization will be baked into the layout, UI, and functionality of your project."
       leadSubBody="My normal tech stack includes Expo, React Native, , but I’m happy to explore other technologies to turn your ideas into reality."
+      seo={{
+        title: 'Services: website building, apps, APIs, tutoring, games',
+        description:
+          'Hire David Grimsley for website building, app development, API/backend development, game development, tutoring, and online presence services. Request a quote and get started.',
+        path: '/services',
+        keywords: [
+          'website building',
+          'website made',
+          'web developer for hire',
+          'small business website',
+          'portfolio website',
+          'app development',
+          'React Native',
+          'API development',
+          'backend developer',
+          'tutoring computer science',
+          'game development',
+          'online presence',
+          'SEO services',
+        ],
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@type': 'ProfessionalService',
+          name: 'David Grimsley – Software & Web Development Services',
+          url: 'https://davidjgrimsley.com/services',
+          areaServed: 'US',
+          serviceType: [
+            'Website building',
+            'Web development',
+            'App development',
+            'API development',
+            'Game development',
+            'Tutoring',
+            'Online presence services',
+          ],
+        },
+        type: 'website',
+      }}
     >
       {services.map((service, index) => {
         const isHovered = hoveredId === service.id;

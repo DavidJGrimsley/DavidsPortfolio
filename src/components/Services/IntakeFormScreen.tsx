@@ -116,6 +116,20 @@ export const IntakeFormScreen = ({ formId }: IntakeFormScreenProps) => {
         titleA={titleA}
         titleB={titleB}
         showFooter={false}
+        seo={{
+          title: form.title,
+          description: form.description,
+          path: `/services/${form.id}`,
+          keywords: [
+            'services',
+            'project intake',
+            'website building',
+            'app development',
+            'API development',
+            'quote',
+          ],
+          type: 'website',
+        }}
         lead={
           <>
             <ThemedText className="text-2xl font-bold mb-2">{form.title}</ThemedText>

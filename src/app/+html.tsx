@@ -18,7 +18,6 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="author" content="David Grimsley" />
         <meta name="robots" content="index, follow" />
         <meta name="googlebot" content="index, follow" />
-        <link rel="canonical" href="https://davidjgrimsley.com" />
         
         {/* Theme Color */}
         <meta name="theme-color" content="#20182D" media="(prefers-color-scheme: dark)" />

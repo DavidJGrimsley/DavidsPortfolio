@@ -59,6 +59,22 @@ export default function APIIndexPage() {
       title="Public APIs"
       leadBody="The internet’s interconnectivity depends on APIs. It’s collaboration in action. I enjoy the resources available via existing APIs for developers to use, and this is my contribution to that process. PokeAPI (Pokémon), SWAPI (Star Wars), and OpenAI are just a few of the tools that I call."
       leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
+      seo={{
+        title: 'Public APIs',
+        description:
+          'Explore public APIs built and hosted by David Grimsley. Learn what an API is, how to call endpoints, and view documentation, uptime, and rate limits.',
+        path: '/public-facing/api',
+        keywords: [
+          'public API',
+          'API portfolio',
+          'what is an API',
+          'REST API',
+          'backend development',
+          'NGINX',
+          'developer tools',
+        ],
+        type: 'website',
+      }}
     >
 
       <WhatIsAPICard />

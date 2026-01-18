@@ -74,7 +74,7 @@ export default function MCPAppPage() {
     'MCP server exposing React Native, Expo Router, and full-stack development guides. Structured resources for AI tools, including architecture patterns, state management, database design, and deployment strategies. Open-source MCP implementation for developer knowledge sharing.';
   const seoKeywords =
     'MCP, Model Context Protocol, AI tools, developer resources, React Native, Expo Router, full-stack development, architecture patterns, state management, Drizzle ORM, Supabase, deployment guides, open-source, AI assistant, developer documentation, software engineering, David Grimsley';
-  const seoImage = 'https://davidjgrimsley.com/images/mcp-app-preview.png';
+  const seoImage = 'https://davidjgrimsley.com/images/icon.png';
   const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp/app';
 
   // MCP Resources (guides) fallback (local)

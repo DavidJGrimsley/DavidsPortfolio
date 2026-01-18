@@ -82,7 +82,7 @@ export default function MCPIndexPage() {
     'Explore MCP (Model Context Protocol) servers by David Grimsley. Open-source implementations exposing development guides, architecture patterns, and structured resources for AI-powered code assistance. MCP servers for React Native, Expo Router, full-stack development, and more.';
   const seoKeywords = 
     'MCP, Model Context Protocol, MCP server, AI tools, Pokémon MCP, developer resources, React Native MCP, Expo Router MCP, AI code assistance, structured knowledge, open-source MCP, developer documentation, software engineering, David Grimsley, mrdj-app-mcp, AI assistant integration';
-  const seoImage = 'https://davidjgrimsley.com/images/mcp-servers-preview.png';
+  const seoImage = 'https://davidjgrimsley.com/images/icon.png';
   const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp';
 
   return (

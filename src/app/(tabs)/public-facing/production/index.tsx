@@ -40,6 +40,21 @@ export default function ProductionIndexPage() {
       title="Production Applications"
       leadBody="These apps, games, and other creations are from my own mind and built by me, with possible collaboration from others. Your support is greatly appreciated, so please check them out and share them with folks who might benefit from their use."
       leadSubBody="My Linux VPS is where I host web apps and the backend APIs that mobile applications and games need."
+      seo={{
+        title: 'Production applications',
+        description:
+          'Live production apps and projects by David Grimsley. Explore shipped web apps, games, and hosted tools along with links and status.',
+        path: '/public-facing/production',
+        keywords: [
+          'production apps',
+          'live projects',
+          'web apps',
+          'portfolio',
+          'Linux VPS',
+          'backend APIs',
+        ],
+        type: 'website',
+      }}
     >
       {apps.map((app) => (
         <SoftwareCard

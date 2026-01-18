@@ -98,6 +98,21 @@ export default function Index() {
         titleB="me"
         leadBody="I believe accessibility and transparency are some of the most important factors in choosing where and with whom to do business. I’d love to hear from you."
         leadSubBody="Please feel free to contact me via email, social media, or the form below. There are also specialized forms on the services page for starting a project."
+        seo={{
+          title: 'Contact',
+          description:
+            'Contact David Grimsley to discuss website building, app development, APIs, tutoring, game development, or online presence services.',
+          path: '/contact',
+          keywords: [
+            'contact',
+            'website quote',
+            'website developer',
+            'app developer',
+            'API developer',
+            'freelance developer',
+          ],
+          type: 'website',
+        }}
       >
         <View className="w-full max-w-[980px]">
           {/* Resume download section */}

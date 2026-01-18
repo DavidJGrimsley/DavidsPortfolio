@@ -144,8 +144,31 @@ export default function QuantumAPIPage() {
     return 'GET';
   };
 
+  const seoTitle = portfolioDetail?.api?.name
+    ? `${portfolioDetail.api.name} API`
+    : 'Quantum API';
+  const seoDescription =
+    portfolioDetail?.api?.description ??
+    'Quantum is a public API hosted by David Grimsley. View endpoints, docs, examples, uptime, and usage notes.';
+
   return (
-    <PublicFacingDetailWrapper>
+    <PublicFacingDetailWrapper
+      seo={{
+        title: seoTitle,
+        description: seoDescription,
+        path: '/public-facing/api/quantum',
+        keywords: [
+          'Quantum API',
+          'public API',
+          'what is an API',
+          'REST API',
+          'developer tools',
+          'backend development',
+          'TypeScript',
+        ],
+        type: 'website',
+      }}
+    >
         {/* Header */}
         <View className="mb-7.5">
           <View className="flex-row items-center mb-3">

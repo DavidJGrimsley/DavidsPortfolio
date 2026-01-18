@@ -69,7 +69,7 @@ export default function MRDJPokemonMcpPage() {
     'MCP server exposing Pokémon strategy guides and PokéAPI-style tools: Pokémon lookup/search, type effectiveness, counter suggestions, and team coverage helpers.';
   const seoKeywords =
     'MCP, Model Context Protocol, Pokemon, Pokémon, PokeAPI, type effectiveness, team builder, raid strategy, AI tools, developer resources, open-source, David Grimsley, mrdj-pokemon-mcp';
-  const seoImage = 'https://davidjgrimsley.com/images/mcp-servers-preview.png';
+  const seoImage = 'https://davidjgrimsley.com/images/icon.png';
   const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp';
 
   const fallbackMcpResources = useMemo(

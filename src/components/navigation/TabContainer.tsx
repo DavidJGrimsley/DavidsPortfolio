@@ -27,6 +27,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { SeoHead, type SeoHeadProps } from '@/components/SEO/SeoHead'
 import { TitleOfPage } from '@/components/Categories/TitleOfPage'
 import { Foot } from '@/components/Foot'
 import { MidLevelScreenGradient } from '@/components/Gradients'
@@ -43,6 +44,7 @@ type TabContainerProps = {
   contentClassName?: string;
   scrollClassName?: string;
   background?: React.ReactNode;
+  seo?: SeoHeadProps;
 };
 
 export const TabContainer = ({
@@ -56,6 +58,7 @@ export const TabContainer = ({
   contentClassName,
   scrollClassName,
   background,
+  seo,
 }: TabContainerProps) => {
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -103,8 +106,33 @@ export const TabContainer = ({
       </>
     ) : null);
 
+  const derivedTitle = useMemo(() => {
+    if (seo?.title) return seo.title;
+    const combined = [titleA, titleB].filter(Boolean).join(' ').trim();
+    return combined.length > 0 ? combined : undefined;
+  }, [seo?.title, titleA, titleB]);
+
+  const derivedDescription = useMemo(() => {
+    if (seo?.description) return seo.description;
+    if (leadBody && leadBody.trim().length > 0) return leadBody;
+    if (leadSubBody && leadSubBody.trim().length > 0) return leadSubBody;
+    return undefined;
+  }, [leadBody, leadSubBody, seo?.description]);
+
   return (
     <View className="flex-1 flex-row bg-themed">
+      <SeoHead
+        title={derivedTitle}
+        description={derivedDescription}
+        path={seo?.path}
+        canonicalUrl={seo?.canonicalUrl}
+        keywords={seo?.keywords}
+        image={seo?.image}
+        type={seo?.type}
+        noIndex={seo?.noIndex}
+        structuredData={seo?.structuredData}
+      />
+
       <Animated.View style={backgroundStyle} className="absolute inset-0">
         {resolvedBackground}
       </Animated.View>
