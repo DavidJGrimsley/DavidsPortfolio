@@ -85,7 +85,6 @@ const TabLayout = ({  }) => {
               options={{ headerShown: false }} />
             <Tabs.Screen name="portfolio" />
             <Tabs.Screen name="public-facing" />
-            <Tabs.Screen name="more" />
             <Tabs.Screen name="pokemon" options={{ href: null }} />
           </Tabs>
         </View>
