@@ -35,11 +35,7 @@ export default function NotFoundScreen() {
       <TabContainer
         titleA="Page"
         titleB="Not Found"
-        lead={
-          <ThemedText className="detail-body text-left">
-            Sorry, this screen doesn't exist. This shouldn't have happened. I'm embarrassed.
-          </ThemedText>
-        }
+        leadBody="Sorry, this screen doesn't exist. This shouldn't have happened. I'm embarrassed."
       >
         <View className="w-full items-center">
           <View className="w-[70%] max-w-120 aspect-square">

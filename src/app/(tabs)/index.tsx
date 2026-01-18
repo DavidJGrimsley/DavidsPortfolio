@@ -2,7 +2,6 @@ import { View } from "react-native";
 import React from "react";
 import { FeaturedCard } from "../../components/FeaturedCard";
 import { HomeScreenGradient } from "@/components/Gradients";
-import { ThemedText } from "@/components/UI/ThemedText";
 import { TabContainer } from "@/components/Navigation/TabContainer";
 
 
@@ -14,19 +13,11 @@ export default function Index() {
   return (
     <View className="flex-1 mb-[1%] bg-themed">
       <TabContainer
-        titleA="David"
+        titleA="David 'Mr. DJ' "
         titleB="Grimsley"
         background={<HomeScreenGradient />}
-        lead={
-          <>
-            <ThemedText className="detail-body">
-              I help teams ship polished products across mobile, web, and game experiences—pairing strong UX instincts with reliable engineering. Every project gets the same rigor: thoughtful architecture, resilient data flows, and instrumentation so we can measure what matters.
-            </ThemedText>
-            <ThemedText className="detail-body text-secondary mt-[1%]">
-              From rapid prototypes to production launches, I focus on maintainable systems, accessibility, and performance so features stay fast, inclusive, and easy to iterate.
-            </ThemedText>
-          </>
-        }
+        leadBody="Hello World, welcome to my website. I’m glad you’re here. I’ve built this website with Expo React Native, and I hope you enjoy the smooth experience I’ve worked to achieve. Regardless of the project, I pay close attention to details and spend time and care on the most important aspects such as architecture, resilient data flows, and a seamless user experience. From UI to the backend, I think about the user journey and how people will interact with the technology. I get user feedback early and often to prevent tunnel vision and stay in touch with what matters: building something people will want to use and enjoy using."
+        leadSubBody="Please explore to find my portfolio projects including mobile apps, websites, games, and more. There are public-facing tools for all to use such as APIs and MCP servers. Your feedback on functionality and style is appreciated; a survey can be found on the contact page."
       >
         {/* <FireText text="DAVID GRIMSLEY" fontSize={48} /> */}
         <View className="items-center p-[2%] my-[2%]">

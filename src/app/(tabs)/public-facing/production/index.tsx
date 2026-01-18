@@ -38,7 +38,8 @@ export default function ProductionIndexPage() {
   return (
     <PublicFacingIndexWrapper
       title="Production Applications"
-      subtitle="Published apps and projects you can try right now"
+      leadBody="These apps, games, and other creations are from my own mind and built by me, with possible collaboration from others. Your support is greatly appreciated, so please check them out and share them with folks who might benefit from their use."
+      leadSubBody="My Linux VPS is where I host web apps and the backend APIs that mobile applications and games need."
     >
       {apps.map((app) => (
         <SoftwareCard

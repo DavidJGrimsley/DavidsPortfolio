@@ -57,8 +57,11 @@ export default function APIIndexPage() {
   return (
     <PublicFacingIndexWrapper
       title="Public APIs"
-      subtitle="Open APIs hosted by David Grimsley for public use"
+      leadBody="The internet’s interconnectivity depends on APIs. It’s collaboration in action. I enjoy the resources available via existing APIs for developers to use, and this is my contribution to that process. PokeAPI (Pokémon), SWAPI (Star Wars), and OpenAI are just a few of the tools that I call."
+      leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
     >
+
+      <WhatIsAPICard />
       {apis.map((api) => (
         <SoftwareCard
           key={api.id}
@@ -70,8 +73,6 @@ export default function APIIndexPage() {
           onPress={() => handleAPIPress(api.id)}
         />
       ))}
-
-      <WhatIsAPICard />
 
       <ComingSoonCard
         title="More APIs Coming Soon"

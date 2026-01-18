@@ -9,7 +9,7 @@ import { useColorScheme } from 'react-native';
 const lightColors = {
   text: '#11181C',
   background: '#E9DDEE',
-  secondary: '#A2DDF6',
+  secondary: '#17A9E8',
   accent: '#723B80',
   tint: '#0E668B',
   icon: '#687076',

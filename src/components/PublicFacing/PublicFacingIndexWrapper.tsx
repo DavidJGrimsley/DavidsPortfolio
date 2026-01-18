@@ -1,16 +1,16 @@
 import React from 'react';
 import { View } from 'react-native';
-import { ThemedText } from '@/components/UI/ThemedText';
 import { TabContainer } from '@/components/Navigation/TabContainer';
 
 type PublicFacingIndexWrapperProps = {
 	title: string;
-	subtitle?: string;
+	leadBody?: string;
+	leadSubBody?: string;
 	children: React.ReactNode;
 	contentClassName?: string;
 };
 
-export function PublicFacingIndexWrapper({ title, subtitle, children, contentClassName }: PublicFacingIndexWrapperProps) {
+export function PublicFacingIndexWrapper({ title, leadBody, leadSubBody, children, contentClassName }: PublicFacingIndexWrapperProps) {
   const [titleA, ...titleRest] = title.trim().split(/\s+/);
   const titleB = titleRest.join(' ');
 
@@ -18,7 +18,8 @@ export function PublicFacingIndexWrapper({ title, subtitle, children, contentCla
 		<TabContainer
 			titleA={titleA ?? ''}
 			titleB={titleB}
-			lead={subtitle ? <ThemedText className="detail-body opacity-80">{subtitle}</ThemedText> : undefined}
+			leadBody={leadBody}
+			leadSubBody={leadSubBody}
 			contentClassName={contentClassName}
 		>
 			<View className="w-full flex flex-col gap-4">

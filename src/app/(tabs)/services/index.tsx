@@ -158,16 +158,10 @@ const ServicesPage = () => {
 
   return (
     <TabContainer
-      titleA="My"
-      titleB="Services"
-      lead={
-        <>
-          <ThemedText className="text-2xl font-bold mb-2">What I offer</ThemedText>
-          <ThemedText className="text-base opacity-85">
-            I provide app development, web design, game development, tutoring, and online presence services. Pick a service and fill out the intake form to get started.
-          </ThemedText>
-        </>
-      }
+      titleA="Whatcha"
+      titleB="need?"
+      leadBody="It would be my pleasure to meet and discuss your goals. Whether you need a mobile app, website, game, or other software, I’ll get to know the why before I start to code. The greater purpose of your business or organization will be baked into the layout, UI, and functionality of your project."
+      leadSubBody="My normal tech stack includes Expo, React Native, , but I’m happy to explore other technologies to turn your ideas into reality."
     >
       {services.map((service, index) => {
         const isHovered = hoveredId === service.id;

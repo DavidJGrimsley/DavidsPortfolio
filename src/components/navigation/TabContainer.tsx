@@ -30,11 +30,14 @@ import Animated, {
 import { TitleOfPage } from '@/components/Categories/TitleOfPage'
 import { Foot } from '@/components/Foot'
 import { MidLevelScreenGradient } from '@/components/Gradients'
+import { ThemedText } from '@/components/UI/ThemedText'
 
 type TabContainerProps = {
   titleA?: string;
   titleB?: string;
   lead?: React.ReactNode;
+  leadBody?: string;
+  leadSubBody?: string;
   children: React.ReactNode;
   showFooter?: boolean;
   contentClassName?: string;
@@ -46,6 +49,8 @@ export const TabContainer = ({
   titleA,
   titleB,
   lead,
+  leadBody,
+  leadSubBody,
   children,
   showFooter = true,
   contentClassName,
@@ -90,6 +95,14 @@ export const TabContainer = ({
 
   const resolvedBackground = background ?? <MidLevelScreenGradient />;
 
+  const resolvedLead = lead ??
+    (leadBody || leadSubBody ? (
+      <>
+        {leadBody ? <ThemedText className="detail-body">{leadBody}</ThemedText> : null}
+        {leadSubBody ? <ThemedText className="detail-subBody">{leadSubBody}</ThemedText> : null}
+      </>
+    ) : null);
+
   return (
     <View className="flex-1 flex-row bg-themed">
       <Animated.View style={backgroundStyle} className="absolute inset-0">
@@ -119,7 +132,7 @@ export const TabContainer = ({
               startDelayMs={titleDelayMs}
               scrollY={scrollY}
             >
-              {lead ? <View className="page-lead mt-[2%] mb-[4%]">{lead}</View> : null}
+              {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
               {children}
               {showFooter ? (
                 <View className="mt-[8%] pb-[6%] w-full">
@@ -129,7 +142,7 @@ export const TabContainer = ({
             </TitleOfPage>
           ) : (
             <>
-              {lead ? <View className="page-lead mt-[2%] mb-[4%]">{lead}</View> : null}
+              {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
               {children}
               {showFooter ? (
                 <View className="mt-[8%] pb-[6%] w-full">

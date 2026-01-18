@@ -25,12 +25,12 @@ Colors
     /* Light defaults */
     --color-text: #11181C; /* Ink Black */
     --color-background: #E9DDEE; /* Lavender Veil */
-    --color-secondary: #A2DDF6; /* Frosted Blue */
+    --color-secondary: #17A9E8; /* Light Blue */
     --color-accent: #723B80; /* Velvet Orchid */
     --color-tint: #0E668B; /* Baltic Blue */
     --color-icon: #687076; /* Dim Grey */
     --color-tab-icon-default: #723B80; /* Velvet Orchid */
-    --color-tab-icon-selected: #A2DDF6; /* Frosted Blue */
+    --color-tab-icon-selected: #17A9E8; /* Light Blue */
     --color-white-or-black: #F8F8F8; /* Bright Snow */
     --color-white: #F8F8F8; /* Consistent white for overlays, matches text in dark mode */
     
@@ -436,7 +436,12 @@ Colors
 }
 
   .detail-body {
-    @apply text-base md:text-lg text-left text-(--color-text) leading-relaxed;
+    @apply text-base md:text-xl text-left text-(--color-text) leading-relaxed;
+    font-family: "Noto Sans";
+  }
+  
+  .detail-subBody {
+    @apply text-base md:text-lg text-left text-(--color-secondary) leading-relaxed;
     font-family: "Noto Sans";
   }
 

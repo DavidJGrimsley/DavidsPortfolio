@@ -155,39 +155,40 @@ export default function MCPIndexPage() {
       
       <PublicFacingIndexWrapper
         title="MCP Servers"
-        subtitle="Model Context Protocol servers exposing structured development knowledge for AI tools"
+        leadBody="Using advanced models like Claude Sonnet and OpenAI allows me to leverage the speed and effectiveness of agentic coding, while my solid understanding of programming fundamentals, UI/UX principles, and data flow keeps projects actually working and makes architecture design and debugging my strong suit. It’s important to keep the AI agent in check. This is just one use of an MCP. I also made an MCP focused on Pokémon, which includes guides written by me and a full database of Pokémon information."
+        leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
       >
+
+        {/* What is MCP? Info Card */}
+        <WhatIsMCPCard />
         {servers.map((server) => {
           const synced = syncedMetaById[server.id];
           const version = synced?.version ?? server.version;
           const resources = synced?.resources ?? server.resources;
           const tools = synced?.tools ?? server.tools;
           const prompts = synced?.prompts ?? server.prompts;
-
+          
           const isSynced = synced?.isSynced === true;
           const isOffline = synced?.isSynced === false;
           const isLive = server.status === 'active' && !isOffline;
-
+          
           return (
             <SoftwareCard
-              key={server.id}
-              item={{
-                ...server,
-                version,
-                status: isLive ? 'active' : 'inactive',
-              }}
-              stats={[
-                { emoji: '📚', label: `${resources} resources` },
-                { emoji: '🔧', label: `${tools} ${tools === 1 ? 'tool' : 'tools'}` },
-                { emoji: '💬', label: `${prompts} prompts` },
-              ]}
-              onPress={() => handleMCPPress(server.id)}
+            key={server.id}
+            item={{
+              ...server,
+              version,
+              status: isLive ? 'active' : 'inactive',
+            }}
+            stats={[
+              { emoji: '📚', label: `${resources} resources` },
+              { emoji: '🔧', label: `${tools} ${tools === 1 ? 'tool' : 'tools'}` },
+              { emoji: '💬', label: `${prompts} prompts` },
+            ]}
+            onPress={() => handleMCPPress(server.id)}
             />
           );
         })}
-
-        {/* What is MCP? Info Card */}
-        <WhatIsMCPCard />
 
         {/* Coming Soon Card */}
         <ComingSoonCard
