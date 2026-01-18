@@ -164,11 +164,10 @@ export default function MCPIndexPage() {
         {servers.map((server) => {
           const synced = syncedMetaById[server.id];
           const version = synced?.version ?? server.version;
-          const resources = synced?.resources ?? server.resources;
-          const tools = synced?.tools ?? server.tools;
-          const prompts = synced?.prompts ?? server.prompts;
+          const resources = synced?.resources;
+          const tools = synced?.tools;
+          const prompts = synced?.prompts;
           
-          const isSynced = synced?.isSynced === true;
           const isOffline = synced?.isSynced === false;
           const isLive = server.status === 'active' && !isOffline;
           
@@ -181,9 +180,9 @@ export default function MCPIndexPage() {
               status: isLive ? 'active' : 'inactive',
             }}
             stats={[
-              { emoji: '📚', label: `${resources} resources` },
-              { emoji: '🔧', label: `${tools} ${tools === 1 ? 'tool' : 'tools'}` },
-              { emoji: '💬', label: `${prompts} prompts` },
+              { emoji: '📚', label: `${typeof resources === 'number' ? resources : '—'} resources` },
+              { emoji: '🔧', label: `${typeof tools === 'number' ? tools : '—'} tools` },
+              { emoji: '💬', label: `${typeof prompts === 'number' ? prompts : '—'} prompts` },
             ]}
             onPress={() => handleMCPPress(server.id)}
             />

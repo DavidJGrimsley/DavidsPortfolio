@@ -9,9 +9,7 @@
       "baseUrl": "https://davidjgrimsley.com/api/quantum",
       "status": "active",
       "featured": true,
-      "tags": ["quantum", "simulation", "gaming", "text-processing"],
-      "endpoints": 4,
-      "uptime": "99.5%"
+      "tags": ["quantum", "simulation", "gaming", "text-processing"]
     }
   ]
 }

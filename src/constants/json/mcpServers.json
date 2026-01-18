@@ -9,10 +9,7 @@
       "github": "https://github.com/DavidJGrimsley/mrdj-app-mcp",
       "status": "active",
       "featured": true,
-      "tags": ["MCP", "React Native", "Expo Router", "AI Tools", "Developer Guides"],
-      "resources": 11,
-      "tools": 1,
-      "prompts": 3
+      "tags": ["MCP", "React Native", "Expo Router", "AI Tools", "Developer Guides"]
     },
     {
       "id": "mrdj-pokemon-mcp",
@@ -23,10 +20,7 @@
       "github": "https://github.com/DavidJGrimsley/mrdj-pokemon-mcp",
       "status": "active",
       "featured": false,
-      "tags": ["MCP", "Pokémon", "PokeAPI", "AI Tools", "Strategy Guides"],
-      "resources": 3,
-      "tools": 7,
-      "prompts": 0
+      "tags": ["MCP", "Pokémon", "PokeAPI", "AI Tools", "Strategy Guides"]
     }
   ]
 }

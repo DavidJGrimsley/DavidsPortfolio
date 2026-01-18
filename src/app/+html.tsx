@@ -12,16 +12,29 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta name='impact-site-verification' content='a180ff90-b21a-4a80-93fc-36696aad5bdb'/>
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="color-scheme" content="light dark" />
         
         {/* Default SEO Meta Tags */}
         <meta name="author" content="David Grimsley" />
         <meta name="robots" content="index, follow" />
         <meta name="googlebot" content="index, follow" />
+
+        {/* PWA */}
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="DJsPortfolio" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/images/icon.png" />
         
         {/* Theme Color */}
-        <meta name="theme-color" content="#20182D" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#E9DDEE" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#E9DDEE" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {\n  try {\n    const meta = document.querySelector('meta[name="theme-color"]');\n    if (!meta) return;\n    const mq = window.matchMedia('(prefers-color-scheme: dark)');\n    const set = () => meta.setAttribute('content', mq.matches ? '#20182D' : '#E9DDEE');\n    set();\n    if (mq.addEventListener) mq.addEventListener('change', set);\n    else mq.addListener(set);\n  } catch {}\n})();`,
+          }}
+        />
 
         {/* Google Fonts (web). Native uses local fonts via expo-font. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

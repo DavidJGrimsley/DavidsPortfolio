@@ -15,6 +15,9 @@ import {
 import { MCPHeroSection, MCPWhatIsSection } from '~/src/components/PublicFacing/mcp/MCPPageSections';
 import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
 
+const SHOULD_DEBUG_PUBLIC_FACING =
+  __DEV__ || process.env.EXPO_PUBLIC_PUBLIC_FACING_DEBUG === '1';
+
 const MCP_ENDPOINT = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-pokemon-mcp';
 const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-pokemon-mcp/portfolio.json';
@@ -51,6 +54,7 @@ export default function MRDJPokemonMcpPage() {
   const [copied, setCopied] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [portfolioMeta, setPortfolioMeta] = useState<MCPPortfolioMeta | null>(null);
+  const [isMetaSynced, setIsMetaSynced] = useState(false);
 
   const handleCopyEndpoint = () => {
     Clipboard.setString(portfolioMeta?.server?.mcpEndpointUrl ?? MCP_ENDPOINT);
@@ -161,6 +165,11 @@ export default function MRDJPokemonMcpPage() {
 
     const fetchPortfolioMeta = async () => {
       try {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.log('[PublicFacing][mrdj-pokemon-mcp] Fetching portfolio meta', {
+            url: MCP_PORTFOLIO_META_URL,
+          });
+        }
         const response = await fetch(MCP_PORTFOLIO_META_URL, {
           method: 'GET',
           cache: 'no-store' as any,
@@ -174,13 +183,39 @@ export default function MRDJPokemonMcpPage() {
               })
             : response;
 
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.log('[PublicFacing][mrdj-pokemon-mcp] Portfolio meta response', {
+            initialStatus: response.status,
+            finalStatus: finalResponse.status,
+            ok: finalResponse.ok,
+            usedCacheBust: finalResponse !== response,
+          });
+        }
+
         if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
         const data = (await finalResponse.json()) as MCPPortfolioMeta;
         if (!isMounted) return;
         setPortfolioMeta(data);
-      } catch {
+        setIsMetaSynced(true);
+
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.log('[PublicFacing][mrdj-pokemon-mcp] Portfolio meta parsed', {
+            server: data?.server,
+            resources: Array.isArray(data?.resources) ? data.resources.length : 0,
+            tools: Array.isArray(data?.tools) ? data.tools.length : 0,
+            prompts: Array.isArray(data?.prompts) ? data.prompts.length : 0,
+            endpoints: Array.isArray(data?.endpoints) ? data.endpoints.length : 0,
+          });
+        }
+      } catch (error) {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.warn('[PublicFacing][mrdj-pokemon-mcp] Failed to fetch portfolio meta; using fallback', {
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
         if (!isMounted) return;
         setPortfolioMeta(null);
+        setIsMetaSynced(false);
       }
     };
 
@@ -238,6 +273,12 @@ export default function MRDJPokemonMcpPage() {
       ? portfolioMeta!.endpoints
       : fallbackMcpEndpoints;
 
+  const resourceCount = Array.isArray(mcpResources) ? mcpResources.length : 0;
+  const toolCount = Array.isArray(mcpTools) ? mcpTools.length : 0;
+  const promptCount = Array.isArray(mcpPrompts) ? mcpPrompts.length : 0;
+
+  const endpointCount = mcpEndpoints.length;
+
   return (
     <>
       <Head>
@@ -271,10 +312,11 @@ export default function MRDJPokemonMcpPage() {
             'effectiveness, counter suggestions, and team coverage helpers. Now live and publicly accessible.'
           }
           keyFeatures={[
-            'Built-in Pokémon strategy guides as MCP resources',
+            `${resourceCount} strategy guides (synced from portfolio.json)`,
             'Pokémon lookup/search from a local PokeAPI data sync',
             'Type effectiveness calculator (1–2 defending types)',
             'Counters + team defensive coverage suggestions',
+            `Metadata: ${isMetaSynced ? 'synced' : 'fallback'}`,
           ]}
           mcpEndpointUrl={mcpEndpointUrl}
           githubRepoUrl={githubRepoUrl}
@@ -290,6 +332,40 @@ export default function MRDJPokemonMcpPage() {
         <MCPWhatIsSection tintColor={tintColor} />
 
         <MCPCollapsibleSection title="Endpoints" icon="link">
+          <GreyView className="mb-4">
+            <ThemedText className="detail-body opacity-80">
+              This section syncs from <ThemedText className="font-mono">portfolio.json</ThemedText> when available,
+              and falls back to local metadata if the server is unreachable.
+            </ThemedText>
+          </GreyView>
+
+          <GreyView className="mb-4">
+            <ThemedText className="detail-subheader mb-2">Synced Metadata</ThemedText>
+            <View className="pl-2">
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {resourceCount} resources</ThemedText>
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {toolCount} tools</ThemedText>
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {promptCount} prompts</ThemedText>
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {endpointCount} endpoints</ThemedText>
+            </View>
+
+            <View className="flex-row items-center gap-2 mt-3">
+              <ExternalLink href={MCP_PORTFOLIO_META_URL}>
+                <ThemedText className="detail-meta font-mono" style={{ color: tintColor }}>
+                  View portfolio.json
+                </ThemedText>
+              </ExternalLink>
+              <Pressable
+                onPress={() => handleCopyUrl(MCP_PORTFOLIO_META_URL)}
+                className="px-3 py-1.5 rounded-lg"
+                style={{ backgroundColor: tintColor + '20' }}
+              >
+                <ThemedText className="detail-meta" style={{ color: tintColor }}>
+                  {copiedUrl === MCP_PORTFOLIO_META_URL ? 'Copied' : 'Copy URL'}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </GreyView>
+
           {mcpEndpoints.map((endpoint) => (
             <View
               key={endpoint.id || endpoint.url}

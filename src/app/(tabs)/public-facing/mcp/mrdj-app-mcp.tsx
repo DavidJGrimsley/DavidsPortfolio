@@ -17,8 +17,11 @@ import {
 import { MCPHeroSection, MCPWhatIsSection } from '~/src/components/PublicFacing/mcp/MCPPageSections';
 import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
 
+const SHOULD_DEBUG_PUBLIC_FACING =
+  __DEV__ || process.env.EXPO_PUBLIC_PUBLIC_FACING_DEBUG === '1';
+
 // Server URLs
-const MCP_BASE_URL = 'https://davidjgrimsley.com/public-facing/mcp/app/mrdj-app-mcp';
+const MCP_BASE_URL = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp';
 const MCP_ENDPOINT = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp/mcp';
 const GITHUB_REPO = 'https://github.com/DavidJGrimsley/mrdj-app-mcp';
 const MCP_PORTFOLIO_META_URL = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp/portfolio.json';
@@ -75,7 +78,7 @@ export default function MCPAppPage() {
   const seoKeywords =
     'MCP, Model Context Protocol, AI tools, developer resources, React Native, Expo Router, full-stack development, architecture patterns, state management, Drizzle ORM, Supabase, deployment guides, open-source, AI assistant, developer documentation, software engineering, David Grimsley';
   const seoImage = 'https://davidjgrimsley.com/images/icon.png';
-  const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp/app';
+  const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp';
 
   // MCP Resources (guides) fallback (local)
   const fallbackMcpResources = [
@@ -184,6 +187,11 @@ export default function MCPAppPage() {
 
     const fetchPortfolioMeta = async () => {
       try {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.log('[PublicFacing][mrdj-app-mcp] Fetching portfolio meta', {
+            url: MCP_PORTFOLIO_META_URL,
+          });
+        }
         const response = await fetch(MCP_PORTFOLIO_META_URL, {
           method: 'GET',
           cache: 'no-store' as any,
@@ -199,12 +207,36 @@ export default function MCPAppPage() {
               })
             : response;
 
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.log('[PublicFacing][mrdj-app-mcp] Portfolio meta response', {
+            initialStatus: response.status,
+            finalStatus: finalResponse.status,
+            ok: finalResponse.ok,
+            usedCacheBust: finalResponse !== response,
+          });
+        }
+
         if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
         const data = (await finalResponse.json()) as MCPPortfolioMeta;
         if (!isMounted) return;
         setPortfolioMeta(data);
         setIsMetaSynced(true);
-      } catch {
+
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.log('[PublicFacing][mrdj-app-mcp] Portfolio meta parsed', {
+            server: data?.server,
+            resources: Array.isArray(data?.resources) ? data.resources.length : 0,
+            tools: Array.isArray(data?.tools) ? data.tools.length : 0,
+            prompts: Array.isArray(data?.prompts) ? data.prompts.length : 0,
+            endpoints: Array.isArray(data?.endpoints) ? data.endpoints.length : 0,
+          });
+        }
+      } catch (error) {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
+          console.warn('[PublicFacing][mrdj-app-mcp] Failed to fetch portfolio meta; using fallback', {
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
         if (!isMounted) return;
         setPortfolioMeta(null);
         setIsMetaSynced(false);
@@ -224,6 +256,11 @@ export default function MCPAppPage() {
   const mcpResources = portfolioMeta?.resources ?? fallbackMcpResources;
   const mcpTools = portfolioMeta?.tools ?? fallbackMcpTools;
   const mcpPrompts = portfolioMeta?.prompts ?? fallbackMcpPrompts;
+
+  const resourceCount = Array.isArray(mcpResources) ? mcpResources.length : 0;
+  const toolCount = Array.isArray(mcpTools) ? mcpTools.length : 0;
+  const promptCount = Array.isArray(mcpPrompts) ? mcpPrompts.length : 0;
+
 
   const fallbackMcpEndpoints: MCPEndpointMeta[] = [
     {
@@ -256,6 +293,8 @@ export default function MCPAppPage() {
     Array.isArray(portfolioMeta?.endpoints) && portfolioMeta!.endpoints.length > 0
       ? portfolioMeta!.endpoints
       : fallbackMcpEndpoints;
+
+  const endpointCount = mcpEndpoints.length;
 
   return (
     <>
@@ -321,10 +360,11 @@ export default function MCPAppPage() {
             'same documentation I use for building production applications, either locally or via the hosted endpoint.'
           }
           keyFeatures={[
-            '11 comprehensive development guides (architecture, routing, state, DB, styling, performance)',
+            `${resourceCount} development guides (synced from portfolio.json)`,
             'MCP resources for AI-powered code assistance',
             'Interactive prompts for architecture, stores, and routing',
             'Plesk-friendly deployment (also Docker, VPS, serverless)',
+            `Metadata: ${isMetaSynced ? 'synced' : 'fallback'}`,
           ]}
           mcpEndpointUrl={mcpEndpointUrl}
           githubRepoUrl={githubRepoUrl}
@@ -343,10 +383,36 @@ export default function MCPAppPage() {
         <MCPCollapsibleSection title="Endpoints" icon="link">
           <GreyView className="mb-4">
             <ThemedText className="detail-body opacity-80">
-              These are the public endpoints associated with this MCP server. This section is synced from
-              <ThemedText className="font-mono"> portfolio.json</ThemedText> when available, with a local
-              fallback.
+              This section syncs from <ThemedText className="font-mono">portfolio.json</ThemedText> when available,
+              and falls back to local metadata if the server is unreachable.
             </ThemedText>
+          </GreyView>
+
+          <GreyView className="mb-4">
+            <ThemedText className="detail-subheader mb-2">Synced Metadata</ThemedText>
+            <View className="pl-2">
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {resourceCount} resources</ThemedText>
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {toolCount} tools</ThemedText>
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {promptCount} prompts</ThemedText>
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {endpointCount} endpoints</ThemedText>
+            </View>
+
+            <View className="flex-row items-center gap-2 mt-3">
+              <ExternalLink href={MCP_PORTFOLIO_META_URL}>
+                <ThemedText className="detail-meta font-mono" style={{ color: tintColor }}>
+                  View portfolio.json
+                </ThemedText>
+              </ExternalLink>
+              <Pressable
+                onPress={() => handleCopyUrl(MCP_PORTFOLIO_META_URL)}
+                className="px-3 py-1.5 rounded-lg"
+                style={{ backgroundColor: tintColor + '20' }}
+              >
+                <ThemedText className="detail-meta" style={{ color: tintColor }}>
+                  {copiedUrl === MCP_PORTFOLIO_META_URL ? 'Copied' : 'Copy URL'}
+                </ThemedText>
+              </Pressable>
+            </View>
           </GreyView>
 
           {mcpEndpoints.map((endpoint) => (
@@ -834,9 +900,7 @@ npm start`}
               <ThemedText className="detail-body mb-1.5 opacity-80">
                 • File-based markdown guides
               </ThemedText>
-              <ThemedText className="detail-body mb-1.5 opacity-80">
-                • 11 comprehensive development guides
-              </ThemedText>
+              <ThemedText className="detail-body mb-1.5 opacity-80">• {resourceCount} comprehensive development guides</ThemedText>
               <ThemedText className="detail-body mb-1.5 opacity-80">
                 • Covers: React Native, Expo Router, Zustand, Drizzle, Supabase, deployment
               </ThemedText>

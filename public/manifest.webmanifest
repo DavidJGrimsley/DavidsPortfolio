@@ -1,0 +1,25 @@
+{
+  "name": "DJsPortfolio",
+  "short_name": "Portfolio",
+  "description": "A portfolio of David J Grimsley's work in mobile development, game design and web development.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E9DDEE",
+  "theme_color": "#E9DDEE",
+  "icons": [
+    {
+      "src": "/images/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/adaptive-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Pressable, Linking } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
-import { ThemedView } from '@/components/UI/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { EndpointCard } from '~/src/components/PublicFacing/api/APIComponents';
 import { ExternalLink } from '@/components/UI/ExternalLink';
-import { GreyView } from '@/components/UI/GreyView';
 import { HelloWave } from '@/components/QuantumAnimation';
 import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
 import apisData from '@json/apis.json';
 
-const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/api/quantum';
-const QUANTUM_PORTFOLIO_URL = `${QUANTUM_BASE_URL}/portfolio.json`;
+const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/public-facing/api/quantum';
+const QUANTUM_PORTFOLIO_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/portfolio.json';
+
+const SHOULD_DEBUG_PUBLIC_FACING =
+  __DEV__ || process.env.EXPO_PUBLIC_PUBLIC_FACING_DEBUG === '1';
 
 type QuantumPortfolioDetail = {
   api: {
@@ -29,12 +30,12 @@ type QuantumPortfolioDetail = {
     tags?: string[];
     uptime?: string;
   };
-  endpoints: Array<{
+  endpoints: {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
     path: string;
     summary: string;
     description?: string;
-    parameters?: Array<{
+    parameters?: {
       name: string;
       type: string;
       required: boolean;
@@ -42,10 +43,10 @@ type QuantumPortfolioDetail = {
       example?: any;
       enum?: string[];
       dependsOn?: string;
-    }>;
+    }[];
     requestBody?: { description: string; example: any };
-    responses?: Array<{ code: string; description: string; example?: any }>;
-  }>;
+    responses?: { code: string; description: string; example?: any }[];
+  }[];
 };
 
 export default function QuantumAPIPage() {
@@ -63,7 +64,7 @@ export default function QuantumAPIPage() {
 
     const fetchPortfolioDetail = async () => {
       try {
-        if (__DEV__) {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
           console.log('[Quantum] Fetching portfolio detail', {
             url: QUANTUM_PORTFOLIO_URL,
           });
@@ -74,7 +75,7 @@ export default function QuantumAPIPage() {
           cache: 'no-store' as any,
         });
 
-        if (__DEV__) {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
           console.log('[Quantum] Initial response', {
             status: response.status,
             ok: response.ok,
@@ -89,7 +90,7 @@ export default function QuantumAPIPage() {
               })
             : response;
 
-        if (__DEV__ && finalResponse !== response) {
+        if (SHOULD_DEBUG_PUBLIC_FACING && finalResponse !== response) {
           console.log('[Quantum] Retried after 304 with cache-bust', {
             status: finalResponse.status,
             ok: finalResponse.ok,
@@ -99,7 +100,7 @@ export default function QuantumAPIPage() {
         if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
         const data = (await finalResponse.json()) as QuantumPortfolioDetail;
 
-        if (__DEV__) {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
           console.log('[Quantum] Parsed payload', {
             apiId: data?.api?.id,
             apiVersion: data?.api?.version,
@@ -112,7 +113,7 @@ export default function QuantumAPIPage() {
         setPortfolioDetail(data);
         setIsDetailSynced(true);
       } catch (error) {
-        if (__DEV__) {
+        if (SHOULD_DEBUG_PUBLIC_FACING) {
           console.warn('[Quantum] Failed to fetch portfolio detail; using local fallback', {
             message: error instanceof Error ? error.message : String(error),
           });
@@ -137,12 +138,8 @@ export default function QuantumAPIPage() {
   const isLive =
     apiStatusRaw === 'active' || apiStatusRaw === 'healthy' || apiStatusRaw === 'live' || (isDetailSynced && apiStatusRaw !== 'offline');
 
-  const fetchedEndpoints = Array.isArray(portfolioDetail?.endpoints) ? portfolioDetail!.endpoints : null;
-  const toMethod = (m: string): 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' => {
-    const upper = String(m).toUpperCase();
-    if (upper === 'GET' || upper === 'POST' || upper === 'PUT' || upper === 'DELETE' || upper === 'PATCH') return upper;
-    return 'GET';
-  };
+  const isMetaSynced = isDetailSynced;
+  const hasRemoteEndpoints = Array.isArray(portfolioDetail?.endpoints) && portfolioDetail.endpoints.length > 0;
 
   const seoTitle = portfolioDetail?.api?.name
     ? `${portfolioDetail.api.name} API`
@@ -210,9 +207,7 @@ export default function QuantumAPIPage() {
           </View>
 
           <ThemedText className="opacity-85 mb-4 leading-6">
-            General-purpose quantum computing services for games and applications. 
-            Run real quantum circuits using Qiskit Aer Simulator to generate truly 
-            random numbers, transform text, and create unique quantum-powered experiences.
+            General-purpose quantum computing services for games and applications. Run real quantum circuits using Qiskit Aer Simulator to generate truly random numbers, transform text, and create unique quantum-powered experiences.
           </ThemedText>
 
           {/* Features Section */}
@@ -226,7 +221,8 @@ export default function QuantumAPIPage() {
                 • Qiskit Backend - Powered by IBM Qiskit Aer Simulator running on Python server{'\n'}
                 • Low Latency - Optimized for fast responses with connection pooling{'\n'}
                 • CORS Enabled - Ready for web applications and cross-origin requests{'\n'}
-                • Detailed Responses - Get measurement results, superposition strength, and quantum state info
+                • Detailed Responses - Get measurement results, superposition strength, and quantum state info{'\n'}
+                • Metadata: {isMetaSynced ? 'synced' : 'fallback'}
               </ThemedText>
             </View>
           </View>
@@ -244,11 +240,11 @@ export default function QuantumAPIPage() {
                 Base URL
               </ThemedText>
               <ExternalLink 
-                href={QUANTUM_BASE_URL}
+                href={apiBaseUrl}
                 className="font-mono text-sm"
                 style={{ color: tintColor }}
               >
-                {QUANTUM_BASE_URL}
+                {apiBaseUrl}
               </ExternalLink>
             </View>
 
@@ -274,25 +270,35 @@ export default function QuantumAPIPage() {
             📡 Endpoints
           </ThemedText>
 
-          {fetchedEndpoints && fetchedEndpoints.length > 0 ? (
-            <>
-              {fetchedEndpoints.map((ep) => (
-                <EndpointCard
-                  key={`${ep.method}:${ep.path}`}
-                  method={toMethod(ep.method)}
-                  path={ep.path}
-                  summary={ep.summary}
-                  description={ep.description}
-                  parameters={ep.parameters}
-                  requestBody={ep.requestBody}
-                  responses={ep.responses}
-                  baseUrl={apiBaseUrl}
-                />
-              ))}
-            </>
-          ) : null}
+          {hasRemoteEndpoints
+            ? portfolioDetail!.endpoints.map((endpoint) => {
+                const normalizedMethod = String(endpoint.method ?? 'GET').toUpperCase();
+                const methodForCard =
+                  normalizedMethod === 'GET' ||
+                  normalizedMethod === 'POST' ||
+                  normalizedMethod === 'PUT' ||
+                  normalizedMethod === 'DELETE' ||
+                  normalizedMethod === 'PATCH'
+                    ? normalizedMethod
+                    : 'GET';
 
-          {!fetchedEndpoints || fetchedEndpoints.length === 0 ? (
+                return (
+                  <EndpointCard
+                    key={`${normalizedMethod}:${endpoint.path}`}
+                    method={methodForCard}
+                    path={endpoint.path}
+                    summary={endpoint.summary}
+                    description={endpoint.description}
+                    parameters={endpoint.parameters}
+                    requestBody={endpoint.requestBody}
+                    responses={endpoint.responses}
+                    baseUrl={apiBaseUrl}
+                  />
+                );
+              })
+            : null}
+
+          {!hasRemoteEndpoints ? (
             <>
               {/* Quantum Gate */}
               <EndpointCard
@@ -417,10 +423,10 @@ export default function QuantumAPIPage() {
             }}
           >
             <View className="flex-row items-center justify-between">
-              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl">
+              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl" style={{ color: textColor }}>
                 What is Quantum Mechanics?
               </ThemedText>
-              <ThemedText className="detail-body text-lg md:text-xl">
+              <ThemedText className="detail-body text-lg md:text-xl" style={{ color: textColor }}>
                 {isQuantumMechanicsExpanded ? '▼' : '▶'}
               </ThemedText>
             </View>
@@ -706,10 +712,10 @@ export default function QuantumAPIPage() {
             }}
           >
             <View className="flex-row items-center justify-between">
-              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl">
+              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl" style={{ color: textColor }}>
                 How to Use This API
               </ThemedText>
-              <ThemedText className="detail-body text-lg md:text-xl">
+              <ThemedText className="detail-body text-lg md:text-xl" style={{ color: textColor }}>
                 {isHowToUseExpanded ? '▼' : '▶'}
               </ThemedText>
             </View>
@@ -805,7 +811,7 @@ export default function QuantumAPIPage() {
               <ScrollView horizontal>
                 <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
 {`const response = await fetch(
-  'https://davidjgrimsley.com/api/quantum/quantum_gate',
+  'https://davidjgrimsley.com/public-facing/api/quantum/quantum_gate',
   {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -836,7 +842,7 @@ console.log('Superposition:', result.superposition_strength);`}
 import math
 
 response = requests.post(
-    'https://davidjgrimsley.com/api/quantum/quantum_gate',
+  'https://davidjgrimsley.com/public-facing/api/quantum/quantum_gate',
     json={
         'gate_type': 'rotation',
         'rotation_angle': math.pi / 2
@@ -859,7 +865,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
             <View className="p-4 rounded-lg bg-(--color-code-bg)">
               <ScrollView horizontal>
                 <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
-{`curl -X POST https://davidjgrimsley.com/api/quantum/quantum_gate \\
+{`curl -X POST https://davidjgrimsley.com/public-facing/api/quantum/quantum_gate \\
   -H "Content-Type: application/json" \\
   -d '{"gate_type":"rotation","rotation_angle":1.5708}'`}
                 </ThemedText>

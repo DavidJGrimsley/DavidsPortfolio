@@ -70,6 +70,18 @@ function RootLayoutWebSSR() {
 function RootLayoutClient() {
   const [appIsReady, setAppIsReady] = useState(false);
 
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (typeof window === 'undefined') return;
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch(() => {
+        // no-op
+      });
+  }, []);
+
   // Native only: keep the OS splash visible until we explicitly hide it.
   useEffect(() => {
     if (Platform.OS === 'web') return;

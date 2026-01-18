@@ -7,8 +7,7 @@ import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFa
 import { useFetchPortfolio } from '@/hooks/useFetchPortfolio';
 import apisData from '@json/apis.json';
 
-const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/api/quantum';
-const QUANTUM_PORTFOLIO_URL = `${QUANTUM_BASE_URL}/portfolio.json`;
+const QUANTUM_PORTFOLIO_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/portfolio.json';
 
 type QuantumPortfolio = {
   api: {
@@ -25,12 +24,28 @@ type QuantumPortfolio = {
     tags: string[];
     uptime: string;
   };
-  endpoints: Array<{
+  endpoints: {
     method: string;
     path: string;
     summary: string;
     description?: string;
-  }>;
+  }[];
+};
+
+type ApiCardItem = {
+  id: string;
+  name: string;
+  version: string;
+  icon: string;
+  description: string;
+  baseUrl: string;
+  docsUrl?: string;
+  healthUrl?: string;
+  status: string;
+  featured?: boolean;
+  tags: string[];
+  uptime?: string;
+  endpoints?: number;
 };
 
 export default function APIIndexPage() {
@@ -44,12 +59,12 @@ export default function APIIndexPage() {
     router.push(`/public-facing/api/${apiId}` as any);
   };
 
-  const fallbackApis = useMemo(() => apisData.apis ?? [], []);
-  const apis = portfolioQuantum?.api
+  const fallbackApis = useMemo(() => (apisData.apis ?? []) as ApiCardItem[], []);
+  const apis: ApiCardItem[] = portfolioQuantum?.api
     ? [
         {
           ...portfolioQuantum.api,
-          endpoints: Array.isArray(portfolioQuantum.endpoints) ? portfolioQuantum.endpoints.length : 0,
+          endpoints: Array.isArray(portfolioQuantum.endpoints) ? portfolioQuantum.endpoints.length : undefined,
         },
       ]
     : fallbackApis;
@@ -83,8 +98,8 @@ export default function APIIndexPage() {
           key={api.id}
           item={api}
           stats={[
-            { emoji: '📡', label: `${api.endpoints} endpoints` },
-            { emoji: '⚡', label: `${api.uptime} uptime` },
+            { emoji: '📡', label: `${typeof api.endpoints === 'number' ? api.endpoints : '—'} endpoints` },
+            { emoji: '⚡', label: `${typeof api.uptime === 'string' ? api.uptime : '—'} uptime` },
           ]}
           onPress={() => handleAPIPress(api.id)}
         />
