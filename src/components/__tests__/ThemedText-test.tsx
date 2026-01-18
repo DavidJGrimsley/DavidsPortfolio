@@ -9,16 +9,12 @@ jest.mock('@/hooks/useThemeColor', () => ({
 }));
 
 it(`renders correctly`, () => {
-  let testRenderer: renderer.ReactTestRenderer | null = null;
+  let testRenderer!: renderer.ReactTestRenderer;
   act(() => {
     testRenderer = renderer.create(<ThemedText>Snapshot test!</ThemedText>);
   });
 
-  if (!testRenderer) {
-    throw new Error('ThemedText did not render');
-  }
-
-  const textNode = testRenderer.root.findByType(Text);
+  const textNode = testRenderer.root.findByType(Text as any);
   expect(textNode.props.children).toBe('Snapshot test!');
   expect(textNode.props.className).toContain('text-themed');
 });

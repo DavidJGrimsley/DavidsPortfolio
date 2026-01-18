@@ -10,7 +10,7 @@ interface EndpointCardProps {
   path: string;
   summary: string;
   description?: string;
-  parameters?: Array<{
+  parameters?: {
     name: string;
     type: string;
     required: boolean;
@@ -18,16 +18,16 @@ interface EndpointCardProps {
     example?: any;
     enum?: string[];
     dependsOn?: string;
-  }>;
+  }[];
   requestBody?: {
     description: string;
     example: any;
   };
-  responses?: Array<{
+  responses?: {
     code: string;
     description: string;
     example?: any;
-  }>;
+  }[];
   baseUrl: string;
   onTest?: () => void;
 }

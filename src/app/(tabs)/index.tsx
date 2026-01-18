@@ -11,7 +11,7 @@ export default function Index() {
 
 
   return (
-    <View className="flex-1 mb-[1%] bg-themed">
+    <View className="flex-1 bg-themed">
       <TabContainer
         titleA="David 'Mr. DJ' "
         titleB="Grimsley"

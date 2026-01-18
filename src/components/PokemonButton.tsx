@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 
 interface PokemonButtonProps {
@@ -13,7 +12,6 @@ export const PokemonButton: React.FC<PokemonButtonProps> = ({
   size = RFPercentage(2.4), // Default size, 
   color 
 }) => {
-  const colorScheme = useColorScheme();
   const iconColor = color || '#000000'; // Black color
 
   return (

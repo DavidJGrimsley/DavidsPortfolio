@@ -26,7 +26,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="DJsPortfolio" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/images/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/pwa-180x180.png" />
         
         {/* Theme Color */}
         <meta name="theme-color" content="#E9DDEE" />
@@ -60,12 +60,21 @@ export default function Root({ children }: PropsWithChildren) {
 }
 
 const responsiveBackground = `
-html, body, #root {
+html, body, #root, #app, #expo-root {
   background-color: #E9DDEE;
   height: 100%;
+  min-height: 100%;
+  min-height: 100svh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  overflow-x: hidden;
+  overscroll-behavior: none;
 }
 @media (prefers-color-scheme: dark) {
-  html, body, #root {
+  html, body, #root, #app, #expo-root {
     background-color: #20182D;
   }
 }

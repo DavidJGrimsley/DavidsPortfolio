@@ -145,16 +145,6 @@ const hexToRgba = (hex: string, alpha: number) => {
 
 const ServicesPage = () => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const handleSecondaryAction = (url: string, isRoute: boolean) => {
-    if (isRoute) {
-      router.push(url as Href);
-    } else {
-      // External URL - open in new window on web
-      if (typeof window !== "undefined") {
-        window.open(url, "_blank");
-      }
-    }
-  };
 
   return (
     <TabContainer

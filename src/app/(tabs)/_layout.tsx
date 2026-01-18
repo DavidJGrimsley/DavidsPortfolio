@@ -1,65 +1,13 @@
 import React from 'react';
-import { type Href, router, Tabs, useSegments } from 'expo-router';
-import { TabBarIcon } from '@/components/Navigation/TabBarIcon';
-import { PokemonButton } from '@/components/PokemonButton';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { RFPercentage } from 'react-native-responsive-fontsize';
-import * as Device from 'expo-device';
-import { Platform, Pressable, Text, View, Dimensions, useWindowDimensions } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { Tabs } from 'expo-router';
+import { View } from 'react-native';
 import { VerticalTabBar } from '@/components/Navigation/VerticalTabBar';
 
 /**
  * @EXTRACT: Desktop breakpoint for showing vertical tab bar
  * When extracting to npm, this should be configurable via props
  */
-const DESKTOP_BREAKPOINT = 1024;
-
-const TabLayout = ({  }) => {
-  const colorScheme = useColorScheme();
-  const segments = useSegments();
-  const { width: windowWidth } = useWindowDimensions();
-  
-  // Platform and viewport detection
-  // @EXTRACT: Consider making this a hook: useIsDesktopWeb()
-  const isWeb = Platform.OS === 'web';
-  const isDesktopWidth = windowWidth >= DESKTOP_BREAKPOINT;
-  const isDesktopWeb = isWeb && isDesktopWidth;
-  
-  // Color values based on theme - using CSS variable values for JS contexts
-  // These match the --color-* variables in global.css
-  const tintColor = colorScheme === 'light' ? '#0E668B' : '#EEA444';
-  const tabIconDefault = colorScheme === 'light' ? '#723B80' : '#321E3B';
-  const secondaryColor = colorScheme === 'light' ? '#A2DDF6' : '#A96710';
-  const accentColor = colorScheme === 'light' ? '#723B80' : '#321E3B';
-  const headerBg = colorScheme === 'light' ? '#E9DDEE' : '#20182D';
-  
-  // Convert segments to regular array to avoid TypeScript tuple issues
-  const routeSegments = [...segments];
-  
-  // Fix: More robust home page detection for both dev and production
-  const isHomePage = routeSegments.length === 0 || 
-                     (routeSegments.length === 1 && routeSegments[0] === '(tabs)') ||
-                     routeSegments.join('/') === '(tabs)' ||
-                     routeSegments.join('/') === '';
-  
-  // Fix: Check for main section pages (not including structural segments)
-  const mainSections = ['mobile-apps', 'game-design', 'website-development', 'software-development', 'services', 'contact', 'pokemon', 'public-facing'];
-  
-  // More robust section detection
-  let currentSection = null;
-  for (const segment of routeSegments) {
-    if (mainSections.includes(segment)) {
-      currentSection = segment;
-      break;
-    }
-  }
-  
-  const isMainLevel = currentSection !== null;
-  
-  // Fix: Better detection of piece/detail level (dynamic routes)
-  const isPieceLevel = routeSegments.some(seg => seg.includes('[')) ||
-                       routeSegments.some(seg => seg === '[title]');
+const TabLayout = () => {
 
   /**
    * Desktop Web Layout
@@ -69,30 +17,29 @@ const TabLayout = ({  }) => {
    * @EXTRACT: This pattern should be documented as the recommended usage
    */
   // if (isDesktopWeb) {
-    return (
-      <View className="flex-1 flex-row w-full">
-
-        <View style={{ width: '75%', flex: 1 }}>
-          <Tabs
-            screenOptions={{
-              // Hide the bottom tab bar on desktop - we use VerticalTabBar instead
-              tabBarStyle: { display: 'none' },
-              headerShown: false,
-            }}
-          >
-            <Tabs.Screen 
-              name="index" 
-              options={{ headerShown: false }} />
-            <Tabs.Screen name="portfolio" />
-            <Tabs.Screen name="public-facing" />
-            <Tabs.Screen name="pokemon" options={{ href: null }} />
-          </Tabs>
-        </View>
-
-          <VerticalTabBar />
-        
+  return (
+    <View className="flex-1 flex-row w-full">
+      <View style={{ width: '75%', flex: 1 }}>
+        <Tabs
+          screenOptions={{
+            // Hide the bottom tab bar on desktop - we use VerticalTabBar instead
+            tabBarStyle: { display: 'none' },
+            headerShown: false,
+          }}
+        >
+          <Tabs.Screen
+            name="index"
+            options={{ headerShown: false }}
+          />
+          <Tabs.Screen name="portfolio" />
+          <Tabs.Screen name="public-facing" />
+          <Tabs.Screen name="pokemon" options={{ href: null }} />
+        </Tabs>
       </View>
-    );
+
+      <VerticalTabBar />
+    </View>
+  );
   }
 
   /**

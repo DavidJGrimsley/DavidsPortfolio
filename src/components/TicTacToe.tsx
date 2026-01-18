@@ -23,8 +23,8 @@ function Square({ value, onSquareClick }: SquareProps) {
 
 interface BoardProps {
   xIsNext: boolean;
-  squares: Array<string | null>;
-  onPlay: (nextSquares: Array<string | null>) => void;
+  squares: (string | null)[];
+  onPlay: (nextSquares: (string | null)[]) => void;
 }
 
 function Board({ xIsNext, squares, onPlay }: BoardProps) {
@@ -75,7 +75,7 @@ function Board({ xIsNext, squares, onPlay }: BoardProps) {
   );
 }
 
-function calculateWinner(squares: Array<string | null>): string | null {
+function calculateWinner(squares: (string | null)[]): string | null {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -96,12 +96,12 @@ function calculateWinner(squares: Array<string | null>): string | null {
 }
 
 export default function Game() {
-  const [history, setHistory] = useState<Array<Array<string | null>>>([Array(9).fill(null)]);
+  const [history, setHistory] = useState<(string | null)[][]>([Array(9).fill(null)]);
   const [currentMove, setCurrentMove] = useState(0);
   const xIsNext = currentMove % 2 === 0;
   const currentSquares = history[currentMove];
 
-  function handlePlay(nextSquares: Array<string | null>) {
+  function handlePlay(nextSquares: (string | null)[]) {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
     setHistory(nextHistory);
     setCurrentMove(nextHistory.length - 1);

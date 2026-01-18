@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/UI/ThemedText";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, TextInput, View, Dimensions, Linking } from "react-native";
+import { ActivityIndicator, Modal, Pressable, TextInput, View, Linking } from "react-native";
 import { type Href, router } from "expo-router";
 import { Controller, useForm } from 'react-hook-form';
 import { Picker } from '@react-native-picker/picker';
@@ -8,8 +8,6 @@ import { TabContainer } from "@/components/Navigation/TabContainer";
 import { FORM_SUBMIT_ENDPOINT, intakeForms, type IntakeField } from '@/constants/intakeForms';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
-const screenWidth = Dimensions.get('window').width;
-const isMobile = screenWidth < 768;
 
 export default function Index() {
   const contactForm = intakeForms['contact'];

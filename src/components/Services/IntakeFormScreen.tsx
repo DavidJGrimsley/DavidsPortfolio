@@ -17,8 +17,8 @@ export const IntakeFormScreen = ({ formId }: IntakeFormScreenProps) => {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const titleA = formId == 'survey' ? 'What are' : 'Let\'s Get';
-  const titleB = formId == 'survey' ? 'your thoughts?' : 'Started';
+  const titleA = formId === 'survey' ? 'What are' : 'Let\'s Get';
+  const titleB = formId === 'survey' ? 'your thoughts?' : 'Started';
 
   const textColor = useThemeColor({}, 'text');
   const tintColor = useThemeColor({}, 'tint');

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Head from 'expo-router/head';
+import { useFocusEffect, usePathname } from 'expo-router';
 
 import {
   AUTHOR_NAME,
@@ -12,7 +13,7 @@ import {
   toAbsoluteUrl,
 } from '@/constants/seo';
 
-export type SeoStructuredData = Record<string, unknown> | Array<Record<string, unknown>>;
+export type SeoStructuredData = Record<string, unknown> | Record<string, unknown>[];
 
 export type SeoHeadProps = {
   title?: string;
@@ -58,8 +59,18 @@ export function SeoHead({
 
   const resolvedImage = toAbsoluteUrl(image ?? DEFAULT_OG_IMAGE_PATH);
 
+  const pathname = usePathname();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (typeof document !== 'undefined') {
+        document.title = resolvedTitle;
+      }
+    }, [resolvedTitle, pathname])
+  );
+
   return (
-    <Head>
+    <Head key={resolvedCanonical}>
       <title>{resolvedTitle}</title>
 
       <meta name="description" content={resolvedDescription} />

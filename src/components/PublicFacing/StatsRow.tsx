@@ -5,7 +5,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 
 type StatsRowProps = {
-  stats: Array<{ emoji: string; label: string }>;
+  stats: { emoji: string; label: string }[];
 };
 
 export function StatsRow({ stats }: StatsRowProps) {

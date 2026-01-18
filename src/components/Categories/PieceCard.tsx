@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Image, Pressable, View, useColorScheme } from "react-native";
 import { ThemedText } from "@/components/UI/ThemedText";
 
@@ -25,12 +25,6 @@ export function PieceCard({
 }: PieceCardProps) {
   const colorScheme = useColorScheme();
   const [isHovered, setIsHovered] = useState(false);
-
-  // Use CSS variables for shadow color based on theme
-  const shadowTint = useMemo(
-    () => (colorScheme === "dark" ? "var(--color-tint)" : "var(--color-tint)"),
-    [colorScheme]
-  );
 
   const containerClassName = `${isHovered ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
   const titleClassName = `detail-title leading-tight ${isHovered ? "text-white-or-black" : "text-secondary"}`;

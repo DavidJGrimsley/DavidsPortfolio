@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, Stack } from 'expo-router';
 import { Platform, View } from 'react-native';
 import LottieView from 'lottie-react-native';

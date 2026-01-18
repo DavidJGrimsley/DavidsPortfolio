@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
-import { router, Href } from 'expo-router';
+import { router } from 'expo-router';
 import { OtherSection } from '@/types/portfolio';
 import { ThemedText } from '@/components/UI/ThemedText';
 

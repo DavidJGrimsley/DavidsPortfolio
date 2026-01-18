@@ -15,7 +15,7 @@ type SoftwareCardProps = {
     status: string;
     tags: string[];
   };
-  stats: Array<{ emoji: string; label: string }>;
+  stats: { emoji: string; label: string }[];
   ctaLabel?: string;
   ctaHint?: string;
   onPress: () => void;
