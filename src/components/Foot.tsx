@@ -8,8 +8,8 @@ export function Foot() {
 
     return (
         <Container className="footer">
-            <ThemedText className="footer-text">
-                Contact me at: <a href="mailto:DavidJGrimsley@Gmail.com">DavidJGrimsley@Gmail.com</a>
+            <ThemedText className="">
+                Contact me at: <a href="mailto:MrDJ@DavidJGrimsley.com">MrDJ@DavidJGrimsley.com</a>
             </ThemedText>
             <ThemedText className="footer-text">Made by David 'Mr. DJ' Grimsley</ThemedText>
         </Container>

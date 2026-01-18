@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/UI/ThemedText";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, TextInput, View, Dimensions } from "react-native";
+import { ActivityIndicator, Modal, Pressable, TextInput, View, Dimensions, Linking } from "react-native";
 import { type Href, router } from "expo-router";
 import { Controller, useForm } from 'react-hook-form';
 import { Picker } from '@react-native-picker/picker';
@@ -102,7 +102,14 @@ export default function Index() {
         <View className="w-full max-w-[980px]">
           {/* Resume download section */}
           <View className="items-center my-5">
-            <a className="text-base text-tint underline" href="/files/DavidGrimsleyResume.pdf" download>Download Resume</a>
+            <Pressable
+              className="px-4 py-2.5 rounded-2.5 bg-tint"
+              onPress={() => Linking.openURL('https://docs.google.com/document/d/1IOsUDX_CZRx1tp4kEjWDSaAtIdriN8bdn4dvhgpoWsk/edit?usp=sharing')}
+            >
+              <ThemedText inverse className="text-base font-bold">
+                View Resume
+              </ThemedText>
+            </Pressable>
           </View>
 
           {/* Contact Form */}
