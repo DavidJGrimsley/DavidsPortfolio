@@ -24,7 +24,9 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withDelay,
   withTiming,
+  Easing,
 } from 'react-native-reanimated'
 
 import { SeoHead, type SeoHeadProps } from '@/components/SEO/SeoHead'
@@ -44,6 +46,10 @@ type TabContainerProps = {
   contentClassName?: string;
   scrollClassName?: string;
   background?: React.ReactNode;
+  overlayIcon?: React.ReactNode;
+  overlayIconDelayMs?: number;
+  overlayIconEnterDurationMs?: number;
+  overlayIconTranslateX?: number;
   seo?: SeoHeadProps;
 };
 
@@ -58,6 +64,10 @@ export const TabContainer = ({
   contentClassName,
   scrollClassName,
   background,
+  overlayIcon,
+  overlayIconDelayMs = 0,
+  overlayIconEnterDurationMs = 900,
+  overlayIconTranslateX = 80,
   seo,
 }: TabContainerProps) => {
   const { width } = useWindowDimensions();
@@ -75,14 +85,25 @@ export const TabContainer = ({
 
   const scrollY = useSharedValue(0);
   const bgFade = useSharedValue(reduceMotion ? 1 : 0);
+  const overlayEnter = useSharedValue(reduceMotion ? 1 : 0);
 
   useEffect(() => {
     if (reduceMotion) {
       bgFade.value = 1;
+      overlayEnter.value = 1;
       return;
     }
     bgFade.value = withTiming(1, { duration: 1400 });
-  }, [bgFade, reduceMotion]);
+    if (overlayIcon) {
+      overlayEnter.value = withDelay(
+        Math.max(0, overlayIconDelayMs),
+        withTiming(1, {
+          duration: overlayIconEnterDurationMs,
+          easing: Easing.out(Easing.cubic),
+        })
+      );
+    }
+  }, [bgFade, overlayEnter, reduceMotion, overlayIcon, overlayIconDelayMs, overlayIconEnterDurationMs]);
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -92,6 +113,11 @@ export const TabContainer = ({
 
   const backgroundStyle = useAnimatedStyle(() => ({
     opacity: bgFade.value,
+  }));
+
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: overlayEnter.value,
+    transform: [{ translateX: (1 - overlayEnter.value) * overlayIconTranslateX }],
   }));
 
   const titleDelayMs = reduceMotion ? 0 : background ? 1400 : 0;
@@ -136,6 +162,12 @@ export const TabContainer = ({
       <Animated.View style={backgroundStyle} className="absolute inset-0">
         {resolvedBackground}
       </Animated.View>
+
+      {overlayIcon ? (
+        <Animated.View pointerEvents="none" style={overlayStyle} className="absolute inset-0">
+          {overlayIcon}
+        </Animated.View>
+      ) : null}
 
       <View className="flex-1">
 
