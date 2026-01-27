@@ -1,138 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Pressable } from "react-native";
 import { type Href, router } from "expo-router";
 import { ThemedText } from "@/components/UI/ThemedText";
 import { TabContainer } from "@/components/Navigation/TabContainer";
+import { getContent } from "@/services/contentApi";
+import type { ServiceCard } from "@/types/content";
 
-interface ServiceCard {
-  id: string;
-  title: string;
-  tagline: string;
-  description: string;
-  features: string[];
-  primaryCtaLabel: string;
-  primaryCtaId: string;
-  secondaryCtaLabel?: string;
-  secondaryCtaUrl?: string;
-  secondaryCtaIsRoute?: boolean;
-  accent: string;
-}
-
-const accentColors: Record<string, string> = {
-  blue: "#0E668B",
-  green: "#1E9E70",
-  purple: "#723B80",
-  orange: "#EEA444",
-  pink: "#D63C83",
-};
-
-const services: ServiceCard[] = [
-  {
-    id: "app-development",
-    title: "App Development",
-    tagline: "Turn your idea into reality",
-    description:
-      "Mobile and web apps built with React Native, tailored UX, and the right backend wiring so shipping to iOS and Android is smooth from day one.",
-    features: [
-      "Cross-platform React Native builds",
-      "iOS and Android deployment",
-      "Modern UI and UX design",
-      "Backend integration and APIs",
-      "Real-time features and databases",
-      "App Store optimization",
-    ],
-    primaryCtaLabel: "Start your app project",
-    primaryCtaId: "app-development",
-    secondaryCtaLabel: "Email me",
-    secondaryCtaUrl:
-      "mailto:DavidJGrimsley@gmail.com?subject=App%20Development%20Inquiry",
-    accent: accentColors.blue,
-  },
-  {
-    id: "website-building",
-    title: "Website Building",
-    tagline: "Beautiful, fast, and responsive",
-    description:
-      "Business and portfolio sites that blend conversion-focused UX, performance, and SEO. Optional bundling with online presence services keeps listings consistent.",
-    features: [
-      "Portfolio and business sites",
-      "E-commerce friendly",
-      "Custom domain and email setup",
-      "Responsive on every device",
-      "SEO and performance minded",
-      "Content management options",
-    ],
-    primaryCtaLabel: "Get your website",
-    primaryCtaId: "website-building",
-    secondaryCtaLabel: "See my work",
-    secondaryCtaUrl: "https://davidjgrimsley.com",
-    accent: accentColors.green,
-  },
-  {
-    id: "game-development",
-    title: "Game Development",
-    tagline: "Bring your game concept to life",
-    description:
-      "From Fortnite experiences to Unreal, Unity, Roblox, and Scratch, I design and build interactive games and educational experiences that stay fun and purposeful.",
-    features: [
-      "Fortnite Experiences (UEFN and Verse)",
-      "Unreal Engine and Unity",
-      "Roblox and Scratch for education",
-      "Game design consulting",
-      "2D and 3D mechanics",
-      "Multi-platform support",
-    ],
-    primaryCtaLabel: "Create your game",
-    primaryCtaId: "game-development",
-    secondaryCtaLabel: "Email me",
-    secondaryCtaUrl:
-      "mailto:DavidJGrimsley@gmail.com?subject=Game%20Development%20Inquiry",
-    accent: accentColors.purple,
-  },
-  {
-    id: "tutoring",
-    title: "Tutoring",
-    tagline: "Learn from an experienced developer",
-    description:
-      "Personalized tutoring in math, computer science, game dev, and web dev. One-on-one or group sessions with flexible virtual scheduling. Contact me for pricing.",
-    features: [
-      "Math: Geometry, Algebra, Calculus",
-      "AP CSA, AP CSP, and web development",
-      "Game dev: Fortnite, Unreal, Roblox",
-      "Tailored one-on-one sessions",
-      "Group classes available",
-      "Flexible virtual scheduling",
-    ],
-    primaryCtaLabel: "Sign up for tutoring",
-    primaryCtaId: "tutoring",
-    secondaryCtaLabel: "Learn more",
-    secondaryCtaUrl: "/(tabs)/services/learn",
-    secondaryCtaIsRoute: true,
-    accent: accentColors.orange,
-  },
-  {
-    id: "online-presence",
-    title: "Online Presence",
-    tagline: "Own your business profiles everywhere",
-    description:
-      "Fix and level up business listings across Apple, Google, LinkedIn, and directories. Bundle with a polished site so your info stays accurate and consistent.",
-    features: [
-      "Apple Business Connect setup",
-      "Google Business Profile accuracy",
-      "LinkedIn company page refresh",
-      "Directory cleanup (Yelp, Bing, more)",
-      "Portfolio or landing page build",
-      "Branded domain email and DNS",
-      "Analytics and review links",
-    ],
-    primaryCtaLabel: "Book a consultation",
-    primaryCtaId: "online-presence",
-    secondaryCtaLabel: "Contact me for pricing",
-    secondaryCtaUrl: "/(tabs)/contact",
-    secondaryCtaIsRoute: true,
-    accent: accentColors.pink,
-  },
-];
 
 const hexToRgba = (hex: string, alpha: number) => {
   const sanitized = hex.replace("#", "");
@@ -145,6 +18,90 @@ const hexToRgba = (hex: string, alpha: number) => {
 
 const ServicesPage = () => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [services, setServices] = useState<ServiceCard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getContent()
+      .then((payload) => {
+        if (!isMounted) return;
+        setServices(payload.services);
+        setError(null);
+      })
+      .catch((err: Error) => {
+        if (!isMounted) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const content = useMemo(() => {
+    if (isLoading) {
+      return <ThemedText className="text-base opacity-80">Loading services…</ThemedText>;
+    }
+
+    if (error) {
+      return <ThemedText className="text-base text-red-400">{error}</ThemedText>;
+    }
+
+    if (services.length === 0) {
+      return <ThemedText className="text-base opacity-80">No services available yet.</ThemedText>;
+    }
+
+    return services.map((service, index) => {
+      const isHovered = hoveredId === service.id;
+
+      return (
+        <Pressable
+          key={service.id}
+          className={`rounded-3xl p-[4%] border ${index < services.length - 1 ? "mb-4" : ""}`}
+          style={({ pressed }) => ({
+            borderColor: service.accent,
+            backgroundColor: hexToRgba(service.accent, pressed ? 0.2 : isHovered ? 0.14 : 0.08),
+            transform: [{ scale: pressed ? 0.985 : isHovered ? 1.01 : 1 }],
+            shadowColor: service.accent,
+            shadowOpacity: isHovered ? 0.35 : 0.15,
+            shadowRadius: isHovered ? 18 : 8,
+            shadowOffset: { width: 0, height: isHovered ? 10 : 6 },
+          })}
+          onPress={() => router.push(`/(tabs)/services/${service.primaryCtaId}` as Href)}
+          onHoverIn={() => setHoveredId(service.id)}
+          onHoverOut={() => setHoveredId(null)}
+        >
+          <ThemedText headingLevel={2} visualHeadingLevel={2} className="text-2xl font-bold">
+            {service.title}
+          </ThemedText>
+          <ThemedText className="text-lg font-semibold text-tint mt-1 mb-2">
+            {service.tagline}
+          </ThemedText>
+          <ThemedText className="text-base opacity-90 mb-3">
+            {service.description}
+          </ThemedText>
+
+          <ThemedText className="text-xs uppercase tracking-wider font-bold mb-2 opacity-70">
+            What you get:
+          </ThemedText>
+          <View className="mb-4">
+            {service.features.map((feature) => (
+              <ThemedText key={feature} className="text-base mb-1">
+                • {feature}
+              </ThemedText>
+            ))}
+          </View>
+        </Pressable>
+      );
+    });
+  }, [error, hoveredId, isLoading, services]);
 
   return (
     <TabContainer
@@ -191,50 +148,7 @@ const ServicesPage = () => {
         type: 'website',
       }}
     >
-      {services.map((service, index) => {
-        const isHovered = hoveredId === service.id;
-
-        return (
-          <Pressable
-            key={service.id}
-            className={`rounded-3xl p-[4%] border ${index < services.length - 1 ? "mb-4" : ""}`}
-            style={({ pressed }) => ({
-              borderColor: service.accent,
-              backgroundColor: hexToRgba(service.accent, pressed ? 0.2 : isHovered ? 0.14 : 0.08),
-              transform: [{ scale: pressed ? 0.985 : isHovered ? 1.01 : 1 }],
-              shadowColor: service.accent,
-              shadowOpacity: isHovered ? 0.35 : 0.15,
-              shadowRadius: isHovered ? 18 : 8,
-              shadowOffset: { width: 0, height: isHovered ? 10 : 6 },
-            })}
-            onPress={() => router.push(`/(tabs)/services/${service.primaryCtaId}` as Href)}
-            onHoverIn={() => setHoveredId(service.id)}
-            onHoverOut={() => setHoveredId(null)}
-          >
-          <ThemedText headingLevel={2} visualHeadingLevel={2} className="text-2xl font-bold">
-            {service.title}
-          </ThemedText>
-          <ThemedText className="text-lg font-semibold text-tint mt-1 mb-2">
-            {service.tagline}
-          </ThemedText>
-          <ThemedText className="text-base opacity-90 mb-3">
-            {service.description}
-          </ThemedText>
-
-          <ThemedText className="text-xs uppercase tracking-wider font-bold mb-2 opacity-70">
-            What you get:
-          </ThemedText>
-          <View className="mb-4">
-            {service.features.map((feature) => (
-              <ThemedText key={feature} className="text-base mb-1">
-                • {feature}
-              </ThemedText>
-            ))}
-          </View>
-
-        </Pressable>
-        );
-      })}
+      {content}
     </TabContainer>
   );
 };

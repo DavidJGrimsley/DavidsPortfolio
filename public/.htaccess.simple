@@ -1,9 +1,0 @@
-RewriteEngine On
-
-# Handle favicon issues
-RewriteRule ^favicon\.ico$ - [R=404,L]
-
-# Simple SPA routing fallback
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]

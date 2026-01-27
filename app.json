@@ -24,7 +24,7 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "server",
       "favicon": "./public/images/favicon.png",
       "build": {
         "babel": {
