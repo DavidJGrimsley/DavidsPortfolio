@@ -1,4 +1,4 @@
-import { CONTENT_VERSION, deriveAdsFromServices, services } from '@/server/data/servicesConfig';
+import { CONTENT_VERSION, services } from '@/server/data/servicesConfig';
 import type { ContentPayload } from '@/types/content';
 
 const corsHeaders = {
@@ -16,7 +16,6 @@ export function GET() {
     version: CONTENT_VERSION,
     generatedAt: new Date().toISOString(),
     services,
-    ads: deriveAdsFromServices(services),
   };
 
   return Response.json(payload, { headers: corsHeaders });
