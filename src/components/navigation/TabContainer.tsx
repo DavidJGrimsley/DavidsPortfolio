@@ -177,7 +177,7 @@ export const TabContainer = ({
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={onScroll}
-          contentContainerClassName={`page-content flex flex-col pt-[8%] pb-[12%] ${contentClassName ?? ''}`.trim()}
+          contentContainerClassName={`page-content flex flex-col pt-[4%] pb-[12%] ${contentClassName ?? ''}`.trim()}
           contentContainerStyle={{
             paddingLeft: leftInset,
             paddingRight: 0,

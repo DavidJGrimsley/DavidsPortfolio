@@ -21,7 +21,6 @@ export type MCPHeroSectionProps = {
   accentColor: string;
   textColor: string;
   iconName: React.ComponentProps<typeof Ionicons>['name'];
-  endpointLabel?: string;
 };
 
 export function MCPHeroSection({
@@ -37,7 +36,6 @@ export function MCPHeroSection({
   accentColor,
   textColor,
   iconName,
-  endpointLabel = '🌐 Live MCP Endpoint:',
 }: MCPHeroSectionProps) {
   return (
     <View style={{ marginBottom: 30 }}>
@@ -113,83 +111,8 @@ export function MCPHeroSection({
         </View>
       </View>
 
-      <View style={{ gap: 12 }}>
-        <View
-          style={{
-            backgroundColor: accentColor,
-            borderRadius: 10,
-            padding: 16,
-            borderLeftWidth: 3,
-            borderLeftColor: '#10b981',
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-            <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7, flex: 1 }}>
-              {endpointLabel}
-            </ThemedText>
-            <View style={{ backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.2), color: '#fff', fontWeight: 'bold' }}>LIVE</ThemedText>
-            </View>
-          </View>
+      
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <ThemedText
-              style={{
-                fontSize: RFPercentage(1.8),
-                fontFamily: 'monospace',
-                color: tintColor,
-                fontWeight: '600',
-                flex: 1,
-              }}
-            >
-              {mcpEndpointUrl}
-            </ThemedText>
-
-            <Pressable
-              onPress={onCopyEndpoint}
-              style={({ pressed }) => ({
-                backgroundColor: copiedEndpoint ? '#10b981' : tintColor + '20',
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 8,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Ionicons
-                name={copiedEndpoint ? 'checkmark' : 'copy-outline'}
-                size={20}
-                color={copiedEndpoint ? '#fff' : tintColor}
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        <View
-          style={{
-            backgroundColor: accentColor,
-            borderRadius: 10,
-            padding: 16,
-            borderLeftWidth: 3,
-            borderLeftColor: tintColor,
-          }}
-        >
-          <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7, marginBottom: 6 }}>
-            💻 Source Code (GitHub):
-          </ThemedText>
-          <ExternalLink href={githubRepoUrl}>
-            <ThemedText
-              style={{
-                fontSize: RFPercentage(1.8),
-                fontFamily: 'monospace',
-                color: tintColor,
-                fontWeight: '600',
-              }}
-            >
-              {githubRepoUrl}
-            </ThemedText>
-          </ExternalLink>
-        </View>
-      </View>
     </View>
   );
 }

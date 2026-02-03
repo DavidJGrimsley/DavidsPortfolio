@@ -14,21 +14,10 @@ export default function MCPLayout() {
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="mrdj-app-mcp"
+     <Stack.Screen 
+        name="[id]" 
         options={{
-          headerTitle: 'mrdj-app-mcp Documentation',
           headerShown: false,
-          headerShadowVisible: false,
-          headerTintColor: textColor,
-        }}
-      />
-      <Stack.Screen
-        name="mrdj-pokemon-mcp"
-        options={{
-          headerTitle: 'mrdj-pokemon-mcp Documentation',
-          headerShown: false,
-          headerShadowVisible: false,
           headerTintColor: textColor,
         }}
       />

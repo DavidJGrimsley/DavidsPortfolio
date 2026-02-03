@@ -14,9 +14,8 @@ export default function APIStackLayout() {
         }}
       />
       <Stack.Screen 
-        name="quantum" 
+        name="[id]" 
         options={{
-          headerTitle: "Quantum API Documentation",
           headerShown: false,
           headerShadowVisible: false,
           headerTintColor: textColor,
