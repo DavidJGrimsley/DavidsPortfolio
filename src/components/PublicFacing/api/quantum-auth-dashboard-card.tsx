@@ -1,0 +1,884 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  TextInput,
+  View,
+} from 'react-native';
+import type { Session } from '@supabase/supabase-js';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ThemedText } from '@/components/UI/ThemedText';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import {
+  getQuantumAuthRedirectUrl,
+  getSupabaseBrowserClient,
+  getSupabaseConfigError,
+  isSupabaseConfigured,
+} from '@/lib/supabase-browser';
+import {
+  createQuantumKey,
+  listQuantumKeys,
+  type QuantumKeyRecord,
+  QuantumApiError,
+  revokeQuantumKey,
+  rotateQuantumKey,
+} from '@/services/quantum-key-management';
+
+type QuantumAuthDashboardCardProps = {
+  baseUrl: string;
+};
+
+type RawKeyReveal = {
+  action: 'created' | 'rotated';
+  rawKey: string;
+  label: string;
+};
+
+function formatTimestamp(value?: string | null) {
+  if (!value) return 'Never';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString();
+}
+
+async function copyToClipboard(value: string) {
+  if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+    throw new Error('Copy is only available in a browser with clipboard access.');
+  }
+
+  await navigator.clipboard.writeText(value);
+}
+
+export function QuantumAuthDashboardCard({
+  baseUrl,
+}: QuantumAuthDashboardCardProps) {
+  const backgroundColor = useThemeColor({}, 'background');
+  const accentColor = useThemeColor({}, 'accent');
+  const tintColor = useThemeColor({}, 'tint');
+  const textColor = useThemeColor({}, 'text');
+  const secondaryColor = useThemeColor({}, 'secondary');
+
+  const [email, setEmail] = useState('');
+  const [keyName, setKeyName] = useState('');
+  const [session, setSession] = useState<Session | null>(null);
+  const [keys, setKeys] = useState<QuantumKeyRecord[]>([]);
+  const [rawKeyReveal, setRawKeyReveal] = useState<RawKeyReveal | null>(null);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [keysError, setKeysError] = useState<string | null>(null);
+  const [bootstrapping, setBootstrapping] = useState(true);
+  const [sendingMagicLink, setSendingMagicLink] = useState(false);
+  const [startingGithubSignIn, setStartingGithubSignIn] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [loadingKeys, setLoadingKeys] = useState(false);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [busyKeyId, setBusyKeyId] = useState<string | null>(null);
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
+
+  const supabaseClient = useMemo(() => {
+    if (!isSupabaseConfigured()) {
+      return null;
+    }
+
+    return getSupabaseBrowserClient();
+  }, []);
+
+  const accessToken = session?.access_token ?? null;
+
+  const refreshKeys = useCallback(async () => {
+    if (!accessToken) {
+      setKeys([]);
+      return;
+    }
+
+    setLoadingKeys(true);
+    setKeysError(null);
+
+    try {
+      const records = await listQuantumKeys(baseUrl, accessToken);
+      setKeys(records);
+    } catch (error) {
+      setKeysError(
+        error instanceof QuantumApiError
+          ? error.message
+          : 'Unable to load your Quantum API keys right now.'
+      );
+    } finally {
+      setLoadingKeys(false);
+    }
+  }, [accessToken, baseUrl]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (!supabaseClient) {
+      setBootstrapping(false);
+      return;
+    }
+
+    const bootstrapSession = async () => {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (!isActive) return;
+
+      if (error) {
+        setAuthError(error.message);
+      }
+
+      setSession(data.session);
+      setBootstrapping(false);
+    };
+
+    bootstrapSession();
+
+    const {
+      data: { subscription },
+    } = supabaseClient.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isActive) return;
+
+      setSession(nextSession);
+      setAuthError(null);
+      setAuthMessage(null);
+    });
+
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
+  }, [supabaseClient]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setKeys([]);
+      setRawKeyReveal(null);
+      setLoadingKeys(false);
+      return;
+    }
+
+    refreshKeys();
+  }, [accessToken, refreshKeys]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const oauthError =
+      params.get('error_description') ??
+      params.get('error') ??
+      hashParams.get('error_description') ??
+      hashParams.get('error');
+
+    if (oauthError) {
+      setAuthError(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
+    }
+  }, []);
+
+  const handleMagicLink = useCallback(async () => {
+    if (!supabaseClient) return;
+
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setAuthError('Enter an email address to receive a magic link.');
+      return;
+    }
+
+    setSendingMagicLink(true);
+    setAuthError(null);
+    setAuthMessage(null);
+
+    try {
+      const { error } = await supabaseClient.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: {
+          emailRedirectTo: getQuantumAuthRedirectUrl(),
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setAuthMessage(`Magic link sent to ${normalizedEmail}. Open it in this browser to finish sign in.`);
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to send the magic link.');
+    } finally {
+      setSendingMagicLink(false);
+    }
+  }, [email, supabaseClient]);
+
+  const handleGithubSignIn = useCallback(async () => {
+    if (!supabaseClient) return;
+
+    setStartingGithubSignIn(true);
+    setAuthError(null);
+    setAuthMessage(null);
+
+    try {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: getQuantumAuthRedirectUrl(),
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to start GitHub sign in.');
+      setStartingGithubSignIn(false);
+    }
+  }, [supabaseClient]);
+
+  const handleSignOut = useCallback(async () => {
+    if (!supabaseClient) return;
+
+    setSigningOut(true);
+    setAuthError(null);
+    setAuthMessage(null);
+
+    try {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) {
+        throw error;
+      }
+
+      setSession(null);
+      setKeys([]);
+      setKeyName('');
+      setRawKeyReveal(null);
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to sign out.');
+    } finally {
+      setSigningOut(false);
+    }
+  }, [supabaseClient]);
+
+  const handleCreateKey = useCallback(async () => {
+    if (!accessToken) return;
+
+    setCreatingKey(true);
+    setKeysError(null);
+
+    try {
+      const result = await createQuantumKey(baseUrl, accessToken, {
+        name: keyName.trim() || undefined,
+      });
+
+      if (!result.rawKey) {
+        throw new Error('The API created the key, but no raw key was returned.');
+      }
+
+      setRawKeyReveal({
+        action: 'created',
+        rawKey: result.rawKey,
+        label: (result.key?.label ?? keyName.trim()) || 'New Quantum key',
+      });
+      setKeyName('');
+      await refreshKeys();
+    } catch (error) {
+      setKeysError(error instanceof Error ? error.message : 'Unable to create a new API key.');
+    } finally {
+      setCreatingKey(false);
+    }
+  }, [accessToken, baseUrl, keyName, refreshKeys]);
+
+  const handleRotateKey = useCallback(
+    async (key: QuantumKeyRecord) => {
+      if (!accessToken) return;
+
+      setBusyKeyId(key.id);
+      setKeysError(null);
+
+      try {
+        const result = await rotateQuantumKey(baseUrl, accessToken, key.id);
+        if (!result.rawKey) {
+          throw new Error('The API rotated the key, but no raw key was returned.');
+        }
+
+        setRawKeyReveal({
+          action: 'rotated',
+          rawKey: result.rawKey,
+          label: result.key?.label ?? key.label,
+        });
+        await refreshKeys();
+      } catch (error) {
+        setKeysError(error instanceof Error ? error.message : 'Unable to rotate this key.');
+      } finally {
+        setBusyKeyId(null);
+      }
+    },
+    [accessToken, baseUrl, refreshKeys]
+  );
+
+  const handleRevokeKey = useCallback(
+    async (key: QuantumKeyRecord) => {
+      if (!accessToken) return;
+
+      setBusyKeyId(key.id);
+      setKeysError(null);
+
+      try {
+        await revokeQuantumKey(baseUrl, accessToken, key.id);
+        if (rawKeyReveal?.label === key.label) {
+          setRawKeyReveal(null);
+        }
+        await refreshKeys();
+      } catch (error) {
+        setKeysError(error instanceof Error ? error.message : 'Unable to revoke this key.');
+      } finally {
+        setBusyKeyId(null);
+      }
+    },
+    [accessToken, baseUrl, rawKeyReveal?.label, refreshKeys]
+  );
+
+  const handleCopy = useCallback(async (value: string, key: string) => {
+    try {
+      await copyToClipboard(value);
+      setCopiedValue(key);
+      setTimeout(() => setCopiedValue((current) => (current === key ? null : current)), 1800);
+    } catch (error) {
+      setKeysError(error instanceof Error ? error.message : 'Unable to copy to clipboard.');
+    }
+  }, []);
+
+  return (
+    <View
+      className="mb-7.5 rounded-3xl border p-4 md:p-5"
+      style={{
+        backgroundColor: accentColor + '18',
+        borderColor: tintColor + '33',
+      }}
+    >
+      <View className="mb-4 flex-row items-start justify-between gap-3">
+        <View className="flex-1">
+          <ThemedText type="subtitle" className="mb-1 text-2xl md:text-3xl">
+            Quantum Access
+          </ThemedText>
+          <ThemedText className="opacity-85 text-base leading-6 md:text-lg">
+            Sign in with Supabase to manage Quantum API keys. New secrets are shown once, then stored only as masked metadata.
+          </ThemedText>
+        </View>
+
+        <View
+          className="rounded-2xl px-3 py-1.5"
+          style={{ backgroundColor: tintColor + '25' }}
+        >
+          <ThemedText className="text-xs font-bold uppercase tracking-[0.18em]">
+            Phase 3.5
+          </ThemedText>
+        </View>
+      </View>
+
+      {!isSupabaseConfigured() ? (
+        <View
+          className="rounded-2xl border p-4"
+          style={{
+            backgroundColor: backgroundColor,
+            borderColor: '#ef444466',
+          }}
+        >
+          <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+            Auth is not configured yet
+          </ThemedText>
+          <ThemedText selectable className="opacity-85 text-base leading-6">
+            {getSupabaseConfigError()} Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to enable magic-link and GitHub sign in on this page.
+          </ThemedText>
+        </View>
+      ) : bootstrapping ? (
+        <View
+          className="rounded-2xl p-5"
+          style={{ backgroundColor: backgroundColor }}
+        >
+          <ActivityIndicator color={tintColor} />
+          <ThemedText className="mt-3 text-center opacity-80">
+            Restoring your session...
+          </ThemedText>
+        </View>
+      ) : (
+        <View className="gap-4">
+          {authError ? (
+            <View
+              className="rounded-2xl border px-4 py-3"
+              style={{
+                backgroundColor: '#ef444418',
+                borderColor: '#ef444455',
+              }}
+            >
+              <ThemedText selectable className="text-base leading-6" style={{ color: '#f87171' }}>
+                {authError}
+              </ThemedText>
+            </View>
+          ) : null}
+
+          {authMessage ? (
+            <View
+              className="rounded-2xl border px-4 py-3"
+              style={{
+                backgroundColor: tintColor + '16',
+                borderColor: tintColor + '40',
+              }}
+            >
+              <ThemedText selectable className="text-base leading-6">
+                {authMessage}
+              </ThemedText>
+            </View>
+          ) : null}
+
+          {!session ? (
+            <View
+              className="rounded-2xl border p-4"
+              style={{
+                backgroundColor: backgroundColor,
+                borderColor: accentColor + '35',
+              }}
+            >
+              <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+                Sign in to unlock key management
+              </ThemedText>
+              <ThemedText className="mb-4 opacity-80 text-base leading-6">
+                Use a passwordless email magic link or continue with GitHub. Both return you here so you can manage keys immediately.
+              </ThemedText>
+
+              <View className="gap-3">
+                <TextInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  onChangeText={setEmail}
+                  placeholder="you@example.com"
+                  placeholderTextColor={textColor + '70'}
+                  style={{
+                    backgroundColor: accentColor + '12',
+                    borderColor: tintColor + '30',
+                    borderCurve: 'continuous',
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    color: textColor,
+                    fontSize: 16,
+                    paddingHorizontal: 14,
+                    paddingVertical: 14,
+                  }}
+                  value={email}
+                />
+
+                <View className="gap-3 md:flex-row">
+                  <Pressable
+                    disabled={sendingMagicLink}
+                    onPress={handleMagicLink}
+                    style={({ pressed }) => ({
+                      alignItems: 'center',
+                      backgroundColor: tintColor,
+                      borderCurve: 'continuous',
+                      borderRadius: 16,
+                      flex: 1,
+                      flexDirection: 'row',
+                      gap: 10,
+                      justifyContent: 'center',
+                      opacity: pressed || sendingMagicLink ? 0.72 : 1,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                    })}
+                  >
+                    {sendingMagicLink ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <>
+                        <Ionicons color="#fff" name="mail-outline" size={18} />
+                        <ThemedText inverse className="font-bold text-base">
+                          Email Magic Link
+                        </ThemedText>
+                      </>
+                    )}
+                  </Pressable>
+
+                  <Pressable
+                    disabled={startingGithubSignIn}
+                    onPress={handleGithubSignIn}
+                    style={({ pressed }) => ({
+                      alignItems: 'center',
+                      backgroundColor: backgroundColor,
+                      borderColor: accentColor + '45',
+                      borderCurve: 'continuous',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      flex: 1,
+                      flexDirection: 'row',
+                      gap: 10,
+                      justifyContent: 'center',
+                      opacity: pressed || startingGithubSignIn ? 0.72 : 1,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                    })}
+                  >
+                    {startingGithubSignIn ? (
+                      <ActivityIndicator color={secondaryColor} />
+                    ) : (
+                      <>
+                        <Ionicons color={secondaryColor} name="logo-github" size={18} />
+                        <ThemedText className="font-bold text-base" style={{ color: secondaryColor }}>
+                          Continue with GitHub
+                        </ThemedText>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View className="gap-4">
+              <View
+                className="rounded-2xl border p-4"
+                style={{
+                  backgroundColor: backgroundColor,
+                  borderColor: accentColor + '35',
+                }}
+              >
+                <View className="mb-4 flex-row items-start justify-between gap-3">
+                  <View className="flex-1">
+                    <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                      Signed in
+                    </ThemedText>
+                    <ThemedText selectable className="opacity-80 text-base leading-6">
+                      {session.user.email ?? 'Authenticated Quantum user'}
+                    </ThemedText>
+                  </View>
+
+                  <Pressable
+                    disabled={signingOut}
+                    onPress={handleSignOut}
+                    style={({ pressed }) => ({
+                      backgroundColor: accentColor + '18',
+                      borderCurve: 'continuous',
+                      borderRadius: 14,
+                      opacity: pressed || signingOut ? 0.72 : 1,
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    })}
+                  >
+                    {signingOut ? (
+                      <ActivityIndicator color={secondaryColor} />
+                    ) : (
+                      <ThemedText className="font-bold text-sm uppercase tracking-[0.16em]" style={{ color: secondaryColor }}>
+                        Sign out
+                      </ThemedText>
+                    )}
+                  </Pressable>
+                </View>
+
+                <ThemedText className="mb-3 opacity-80 text-base leading-6">
+                  Bearer-authenticated requests are sent to `{baseUrl}/v1/keys` using your Supabase access token.
+                </ThemedText>
+
+                <View className="gap-3 md:flex-row md:items-center">
+                  <TextInput
+                    autoCapitalize="words"
+                    onChangeText={setKeyName}
+                    placeholder="Optional key label"
+                    placeholderTextColor={textColor + '70'}
+                    style={{
+                      backgroundColor: accentColor + '12',
+                      borderColor: tintColor + '30',
+                      borderCurve: 'continuous',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      color: textColor,
+                      flex: 1,
+                      fontSize: 16,
+                      paddingHorizontal: 14,
+                      paddingVertical: 14,
+                    }}
+                    value={keyName}
+                  />
+
+                  <Pressable
+                    disabled={creatingKey}
+                    onPress={handleCreateKey}
+                    style={({ pressed }) => ({
+                      alignItems: 'center',
+                      backgroundColor: tintColor,
+                      borderCurve: 'continuous',
+                      borderRadius: 16,
+                      justifyContent: 'center',
+                      minWidth: 156,
+                      opacity: pressed || creatingKey ? 0.72 : 1,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                    })}
+                  >
+                    {creatingKey ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <ThemedText inverse className="font-bold text-base">
+                        Create Key
+                      </ThemedText>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+
+              {rawKeyReveal ? (
+                <View
+                  className="rounded-2xl border p-4"
+                  style={{
+                    backgroundColor: tintColor + '12',
+                    borderColor: tintColor + '3f',
+                  }}
+                >
+                  <View className="mb-2 flex-row items-start justify-between gap-3">
+                    <View className="flex-1">
+                      <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                        {rawKeyReveal.action === 'created' ? 'New key generated' : 'Key rotated'}
+                      </ThemedText>
+                      <ThemedText className="opacity-80 text-base leading-6">
+                        Save this secret now. After you leave this state, only the masked version remains visible.
+                      </ThemedText>
+                    </View>
+
+                    <Pressable
+                      onPress={() => setRawKeyReveal(null)}
+                      style={({ pressed }) => ({
+                        opacity: pressed ? 0.72 : 1,
+                        padding: 2,
+                      })}
+                    >
+                      <Ionicons color={textColor} name="close" size={18} />
+                    </Pressable>
+                  </View>
+
+                  <View
+                    className="rounded-2xl border p-3"
+                    style={{
+                      backgroundColor: backgroundColor,
+                      borderColor: tintColor + '2a',
+                    }}
+                  >
+                    <ThemedText className="mb-1 opacity-70 text-sm uppercase tracking-[0.16em]">
+                      {rawKeyReveal.label}
+                    </ThemedText>
+                    <ThemedText
+                      selectable
+                      className="font-mono text-sm leading-6"
+                      style={{ color: secondaryColor }}
+                    >
+                      {rawKeyReveal.rawKey}
+                    </ThemedText>
+                  </View>
+
+                  <Pressable
+                    onPress={() => handleCopy(rawKeyReveal.rawKey, rawKeyReveal.rawKey)}
+                    style={({ pressed }) => ({
+                      alignItems: 'center',
+                      alignSelf: 'flex-start',
+                      backgroundColor: backgroundColor,
+                      borderColor: tintColor + '30',
+                      borderCurve: 'continuous',
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      flexDirection: 'row',
+                      gap: 8,
+                      marginTop: 12,
+                      opacity: pressed ? 0.72 : 1,
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    })}
+                  >
+                    <Ionicons
+                      color={secondaryColor}
+                      name={copiedValue === rawKeyReveal.rawKey ? 'checkmark' : 'copy-outline'}
+                      size={16}
+                    />
+                    <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: secondaryColor }}>
+                      {copiedValue === rawKeyReveal.rawKey ? 'Copied' : 'Copy secret'}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              ) : null}
+
+              {keysError ? (
+                <View
+                  className="rounded-2xl border px-4 py-3"
+                  style={{
+                    backgroundColor: '#ef444418',
+                    borderColor: '#ef444455',
+                  }}
+                >
+                  <ThemedText selectable className="text-base leading-6" style={{ color: '#f87171' }}>
+                    {keysError}
+                  </ThemedText>
+                </View>
+              ) : null}
+
+              <View
+                className="rounded-2xl border p-4"
+                style={{
+                  backgroundColor: backgroundColor,
+                  borderColor: accentColor + '35',
+                }}
+              >
+                <View className="mb-4 flex-row items-center justify-between gap-3">
+                  <View>
+                    <ThemedText type="defaultSemiBold" className="text-lg">
+                      API Keys
+                    </ThemedText>
+                    <ThemedText className="opacity-75 text-base">
+                      Masked metadata only
+                    </ThemedText>
+                  </View>
+
+                  <Pressable
+                    onPress={refreshKeys}
+                    style={({ pressed }) => ({
+                      opacity: pressed || loadingKeys ? 0.72 : 1,
+                      padding: 4,
+                    })}
+                  >
+                    {loadingKeys ? (
+                      <ActivityIndicator color={secondaryColor} />
+                    ) : (
+                      <Ionicons color={secondaryColor} name="refresh" size={18} />
+                    )}
+                  </Pressable>
+                </View>
+
+                {loadingKeys ? (
+                  <View className="items-center py-6">
+                    <ActivityIndicator color={tintColor} />
+                    <ThemedText className="mt-3 opacity-75">Loading your keys...</ThemedText>
+                  </View>
+                ) : keys.length === 0 ? (
+                  <View
+                    className="rounded-2xl border border-dashed p-4"
+                    style={{
+                      backgroundColor: accentColor + '0d',
+                      borderColor: tintColor + '33',
+                    }}
+                  >
+                    <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                      No keys yet
+                    </ThemedText>
+                    <ThemedText className="opacity-80 text-base leading-6">
+                      Create your first Quantum API key above. It will appear here in masked form after generation.
+                    </ThemedText>
+                  </View>
+                ) : (
+                  <View className="gap-3">
+                    {keys.map((key) => {
+                      const isBusy = busyKeyId === key.id;
+                      const isRevoked = key.status === 'revoked';
+
+                      return (
+                        <View
+                          key={key.id}
+                          className="rounded-2xl border p-4"
+                          style={{
+                            backgroundColor: accentColor + '10',
+                            borderColor: isRevoked ? '#ef444455' : tintColor + '2f',
+                          }}
+                        >
+                          <View className="mb-3 flex-row items-start justify-between gap-3">
+                            <View className="flex-1">
+                              <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                                {key.label}
+                              </ThemedText>
+                              <ThemedText selectable className="font-mono text-sm leading-6" style={{ color: secondaryColor }}>
+                                {key.maskedKey}
+                              </ThemedText>
+                            </View>
+
+                            <View
+                              className="rounded-full px-3 py-1"
+                              style={{
+                                backgroundColor: isRevoked ? '#ef444422' : tintColor + '25',
+                              }}
+                            >
+                              <ThemedText
+                                className="text-xs font-bold uppercase tracking-[0.16em]"
+                                style={{ color: isRevoked ? '#f87171' : textColor }}
+                              >
+                                {isRevoked ? 'Revoked' : 'Active'}
+                              </ThemedText>
+                            </View>
+                          </View>
+
+                          <View className="mb-3 gap-1">
+                            <ThemedText className="opacity-75 text-sm">
+                              Created: {formatTimestamp(key.createdAt)}
+                            </ThemedText>
+                            <ThemedText className="opacity-75 text-sm">
+                              Last used: {formatTimestamp(key.lastUsedAt)}
+                            </ThemedText>
+                            {key.revokedAt ? (
+                              <ThemedText className="opacity-75 text-sm">
+                                Revoked: {formatTimestamp(key.revokedAt)}
+                              </ThemedText>
+                            ) : null}
+                          </View>
+
+                          <View className="gap-3 md:flex-row">
+                            <Pressable
+                              disabled={isBusy || isRevoked}
+                              onPress={() => handleRotateKey(key)}
+                              style={({ pressed }) => ({
+                                alignItems: 'center',
+                                backgroundColor: isRevoked ? accentColor + '16' : tintColor,
+                                borderCurve: 'continuous',
+                                borderRadius: 14,
+                                flex: 1,
+                                justifyContent: 'center',
+                                opacity: pressed || isBusy || isRevoked ? 0.72 : 1,
+                                paddingHorizontal: 14,
+                                paddingVertical: 12,
+                              })}
+                            >
+                              {isBusy ? (
+                                <ActivityIndicator color="#fff" />
+                              ) : (
+                                <ThemedText inverse className="font-bold text-sm uppercase tracking-[0.14em]">
+                                  Rotate
+                                </ThemedText>
+                              )}
+                            </Pressable>
+
+                            <Pressable
+                              disabled={isBusy || isRevoked}
+                              onPress={() => handleRevokeKey(key)}
+                              style={({ pressed }) => ({
+                                alignItems: 'center',
+                                backgroundColor: backgroundColor,
+                                borderColor: '#ef444466',
+                                borderCurve: 'continuous',
+                                borderRadius: 14,
+                                borderWidth: 1,
+                                flex: 1,
+                                justifyContent: 'center',
+                                opacity: pressed || isBusy || isRevoked ? 0.72 : 1,
+                                paddingHorizontal: 14,
+                                paddingVertical: 12,
+                              })}
+                            >
+                              <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: '#f87171' }}>
+                                Revoke
+                              </ThemedText>
+                            </Pressable>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}

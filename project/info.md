@@ -27,7 +27,7 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 - Add "API Keys" dashboard UX for list/create/revoke/rotate flows.
 - Integrate portfolio UI with backend key-management endpoints using bearer tokens.
 - Align portfolio copy and docs with real key lifecycle semantics (one-time secret reveal, revoke/rotate behavior).
-- Keep `https://davidjgrimsley.com/public-facing/api/quantum` as the public route/documentation anchor.
+- Use Identerest Account branding for auth UX while keeping API route docs configurable by deploy environment.
 
 ## Out of Scope (Phase 3.5)
 

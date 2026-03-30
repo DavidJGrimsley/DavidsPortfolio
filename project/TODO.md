@@ -89,13 +89,14 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
 ### Portfolio UI Work (Phase 3.5 Focus)
 
 - [ ] Add Supabase GitHub sign-in flow on the Quantum API public-facing page
+- [ ] Rebrand the sign-in component for "Identerest Account" (final logo/style pass later)
 - [ ] Add authenticated "API Keys" dashboard section
 - [ ] Implement key list/create/revoke/rotate UI interactions
 - [ ] Implement one-time secret reveal + copy-once UX
 - [ ] Add confirmation dialogs and friendly error states
 - [ ] Integrate bearer-token calls to key-management endpoints
 - [ ] Ensure no Supabase service-role credentials are exposed client-side
-- [ ] Update docs/copy to mark `https://davidjgrimsley.com/public-facing/api/quantum` as public base URL
+- [ ] Update docs/copy to use Identerest Account auth branding and avoid hardcoded domain-specific migration guidance
 
 ### Validation and Security
 

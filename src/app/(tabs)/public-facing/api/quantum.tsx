@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { EndpointCard } from '~/src/components/PublicFacing/api/APIComponents';
+import { QuantumAuthDashboardCard } from '~/src/components/PublicFacing/api/quantum-auth-dashboard-card';
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { HelloWave } from '@/components/QuantumAnimation';
 import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
@@ -263,6 +264,8 @@ export default function QuantumAPIPage() {
             </ExternalLink>
           </View>
         </View>
+
+        <QuantumAuthDashboardCard baseUrl={QUANTUM_BASE_URL} />
 
         {/* Endpoints Section */}
         <View className="mb-7.5">
@@ -767,12 +770,12 @@ export default function QuantumAPIPage() {
 
               <View>
                 <ThemedText type="defaultSemiBold" className="detail-subheader mb-2 text-xl md:text-2xl">
-                  4. No Authentication or Rate Limits
+                  4. Authentication and Key Management
                 </ThemedText>
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
-                  This API is completely free and open - no API keys, no signup, no login. Just start making requests!{"\n\n"}
+                  Phase 3.5 adds Supabase Auth for key management on this page. Sign in with an email magic link or GitHub, then create, rotate, and revoke Quantum API keys from the dashboard above.{"\n\n"}
                   <ThemedText className="font-bold">Fair Use Policy:</ThemedText> Please be respectful and don't spam the server. 
-                  Excessive requests may be rate-limited. Recommended limit: ~100 requests/minute per IP.
+                  Excessive requests may be rate-limited. Recommended limit: ~100 requests/minute per key or IP.
                 </ThemedText>
               </View>
 
