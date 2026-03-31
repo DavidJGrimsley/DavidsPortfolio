@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Modal,
   Pressable,
@@ -8,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import type { Session } from '@supabase/supabase-js';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Svg, { Line } from 'react-native-svg';
@@ -75,11 +77,26 @@ function formatTimestamp(value?: string | null) {
 }
 
 async function copyToClipboard(value: string) {
-  if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-    throw new Error('Copy is only available in a browser with clipboard access.');
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
   }
 
-  await navigator.clipboard.writeText(value);
+  // Fallback for native (iOS/Android) using expo-clipboard
+  await Clipboard.setStringAsync(value);
+}
+
+function confirmAction(message: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    return Promise.resolve(window.confirm(message));
+  }
+
+  return new Promise((resolve) => {
+    Alert.alert('Confirm', message, [
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+    ]);
+  });
 }
 
 export function QuantumAuthDashboardCard({
@@ -109,6 +126,7 @@ export function QuantumAuthDashboardCard({
   const [deletingRevokedKeys, setDeletingRevokedKeys] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [showIdenterestInfo, setShowIdenterestInfo] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supabaseClient = useMemo(() => {
     if (!isSupabaseConfigured()) {
@@ -379,12 +397,8 @@ export function QuantumAuthDashboardCard({
       if (!accessToken) return;
       if (key.status !== 'revoked') return;
 
-      if (
-        typeof window !== 'undefined' &&
-        !window.confirm(`Delete revoked key "${key.label}" permanently?`)
-      ) {
-        return;
-      }
+      const confirmed = await confirmAction(`Delete revoked key "${key.label}" permanently?`);
+      if (!confirmed) return;
 
       setBusyKeyId(key.id);
       setKeysError(null);
@@ -411,12 +425,10 @@ export function QuantumAuthDashboardCard({
       return;
     }
 
-    if (
-      typeof window !== 'undefined' &&
-      !window.confirm(`Delete all ${revokedKeysCount} revoked keys permanently?`)
-    ) {
-      return;
-    }
+    const confirmed = await confirmAction(
+      `Delete all ${revokedKeysCount} revoked keys permanently?`
+    );
+    if (!confirmed) return;
 
     setDeletingRevokedKeys(true);
     setKeysError(null);
@@ -438,11 +450,26 @@ export function QuantumAuthDashboardCard({
     try {
       await copyToClipboard(value);
       setCopiedValue(key);
-      setTimeout(() => setCopiedValue((current) => (current === key ? null : current)), 1800);
+      if (copiedTimerRef.current) {
+        clearTimeout(copiedTimerRef.current);
+      }
+      copiedTimerRef.current = setTimeout(
+        () => setCopiedValue((current) => (current === key ? null : current)),
+        1800
+      );
     } catch (error) {
       setKeysError(error instanceof Error ? error.message : 'Unable to copy to clipboard.');
     }
   }, []);
+
+  useEffect(
+    () => () => {
+      if (copiedTimerRef.current) {
+        clearTimeout(copiedTimerRef.current);
+      }
+    },
+    []
+  );
 
   return (
     <View

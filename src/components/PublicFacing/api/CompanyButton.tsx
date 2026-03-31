@@ -247,15 +247,25 @@ export function CompanyButton({
       navigateTimerRef.current = null;
     }
 
+    if (typeof window !== 'undefined') {
+      // Pre-open a blank tab synchronously to preserve the user-gesture context
+      // and avoid popup blockers, then navigate it after the animation finishes.
+      const tab = window.open('', '_blank', 'noopener,noreferrer');
+      navigateTimerRef.current = setTimeout(() => {
+        navigateTimerRef.current = null;
+        if (tab && !tab.closed) {
+          tab.location.href = href;
+        } else {
+          // Fallback if the tab was blocked or closed before we navigated it
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }
+        isNavigatingRef.current = false;
+      }, navigateDelayMs);
+      return;
+    }
+
     navigateTimerRef.current = setTimeout(() => {
       navigateTimerRef.current = null;
-
-      if (typeof window !== 'undefined') {
-        window.open(href, '_blank', 'noopener,noreferrer');
-        isNavigatingRef.current = false;
-        return;
-      }
-
       void openBrowserAsync(href).finally(() => {
         isNavigatingRef.current = false;
       });

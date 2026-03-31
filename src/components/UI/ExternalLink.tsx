@@ -12,14 +12,22 @@ export function ExternalLink({ href, onPress, ...rest }: Props) {
       {...rest}
       href={href as unknown as LinkHref}
       onPress={async (event) => {
-        await onPress?.(event);
-        if ('defaultPrevented' in event && event.defaultPrevented) {
+        if (typeof window !== 'undefined') {
+          // Pre-open a blank tab synchronously to preserve the user-gesture context
+          // so popup blockers don't interfere, then navigate it after onPress resolves.
+          event.preventDefault();
+          const tab = window.open('', '_blank', 'noopener,noreferrer');
+          await onPress?.(event);
+          if (tab && !tab.closed) {
+            tab.location.href = href;
+          } else {
+            window.open(href, '_blank', 'noopener,noreferrer');
+          }
           return;
         }
 
-        if (typeof window !== 'undefined') {
-          event.preventDefault();
-          window.open(href, '_blank', 'noopener,noreferrer');
+        await onPress?.(event);
+        if ('defaultPrevented' in event && event.defaultPrevented) {
           return;
         }
 

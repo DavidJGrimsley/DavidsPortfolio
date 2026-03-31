@@ -135,7 +135,7 @@ async function requestQuantumApi(
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${accessToken}`,
-      ...(init?.body ? { 'Content-Type': 'application/json' } : null),
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...(init?.headers ?? {}),
     },
   });
