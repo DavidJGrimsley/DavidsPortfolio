@@ -1,14 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
+  Modal,
   Pressable,
+  ScrollView,
   TextInput,
   View,
 } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import Svg, { Line } from 'react-native-svg';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { CompanyButton } from './CompanyButton';
 import {
   getQuantumAuthRedirectUrl,
   getSupabaseBrowserClient,
@@ -35,6 +40,28 @@ type RawKeyReveal = {
   rawKey: string;
   label: string;
 };
+
+const IDENTEREST_LOGO = require('~/assets/images/identerest-logo.png');
+const CREATISPHERE_LOGO = require('~/assets/images/creatisphere-logo.png');
+const HIGHER_LOGO = require('~/assets/images/higher-logo.png');
+
+const BRAND_COLORS = {
+  identerest: { primary: '#475569', secondary: '#94a3b8' },
+  creatisphere: { primary: '#ff5e00', secondary: '#1058bc' },
+  higher: { primary: '#228B22', secondary: '#C3B091' },
+} as const;
+
+function withAlpha(hex: string, alpha: number) {
+  const normalized = hex.replace('#', '').trim();
+  if (normalized.length !== 6) {
+    return hex;
+  }
+
+  const r = Number.parseInt(normalized.slice(0, 2), 16);
+  const g = Number.parseInt(normalized.slice(2, 4), 16);
+  const b = Number.parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function formatTimestamp(value?: string | null) {
   if (!value) return 'Never';
@@ -81,6 +108,7 @@ export function QuantumAuthDashboardCard({
   const [busyKeyId, setBusyKeyId] = useState<string | null>(null);
   const [deletingRevokedKeys, setDeletingRevokedKeys] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [showIdenterestInfo, setShowIdenterestInfo] = useState(false);
 
   const supabaseClient = useMemo(() => {
     if (!isSupabaseConfigured()) {
@@ -427,21 +455,42 @@ export function QuantumAuthDashboardCard({
       <View className="mb-4 flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <ThemedText type="subtitle" className="mb-1 text-2xl md:text-3xl">
-            Identerest Account
+            Api Keys
           </ThemedText>
           <ThemedText className="opacity-85 text-base leading-6 md:text-lg">
-            Sign in with your Identerest Account to manage Quantum API keys. New secrets are shown once, then stored only as masked metadata.
+            Obtain API keys to use this service. There are rate limits applied to each key. New secrets are shown once, then stored only as masked metadata.
           </ThemedText>
         </View>
 
-        <View
-          className="rounded-2xl px-3 py-1.5"
-          style={{ backgroundColor: tintColor + '25' }}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="About Identerest account"
+          onPress={() => setShowIdenterestInfo(true)}
+          style={({ pressed }) => ({
+            backgroundColor: '#ffffff',
+            borderColor: '#ffffffcc',
+            borderCurve: 'continuous',
+            borderRadius: 18,
+            borderWidth: 1,
+            opacity: pressed ? 0.78 : 1,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+          })}
         >
-          <ThemedText className="text-xs font-bold uppercase tracking-[0.18em]">
-            Phase 3.75
-          </ThemedText>
-        </View>
+          <View className="flex-row items-center gap-2">
+            <Image
+              source={IDENTEREST_LOGO}
+              resizeMode="contain"
+              style={{ height: 20, width: 20 }}
+            />
+            <ThemedText
+              className="text-xs tracking-[0.08em]"
+              style={{ color: '#4b5563', fontFamily: 'Emblema One' }}
+            >
+              Identerest
+            </ThemedText>
+          </View>
+        </Pressable>
       </View>
 
       {!isSupabaseConfigured() ? (
@@ -508,10 +557,10 @@ export function QuantumAuthDashboardCard({
               }}
             >
               <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
-                Sign in with Identerest Account
+                Keys are managed by your Identerest Account
               </ThemedText>
               <ThemedText className="mb-4 opacity-80 text-base leading-6">
-                Use a passwordless email magic link or continue with GitHub. Both return you here so you can manage keys immediately.
+                Sign-in or Create an account today! Use a passwordless email magic link or continue with GitHub.
               </ThemedText>
 
               <View className="gap-3">
@@ -639,10 +688,6 @@ export function QuantumAuthDashboardCard({
                     )}
                   </Pressable>
                 </View>
-
-                <ThemedText className="mb-3 opacity-80 text-base leading-6">
-                  Bearer-authenticated requests are sent to `{baseUrl}/v1/keys` using your Supabase access token.
-                </ThemedText>
 
                 <View className="gap-3 md:flex-row md:items-center">
                   <TextInput
@@ -1012,6 +1057,119 @@ export function QuantumAuthDashboardCard({
           )}
         </View>
       )}
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setShowIdenterestInfo(false)}
+        transparent
+        visible={showIdenterestInfo}
+      >
+        <View className="flex-1 items-center justify-center bg-black/60 px-4">
+          <Pressable
+            accessibilityLabel="Close Identerest info modal"
+            accessibilityRole="button"
+            className="absolute inset-0"
+            onPress={() => setShowIdenterestInfo(false)}
+          />
+
+          <View
+            className="z-10 w-full max-w-[680px] rounded-3xl border p-6 md:p-7"
+            style={{
+              backgroundColor,
+              borderColor: tintColor + '45',
+              maxHeight: 760,
+            }}
+          >
+            <ScrollView
+              contentContainerStyle={{ paddingBottom: 4 }}
+              showsVerticalScrollIndicator
+            >
+              <View className="mb-3 flex-row items-start justify-between gap-3">
+                <View className="flex-1 flex-row items-center gap-2.5">
+                  <ThemedText type="defaultSemiBold" className="text-lg md:text-xl">
+                    About Identerest Ecosystem
+                  </ThemedText>
+                </View>
+
+                <Pressable
+                  accessibilityLabel="Close"
+                  accessibilityRole="button"
+                  onPress={() => setShowIdenterestInfo(false)}
+                  style={({ pressed }) => ({
+                    opacity: pressed ? 0.75 : 1,
+                    padding: 4,
+                  })}
+                >
+                  <Ionicons color={secondaryColor} name="close" size={20} />
+                </Pressable>
+              </View>
+
+              <ThemedText className="opacity-90 text-base leading-6">
+                You are creating or signing into your Identerest Account. This shared account works
+                across the ecosystem, including this Quantum API dashboard, Creatisphere, and Higher.
+              </ThemedText>
+              <ThemedText className="mt-2 opacity-80 text-base leading-6">
+                Sign in once, then reuse the same identity anywhere Identerest is supported.
+              </ThemedText>
+
+              <View className="mt-6 w-full items-center">
+                <View className="w-full max-w-[560px]" style={{ height: 308, position: 'relative' }}>
+                  <Svg
+                    height="100%"
+                    preserveAspectRatio="none"
+                    style={{ left: 0, position: 'absolute', top: 0 }}
+                    viewBox="0 0 100 100"
+                    width="100%"
+                  >
+                    <Line stroke={withAlpha(tintColor, 0.6)} strokeWidth="1.1" x1="50" x2="22.5" y1="43" y2="58" />
+                    <Line stroke={withAlpha(tintColor, 0.6)} strokeWidth="1.1" x1="50" x2="77.5" y1="43" y2="58" />
+                  </Svg>
+
+                  <View className="absolute left-0 right-0 top-0 items-center">
+                    {/* Company Button Component */}
+                    <CompanyButton
+                      accessibilityLabel="Open Identerest"
+                      fontFamily="Emblema One"
+                      href="https://identerest.com"
+                      imageSource={IDENTEREST_LOGO}
+                      name="Identerest"
+                      primaryColor={BRAND_COLORS.identerest.primary}
+                      secondaryColor={BRAND_COLORS.identerest.secondary}
+                    />
+                  </View>
+
+                  <View
+                    className="absolute bottom-0 left-0 right-0 flex-row justify-between"
+                    style={{ bottom: 0, position: 'absolute' }}
+                  >
+                    {/* Company Button Component */}
+                    <CompanyButton
+                      accessibilityLabel="Open Creatisphere"
+                      fontFamily="Cinzel Decorative-Bold"
+                      href="https://creatisphere.app"
+                      imageSource={CREATISPHERE_LOGO}
+                      name="Creatisphere"
+                      primaryColor={BRAND_COLORS.creatisphere.primary}
+                      secondaryColor={BRAND_COLORS.creatisphere.secondary}
+                    />
+
+                    {/* Company Button Component */}
+                    <CompanyButton
+                      accessibilityLabel="Open Higher"
+                      fontFamily="Playfair Display-Bold"
+                      href="https://higher.app"
+                      imageSource={HIGHER_LOGO}
+                      name="Higher"
+                      primaryColor={BRAND_COLORS.higher.primary}
+                      secondaryColor={BRAND_COLORS.higher.secondary}
+                    />
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

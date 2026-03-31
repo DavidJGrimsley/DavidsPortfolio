@@ -6,12 +6,15 @@ import { Uniwind } from 'uniwind';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 
+import { CinzelDecorative_700Bold } from '@expo-google-fonts/cinzel-decorative';
+import { EmblemaOne_400Regular } from '@expo-google-fonts/emblema-one';
 import { LondrinaShadow_400Regular } from '@expo-google-fonts/londrina-shadow';
 import { NotoSans_400Regular } from '@expo-google-fonts/noto-sans';
 import { NotoSansDisplay_400Regular } from '@expo-google-fonts/noto-sans-display';
 import { NotoSansMono_400Regular } from '@expo-google-fonts/noto-sans-mono';
 import { NotoSerif_400Regular } from '@expo-google-fonts/noto-serif';
 import { NotoSerifDisplay_400Regular } from '@expo-google-fonts/noto-serif-display';
+import { PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 
 import StartupLoading from '@/components/StartupLoading';
 import '~/global.css';
@@ -104,6 +107,9 @@ function RootLayoutClient() {
     'Noto Serif': NotoSerif_400Regular,
     'Noto Serif Display': NotoSerifDisplay_400Regular,
     'Londrina Shadow': LondrinaShadow_400Regular,
+    'Cinzel Decorative-Bold': CinzelDecorative_700Bold,
+    'Playfair Display-Bold': PlayfairDisplay_700Bold,
+    'Emblema One': EmblemaOne_400Regular,
     ...Ionicons.font,
   });
 

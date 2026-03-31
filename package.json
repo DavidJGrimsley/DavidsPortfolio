@@ -23,12 +23,15 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@expo-google-fonts/cinzel-decorative": "^0.4.1",
+    "@expo-google-fonts/emblema-one": "^0.4.1",
     "@expo-google-fonts/londrina-shadow": "^0.4.1",
     "@expo-google-fonts/noto-sans": "^0.4.2",
     "@expo-google-fonts/noto-sans-display": "^0.4.2",
     "@expo-google-fonts/noto-sans-mono": "^0.4.2",
     "@expo-google-fonts/noto-serif": "^0.4.2",
     "@expo-google-fonts/noto-serif-display": "^0.4.2",
+    "@expo-google-fonts/playfair-display": "^0.4.2",
     "@expo/html-elements": "^0.13.8",
     "@expo/vector-icons": "^15.0.3",
     "@lottiefiles/dotlottie-react": "^0.13.5",
