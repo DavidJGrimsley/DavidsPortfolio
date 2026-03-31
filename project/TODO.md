@@ -80,7 +80,7 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
   - [x] `POST /v1/keys/{key_id}/revoke`
   - [x] `POST /v1/keys/{key_id}/rotate`
 - [x] Ensure protected runtime endpoints continue using `X-API-Key` from DB-backed records
-- [ ] Roll out required config:
+- [x] Roll out required config:
   - [x] `DATABASE_URL`
   - [x] `SUPABASE_URL`
   - [x] `SUPABASE_JWT_AUDIENCE`
@@ -104,7 +104,8 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
 
 ### Validation and Security
 
-- [ ] Unit tests for key generation/parsing/hashing/constant-time verification
+- [x] Portfolio-side unit tests for Quantum API base URL fallback and key service normalization/error handling
+- [ ] Backend-owned unit tests for key generation/parsing/hashing/constant-time verification
 - [ ] Unit tests for JWT validation paths (valid/expired/wrong issuer/wrong audience/malformed)
 - [ ] Integration tests for user-scoped key ownership boundaries
 - [ ] Integration tests for revoked/rotated key rejection and Redis invalidation behavior

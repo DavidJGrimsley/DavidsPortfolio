@@ -30,6 +30,7 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 - Portfolio copy/docs now reflect key lifecycle semantics (one-time secret reveal, revoke/rotate behavior).
 - Identerest Account branding is now used for auth UX.
 - Quantum API base URL configuration is env-driven with fallback (no longer hardcoded throughout page/components).
+- Portfolio-side validation now covers Quantum API base URL fallback plus key service normalization/error handling; backend-heavy security coverage is still pending.
 
 ## Out of Scope (Phase 3.5)
 
@@ -87,6 +88,7 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
   - Friendly error handling
 - Add env-driven base URL config:
   - `EXPO_PUBLIC_QUANTUM_API_BASE_URL` with production fallback (done)
+  - portfolio-side validation for fallback + service normalization/error handling (done)
 - Add test coverage:
   - unit (hashing/JWT/lifecycle semantics)
   - integration (user scoping/cache invalidation/rate-limit policy)
