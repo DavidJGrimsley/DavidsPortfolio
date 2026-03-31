@@ -56,47 +56,51 @@ Goal: close obvious repo hygiene gaps before major integration work.
 - [ ] Remove stale "no auth/no API keys" copy before Phase 3.5 rollout
 - [ ] Split large public-facing files into smaller maintainable modules
 
-## Phase 3.5 - Portfolio Integration for Real API Key Management (Planned, Not Implemented)
+## Phase 3.5 / 3.75 - Portfolio Integration for Real API Key Management
 
 Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Postgres + Redis), without implementing backend changes in this repo yet.
 
 ### Backend Dependency Tasks (Tracked Here for Cross-Repo Coordination)
 
-- [ ] Create Supabase Postgres `api_keys` table (owner, prefix, hashed secret, status, quotas/limits, lifecycle timestamps)
-- [ ] Create `api_key_audit_events` table for create/revoke/rotate actor metadata
-- [ ] Add Supabase JWT verification with JWKS caching and strict issuer/audience checks
-- [ ] Build key lifecycle service (create one-time secret, revoke, rotate atomically)
-- [ ] Hard cut runtime auth to DB-managed keys only (remove `API_KEYS_JSON` runtime fallback)
-- [ ] Add prefix-based key lookup + constant-time hash verification
-- [ ] Keep Redis metadata cache with explicit invalidation on revoke/rotate
+- [x] Create Supabase Postgres `api_keys` table (owner, prefix, hashed secret, status, quotas/limits, lifecycle timestamps)
+- [x] Create `api_key_audit_events` table for create/revoke/rotate actor metadata
+- [x] Add Supabase JWT verification with JWKS caching and strict issuer/audience checks
+- [x] Build key lifecycle service (create one-time secret, revoke, rotate atomically)
+- [x] Hard cut runtime auth to DB-managed keys only (remove `API_KEYS_JSON` runtime fallback)
+- [x] Add prefix-based key lookup + constant-time hash verification
+- [x] Keep Redis metadata cache with explicit invalidation on revoke/rotate
 
 ### API Contract and Config
 
-- [ ] Confirm/ship user-scoped key endpoints:
-  - [ ] `GET /v1/keys`
-  - [ ] `POST /v1/keys`
-  - [ ] `POST /v1/keys/{key_id}/revoke`
-  - [ ] `POST /v1/keys/{key_id}/rotate`
-- [ ] Ensure protected runtime endpoints continue using `X-API-Key` from DB-backed records
+- [x] Confirm/ship user-scoped key endpoints:
+  - [x] `GET /v1/keys`
+  - [x] `POST /v1/keys`
+  - [x] `DELETE /v1/keys/{key_id}` (revoked-only delete)
+  - [x] `DELETE /v1/keys/revoked` (bulk revoked cleanup)
+  - [x] `POST /v1/keys/{key_id}/revoke`
+  - [x] `POST /v1/keys/{key_id}/rotate`
+- [x] Ensure protected runtime endpoints continue using `X-API-Key` from DB-backed records
 - [ ] Roll out required config:
-  - [ ] `DATABASE_URL`
-  - [ ] `SUPABASE_URL`
-  - [ ] `SUPABASE_JWT_AUDIENCE`
-  - [ ] `SUPABASE_JWT_ISSUER`
-  - [ ] `API_KEY_HASH_SECRET`
-- [ ] Preserve Redis requirement for rate limiting + key metadata cache
+  - [x] `DATABASE_URL`
+  - [x] `SUPABASE_URL`
+  - [x] `SUPABASE_JWT_AUDIENCE`
+  - [x] `SUPABASE_JWT_ISSUER`
+  - [x] `API_KEY_HASH_SECRET`
+- [x] Preserve Redis requirement for rate limiting + key metadata cache
 
-### Portfolio UI Work (Phase 3.5 Focus)
+### Portfolio UI Work (Phase 3.75 Focus)
 
-- [ ] Add Supabase GitHub sign-in flow on the Quantum API public-facing page
-- [ ] Rebrand the sign-in component for "Identerest Account" (final logo/style pass later)
-- [ ] Add authenticated "API Keys" dashboard section
-- [ ] Implement key list/create/revoke/rotate UI interactions
-- [ ] Implement one-time secret reveal + copy-once UX
-- [ ] Add confirmation dialogs and friendly error states
-- [ ] Integrate bearer-token calls to key-management endpoints
-- [ ] Ensure no Supabase service-role credentials are exposed client-side
-- [ ] Update docs/copy to use Identerest Account auth branding and avoid hardcoded domain-specific migration guidance
+- [x] Add Supabase GitHub sign-in flow on the Quantum API public-facing page
+- [x] Rebrand the sign-in component for "Identerest Account" (final logo/style pass later)
+- [x] Add authenticated "API Keys" dashboard section
+- [x] Implement key list/create/revoke/rotate UI interactions
+- [x] Add revoked-key cleanup controls (per-row delete + bulk delete revoked)
+- [x] Implement one-time secret reveal + copy-once UX
+- [x] Add confirmation dialogs and friendly error states
+- [x] Integrate bearer-token calls to key-management endpoints
+- [x] Ensure no Supabase service-role credentials are exposed client-side
+- [x] Update docs/copy to use Identerest Account auth branding and avoid hardcoded domain-specific migration guidance
+- [x] Move hardcoded Quantum API base URL usage to env-driven config with safe fallback
 
 ### Validation and Security
 
@@ -110,10 +114,10 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
 
 ### Completion Criteria
 
-- [ ] Portfolio and backend contracts align for authenticated self-serve key management
-- [ ] Public copy and code examples no longer conflict with auth/key requirements
+- [x] Portfolio and backend contracts align for authenticated self-serve key management
+- [x] Public copy and code examples no longer conflict with auth/key requirements
 - [ ] Cutover plan for deprecating env-based keys is approved and documented
-- [ ] Phase 3.5 implementation can begin without unresolved planning gaps
+- [x] Phase 3.5 implementation can begin without unresolved planning gaps
 
 ## Later Enhancements (Post-3.5)
 

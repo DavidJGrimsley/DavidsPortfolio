@@ -5,13 +5,17 @@ export type QuantumKeyRecord = {
   createdAt?: string | null;
   lastUsedAt?: string | null;
   revokedAt?: string | null;
-  status: 'active' | 'revoked';
+  status: 'active' | 'revoked' | 'rotated';
 };
 
 export type QuantumKeyMutationResult = {
   key: QuantumKeyRecord | null;
   rawKey: string | null;
   message?: string;
+};
+
+export type QuantumRevokedBulkDeleteResult = {
+  deletedCount: number;
 };
 
 type JsonObject = Record<string, unknown>;
@@ -50,6 +54,19 @@ function asString(value: unknown) {
     return String(value);
   }
 
+  return null;
+}
+
+function asNumber(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
   return null;
 }
 
@@ -203,7 +220,12 @@ function normalizeKeyRecord(input: unknown): QuantumKeyRecord | null {
 
   const revokedAt = pickString(record, 'revoked_at', 'revokedAt');
   const statusValue = pickString(record, 'status', 'state');
-  const normalizedStatus = revokedAt || statusValue === 'revoked' ? 'revoked' : 'active';
+  const normalizedStatus =
+    statusValue === 'rotated'
+      ? 'rotated'
+      : revokedAt || statusValue === 'revoked'
+        ? 'revoked'
+        : 'active';
 
   return {
     id,
@@ -290,4 +312,22 @@ export async function rotateQuantumKey(baseUrl: string, accessToken: string, key
   );
 
   return normalizeMutationResult(payload);
+}
+
+export async function deleteQuantumKey(baseUrl: string, accessToken: string, keyId: string) {
+  await requestQuantumApi(baseUrl, accessToken, `/v1/keys/${encodeURIComponent(keyId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function deleteRevokedQuantumKeys(
+  baseUrl: string,
+  accessToken: string
+): Promise<QuantumRevokedBulkDeleteResult> {
+  const payload = await requestQuantumApi(baseUrl, accessToken, '/v1/keys/revoked', {
+    method: 'DELETE',
+  });
+  const objectPayload = asObject(payload);
+  const deletedCount = asNumber(objectPayload?.deleted_count ?? objectPayload?.deletedCount) ?? 0;
+  return { deletedCount };
 }

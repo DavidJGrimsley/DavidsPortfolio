@@ -21,13 +21,15 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 - Web export/server hosting scripts, sitemap generation, and static asset pipeline are in place.
 - Uniwind/Tailwind theming and core UI primitives are integrated.
 
-## Scope (Phase 3.5 Planning Only - Not Implemented Yet)
+## Scope (Phase 3.5 / 3.75 Status)
 
-- Add Supabase GitHub sign-in UX on the portfolio Quantum API page.
-- Add "API Keys" dashboard UX for list/create/revoke/rotate flows.
-- Integrate portfolio UI with backend key-management endpoints using bearer tokens.
-- Align portfolio copy and docs with real key lifecycle semantics (one-time secret reveal, revoke/rotate behavior).
-- Use Identerest Account branding for auth UX while keeping API route docs configurable by deploy environment.
+- Supabase GitHub + magic-link sign-in UX is implemented on the portfolio Quantum API page.
+- "API Keys" dashboard UX is implemented for list/create/revoke/rotate flows.
+- Revoked-key cleanup UX is implemented (single-key delete + bulk delete revoked).
+- Portfolio UI is integrated with backend key-management endpoints using bearer tokens.
+- Portfolio copy/docs now reflect key lifecycle semantics (one-time secret reveal, revoke/rotate behavior).
+- Identerest Account branding is now used for auth UX.
+- Quantum API base URL configuration is env-driven with fallback (no longer hardcoded throughout page/components).
 
 ## Out of Scope (Phase 3.5)
 
@@ -46,10 +48,10 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 
 ## Success Criteria
 
-- Portfolio docs and planning artifacts clearly reflect current repo baseline and Phase 3.5 scope.
-- All Phase 3.5 integration tasks are tracked before implementation begins.
+- Portfolio docs and planning artifacts clearly reflect current baseline and Phase 3.75 rollout status.
+- Auth/key-management flows are live in UI with Identerest Account branding.
 - Public route/base URL messaging is consistent across metadata, docs, and page copy.
-- No implementation work is performed until this planning checkpoint is approved.
+- Remaining work is limited to validation hardening (tests, final rollout verification, and release checks).
 
 ## Broad Repo Backlog (Outside Phase 3.5)
 
@@ -59,28 +61,32 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 - Resolve stale/inconsistent public API copy (base URL and request schema wording).
 - Break down very large public-facing files for maintainability and lower drift risk.
 
-## Phase 3.5 TODO Snapshot (Portfolio + Quantum API Integration)
+## Phase 3.5 / 3.75 TODO Snapshot (Portfolio + Quantum API Integration)
 
-- Create `api_keys` and `api_key_audit_events` tables in Supabase Postgres.
-- Add Supabase JWT verification via JWKS cache with strict issuer/audience checks.
-- Build key lifecycle service: create (one-time reveal), revoke, rotate (atomic).
-- Hard cut runtime key auth to DB-backed lookup only (remove `API_KEYS_JSON` fallback).
-- Add/confirm key-management endpoints:
+- Create `api_keys` and `api_key_audit_events` tables in Supabase Postgres. (done)
+- Add Supabase JWT verification via JWKS cache with strict issuer/audience checks. (done)
+- Build key lifecycle service: create (one-time reveal), revoke, rotate (atomic). (done)
+- Hard cut runtime key auth to DB-backed lookup only (remove `API_KEYS_JSON` fallback). (done)
+- Add/confirm key-management endpoints: (done)
   - `GET /v1/keys`
   - `POST /v1/keys`
+  - `DELETE /v1/keys/{key_id}` (revoked-only delete)
+  - `DELETE /v1/keys/revoked` (bulk revoked cleanup)
   - `POST /v1/keys/{key_id}/revoke`
   - `POST /v1/keys/{key_id}/rotate`
-- Add required config:
+- Add required config: (done)
   - `DATABASE_URL`
   - `SUPABASE_URL`
   - `SUPABASE_JWT_AUDIENCE`
   - `SUPABASE_JWT_ISSUER`
   - `API_KEY_HASH_SECRET`
-- Build portfolio UI flow:
+- Build portfolio UI flow: (done)
   - GitHub sign-in
   - List/create/revoke/rotate key actions
   - Copy-once UX and confirmation dialogs
   - Friendly error handling
+- Add env-driven base URL config:
+  - `EXPO_PUBLIC_QUANTUM_API_BASE_URL` with production fallback (done)
 - Add test coverage:
   - unit (hashing/JWT/lifecycle semantics)
   - integration (user scoping/cache invalidation/rate-limit policy)

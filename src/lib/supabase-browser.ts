@@ -1,10 +1,14 @@
 import { Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { SITE_URL } from '@/constants/seo';
+import { QUANTUM_AUTH_PATH } from '@/lib/quantum-api-config';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
-const QUANTUM_AUTH_PATH = '/public-facing/api/quantum';
+const SUPABASE_ANON_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ??
+  process.env.EXPO_PUBLIC_SUPABASE_KEY?.trim();
+const HAS_LEGACY_SUPABASE_KEY = Boolean(process.env.EXPO_PUBLIC_SUPABASE_KEY?.trim());
+const HAS_ANON_SUPABASE_KEY = Boolean(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim());
 const isWeb = Platform.OS === 'web';
 
 type StorageLike = {
@@ -35,7 +39,20 @@ export function isSupabaseConfigured() {
 
 export function getSupabaseConfigError() {
   if (isSupabaseConfigured()) return null;
-  return 'Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY.';
+  const missing: string[] = [];
+  if (!SUPABASE_URL) missing.push('EXPO_PUBLIC_SUPABASE_URL');
+  if (!SUPABASE_ANON_KEY) missing.push('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+
+  const baseError =
+    missing.length > 0
+      ? `Missing ${missing.join(' and ')}.`
+      : 'Supabase configuration is incomplete.';
+
+  if (!HAS_ANON_SUPABASE_KEY && HAS_LEGACY_SUPABASE_KEY) {
+    return `${baseError} Found legacy EXPO_PUBLIC_SUPABASE_KEY. Rename it to EXPO_PUBLIC_SUPABASE_ANON_KEY.`;
+  }
+
+  return baseError;
 }
 
 export function getQuantumAuthRedirectUrl() {

@@ -17,6 +17,8 @@ import {
 } from '@/lib/supabase-browser';
 import {
   createQuantumKey,
+  deleteQuantumKey,
+  deleteRevokedQuantumKeys,
   listQuantumKeys,
   type QuantumKeyRecord,
   QuantumApiError,
@@ -77,6 +79,7 @@ export function QuantumAuthDashboardCard({
   const [loadingKeys, setLoadingKeys] = useState(false);
   const [creatingKey, setCreatingKey] = useState(false);
   const [busyKeyId, setBusyKeyId] = useState<string | null>(null);
+  const [deletingRevokedKeys, setDeletingRevokedKeys] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
 
   const supabaseClient = useMemo(() => {
@@ -88,6 +91,10 @@ export function QuantumAuthDashboardCard({
   }, []);
 
   const accessToken = session?.access_token ?? null;
+  const revokedKeysCount = useMemo(
+    () => keys.filter((key) => key.status === 'revoked').length,
+    [keys]
+  );
 
   const refreshKeys = useCallback(async () => {
     if (!accessToken) {
@@ -339,6 +346,66 @@ export function QuantumAuthDashboardCard({
     [accessToken, baseUrl, rawKeyReveal?.label, refreshKeys]
   );
 
+  const handleDeleteRevokedKey = useCallback(
+    async (key: QuantumKeyRecord) => {
+      if (!accessToken) return;
+      if (key.status !== 'revoked') return;
+
+      if (
+        typeof window !== 'undefined' &&
+        !window.confirm(`Delete revoked key "${key.label}" permanently?`)
+      ) {
+        return;
+      }
+
+      setBusyKeyId(key.id);
+      setKeysError(null);
+
+      try {
+        await deleteQuantumKey(baseUrl, accessToken, key.id);
+        if (rawKeyReveal?.label === key.label) {
+          setRawKeyReveal(null);
+        }
+        await refreshKeys();
+      } catch (error) {
+        setKeysError(error instanceof Error ? error.message : 'Unable to delete this revoked key.');
+      } finally {
+        setBusyKeyId(null);
+      }
+    },
+    [accessToken, baseUrl, rawKeyReveal?.label, refreshKeys]
+  );
+
+  const handleDeleteAllRevokedKeys = useCallback(async () => {
+    if (!accessToken) return;
+    if (revokedKeysCount <= 0) {
+      setKeysError('No revoked keys to delete.');
+      return;
+    }
+
+    if (
+      typeof window !== 'undefined' &&
+      !window.confirm(`Delete all ${revokedKeysCount} revoked keys permanently?`)
+    ) {
+      return;
+    }
+
+    setDeletingRevokedKeys(true);
+    setKeysError(null);
+
+    try {
+      const result = await deleteRevokedQuantumKeys(baseUrl, accessToken);
+      if (result.deletedCount <= 0) {
+        setKeysError('No revoked keys were deleted.');
+      }
+      await refreshKeys();
+    } catch (error) {
+      setKeysError(error instanceof Error ? error.message : 'Unable to delete revoked keys.');
+    } finally {
+      setDeletingRevokedKeys(false);
+    }
+  }, [accessToken, baseUrl, refreshKeys, revokedKeysCount]);
+
   const handleCopy = useCallback(async (value: string, key: string) => {
     try {
       await copyToClipboard(value);
@@ -360,10 +427,10 @@ export function QuantumAuthDashboardCard({
       <View className="mb-4 flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <ThemedText type="subtitle" className="mb-1 text-2xl md:text-3xl">
-            Quantum Access
+            Identerest Account
           </ThemedText>
           <ThemedText className="opacity-85 text-base leading-6 md:text-lg">
-            Sign in with Supabase to manage Quantum API keys. New secrets are shown once, then stored only as masked metadata.
+            Sign in with your Identerest Account to manage Quantum API keys. New secrets are shown once, then stored only as masked metadata.
           </ThemedText>
         </View>
 
@@ -372,7 +439,7 @@ export function QuantumAuthDashboardCard({
           style={{ backgroundColor: tintColor + '25' }}
         >
           <ThemedText className="text-xs font-bold uppercase tracking-[0.18em]">
-            Phase 3.5
+            Phase 3.75
           </ThemedText>
         </View>
       </View>
@@ -386,10 +453,10 @@ export function QuantumAuthDashboardCard({
           }}
         >
           <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
-            Auth is not configured yet
+            Identerest auth is not configured yet
           </ThemedText>
           <ThemedText selectable className="opacity-85 text-base leading-6">
-            {getSupabaseConfigError()} Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to enable magic-link and GitHub sign in on this page.
+            {getSupabaseConfigError()} Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to enable Identerest Account sign in on this page.
           </ThemedText>
         </View>
       ) : bootstrapping ? (
@@ -441,7 +508,7 @@ export function QuantumAuthDashboardCard({
               }}
             >
               <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
-                Sign in to unlock key management
+                Sign in with Identerest Account
               </ThemedText>
               <ThemedText className="mb-4 opacity-80 text-base leading-6">
                 Use a passwordless email magic link or continue with GitHub. Both return you here so you can manage keys immediately.
@@ -544,7 +611,7 @@ export function QuantumAuthDashboardCard({
                 <View className="mb-4 flex-row items-start justify-between gap-3">
                   <View className="flex-1">
                     <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
-                      Signed in
+                      Signed in via Identerest Account
                     </ThemedText>
                     <ThemedText selectable className="opacity-80 text-base leading-6">
                       {session.user.email ?? 'Authenticated Quantum user'}
@@ -733,19 +800,50 @@ export function QuantumAuthDashboardCard({
                     </ThemedText>
                   </View>
 
-                  <Pressable
-                    onPress={refreshKeys}
-                    style={({ pressed }) => ({
-                      opacity: pressed || loadingKeys ? 0.72 : 1,
-                      padding: 4,
-                    })}
-                  >
-                    {loadingKeys ? (
-                      <ActivityIndicator color={secondaryColor} />
-                    ) : (
-                      <Ionicons color={secondaryColor} name="refresh" size={18} />
-                    )}
-                  </Pressable>
+                  <View className="flex-row items-center gap-2">
+                    <Pressable
+                      disabled={deletingRevokedKeys || loadingKeys || revokedKeysCount <= 0}
+                      onPress={handleDeleteAllRevokedKeys}
+                      style={({ pressed }) => ({
+                        alignItems: 'center',
+                        backgroundColor: backgroundColor,
+                        borderColor: '#ef444466',
+                        borderCurve: 'continuous',
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        justifyContent: 'center',
+                        minHeight: 30,
+                        opacity:
+                          pressed || deletingRevokedKeys || loadingKeys || revokedKeysCount <= 0
+                            ? 0.65
+                            : 1,
+                        paddingHorizontal: 10,
+                        paddingVertical: 7,
+                      })}
+                    >
+                      {deletingRevokedKeys ? (
+                        <ActivityIndicator color="#f87171" />
+                      ) : (
+                        <ThemedText className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: '#f87171' }}>
+                          Delete Revoked
+                        </ThemedText>
+                      )}
+                    </Pressable>
+
+                    <Pressable
+                      onPress={refreshKeys}
+                      style={({ pressed }) => ({
+                        opacity: pressed || loadingKeys ? 0.72 : 1,
+                        padding: 4,
+                      })}
+                    >
+                      {loadingKeys ? (
+                        <ActivityIndicator color={secondaryColor} />
+                      ) : (
+                        <Ionicons color={secondaryColor} name="refresh" size={18} />
+                      )}
+                    </Pressable>
+                  </View>
                 </View>
 
                 {loadingKeys ? (
@@ -772,7 +870,15 @@ export function QuantumAuthDashboardCard({
                   <View className="gap-3">
                     {keys.map((key) => {
                       const isBusy = busyKeyId === key.id;
-                      const isRevoked = key.status === 'revoked';
+                      const isInactive = key.status !== 'active';
+                      const statusLabel =
+                        key.status === 'rotated'
+                          ? 'Rotated'
+                          : key.status === 'revoked'
+                            ? 'Revoked'
+                            : 'Active';
+                      const statusColor = isInactive ? '#f87171' : textColor;
+                      const statusBackground = isInactive ? '#ef444422' : tintColor + '25';
 
                       return (
                         <View
@@ -780,7 +886,7 @@ export function QuantumAuthDashboardCard({
                           className="rounded-2xl border p-4"
                           style={{
                             backgroundColor: accentColor + '10',
-                            borderColor: isRevoked ? '#ef444455' : tintColor + '2f',
+                            borderColor: isInactive ? '#ef444455' : tintColor + '2f',
                           }}
                         >
                           <View className="mb-3 flex-row items-start justify-between gap-3">
@@ -796,14 +902,14 @@ export function QuantumAuthDashboardCard({
                             <View
                               className="rounded-full px-3 py-1"
                               style={{
-                                backgroundColor: isRevoked ? '#ef444422' : tintColor + '25',
+                                backgroundColor: statusBackground,
                               }}
                             >
                               <ThemedText
                                 className="text-xs font-bold uppercase tracking-[0.16em]"
-                                style={{ color: isRevoked ? '#f87171' : textColor }}
+                                style={{ color: statusColor }}
                               >
-                                {isRevoked ? 'Revoked' : 'Active'}
+                                {statusLabel}
                               </ThemedText>
                             </View>
                           </View>
@@ -822,34 +928,10 @@ export function QuantumAuthDashboardCard({
                             ) : null}
                           </View>
 
-                          <View className="gap-3 md:flex-row">
+                          {key.status === 'revoked' ? (
                             <Pressable
-                              disabled={isBusy || isRevoked}
-                              onPress={() => handleRotateKey(key)}
-                              style={({ pressed }) => ({
-                                alignItems: 'center',
-                                backgroundColor: isRevoked ? accentColor + '16' : tintColor,
-                                borderCurve: 'continuous',
-                                borderRadius: 14,
-                                flex: 1,
-                                justifyContent: 'center',
-                                opacity: pressed || isBusy || isRevoked ? 0.72 : 1,
-                                paddingHorizontal: 14,
-                                paddingVertical: 12,
-                              })}
-                            >
-                              {isBusy ? (
-                                <ActivityIndicator color="#fff" />
-                              ) : (
-                                <ThemedText inverse className="font-bold text-sm uppercase tracking-[0.14em]">
-                                  Rotate
-                                </ThemedText>
-                              )}
-                            </Pressable>
-
-                            <Pressable
-                              disabled={isBusy || isRevoked}
-                              onPress={() => handleRevokeKey(key)}
+                              disabled={isBusy}
+                              onPress={() => handleDeleteRevokedKey(key)}
                               style={({ pressed }) => ({
                                 alignItems: 'center',
                                 backgroundColor: backgroundColor,
@@ -857,18 +939,69 @@ export function QuantumAuthDashboardCard({
                                 borderCurve: 'continuous',
                                 borderRadius: 14,
                                 borderWidth: 1,
-                                flex: 1,
                                 justifyContent: 'center',
-                                opacity: pressed || isBusy || isRevoked ? 0.72 : 1,
+                                opacity: pressed || isBusy ? 0.72 : 1,
                                 paddingHorizontal: 14,
                                 paddingVertical: 12,
                               })}
                             >
-                              <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: '#f87171' }}>
-                                Revoke
-                              </ThemedText>
+                              {isBusy ? (
+                                <ActivityIndicator color="#f87171" />
+                              ) : (
+                                <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: '#f87171' }}>
+                                  Delete
+                                </ThemedText>
+                              )}
                             </Pressable>
-                          </View>
+                          ) : (
+                            <View className="gap-3 md:flex-row">
+                              <Pressable
+                                disabled={isBusy || isInactive}
+                                onPress={() => handleRotateKey(key)}
+                                style={({ pressed }) => ({
+                                  alignItems: 'center',
+                                  backgroundColor: isInactive ? accentColor + '16' : tintColor,
+                                  borderCurve: 'continuous',
+                                  borderRadius: 14,
+                                  flex: 1,
+                                  justifyContent: 'center',
+                                  opacity: pressed || isBusy || isInactive ? 0.72 : 1,
+                                  paddingHorizontal: 14,
+                                  paddingVertical: 12,
+                                })}
+                              >
+                                {isBusy ? (
+                                  <ActivityIndicator color="#fff" />
+                                ) : (
+                                  <ThemedText inverse className="font-bold text-sm uppercase tracking-[0.14em]">
+                                    Rotate
+                                  </ThemedText>
+                                )}
+                              </Pressable>
+
+                              <Pressable
+                                disabled={isBusy || isInactive}
+                                onPress={() => handleRevokeKey(key)}
+                                style={({ pressed }) => ({
+                                  alignItems: 'center',
+                                  backgroundColor: backgroundColor,
+                                  borderColor: '#ef444466',
+                                  borderCurve: 'continuous',
+                                  borderRadius: 14,
+                                  borderWidth: 1,
+                                  flex: 1,
+                                  justifyContent: 'center',
+                                  opacity: pressed || isBusy || isInactive ? 0.72 : 1,
+                                  paddingHorizontal: 14,
+                                  paddingVertical: 12,
+                                })}
+                              >
+                                <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: '#f87171' }}>
+                                  Revoke
+                                </ThemedText>
+                              </Pressable>
+                            </View>
+                          )}
                         </View>
                       );
                     })}

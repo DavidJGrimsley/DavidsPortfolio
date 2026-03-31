@@ -8,10 +8,8 @@ import { QuantumAuthDashboardCard } from '~/src/components/PublicFacing/api/quan
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { HelloWave } from '@/components/QuantumAnimation';
 import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
+import { QUANTUM_API_BASE_URL, QUANTUM_PORTFOLIO_URL } from '@/lib/quantum-api-config';
 import apisData from '@json/apis.json';
-
-const QUANTUM_BASE_URL = 'https://davidjgrimsley.com/public-facing/api/quantum';
-const QUANTUM_PORTFOLIO_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/portfolio.json';
 
 const SHOULD_DEBUG_PUBLIC_FACING =
   __DEV__ || process.env.EXPO_PUBLIC_PUBLIC_FACING_DEBUG === '1';
@@ -132,8 +130,8 @@ export default function QuantumAPIPage() {
   }, []);
 
   const apiName = portfolioDetail?.api?.name ?? apisData.apis[0].name;
-  const apiBaseUrl = portfolioDetail?.api?.baseUrl ?? QUANTUM_BASE_URL;
-  const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? `${QUANTUM_BASE_URL}/docs`;
+  const apiBaseUrl = portfolioDetail?.api?.baseUrl ?? QUANTUM_API_BASE_URL;
+  const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? `${apiBaseUrl}/docs`;
   const apiVersion = portfolioDetail?.api?.version ?? apisData.apis[0].version;
   const apiStatusRaw = (portfolioDetail?.api?.status ?? apisData.apis[0].status ?? '').toLowerCase();
   const isLive =
@@ -265,7 +263,7 @@ export default function QuantumAPIPage() {
           </View>
         </View>
 
-        <QuantumAuthDashboardCard baseUrl={QUANTUM_BASE_URL} />
+        <QuantumAuthDashboardCard baseUrl={apiBaseUrl} />
 
         {/* Endpoints Section */}
         <View className="mb-7.5">
@@ -749,7 +747,7 @@ export default function QuantumAPIPage() {
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Use the base URL + endpoint path. For example:{"\n\n"}
                   <ThemedText className="font-mono text-sm md:text-base">
-                    {QUANTUM_BASE_URL}/quantum_gate
+                    {apiBaseUrl}/quantum_gate
                   </ThemedText>
                   {"\n\n"}
                   For GET requests (like /quantum_echo_types), just visit the URL. For POST requests (like /quantum_gate), 
@@ -773,7 +771,7 @@ export default function QuantumAPIPage() {
                   4. Authentication and Key Management
                 </ThemedText>
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
-                  Phase 3.5 adds Supabase Auth for key management on this page. Sign in with an email magic link or GitHub, then create, rotate, and revoke Quantum API keys from the dashboard above.{"\n\n"}
+                  Phase 3.75 uses Identerest Account auth for key management on this page. Sign in with an email magic link or GitHub, then create, rotate, and revoke Quantum API keys from the dashboard above.{"\n\n"}
                   <ThemedText className="font-bold">Fair Use Policy:</ThemedText> Please be respectful and don't spam the server. 
                   Excessive requests may be rate-limited. Recommended limit: ~100 requests/minute per key or IP.
                 </ThemedText>
@@ -786,11 +784,11 @@ export default function QuantumAPIPage() {
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Try visiting this URL in your browser right now:{"\n\n"}
                   <ExternalLink 
-                    href={`${QUANTUM_BASE_URL}/quantum_echo_types`}
+                    href={`${apiBaseUrl}/quantum_echo_types`}
                     className="underline font-mono text-sm md:text-base"
                     style={{ color: tintColor }}
                   >
-                    {QUANTUM_BASE_URL}/quantum_echo_types
+                    {apiBaseUrl}/quantum_echo_types
                   </ExternalLink>
                   {"\n\n"}
                   You'll see a JSON response containing the available echo types. That's your first API call!
@@ -814,7 +812,7 @@ export default function QuantumAPIPage() {
               <ScrollView horizontal>
                 <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
 {`const response = await fetch(
-  'https://davidjgrimsley.com/public-facing/api/quantum/quantum_gate',
+  '${apiBaseUrl}/quantum_gate',
   {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -845,7 +843,7 @@ console.log('Superposition:', result.superposition_strength);`}
 import math
 
 response = requests.post(
-  'https://davidjgrimsley.com/public-facing/api/quantum/quantum_gate',
+  '${apiBaseUrl}/quantum_gate',
     json={
         'gate_type': 'rotation',
         'rotation_angle': math.pi / 2
@@ -868,7 +866,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
             <View className="p-4 rounded-lg bg-(--color-code-bg)">
               <ScrollView horizontal>
                 <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
-{`curl -X POST https://davidjgrimsley.com/public-facing/api/quantum/quantum_gate \\
+{`curl -X POST ${apiBaseUrl}/quantum_gate \\
   -H "Content-Type: application/json" \\
   -d '{"gate_type":"rotation","rotation_angle":1.5708}'`}
                 </ThemedText>
