@@ -12,7 +12,7 @@ describe('quantum api config', () => {
   });
 
   function loadConfig() {
-    return require('../quantum-api-config') as typeof import('../quantum-api-config');
+    return jest.requireActual('../quantum-api-config') as typeof import('../quantum-api-config');
   }
 
   it('falls back to the local /v1 base url when the env var is missing or blank', () => {

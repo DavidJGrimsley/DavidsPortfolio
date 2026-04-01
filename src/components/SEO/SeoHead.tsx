@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Head from 'expo-router/head';
-import { useFocusEffect, usePathname } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 
 import {
   AUTHOR_NAME,
@@ -59,14 +59,12 @@ export function SeoHead({
 
   const resolvedImage = toAbsoluteUrl(image ?? DEFAULT_OG_IMAGE_PATH);
 
-  const pathname = usePathname();
-
   useFocusEffect(
     React.useCallback(() => {
       if (typeof document !== 'undefined') {
         document.title = resolvedTitle;
       }
-    }, [resolvedTitle, pathname])
+    }, [resolvedTitle])
   );
 
   return (
