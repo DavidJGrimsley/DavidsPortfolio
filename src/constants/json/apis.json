@@ -6,7 +6,7 @@
       "version": "0.1.0",
       "icon": "⚛️",
       "description": "General-purpose quantum services for games and applications: simulations, text transformations, gate operations, and more.",
-      "baseUrl": "http://127.0.0.1:8000/v1",
+      "baseUrl": "https://davidjgrimsley.com/v1",
       "status": "active",
       "featured": true,
       "tags": ["quantum", "simulation", "gaming", "text-processing"]

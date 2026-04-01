@@ -1,4 +1,9 @@
-const DEFAULT_QUANTUM_API_BASE_URL = 'http://127.0.0.1:8000/v1';
+const DEFAULT_QUANTUM_API_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
+const DEFAULT_QUANTUM_API_BASE_URL_PRODUCTION = 'https://davidjgrimsley.com/v1';
+const DEFAULT_QUANTUM_API_BASE_URL =
+  process.env.NODE_ENV === 'production'
+    ? DEFAULT_QUANTUM_API_BASE_URL_PRODUCTION
+    : DEFAULT_QUANTUM_API_BASE_URL_LOCAL;
 
 export const QUANTUM_AUTH_PATH = '/public-facing/api/quantum';
 
