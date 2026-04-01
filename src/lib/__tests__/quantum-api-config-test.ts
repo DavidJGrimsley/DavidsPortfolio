@@ -15,7 +15,7 @@ describe('quantum api config', () => {
     return require('../quantum-api-config') as typeof import('../quantum-api-config');
   }
 
-  it('falls back to the production base url when the env var is missing or blank', () => {
+  it('falls back to the local /v1 base url when the env var is missing or blank', () => {
     delete process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL;
 
     const withoutEnv = loadConfig();
@@ -24,13 +24,11 @@ describe('quantum api config', () => {
     jest.resetModules();
     const withBlankEnv = loadConfig();
 
-    expect(withoutEnv.QUANTUM_API_BASE_URL).toBe('https://davidjgrimsley.com/public-facing/api/quantum');
+    expect(withoutEnv.QUANTUM_API_BASE_URL).toBe('http://127.0.0.1:8000/v1');
     expect(withoutEnv.QUANTUM_PORTFOLIO_URL).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum/portfolio.json'
+      'http://127.0.0.1:8000/v1/portfolio.json'
     );
-    expect(withBlankEnv.QUANTUM_API_BASE_URL).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum'
-    );
+    expect(withBlankEnv.QUANTUM_API_BASE_URL).toBe('http://127.0.0.1:8000/v1');
   });
 
   it('uses the env override and trims trailing slashes', () => {

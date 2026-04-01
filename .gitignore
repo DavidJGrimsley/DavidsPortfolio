@@ -57,6 +57,9 @@ app-example
 
 server/
 api-server/
+!src/server/
+!src/server/data/
+!src/server/data/servicesConfig.ts
 
 # Android
 android/

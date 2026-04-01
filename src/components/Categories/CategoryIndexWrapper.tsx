@@ -1,6 +1,6 @@
 import React from "react";
 import { MyCards } from "@/components/Categories/MyCards";
-import { TabContainer } from "@/components/Navigation/TabContainer";
+import { TabContainer } from "@/components/navigation/TabContainer";
 
 const categoryKeywords: Record<string, string[]> = {
   'mobile-apps': ['mobile app developer', 'React Native', 'Expo', 'iOS apps', 'Android apps'],

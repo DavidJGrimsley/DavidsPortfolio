@@ -3,10 +3,10 @@
     {
       "id": "quantum",
       "name": "Quantum API",
-      "version": "1.0.0",
+      "version": "0.1.0",
       "icon": "⚛️",
       "description": "General-purpose quantum services for games and applications: simulations, text transformations, gate operations, and more.",
-      "baseUrl": "https://davidjgrimsley.com/api/quantum",
+      "baseUrl": "http://127.0.0.1:8000/v1",
       "status": "active",
       "featured": true,
       "tags": ["quantum", "simulation", "gaming", "text-processing"]

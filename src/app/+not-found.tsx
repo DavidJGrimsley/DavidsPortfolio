@@ -4,7 +4,7 @@ import { Platform, View } from 'react-native';
 import LottieView from 'lottie-react-native';
 
 import { ThemedText } from '@/components/UI/ThemedText';
-import { TabContainer } from '@/components/Navigation/TabContainer';
+import { TabContainer } from '@/components/navigation/TabContainer';
 
 type LottieComponent = React.ComponentType<any> | null;
 

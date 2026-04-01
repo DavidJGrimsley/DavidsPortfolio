@@ -4,7 +4,7 @@ import { ActivityIndicator, Modal, Pressable, TextInput, View, Linking } from "r
 import { type Href, router } from "expo-router";
 import { Controller, useForm } from 'react-hook-form';
 import { Picker } from '@react-native-picker/picker';
-import { TabContainer } from "@/components/Navigation/TabContainer";
+import { TabContainer } from "@/components/navigation/TabContainer";
 import { FORM_SUBMIT_ENDPOINT, intakeForms, type IntakeField } from '@/constants/intakeForms';
 import { useThemeColor } from '@/hooks/useThemeColor';
 

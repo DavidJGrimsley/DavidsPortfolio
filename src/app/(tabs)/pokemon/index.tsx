@@ -1,7 +1,7 @@
 import React from 'react';
 import { ThemedText } from "@/components/UI/ThemedText";
 import { View, Pressable, Linking } from "react-native";
-import { TabContainer } from "@/components/Navigation/TabContainer";
+import { TabContainer } from "@/components/navigation/TabContainer";
 
 export default function Pokemon() {
   return (

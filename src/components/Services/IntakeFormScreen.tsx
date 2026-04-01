@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Picker } from '@react-native-picker/picker';
 import { FORM_SUBMIT_ENDPOINT, intakeForms, type IntakeField } from '@/constants/intakeForms';
 import { ThemedText } from '@/components/UI/ThemedText';
-import { TabContainer } from '@/components/Navigation/TabContainer';
+import { TabContainer } from '@/components/navigation/TabContainer';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
 interface IntakeFormScreenProps {

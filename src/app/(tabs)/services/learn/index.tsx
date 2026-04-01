@@ -1,7 +1,7 @@
 import { View, Pressable } from 'react-native';
 import { ThemedText } from "@/components/UI/ThemedText";
 import { type Href, router } from 'expo-router';
-import { TabContainer } from "@/components/Navigation/TabContainer";
+import { TabContainer } from "@/components/navigation/TabContainer";
 
 const Page = () => {
   return (

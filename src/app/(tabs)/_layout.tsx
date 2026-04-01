@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import { VerticalTabBar } from '@/components/Navigation/VerticalTabBar';
+import { VerticalTabBar } from '@/components/navigation/VerticalTabBar';
 
 /**
  * @EXTRACT: Desktop breakpoint for showing vertical tab bar
