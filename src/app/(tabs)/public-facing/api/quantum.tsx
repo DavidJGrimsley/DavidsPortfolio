@@ -8,9 +8,17 @@ import { QuantumAuthDashboardCard } from '~/src/components/PublicFacing/api/quan
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { HelloWave } from '@/components/QuantumAnimation';
 import { PublicFacingDetailWrapper } from '~/src/components/PublicFacing/PublicFacingDetailWrapper';
-import { QUANTUM_API_BASE_URL, QUANTUM_PORTFOLIO_URL } from '@/lib/quantum-api-config';
+import {
+  QUANTUM_API_BASE_URL,
+  QUANTUM_DOCS_URL,
+  QUANTUM_PORTFOLIO_URL,
+  getQuantumApiHeaders,
+  hasQuantumApiKey,
+} from '@/lib/quantum-api-config';
 import apisData from '@json/apis.json';
 
+const QUANTUM_API_HEADERS = getQuantumApiHeaders({ includeContentType: false });
+const HAS_QUANTUM_API_KEY = hasQuantumApiKey();
 const SHOULD_DEBUG_PUBLIC_FACING =
   __DEV__ || process.env.EXPO_PUBLIC_PUBLIC_FACING_DEBUG === '1';
 
@@ -34,6 +42,7 @@ type QuantumPortfolioDetail = {
     path: string;
     summary: string;
     description?: string;
+    auth?: 'public' | 'api_key' | 'bearer_jwt';
     parameters?: {
       name: string;
       type: string;
@@ -47,6 +56,99 @@ type QuantumPortfolioDetail = {
     responses?: { code: string; description: string; example?: any }[];
   }[];
 };
+
+type QuantumEndpoint = QuantumPortfolioDetail['endpoints'][number];
+
+const FALLBACK_ENDPOINTS: QuantumEndpoint[] = [
+  {
+    method: 'GET',
+    path: '/v1/health',
+    summary: 'Service health and runtime capability status',
+    description:
+      'Public liveness endpoint. Returns service status, version, and runtime availability details.',
+    auth: 'public',
+    responses: [
+      {
+        code: '200',
+        description: 'Healthy response payload',
+        example: {
+          status: 'healthy',
+          service: 'Quantum API',
+          version: '0.1.0',
+          qiskit_available: true,
+          runtime_mode: 'simulator',
+        },
+      },
+    ],
+  },
+  {
+    method: 'GET',
+    path: '/v1/echo-types',
+    summary: 'List canonical text transformation categories',
+    description:
+      'Returns transformation categories and descriptions used by text transformation clients.',
+    auth: 'api_key',
+    responses: [
+      {
+        code: '200',
+        description: 'Echo type catalog',
+      },
+      {
+        code: '401',
+        description: 'Missing or invalid API key',
+      },
+    ],
+  },
+  {
+    method: 'POST',
+    path: '/v1/gates/run',
+    summary: 'Run a single-qubit gate and return measured output',
+    description:
+      'Supports bit_flip, phase_flip, and rotation gates. Rotation requests must include rotation_angle_rad.',
+    auth: 'api_key',
+    parameters: [
+      {
+        name: 'gate_type',
+        type: 'string',
+        required: true,
+        description: "Gate to apply: 'bit_flip', 'phase_flip', or 'rotation'.",
+        example: 'rotation',
+        enum: ['bit_flip', 'phase_flip', 'rotation'],
+      },
+      {
+        name: 'rotation_angle_rad',
+        type: 'number',
+        required: false,
+        description: "Radians for rotation gate. Required only when gate_type is 'rotation'.",
+        example: 1.5708,
+        dependsOn: 'rotation',
+      },
+    ],
+    requestBody: {
+      description: 'Gate execution request payload.',
+      example: {
+        gate_type: 'rotation',
+        rotation_angle_rad: Math.PI / 2,
+      },
+    },
+    responses: [
+      {
+        code: '200',
+        description: 'Successful quantum gate simulation',
+        example: {
+          gate_type: 'rotation',
+          measurement: 1,
+          superposition_strength: 0.87,
+          success: true,
+        },
+      },
+      {
+        code: '401',
+        description: 'Missing or invalid API key',
+      },
+    ],
+  },
+];
 
 export default function QuantumAPIPage() {
   const backgroundColor = useThemeColor({}, 'background');
@@ -131,7 +233,7 @@ export default function QuantumAPIPage() {
 
   const apiName = portfolioDetail?.api?.name ?? apisData.apis[0].name;
   const apiBaseUrl = portfolioDetail?.api?.baseUrl ?? QUANTUM_API_BASE_URL;
-  const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? `${apiBaseUrl}/docs`;
+  const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? QUANTUM_DOCS_URL;
   const apiVersion = portfolioDetail?.api?.version ?? apisData.apis[0].version;
   const apiStatusRaw = (portfolioDetail?.api?.status ?? apisData.apis[0].status ?? '').toLowerCase();
   const isLive =
@@ -139,6 +241,18 @@ export default function QuantumAPIPage() {
 
   const isMetaSynced = isDetailSynced;
   const hasRemoteEndpoints = Array.isArray(portfolioDetail?.endpoints) && portfolioDetail.endpoints.length > 0;
+  const endpointsToRender: QuantumEndpoint[] = hasRemoteEndpoints ? portfolioDetail!.endpoints : FALLBACK_ENDPOINTS;
+  const authHintForEndpoint = (
+    auth: QuantumEndpoint['auth'],
+  ): string | undefined => {
+    if (auth === 'api_key' && !HAS_QUANTUM_API_KEY) {
+      return 'Set EXPO_PUBLIC_QUANTUM_API_KEY to test this endpoint locally.';
+    }
+    if (auth === 'bearer_jwt') {
+      return 'This endpoint requires a signed user JWT. Test it in Swagger with Bearer auth.';
+    }
+    return undefined;
+  };
 
   const seoTitle = portfolioDetail?.api?.name
     ? `${portfolioDetail.api.name} API`
@@ -271,146 +385,46 @@ export default function QuantumAPIPage() {
             📡 Endpoints
           </ThemedText>
 
-          {hasRemoteEndpoints
-            ? portfolioDetail!.endpoints.map((endpoint) => {
-                const normalizedMethod = String(endpoint.method ?? 'GET').toUpperCase();
-                const methodForCard =
-                  normalizedMethod === 'GET' ||
-                  normalizedMethod === 'POST' ||
-                  normalizedMethod === 'PUT' ||
-                  normalizedMethod === 'DELETE' ||
-                  normalizedMethod === 'PATCH'
-                    ? normalizedMethod
-                    : 'GET';
+          {endpointsToRender.map((endpoint) => {
+            const normalizedMethod = String(endpoint.method ?? 'GET').toUpperCase();
+            const methodForCard =
+              normalizedMethod === 'GET' ||
+              normalizedMethod === 'POST' ||
+              normalizedMethod === 'PUT' ||
+              normalizedMethod === 'DELETE' ||
+              normalizedMethod === 'PATCH'
+                ? normalizedMethod
+                : 'GET';
 
-                return (
-                  <EndpointCard
-                    key={`${normalizedMethod}:${endpoint.path}`}
-                    method={methodForCard}
-                    path={endpoint.path}
-                    summary={endpoint.summary}
-                    description={endpoint.description}
-                    parameters={endpoint.parameters}
-                    requestBody={endpoint.requestBody}
-                    responses={endpoint.responses}
-                    baseUrl={apiBaseUrl}
-                  />
-                );
-              })
-            : null}
+            return (
+              <EndpointCard
+                key={`${normalizedMethod}:${endpoint.path}`}
+                method={methodForCard}
+                path={endpoint.path}
+                summary={endpoint.summary}
+                description={endpoint.description}
+                auth={endpoint.auth ?? 'public'}
+                parameters={endpoint.parameters}
+                requestBody={endpoint.requestBody}
+                responses={endpoint.responses}
+                baseUrl={apiBaseUrl}
+                extraHeaders={endpoint.auth === 'api_key' && HAS_QUANTUM_API_KEY ? QUANTUM_API_HEADERS : undefined}
+                liveDisabledReason={authHintForEndpoint(endpoint.auth)}
+              />
+            );
+          })}
 
           {!hasRemoteEndpoints ? (
-            <>
-              {/* Quantum Gate */}
-              <EndpointCard
-                method="POST"
-                path="/quantum_gate"
-                summary="Apply quantum gate operation"
-                description="Execute a quantum gate operation on a single qubit. The qubit starts in |0⟩ state, the gate is applied, then measured to collapse the wavefunction.\n\n🔄 Rotation (RY): Creates quantum superposition. Angle 0°→always 0, 45°→50/50 chance, 90°→maximum superposition, 180°→always 1. Measurement is probabilistic!\n\n⚡ Bit Flip (Pauli-X): Quantum NOT gate. Deterministically flips |0⟩→|1⟩. Always measures 1, no superposition.\n\n🌊 Phase Flip (Pauli-Z): Flips phase of |1⟩ while leaving |0⟩ unchanged. Always measures 0 from |0⟩ state, no superposition."
-                parameters={[
-                  {
-                    name: 'gate',
-                    type: 'string',
-                    required: true,
-                    description: 'Type of quantum gate to apply',
-                    example: 'rotation',
-                    enum: ['rotation', 'bit_flip', 'phase_flip']
-                  },
-                  {
-                    name: 'rotation_angle',
-                    type: 'number',
-                    required: false,
-                    description: 'Angle in degrees for RY rotation gate (0 to 180). Required only when gate="rotation". Higher angles create more superposition.',
-                    example: 50,
-                    dependsOn: 'rotation'
-                  }
-                ]}
-                requestBody={{
-                  description: 'Quantum gate configuration. Include rotation_angle only for rotation gate.',
-                  example: {
-                    gate: 'rotation',
-                    rotation_angle: 50
-                  }
-                }}
-                responses={[
-                  {
-                    code: '200',
-                    description: 'Quantum gate result. measurement: collapsed state (0 or 1, random for rotation). success: true if measured 0. superposition_strength: how quantum the state is (0=classical, higher=more quantum). For rotation gates, measurement varies randomly based on quantum probability!',
-                    example: {
-                      gate_type: 'rotation',
-                      measurement: 0,
-                      success: true,
-                      superposition_strength: 0.866
-                    }
-                  },
-                  {
-                    code: '400',
-                    description: 'Invalid gate parameters'
-                  },
-                  {
-                    code: '500',
-                    description: 'Quantum simulation error'
-                  }
-                ]}
-                baseUrl={apiBaseUrl}
-              />
-
-          {/* Quantum Text */}
-              <EndpointCard
-            method="POST"
-            path="/quantum_text"
-            summary="Transform text using quantum effects"
-            description="Apply quantum-inspired transformations to text strings. Uses quantum randomness to determine transformation strength and type."
-            parameters={[
-              {
-                name: 'text',
-                type: 'string',
-                required: true,
-                description: 'The text string to transform',
-                example: 'Hello Quantum World'
-              }
-            ]}
-            requestBody={{
-              description: 'Text transformation request',
-              example: {
-                text: 'Hello Quantum World'
-              }
-            }}
-            responses={[
-              {
-                code: '200',
-                description: 'Transformed text result',
-                example: {
-                  coverage_percent: 50,
-                  original: 'Hello Quantum World',
-                  quantum_words: 2,
-                  total_words: 3,
-                  transformed: 'ⓗⓔⓛⓛⓞ ⓆⓊⒶⓃⓉⓊⓂ World'
-                }
-              }
-            ]}
-            baseUrl={apiBaseUrl}
-          />
-
-          {/* Echo Types */}
-              <EndpointCard
-            method="GET"
-            path="/quantum_echo_types"
-            summary="List available transformation types"
-            description="Get a list of all available quantum text transformation types and their descriptions."
-            baseUrl={apiBaseUrl}
-            responses={[
-              {
-                code: '200',
-                description: 'List of transformation types',
-                example: {
-                  types: ['circled', 'squared', 'inverted', 'script', 'bold']
-                }
-              }
-            ]}
-          />
-
-            </>
+            <View
+              className="p-4 rounded-lg"
+              style={{
+                backgroundColor: accentColor,
+              }}
+            >
+              <ThemedText className="opacity-80">
+                Unable to sync endpoint metadata from {QUANTUM_PORTFOLIO_URL}. Showing local fallback endpoint docs.
+              </ThemedText>
+            </View>
           ) : null}
         </View>
 
@@ -502,7 +516,7 @@ export default function QuantumAPIPage() {
                   How This API Works
                 </ThemedText>
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
-                  This API uses IBM's Qiskit library to simulate quantum circuits. When you call the /quantum_gate endpoint, 
+                  This API uses IBM's Qiskit library to simulate quantum circuits. When you call the /gates/run endpoint, 
                   the server creates a quantum circuit, applies a rotation gate (RY) at your chosen angle, then measures the 
                   qubit. The measurement forces the quantum state to collapse into either 0 or 1, giving you TRUE quantum 
                   randomness (not pseudo-random like typical computer algorithms). The angle you choose determines how likely 
@@ -747,11 +761,11 @@ export default function QuantumAPIPage() {
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Use the base URL + endpoint path. For example:{"\n\n"}
                   <ThemedText className="font-mono text-sm md:text-base">
-                    {apiBaseUrl}/quantum_gate
+                    {apiBaseUrl}/gates/run
                   </ThemedText>
                   {"\n\n"}
-                  For GET requests (like /quantum_echo_types), just visit the URL. For POST requests (like /quantum_gate), 
-                  you need to send data in JSON format.
+                  For public GET requests (like /health), visit the URL directly. For protected endpoints (like /gates/run or /echo-types),
+                  send <ThemedText className="font-mono">X-API-Key</ThemedText> with your request.
                 </ThemedText>
               </View>
 
@@ -772,8 +786,11 @@ export default function QuantumAPIPage() {
                 </ThemedText>
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Phase 3.75 uses Identerest Account auth for key management on this page. Sign in with an email magic link or GitHub, then create, rotate, and revoke Quantum API keys from the dashboard above.{"\n\n"}
-                  <ThemedText className="font-bold">Fair Use Policy:</ThemedText> Please be respectful and don't spam the server. 
-                  Excessive requests may be rate-limited. Recommended limit: ~100 requests/minute per key or IP.
+                  Public routes include <ThemedText className="font-mono">/v1/health</ThemedText> and{' '}
+                  <ThemedText className="font-mono">/v1/portfolio.json</ThemedText>. Most runtime endpoints require an API key in{' '}
+                  <ThemedText className="font-mono">X-API-Key</ThemedText>.{"\n\n"}
+                  <ThemedText className="font-bold">Fair Use Policy:</ThemedText> Keep requests reasonable and expect rate limiting
+                  on protected endpoints.
                 </ThemedText>
               </View>
 
@@ -784,14 +801,14 @@ export default function QuantumAPIPage() {
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Try visiting this URL in your browser right now:{"\n\n"}
                   <ExternalLink 
-                    href={`${apiBaseUrl}/quantum_echo_types`}
+                    href={`${apiBaseUrl}/health`}
                     className="underline font-mono text-sm md:text-base"
                     style={{ color: tintColor }}
                   >
-                    {apiBaseUrl}/quantum_echo_types
+                    {apiBaseUrl}/health
                   </ExternalLink>
                   {"\n\n"}
-                  You'll see a JSON response containing the available echo types. That's your first API call!
+                  You will see a health payload. Then add <ThemedText className="font-mono">X-API-Key</ThemedText> to call protected routes like /gates/run.
                 </ThemedText>
               </View>
             </View>
@@ -812,13 +829,16 @@ export default function QuantumAPIPage() {
               <ScrollView horizontal>
                 <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
 {`const response = await fetch(
-  '${apiBaseUrl}/quantum_gate',
+  '${apiBaseUrl}/gates/run',
   {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': '<your_api_key>'
+    },
     body: JSON.stringify({
       gate_type: 'rotation',
-      rotation_angle: Math.PI / 2
+      rotation_angle_rad: Math.PI / 2
     })
   }
 );
@@ -843,10 +863,11 @@ console.log('Superposition:', result.superposition_strength);`}
 import math
 
 response = requests.post(
-  '${apiBaseUrl}/quantum_gate',
+  '${apiBaseUrl}/gates/run',
+    headers={'X-API-Key': '<your_api_key>'},
     json={
         'gate_type': 'rotation',
-        'rotation_angle': math.pi / 2
+        'rotation_angle_rad': math.pi / 2
     }
 )
 
@@ -866,9 +887,10 @@ print(f"Superposition: {result['superposition_strength']}")`}
             <View className="p-4 rounded-lg bg-(--color-code-bg)">
               <ScrollView horizontal>
                 <ThemedText className="font-mono text-sm md:text-base text-(--color-code-text) leading-relaxed">
-{`curl -X POST ${apiBaseUrl}/quantum_gate \\
+{`curl -X POST ${apiBaseUrl}/gates/run \\
+  -H "X-API-Key: <your_api_key>" \\
   -H "Content-Type: application/json" \\
-  -d '{"gate_type":"rotation","rotation_angle":1.5708}'`}
+  -d '{"gate_type":"rotation","rotation_angle_rad":1.5708}'`}
                 </ThemedText>
               </ScrollView>
             </View>
@@ -977,7 +999,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
             <HelloWave />
             
             <ThemedText className="detail-body opacity-85 text-center mt-4 italic text-base md:text-lg leading-relaxed">
-              Every time this loads, it calls POST /quantum_gate with a random rotation angle, 
+              Every time this loads, it calls POST /gates/run with a random rotation angle, 
               runs a quantum simulation, measures the qubit, and uses the result to control 
               the animation's behavior. This is quantum computing in action!
             </ThemedText>

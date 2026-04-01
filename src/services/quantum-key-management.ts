@@ -33,7 +33,27 @@ export class QuantumApiError extends Error {
 }
 
 function joinUrl(baseUrl: string, path: string) {
-  return `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  const trimmedPath = path.trim();
+  if (/^https?:\/\//i.test(trimmedPath)) {
+    return trimmedPath;
+  }
+
+  const normalizedBase = baseUrl.trim().replace(/\/+$/, '');
+  const normalizedPath = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
+  const baseMatch = normalizedBase.match(/^(https?:\/\/[^/]+)(\/.*)?$/i);
+
+  if (!baseMatch) {
+    return `${normalizedBase}${normalizedPath}`;
+  }
+
+  const origin = baseMatch[1];
+  const basePath = baseMatch[2] ?? '';
+
+  if (basePath && normalizedPath.startsWith(`${basePath}/`)) {
+    return `${origin}${normalizedPath}`;
+  }
+
+  return `${normalizedBase}${normalizedPath}`;
 }
 
 function asObject(value: unknown): JsonObject | null {
@@ -266,7 +286,7 @@ function normalizeMutationResult(payload: unknown): QuantumKeyMutationResult {
 }
 
 export async function listQuantumKeys(baseUrl: string, accessToken: string) {
-  const payload = await requestQuantumApi(baseUrl, accessToken, '/v1/keys', {
+  const payload = await requestQuantumApi(baseUrl, accessToken, '/keys', {
     method: 'GET',
   });
 
@@ -280,7 +300,7 @@ export async function createQuantumKey(
   accessToken: string,
   input: { name?: string }
 ) {
-  const payload = await requestQuantumApi(baseUrl, accessToken, '/v1/keys', {
+  const payload = await requestQuantumApi(baseUrl, accessToken, '/keys', {
     method: 'POST',
     body: JSON.stringify(input.name ? { name: input.name } : {}),
   });
@@ -292,7 +312,7 @@ export async function revokeQuantumKey(baseUrl: string, accessToken: string, key
   const payload = await requestQuantumApi(
     baseUrl,
     accessToken,
-    `/v1/keys/${encodeURIComponent(keyId)}/revoke`,
+    `/keys/${encodeURIComponent(keyId)}/revoke`,
     {
       method: 'POST',
     }
@@ -305,7 +325,7 @@ export async function rotateQuantumKey(baseUrl: string, accessToken: string, key
   const payload = await requestQuantumApi(
     baseUrl,
     accessToken,
-    `/v1/keys/${encodeURIComponent(keyId)}/rotate`,
+    `/keys/${encodeURIComponent(keyId)}/rotate`,
     {
       method: 'POST',
     }
@@ -315,7 +335,7 @@ export async function rotateQuantumKey(baseUrl: string, accessToken: string, key
 }
 
 export async function deleteQuantumKey(baseUrl: string, accessToken: string, keyId: string) {
-  await requestQuantumApi(baseUrl, accessToken, `/v1/keys/${encodeURIComponent(keyId)}`, {
+  await requestQuantumApi(baseUrl, accessToken, `/keys/${encodeURIComponent(keyId)}`, {
     method: 'DELETE',
   });
 }
@@ -324,7 +344,7 @@ export async function deleteRevokedQuantumKeys(
   baseUrl: string,
   accessToken: string
 ): Promise<QuantumRevokedBulkDeleteResult> {
-  const payload = await requestQuantumApi(baseUrl, accessToken, '/v1/keys/revoked', {
+  const payload = await requestQuantumApi(baseUrl, accessToken, '/keys/revoked', {
     method: 'DELETE',
   });
   const objectPayload = asObject(payload);

@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
-import { TabContainer } from '@/components/Navigation/TabContainer';
+import { TabContainer } from '@/components/navigation/TabContainer';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 
 export default function PortfolioIndexPage() {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { TabContainer } from '@/components/Navigation/TabContainer';
+import { TabContainer } from '@/components/navigation/TabContainer';
 import type { SeoHeadProps } from '@/components/SEO/SeoHead';
 
 type PublicFacingIndexWrapperProps = {

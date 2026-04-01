@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import React from "react";
 import { FeaturedCard } from "../../components/FeaturedCard";
 import { HomeScreenGradient } from "@/components/Gradients";
-import { TabContainer } from "@/components/Navigation/TabContainer";
+import { TabContainer } from "@/components/navigation/TabContainer";
 
 
 

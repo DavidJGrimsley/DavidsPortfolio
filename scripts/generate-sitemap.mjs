@@ -73,6 +73,14 @@ function normalizePathname(p) {
   return p;
 }
 
+function encodePathname(pathname) {
+  const normalized = normalizePathname(pathname);
+  return normalized
+    .split('/')
+    .map((segment, index) => (index === 0 ? '' : encodeURIComponent(segment)))
+    .join('/');
+}
+
 function main() {
   // Static routes (group folders like (tabs) are NOT part of the URL)
   const staticRoutes = [
@@ -145,7 +153,7 @@ function main() {
 
   const allRoutes = [...staticRoutes, ...portfolioRoutes, ...intakeRoutes]
     .map((r) => ({
-      loc: joinUrl(SITE_URL, normalizePathname(r.path)),
+      loc: joinUrl(SITE_URL, encodePathname(r.path)),
       changefreq: r.changefreq,
       priority: r.priority,
     }));

@@ -22,7 +22,7 @@ function createMockResponse(body: string, init?: Partial<Pick<MockResponse, 'ok'
 
 describe('quantum key management', () => {
   const fetchMock = jest.fn();
-  const baseUrl = 'https://example.com/public-facing/api/quantum';
+  const baseUrl = 'https://example.com/v1';
   const accessToken = 'supabase-access-token';
 
   beforeEach(() => {
@@ -66,7 +66,7 @@ describe('quantum key management', () => {
 
     const keys = await listQuantumKeys(baseUrl, accessToken);
 
-    expect(fetchMock).toHaveBeenCalledWith(`${baseUrl}/v1/keys`, {
+    expect(fetchMock).toHaveBeenCalledWith(`${baseUrl}/keys`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${accessToken}`,

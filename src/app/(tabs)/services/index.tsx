@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { View, Pressable } from "react-native";
 import { type Href, router } from "expo-router";
 import { ThemedText } from "@/components/UI/ThemedText";
-import { TabContainer } from "@/components/Navigation/TabContainer";
+import { TabContainer } from "@/components/navigation/TabContainer";
 import { getContent } from "@/services/contentApi";
 import type { ServiceCard } from "@/types/content";
 

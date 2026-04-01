@@ -12,12 +12,18 @@ import LottieView from 'lottie-react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { ThemedView } from '@/components/UI/ThemedView';
 import { ExternalLink } from '@/components/UI/ExternalLink';
-import { QUANTUM_API_BASE_URL } from '@/lib/quantum-api-config';
+import {
+  QUANTUM_API_BASE_URL,
+  getQuantumApiHeaders,
+  hasQuantumApiKey,
+} from '@/lib/quantum-api-config';
 
 
 export function HelloWave() {
   const quantumBaseUrl = QUANTUM_API_BASE_URL;
-  const quantumEndpoint = `${quantumBaseUrl}/quantum_gate`;
+  const quantumEndpoint = `${quantumBaseUrl}/gates/run`;
+  const quantumApiHeaders = getQuantumApiHeaders();
+  const hasApiKey = hasQuantumApiKey();
   const rotationAnimation = useSharedValue(0);
   const scaleAnimation = useSharedValue(1);
   const [robotMessage, setRobotMessage] = useState('🤖 Initializing quantum circuit...');
@@ -115,7 +121,12 @@ export function HelloWave() {
   const startClassicalFallback = (reason: string) => {
     console.log('🌊 [QuantumWave] 🎲 Falling back to classical physics animation:', reason);
 
-    setRobotMessage('⚠️ Quantum server offline - Running classical animation mode');
+    const keyMissing = reason.toLowerCase().includes('api key');
+    setRobotMessage(
+      keyMissing
+        ? '⚠️ Missing EXPO_PUBLIC_QUANTUM_API_KEY - Running classical animation mode'
+        : '⚠️ Quantum API unavailable - Running classical animation mode',
+    );
     setTechnicalDetails({
       gate: 'Classical Fallback',
       angle: 0,
@@ -172,6 +183,11 @@ export function HelloWave() {
     makeRobotSpeak('Initializing qubit in |0⟩ state...', 1500);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
+    if (!hasApiKey) {
+      startClassicalFallback('Missing API key');
+      return;
+    }
+
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => {
@@ -199,12 +215,10 @@ export function HelloWave() {
 
       const response = await fetch(quantumEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: quantumApiHeaders,
         body: JSON.stringify({
           gate_type: 'rotation',
-          rotation_angle: randomAngle,
+          rotation_angle_rad: randomAngle,
         }),
         signal: controller.signal,
       });
@@ -537,11 +551,11 @@ export function HelloWave() {
       {/* Explanation */}
       <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(128, 128, 128, 0.3)' }}>
         <ThemedText style={{ fontSize: 12, opacity: 0.7, textAlign: 'left', fontStyle: 'italic', flexWrap: 'wrap' }}>
-          💡 This animation is slightly or very different every time you load it due to quantum randomness! It makes a live API call 
+          💡 This animation is slightly or very different every time you load it due to quantum randomness! It makes a live API call
           to a Python server hosted at <ExternalLink 
             href={quantumBaseUrl}
             style={{ textDecorationLine: 'underline', color: '#11181C', fontSize: 12, opacity: 0.7 }}
-          >{quantumBaseUrl}</ExternalLink>, which runs Qiskit quantum circuit calculations in a simulated environment. 
+          >{quantumBaseUrl}</ExternalLink>, which runs Qiskit quantum circuit calculations in a simulated environment.
           The RY gate creates a superposition state, and when measured, the quantum wavefunction collapses to produce 
           truly random results that drive the animation&apos;s behavior, intensity, and duration.
         </ThemedText>
