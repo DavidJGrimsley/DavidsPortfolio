@@ -5,9 +5,8 @@ import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsAPICard } from '~/src/components/PublicFacing/api/WhatIsAPICard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
 import { useFetchPortfolio } from '@/hooks/useFetchPortfolio';
+import { QUANTUM_PORTFOLIO_URL } from '@/lib/quantum-api-config';
 import apisData from '@json/apis.json';
-
-const QUANTUM_PORTFOLIO_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/portfolio.json';
 
 type QuantumPortfolio = {
   api: {

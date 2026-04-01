@@ -12,10 +12,11 @@ import LottieView from 'lottie-react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { ThemedView } from '@/components/UI/ThemedView';
 import { ExternalLink } from '@/components/UI/ExternalLink';
+import { QUANTUM_API_BASE_URL } from '@/lib/quantum-api-config';
 
 
 export function HelloWave() {
-  const quantumBaseUrl = 'https://davidjgrimsley.com/public-facing/api/quantum';
+  const quantumBaseUrl = QUANTUM_API_BASE_URL;
   const quantumEndpoint = `${quantumBaseUrl}/quantum_gate`;
   const rotationAnimation = useSharedValue(0);
   const scaleAnimation = useSharedValue(1);
@@ -538,9 +539,9 @@ export function HelloWave() {
         <ThemedText style={{ fontSize: 12, opacity: 0.7, textAlign: 'left', fontStyle: 'italic', flexWrap: 'wrap' }}>
           💡 This animation is slightly or very different every time you load it due to quantum randomness! It makes a live API call 
           to a Python server hosted at <ExternalLink 
-            href="https://davidjgrimsley.com/public-facing/api/quantum"
+            href={quantumBaseUrl}
             style={{ textDecorationLine: 'underline', color: '#11181C', fontSize: 12, opacity: 0.7 }}
-          >DavidJGrimsley.com/public-facing/api/quantum</ExternalLink>, which runs Qiskit quantum circuit calculations in a simulated environment. 
+          >{quantumBaseUrl}</ExternalLink>, which runs Qiskit quantum circuit calculations in a simulated environment. 
           The RY gate creates a superposition state, and when measured, the quantum wavefunction collapses to produce 
           truly random results that drive the animation&apos;s behavior, intensity, and duration.
         </ThemedText>
