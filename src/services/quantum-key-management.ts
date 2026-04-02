@@ -435,8 +435,22 @@ export function toIbmProfileUserMessage(error: unknown) {
   }
 
   if (
-    error.status === 400 ||
     error.status === 401 ||
+    error.status === 403 ||
+    errorIncludes(
+      joinedDetails,
+      'access token',
+      'jwt',
+      'expired',
+      'not authenticated',
+      'authentication required'
+    )
+  ) {
+    return 'Your session is no longer valid. Sign out and sign in again, then retry.';
+  }
+
+  if (
+    error.status === 400 ||
     errorIncludes(joinedDetails, 'invalid credential', 'invalid token', 'unauthorized')
   ) {
     return 'IBM credentials could not be verified. Check token, instance/CRN, and channel.';

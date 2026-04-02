@@ -41,6 +41,10 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function isTerminalIbmFailureStatus(status: string) {
+  return status === 'failed' || status === 'cancelled' || status === 'cancelling';
+}
+
 function getRandomAngle() {
   const angles = [
     Math.PI / 16,
@@ -63,6 +67,7 @@ export function HelloWave() {
   const quantumApiHeaders = getQuantumApiHeaders();
 
   const restartRef = useRef<LottieView>(null);
+  const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
@@ -124,14 +129,30 @@ export function HelloWave() {
 
   const runSimulator = useCallback(
     async (angle: number): Promise<QuantumRunResult> => {
-      const response = await fetch(quantumEndpoint, {
-        method: 'POST',
-        headers: quantumApiHeaders,
-        body: JSON.stringify({
-          gate_type: 'rotation',
-          rotation_angle_rad: angle,
-        }),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 10_000);
+
+      let response: Response;
+      try {
+        response = await fetch(quantumEndpoint, {
+          method: 'POST',
+          headers: quantumApiHeaders,
+          body: JSON.stringify({
+            gate_type: 'rotation',
+            rotation_angle_rad: angle,
+          }),
+          signal: controller.signal,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Simulator request timed out. Please try again.');
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -195,13 +216,12 @@ export function HelloWave() {
         status,
       });
 
+      if (isTerminalIbmFailureStatus(status)) {
+        throw new Error(`IBM hardware job ended with status "${status}".`);
+      }
+
       const pollStart = Date.now();
-      while (
-        status !== 'succeeded' &&
-        status !== 'failed' &&
-        status !== 'cancelled' &&
-        status !== 'cancelling'
-      ) {
+      while (status !== 'succeeded') {
         if (Date.now() - pollStart > 120_000) {
           throw new Error('IBM hardware job timed out after 120 seconds.');
         }
@@ -218,8 +238,12 @@ export function HelloWave() {
           status,
         });
 
-        if (status === 'failed' || status === 'cancelled' || status === 'cancelling') {
+        if (isTerminalIbmFailureStatus(status)) {
           throw new Error(next.errorMessage ?? `IBM hardware job ended with status "${status}".`);
+        }
+
+        if (status !== 'queued' && status !== 'running' && status !== 'succeeded') {
+          throw new Error(`IBM hardware job returned unexpected status "${status}".`);
         }
       }
 
@@ -269,6 +293,11 @@ export function HelloWave() {
   );
 
   const runQuantumAnimation = useCallback(async () => {
+    if (completionTimerRef.current) {
+      clearTimeout(completionTimerRef.current);
+      completionTimerRef.current = null;
+    }
+
     setIsLoading(true);
     setIsComplete(false);
     setIbmBackendsError(null);
@@ -319,8 +348,9 @@ export function HelloWave() {
       );
 
       const finishDelayMs = result.measurement === 1 ? 10_000 : Math.max(1500, Math.floor(4000 / speed));
-      setTimeout(() => {
+      completionTimerRef.current = setTimeout(() => {
         setIsComplete(true);
+        completionTimerRef.current = null;
       }, finishDelayMs);
     } catch (error) {
       setRobotMessage(error instanceof Error ? error.message : 'Quantum run failed.');
@@ -332,6 +362,10 @@ export function HelloWave() {
       setLottieLoop(false);
       setLottieSpeed(1);
       setIsComplete(true);
+      if (completionTimerRef.current) {
+        clearTimeout(completionTimerRef.current);
+        completionTimerRef.current = null;
+      }
     } finally {
       setIsLoading(false);
     }
@@ -347,6 +381,15 @@ export function HelloWave() {
       void loadIbmHardwareBackends();
     }
   }, [executionMode, ibmBackends.length, loadIbmHardwareBackends]);
+
+  useEffect(
+    () => () => {
+      if (completionTimerRef.current) {
+        clearTimeout(completionTimerRef.current);
+      }
+    },
+    []
+  );
 
   const handleRestartClick = () => {
     if (isRestartPlaying) return;

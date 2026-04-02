@@ -340,6 +340,9 @@ describe('quantum key management', () => {
     const duplicate = new QuantumApiError('duplicate key value violates unique constraint', 409, {
       detail: 'duplicate profile_name',
     });
+    const sessionExpired = new QuantumApiError('jwt expired', 401, {
+      detail: 'authentication required',
+    });
     const invalid = new QuantumApiError('credentials invalid', 400, {
       detail: 'invalid token',
     });
@@ -349,6 +352,9 @@ describe('quantum key management', () => {
 
     expect(toIbmProfileUserMessage(duplicate)).toBe(
       'A profile with that name already exists. Choose a different profile name.'
+    );
+    expect(toIbmProfileUserMessage(sessionExpired)).toBe(
+      'Your session is no longer valid. Sign out and sign in again, then retry.'
     );
     expect(toIbmProfileUserMessage(invalid)).toBe(
       'IBM credentials could not be verified. Check token, instance/CRN, and channel.'
