@@ -2,7 +2,7 @@
 
 ## Product Goal
 
-Build a production-ready portfolio app (Expo Router + React Native Web) that showcases projects, exposes public developer resources, and supports a clean Phase 3.5 integration for Quantum API self-serve key management.
+Build a production-ready portfolio app (Expo Router + React Native Web) that showcases projects, exposes public developer resources, and supports Quantum API self-serve key management plus BYO IBM credential workflows.
 
 ## Primary Consumers
 
@@ -32,6 +32,27 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 - Quantum API base URL configuration is env-driven with fallback (no longer hardcoded throughout page/components).
 - Portfolio-side validation now covers Quantum API base URL fallback plus key service normalization/error handling; backend-heavy security coverage is still pending.
 
+## Scope (Phase 4 V1 Status - BYO IBM)
+
+- "IBM Credentials" section is integrated into the existing key-management dashboard and remains collapsed by default.
+- IBM profile management is implemented using Quantum API bearer endpoints only:
+  - `GET /v1/ibm/profiles`
+  - `POST /v1/ibm/profiles`
+  - `PATCH /v1/ibm/profiles/{profile_id}`
+  - `DELETE /v1/ibm/profiles/{profile_id}`
+  - `POST /v1/ibm/profiles/{profile_id}/verify`
+- IBM profile UX supports:
+  - list, create, edit, delete
+  - set default
+  - verify profile
+  - channel selection (`ibm_quantum_platform`, `ibm_cloud`)
+- Quantum animation/runtime UX supports simulator vs IBM hardware mode:
+  - hardware backend discovery via `GET /v1/list_backends?provider=ibm`
+  - async hardware jobs via `/v1/jobs/*`
+  - hardware evidence display (backend/job ids/status)
+- Simulator flows remain available when IBM credentials are not present.
+- Error messaging now includes useful user-facing mapping for duplicate names, invalid credentials, and server encryption/config errors.
+
 ## Out of Scope (Phase 3.5)
 
 - Implementing backend DB migrations or auth services inside this portfolio repo
@@ -49,10 +70,11 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 
 ## Success Criteria
 
-- Portfolio docs and planning artifacts clearly reflect current baseline and Phase 3.75 rollout status.
+- Portfolio docs and planning artifacts clearly reflect current baseline and Phase 4 V1 rollout status.
 - Auth/key-management flows are live in UI with Identerest Account branding.
-- Public route/base URL messaging is consistent across metadata, docs, and page copy.
-- Remaining work is limited to validation hardening (tests, final rollout verification, and release checks).
+- IBM profile management is live in UI through Quantum API bearer endpoints (no direct secret writes to Supabase).
+- Simulator and BYO IBM messaging is consistent across dashboard UX and API page copy.
+- Remaining work is limited to backend CORS/auth policy stabilization plus validation hardening.
 
 ## Broad Repo Backlog (Outside Phase 3.5)
 
@@ -94,3 +116,14 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
   - integration (user scoping/cache invalidation/rate-limit policy)
   - security (cross-user blocking/no secret leakage/audit events)
   - E2E UI flow (login/create/copy/revoke/rotate/error states)
+
+## Phase 4 V1 TODO Snapshot (Portfolio + Quantum API IBM BYO Integration)
+
+- Add IBM profile service layer support for all bearer-auth profile endpoints. (done)
+- Add IBM credentials dashboard section with create/edit/delete/default/verify flows. (done)
+- Add channel selection support (`ibm_quantum_platform`, `ibm_cloud`). (done)
+- Add simulator-vs-hardware runtime controls and IBM backend discovery integration. (done)
+- Add async hardware job submit/poll/result integration for UI demo flow. (done)
+- Ensure IBM credentials remain optional and simulator flow remains frictionless. (done)
+- Expand UI tests for IBM dashboard interactions and runtime mode switching. (pending)
+- Coordinate backend CORS policy coverage for local web origin + bearer routes. (pending, backend repo)

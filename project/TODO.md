@@ -120,6 +120,50 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
 - [ ] Cutover plan for deprecating env-based keys is approved and documented
 - [x] Phase 3.5 implementation can begin without unresolved planning gaps
 
+## Phase 4 V1 - BYO IBM Credentials + Hardware Runtime
+
+Goal: keep simulator usage seamless while enabling optional IBM profile management and IBM hardware execution via existing Quantum API contracts.
+
+### IBM Profile Management (Bearer Auth)
+
+- [x] Add service support for:
+  - [x] `GET /v1/ibm/profiles`
+  - [x] `POST /v1/ibm/profiles`
+  - [x] `PATCH /v1/ibm/profiles/{profile_id}`
+  - [x] `DELETE /v1/ibm/profiles/{profile_id}`
+  - [x] `POST /v1/ibm/profiles/{profile_id}/verify`
+- [x] Add dashboard UX for list/create/edit/delete/default/verify profile actions
+- [x] Support channel selector with:
+  - [x] `ibm_quantum_platform`
+  - [x] `ibm_cloud`
+- [x] Keep IBM raw token write-only in UX and avoid client persistence of secrets
+- [x] Surface user-facing errors for duplicate profile names and invalid credentials
+
+### IBM Runtime (API Key Auth)
+
+- [x] Add service support for:
+  - [x] `GET /v1/list_backends?provider=ibm`
+  - [x] `POST /v1/jobs/circuits`
+  - [x] `GET /v1/jobs/{job_id}`
+  - [x] `GET /v1/jobs/{job_id}/result`
+  - [x] `POST /v1/jobs/{job_id}/cancel`
+- [x] Add simulator/hardware run toggle in quantum demo UI
+- [x] Display hardware execution evidence (backend/local job id/remote job id/status)
+- [x] Ensure hardware mode uses default IBM profile when no explicit profile selection is needed
+
+### UX and Copy
+
+- [x] Add IBM Credentials help modal
+- [x] Keep IBM Credentials section collapsed by default
+- [x] Update API page copy to clarify simulator-first + BYO IBM model
+- [x] Fix dropdown contrast for IBM channel and backend selection
+
+### Remaining Follow-ups
+
+- [ ] Backend CORS policy must include localhost web origin for bearer IBM/key routes
+- [ ] Backend auth/key policy review for `/v1/gates/run` 401 debugging in live env
+- [ ] Add deeper component tests for IBM dashboard interactions
+
 ## Later Enhancements (Post-3.5)
 
 - [ ] Add per-user plan tiers/policies without changing lifecycle endpoint contracts

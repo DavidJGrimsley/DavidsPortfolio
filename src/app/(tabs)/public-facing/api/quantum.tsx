@@ -237,9 +237,10 @@ export default function QuantumAPIPage() {
   const apiVersion = portfolioDetail?.api?.version ?? apisData.apis[0].version;
   const apiStatusRaw = (portfolioDetail?.api?.status ?? apisData.apis[0].status ?? '').toLowerCase();
   const isLive =
-    apiStatusRaw === 'active' || apiStatusRaw === 'healthy' || apiStatusRaw === 'live' || (isDetailSynced && apiStatusRaw !== 'offline');
-
-  const isMetaSynced = isDetailSynced;
+    apiStatusRaw === 'active' ||
+    apiStatusRaw === 'healthy' ||
+    apiStatusRaw === 'live' ||
+    (isDetailSynced && apiStatusRaw !== 'offline');
   const hasRemoteEndpoints = Array.isArray(portfolioDetail?.endpoints) && portfolioDetail.endpoints.length > 0;
   const endpointsToRender: QuantumEndpoint[] = hasRemoteEndpoints ? portfolioDetail!.endpoints : FALLBACK_ENDPOINTS;
   const authHintForEndpoint = (
@@ -314,13 +315,13 @@ export default function QuantumAPIPage() {
               className={`px-3 py-1.5 rounded-xl ml-2 ${isLive ? 'bg-success' : 'bg-error'}`}
             >
               <ThemedText inverse className="font-bold text-xs">
-                {isLive ? '● LIVE' : '● OFFLINE'}
+                {isLive ? ' LIVE' : ' OFFLINE'}
               </ThemedText>
             </View>
           </View>
 
           <ThemedText className="opacity-85 mb-4 leading-6">
-            General-purpose quantum computing services for games and applications. Run real quantum circuits using Qiskit Aer Simulator to generate truly random numbers, transform text, and create unique quantum-powered experiences.
+            General-purpose quantum computing services for games and applications. Simulator-backed runtime works out of the box, and BYO IBM credentials unlock backend discovery, transpilation, and async hardware jobs through the same Quantum API account.
           </ThemedText>
 
           {/* Features Section */}
@@ -330,12 +331,12 @@ export default function QuantumAPIPage() {
             </ThemedText>
             <View className="pl-2">
               <ThemedText className="opacity-85 text-sm leading-6">
-                • True Randomness - Quantum measurement provides genuine randomness, not pseudo-random algorithms{'\n'}
-                • Qiskit Backend - Powered by IBM Qiskit Aer Simulator running on Python server{'\n'}
-                • Low Latency - Optimized for fast responses with connection pooling{'\n'}
-                • CORS Enabled - Ready for web applications and cross-origin requests{'\n'}
-                • Detailed Responses - Get measurement results, superposition strength, and quantum state info{'\n'}
-                • Metadata: {isMetaSynced ? 'synced' : 'fallback'}
+                 True Randomness - Quantum measurement provides genuine randomness, not pseudo-random algorithms{'\n'}
+                 Simulator First - Qiskit Aer simulator works without IBM credentials{'\n'}
+                 BYO IBM - Add optional IBM credentials for hardware workflows{'\n'}
+                 Low Latency - Optimized for fast responses with connection pooling{'\n'}
+                 CORS Enabled - Ready for web applications and cross-origin requests{'\n'}
+                 Detailed Responses - Get measurement results, superposition strength, and quantum state info{'\n'}
               </ThemedText>
             </View>
           </View>
@@ -382,7 +383,7 @@ export default function QuantumAPIPage() {
         {/* Endpoints Section */}
         <View className="mb-7.5">
           <ThemedText type="subtitle" className="mb-4">
-            📡 Endpoints
+             Endpoints
           </ThemedText>
 
           {endpointsToRender.map((endpoint) => {
@@ -442,7 +443,7 @@ export default function QuantumAPIPage() {
                 What is Quantum Mechanics?
               </ThemedText>
               <ThemedText className="detail-body text-lg md:text-xl" style={{ color: textColor }}>
-                {isQuantumMechanicsExpanded ? '▼' : '▶'}
+                {isQuantumMechanicsExpanded ? 'v' : '>'}
               </ThemedText>
             </View>
           </Pressable>
@@ -530,7 +531,7 @@ export default function QuantumAPIPage() {
                 borderColor: '#f59e0b60',
               }}>
                 <View className="flex-row items-center mb-2">
-                  <ThemedText className="mr-2 text-[2%]">⚠️</ThemedText>
+                  <ThemedText className="mr-2 text-[2%]">!</ThemedText>
                   <ThemedText type="defaultSemiBold" className="detail-subheader text-[2%]">
                     Important: Simulator vs Real Quantum Hardware
                   </ThemedText>
@@ -548,7 +549,7 @@ export default function QuantumAPIPage() {
                     </ThemedText>
                     <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
                       The simulator mathematically calculates what a quantum computer WOULD do. It uses the actual quantum 
-                      mechanics equations (Schrödinger equation, unitary matrices) to compute superposition states and 
+                      mechanics equations (Schrodinger equation, unitary matrices) to compute superposition states and 
                       measurement probabilities. The randomness comes from Python's pseudo-random number generator weighted 
                       by quantum probabilities - so it's <ThemedText className="italic">statistically</ThemedText> correct 
                       but not fundamentally random.
@@ -573,7 +574,7 @@ export default function QuantumAPIPage() {
                     </ThemedText>
                     <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
                       Real quantum hardware uses <ThemedText className="font-bold">actual physical qubits</ThemedText> - 
-                      superconducting circuits, trapped ions, or photons - operating at near absolute zero (-273°C). When you 
+                      superconducting circuits, trapped ions, or photons - operating at near absolute zero (-273C). When you 
                       measure these, the wavefunction collapse is a REAL physical event governed by quantum mechanics, not 
                       a random number generator. That's true, unclonable, fundamentally unpredictable randomness. Plus, 
                       real hardware has noise, decoherence, and other quantum weirdness that's hard to simulate.
@@ -582,20 +583,20 @@ export default function QuantumAPIPage() {
 
                   <View>
                     <ThemedText type="defaultSemiBold" className="detail-subheader mb-1 text-[1.9%]">
-                      Future Plans
+                      Hardware Access Model
                     </ThemedText>
                     <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
-                      I plan to integrate <ThemedText className="font-bold">IBM Quantum's real hardware</ThemedText> via 
-                      their cloud API. This will let this API run circuits on actual quantum processors (like their 127-qubit Eagle 
-                      or 433-qubit Osprey chips). The results will be TRULY quantum - fundamentally random, with real quantum 
-                      noise. The tradeoff? Real hardware has limited availability, longer wait times, and costs money after 
-                      free tier limits.
+                      IBM hardware access follows a <ThemedText className="font-bold">BYO credential model</ThemedText>.
+                      Simulator mode remains available without IBM credentials. If you save and verify your
+                      own IBM profile, you can route jobs to IBM hardware backends through this same API key.
+                      Hardware jobs are asynchronous and can take longer due to queueing and provider limits.
+                      
                     </ThemedText>
                   </View>
                 </View>
 
                 <ThemedText className="detail-body opacity-80 italic text-[1.7%] leading-[2.4%]">
-                  💡 Bottom line: This simulator is perfect for learning, development, and applications where quantum-correct 
+                   Bottom line: This simulator is perfect for learning, development, and applications where quantum-correct 
                   probability distributions matter more than fundamental randomness. For cryptographic security or quantum 
                   research, real hardware would be necessary.
                 </ThemedText>
@@ -610,12 +611,12 @@ export default function QuantumAPIPage() {
                 </ThemedText>
                 <View className="pl-3 gap-2">
                   <ThemedText className="detail-body opacity-90 text-[1.8%] leading-[2.4%]">
-                    • Breaking encryption and creating unbreakable quantum encryption{"\n"}
-                    • Simulating molecules for drug discovery and materials science{"\n"}
-                    • Optimizing complex systems (logistics, finance, AI training){"\n"}
-                    • True random number generation for security and gaming{"\n"}
-                    • Solving problems exponentially faster than classical computers{"\n"}
-                    • Machine learning with quantum neural networks
+                     Breaking encryption and creating unbreakable quantum encryption{"\n"}
+                     Simulating molecules for drug discovery and materials science{"\n"}
+                     Optimizing complex systems (logistics, finance, AI training){"\n"}
+                     True random number generation for security and gaming{"\n"}
+                     Solving problems exponentially faster than classical computers{"\n"}
+                     Machine learning with quantum neural networks
                   </ThemedText>
                 </View>
               </View>
@@ -636,19 +637,19 @@ export default function QuantumAPIPage() {
                 >
                   {/* Completed Items */}
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">✓</ThemedText>
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">[x]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Quantum Gate API - RY rotation gates for true randomness
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">✓</ThemedText>
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">[x]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Quantum Text Transformation - Unicode effects powered by quantum randomness
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">✓</ThemedText>
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">[x]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Portfolio Integration - Live quantum animation in Quantum Echo project
                     </ThemedText>
@@ -656,43 +657,43 @@ export default function QuantumAPIPage() {
                   
                   {/* To-Do Items */}
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Multi-qubit circuits for more complex quantum states
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum entanglement demonstration API
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Grover's algorithm for quantum search
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum random number generator (QRNG) endpoint
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum game mechanics for procedural generation
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Quantum circuit visualization in the API response
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">☐</ThemedText>
+                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
                     <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
                       Real quantum hardware access via IBM Quantum cloud
                     </ThemedText>
@@ -708,7 +709,7 @@ export default function QuantumAPIPage() {
                 }}
               >
                 <ThemedText className="detail-body opacity-90 italic text-[1.8%] leading-[2.5%]">
-                  💡 Fun fact: The randomness from quantum measurement is the ONLY truly random process in the universe. 
+                   Fun fact: The randomness from quantum measurement is the ONLY truly random process in the universe. 
                   Everything else (dice rolls, coin flips, random() functions) is technically predictable if you know all 
                   the variables. Quantum randomness is fundamentally unpredictable - even in theory.
                 </ThemedText>
@@ -731,7 +732,7 @@ export default function QuantumAPIPage() {
                 How to Use This API
               </ThemedText>
               <ThemedText className="detail-body text-lg md:text-xl" style={{ color: textColor }}>
-                {isHowToUseExpanded ? '▼' : '▶'}
+                {isHowToUseExpanded ? 'v' : '>'}
               </ThemedText>
             </View>
           </Pressable>
@@ -786,6 +787,7 @@ export default function QuantumAPIPage() {
                 </ThemedText>
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
                   Phase 3.75 uses Identerest Account auth for key management on this page. Sign in with an email magic link or GitHub, then create, rotate, and revoke Quantum API keys from the dashboard above.{"\n\n"}
+                  IBM credentials are optional. Without them, simulator-backed features still work. With BYO IBM credentials, the same account can use IBM backend discovery, transpilation, and async hardware jobs.{"\n\n"}
                   Public routes include <ThemedText className="font-mono">/v1/health</ThemedText> and{' '}
                   <ThemedText className="font-mono">/v1/portfolio.json</ThemedText>. Most runtime endpoints require an API key in{' '}
                   <ThemedText className="font-mono">X-API-Key</ThemedText>.{"\n\n"}
@@ -818,7 +820,7 @@ export default function QuantumAPIPage() {
         {/* Code Examples Section */}
         <View className="mb-7.5">
           <ThemedText type="subtitle" className="detail-section-header mb-4 text-2xl md:text-3xl">
-            💻 Code Examples
+             Code Examples
           </ThemedText>
           {/* JavaScript Example */}
           <View className="mb-5">
@@ -900,7 +902,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
         {/* Technical Details Section */}
         <View className="mb-7.5">
           <ThemedText type="subtitle" className="detail-section-header mb-4 text-[2.2%]">
-            🔬 Technical Details
+             Technical Details
           </ThemedText>
           
           <View
@@ -949,7 +951,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
         {/* Use Cases Section */}
         <View className="mb-7.5">
           <ThemedText type="subtitle" className="detail-section-header mb-4 text-[2.2%]">
-            🎯 Use Cases
+             Use Cases
           </ThemedText>
           
           <View className="gap-3">
@@ -981,7 +983,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
         {/* Live API Demo */}
         <View className="mb-5">
           <ThemedText type="subtitle" className="detail-section-header mb-4 text-2xl md:text-3xl">
-            🎮 Live Demo
+             Live Demo
           </ThemedText>
           <View 
             className="p-5 rounded-lg"
@@ -990,7 +992,7 @@ print(f"Superposition: {result['superposition_strength']}")`}
             }}
           >
             <ThemedText className="detail-body opacity-90 text-center mb-4 text-lg md:text-xl leading-relaxed">
-              💡 This is the actual quantum animation from my Quantum Echo project. 
+               This is the actual quantum animation from my Quantum Echo project. 
               It's making a LIVE call to this API right now! Watch it run a 30-second 
               quantum circuit simulation with real Qiskit code.
             </ThemedText>
@@ -1027,4 +1029,5 @@ print(f"Superposition: {result['superposition_strength']}")`}
       </PublicFacingDetailWrapper>
   );
 }
+
 
