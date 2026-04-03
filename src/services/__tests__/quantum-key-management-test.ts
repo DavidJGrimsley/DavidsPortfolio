@@ -1,9 +1,15 @@
 import {
   QuantumApiError,
+  createIbmProfile,
   createQuantumKey,
+  deleteIbmProfile,
   deleteRevokedQuantumKeys,
+  listIbmProfiles,
   listQuantumKeys,
   rotateQuantumKey,
+  toIbmProfileUserMessage,
+  updateIbmProfile,
+  verifyIbmProfile,
 } from '../quantum-key-management';
 
 type MockResponse = {
@@ -191,6 +197,170 @@ describe('quantum key management', () => {
 
     await expect(createQuantumKey(baseUrl, accessToken, {})).rejects.toBeInstanceOf(
       QuantumApiError
+    );
+  });
+
+  it('normalizes ibm profile list payloads', async () => {
+    fetchMock.mockResolvedValue(
+      createMockResponse(
+        JSON.stringify({
+          profiles: [
+            {
+              profile_id: ' profile-1 ',
+              owner_user_id: 'user-1',
+              profile_name: ' IBM Open ',
+              instance: 'crn:v1:test',
+              channel: 'ibm_quantum_platform',
+              masked_token: 'tok_****1234',
+              is_default: true,
+              verification_status: 'verified',
+              last_verified_at: '2026-04-01T11:00:00.000Z',
+              created_at: '2026-03-29T11:00:00.000Z',
+              updated_at: '2026-04-01T11:00:00.000Z',
+            },
+            {
+              profile_name: 'missing-id',
+            },
+          ],
+        })
+      )
+    );
+
+    await expect(listIbmProfiles(baseUrl, accessToken)).resolves.toEqual([
+      {
+        profileId: 'profile-1',
+        ownerUserId: 'user-1',
+        profileName: 'IBM Open',
+        instance: 'crn:v1:test',
+        channel: 'ibm_quantum_platform',
+        maskedToken: 'tok_****1234',
+        isDefault: true,
+        verificationStatus: 'verified',
+        lastVerifiedAt: '2026-04-01T11:00:00.000Z',
+        createdAt: '2026-03-29T11:00:00.000Z',
+        updatedAt: '2026-04-01T11:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('handles ibm profile create, update, verify, and delete calls', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        createMockResponse(
+          JSON.stringify({
+            profile: {
+              profile_id: 'profile-2',
+              owner_user_id: 'user-1',
+              profile_name: 'IBM Team',
+              instance: 'crn:v1:team',
+              channel: 'ibm_cloud',
+              masked_token: 'tok_****4321',
+              is_default: false,
+              verification_status: 'unverified',
+              created_at: '2026-04-01T11:00:00.000Z',
+              updated_at: '2026-04-01T11:00:00.000Z',
+            },
+          })
+        )
+      )
+      .mockResolvedValueOnce(
+        createMockResponse(
+          JSON.stringify({
+            profile_id: 'profile-2',
+            owner_user_id: 'user-1',
+            profile_name: 'IBM Team Updated',
+            instance: 'crn:v1:team-updated',
+            channel: 'ibm_quantum_platform',
+            masked_token: 'tok_****4321',
+            is_default: true,
+            verification_status: 'verified',
+            last_verified_at: '2026-04-02T11:00:00.000Z',
+            created_at: '2026-04-01T11:00:00.000Z',
+            updated_at: '2026-04-02T11:00:00.000Z',
+          })
+        )
+      )
+      .mockResolvedValueOnce(
+        createMockResponse(
+          JSON.stringify({
+            profile: {
+              profile_id: 'profile-2',
+              owner_user_id: 'user-1',
+              profile_name: 'IBM Team Updated',
+              instance: 'crn:v1:team-updated',
+              channel: 'ibm_quantum_platform',
+              masked_token: 'tok_****4321',
+              is_default: true,
+              verification_status: 'verified',
+              last_verified_at: '2026-04-02T11:00:00.000Z',
+              created_at: '2026-04-01T11:00:00.000Z',
+              updated_at: '2026-04-02T11:00:00.000Z',
+            },
+            verified: true,
+          })
+        )
+      )
+      .mockResolvedValueOnce(createMockResponse(JSON.stringify({ deleted: true })));
+
+    await expect(
+      createIbmProfile(baseUrl, accessToken, {
+        profileName: 'IBM Team',
+        token: 'raw-token',
+        instance: 'crn:v1:team',
+        channel: 'ibm_cloud',
+      })
+    ).resolves.toMatchObject({
+      profileId: 'profile-2',
+      profileName: 'IBM Team',
+      channel: 'ibm_cloud',
+    });
+
+    await expect(
+      updateIbmProfile(baseUrl, accessToken, 'profile-2', {
+        profileName: 'IBM Team Updated',
+        instance: 'crn:v1:team-updated',
+        channel: 'ibm_quantum_platform',
+        isDefault: true,
+      })
+    ).resolves.toMatchObject({
+      profileId: 'profile-2',
+      profileName: 'IBM Team Updated',
+      isDefault: true,
+    });
+
+    await expect(verifyIbmProfile(baseUrl, accessToken, 'profile-2')).resolves.toMatchObject({
+      profileId: 'profile-2',
+      verificationStatus: 'verified',
+    });
+
+    await expect(deleteIbmProfile(baseUrl, accessToken, 'profile-2')).resolves.toBeUndefined();
+  });
+
+  it('maps ibm profile api errors to user-facing messages', () => {
+    const duplicate = new QuantumApiError('duplicate key value violates unique constraint', 409, {
+      detail: 'duplicate profile_name',
+    });
+    const sessionExpired = new QuantumApiError('jwt expired', 401, {
+      detail: 'authentication required',
+    });
+    const invalid = new QuantumApiError('credentials invalid', 400, {
+      detail: 'invalid token',
+    });
+    const encryption = new QuantumApiError('kms not configured', 500, {
+      detail: 'encryption key missing',
+    });
+
+    expect(toIbmProfileUserMessage(duplicate)).toBe(
+      'A profile with that name already exists. Choose a different profile name.'
+    );
+    expect(toIbmProfileUserMessage(sessionExpired)).toBe(
+      'Your session is no longer valid. Sign out and sign in again, then retry.'
+    );
+    expect(toIbmProfileUserMessage(invalid)).toBe(
+      'IBM credentials could not be verified. Check token, instance/CRN, and channel.'
+    );
+    expect(toIbmProfileUserMessage(encryption)).toBe(
+      'Server encryption is not configured yet. Please try again later or contact support.'
     );
   });
 });

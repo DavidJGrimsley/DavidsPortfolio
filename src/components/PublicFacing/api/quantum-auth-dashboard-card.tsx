@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   TextInput,
@@ -12,6 +13,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import type { Session } from '@supabase/supabase-js';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { Picker } from '@react-native-picker/picker';
 import Svg, { Line } from 'react-native-svg';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -23,14 +25,22 @@ import {
   isSupabaseConfigured,
 } from '@/lib/supabase-browser';
 import {
+  createIbmProfile,
   createQuantumKey,
+  deleteIbmProfile,
   deleteQuantumKey,
   deleteRevokedQuantumKeys,
+  listIbmProfiles,
+  type IbmProfileChannel,
+  type IbmProfileRecord,
   listQuantumKeys,
   type QuantumKeyRecord,
   QuantumApiError,
   revokeQuantumKey,
   rotateQuantumKey,
+  toIbmProfileUserMessage,
+  updateIbmProfile,
+  verifyIbmProfile,
 } from '@/services/quantum-key-management';
 
 type QuantumAuthDashboardCardProps = {
@@ -41,6 +51,14 @@ type RawKeyReveal = {
   action: 'created' | 'rotated';
   rawKey: string;
   label: string;
+};
+
+type IbmProfileFormState = {
+  profileName: string;
+  token: string;
+  instance: string;
+  channel: IbmProfileChannel;
+  isDefault: boolean;
 };
 
 const IDENTEREST_LOGO = require('~/assets/images/identerest-logo.png');
@@ -76,6 +94,16 @@ function formatTimestamp(value?: string | null) {
   return date.toLocaleString();
 }
 
+function createEmptyIbmProfileForm(): IbmProfileFormState {
+  return {
+    profileName: '',
+    token: '',
+    instance: '',
+    channel: 'ibm_quantum_platform',
+    isDefault: false,
+  };
+}
+
 async function copyToClipboard(value: string) {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -102,20 +130,27 @@ function confirmAction(message: string): Promise<boolean> {
 export function QuantumAuthDashboardCard({
   baseUrl,
 }: QuantumAuthDashboardCardProps) {
+  const isWeb = Platform.OS === 'web';
   const backgroundColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
   const secondaryColor = useThemeColor({}, 'secondary');
+  const ibmPickerBackgroundColor = isWeb ? '#ffffff' : accentColor + '12';
+  const ibmPickerTextColor = isWeb ? '#11181C' : textColor;
+  const ibmPickerBorderColor = isWeb ? '#9ca3af' : tintColor + '30';
 
   const [email, setEmail] = useState('');
   const [keyName, setKeyName] = useState('');
   const [session, setSession] = useState<Session | null>(null);
   const [keys, setKeys] = useState<QuantumKeyRecord[]>([]);
+  const [ibmProfiles, setIbmProfiles] = useState<IbmProfileRecord[]>([]);
   const [rawKeyReveal, setRawKeyReveal] = useState<RawKeyReveal | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [keysError, setKeysError] = useState<string | null>(null);
+  const [ibmError, setIbmError] = useState<string | null>(null);
+  const [ibmMessage, setIbmMessage] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [sendingMagicLink, setSendingMagicLink] = useState(false);
   const [startingGithubSignIn, setStartingGithubSignIn] = useState(false);
@@ -124,8 +159,15 @@ export function QuantumAuthDashboardCard({
   const [creatingKey, setCreatingKey] = useState(false);
   const [busyKeyId, setBusyKeyId] = useState<string | null>(null);
   const [deletingRevokedKeys, setDeletingRevokedKeys] = useState(false);
+  const [loadingIbmProfiles, setLoadingIbmProfiles] = useState(false);
+  const [submittingIbmForm, setSubmittingIbmForm] = useState(false);
+  const [busyIbmProfileId, setBusyIbmProfileId] = useState<string | null>(null);
+  const [showIbmCredentials, setShowIbmCredentials] = useState(false);
+  const [editingIbmProfileId, setEditingIbmProfileId] = useState<string | null>(null);
+  const [ibmForm, setIbmForm] = useState<IbmProfileFormState>(createEmptyIbmProfileForm);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [showIdenterestInfo, setShowIdenterestInfo] = useState(false);
+  const [showIbmInfoModal, setShowIbmInfoModal] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supabaseClient = useMemo(() => {
@@ -162,6 +204,25 @@ export function QuantumAuthDashboardCard({
       );
     } finally {
       setLoadingKeys(false);
+    }
+  }, [accessToken, baseUrl]);
+
+  const refreshIbmProfiles = useCallback(async () => {
+    if (!accessToken) {
+      setIbmProfiles([]);
+      return;
+    }
+
+    setLoadingIbmProfiles(true);
+    setIbmError(null);
+
+    try {
+      const records = await listIbmProfiles(baseUrl, accessToken);
+      setIbmProfiles(records);
+    } catch (error) {
+      setIbmError(toIbmProfileUserMessage(error));
+    } finally {
+      setLoadingIbmProfiles(false);
     }
   }, [accessToken, baseUrl]);
 
@@ -206,13 +267,20 @@ export function QuantumAuthDashboardCard({
   useEffect(() => {
     if (!accessToken) {
       setKeys([]);
+      setIbmProfiles([]);
       setRawKeyReveal(null);
       setLoadingKeys(false);
+      setLoadingIbmProfiles(false);
+      setIbmError(null);
+      setIbmMessage(null);
+      setEditingIbmProfileId(null);
+      setIbmForm(createEmptyIbmProfileForm());
       return;
     }
 
     refreshKeys();
-  }, [accessToken, refreshKeys]);
+    refreshIbmProfiles();
+  }, [accessToken, refreshIbmProfiles, refreshKeys]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -304,8 +372,13 @@ export function QuantumAuthDashboardCard({
 
       setSession(null);
       setKeys([]);
+      setIbmProfiles([]);
       setKeyName('');
       setRawKeyReveal(null);
+      setIbmError(null);
+      setIbmMessage(null);
+      setEditingIbmProfileId(null);
+      setIbmForm(createEmptyIbmProfileForm());
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Unable to sign out.');
     } finally {
@@ -445,6 +518,165 @@ export function QuantumAuthDashboardCard({
       setDeletingRevokedKeys(false);
     }
   }, [accessToken, baseUrl, refreshKeys, revokedKeysCount]);
+
+  const handleIbmFormField = useCallback(
+    (field: keyof IbmProfileFormState, value: string | boolean | IbmProfileChannel) => {
+      setIbmForm((current) => ({ ...current, [field]: value }));
+    },
+    []
+  );
+
+  const handleStartEditIbmProfile = useCallback((profile: IbmProfileRecord) => {
+    setEditingIbmProfileId(profile.profileId);
+    setIbmError(null);
+    setIbmMessage(`Editing profile "${profile.profileName}"`);
+    setIbmForm({
+      profileName: profile.profileName,
+      token: '',
+      instance: profile.instance,
+      channel: profile.channel,
+      isDefault: profile.isDefault,
+    });
+    setShowIbmCredentials(true);
+  }, []);
+
+  const handleCancelIbmEdit = useCallback(() => {
+    setEditingIbmProfileId(null);
+    setIbmForm(createEmptyIbmProfileForm());
+    setIbmError(null);
+  }, []);
+
+  const handleSubmitIbmProfile = useCallback(async () => {
+    if (!accessToken) return;
+
+    const profileName = ibmForm.profileName.trim();
+    const instance = ibmForm.instance.trim();
+    const token = ibmForm.token.trim();
+    const isEditing = Boolean(editingIbmProfileId);
+
+    if (!profileName) {
+      setIbmError('Profile name is required.');
+      return;
+    }
+    if (!instance) {
+      setIbmError('IBM instance / CRN is required.');
+      return;
+    }
+    if (!isEditing && !token) {
+      setIbmError('IBM API token is required when creating a profile.');
+      return;
+    }
+
+    setSubmittingIbmForm(true);
+    setIbmError(null);
+    setIbmMessage(null);
+
+    try {
+      if (editingIbmProfileId) {
+        await updateIbmProfile(baseUrl, accessToken, editingIbmProfileId, {
+          profileName,
+          instance,
+          channel: ibmForm.channel,
+          isDefault: ibmForm.isDefault,
+          token: token || undefined,
+        });
+        setIbmMessage(`Updated profile "${profileName}".`);
+      } else {
+        await createIbmProfile(baseUrl, accessToken, {
+          profileName,
+          instance,
+          channel: ibmForm.channel,
+          isDefault: ibmForm.isDefault,
+          token,
+        });
+        setIbmMessage(`Saved profile "${profileName}".`);
+      }
+
+      setEditingIbmProfileId(null);
+      setIbmForm(createEmptyIbmProfileForm());
+      await refreshIbmProfiles();
+    } catch (error) {
+      setIbmError(toIbmProfileUserMessage(error));
+    } finally {
+      setSubmittingIbmForm(false);
+    }
+  }, [accessToken, baseUrl, editingIbmProfileId, ibmForm, refreshIbmProfiles]);
+
+  const handleDeleteIbmProfile = useCallback(
+    async (profile: IbmProfileRecord) => {
+      if (!accessToken) return;
+
+      const confirmed = await confirmAction(
+        `Delete IBM profile "${profile.profileName}" permanently?`
+      );
+      if (!confirmed) return;
+
+      setBusyIbmProfileId(profile.profileId);
+      setIbmError(null);
+      setIbmMessage(null);
+
+      try {
+        await deleteIbmProfile(baseUrl, accessToken, profile.profileId);
+        if (editingIbmProfileId === profile.profileId) {
+          setEditingIbmProfileId(null);
+          setIbmForm(createEmptyIbmProfileForm());
+        }
+        setIbmMessage(`Deleted profile "${profile.profileName}".`);
+        await refreshIbmProfiles();
+      } catch (error) {
+        setIbmError(toIbmProfileUserMessage(error));
+      } finally {
+        setBusyIbmProfileId(null);
+      }
+    },
+    [accessToken, baseUrl, editingIbmProfileId, refreshIbmProfiles]
+  );
+
+  const handleVerifyIbmProfile = useCallback(
+    async (profile: IbmProfileRecord) => {
+      if (!accessToken) return;
+
+      setBusyIbmProfileId(profile.profileId);
+      setIbmError(null);
+      setIbmMessage(null);
+
+      try {
+        const verified = await verifyIbmProfile(baseUrl, accessToken, profile.profileId);
+        const statusLabel = verified?.verificationStatus ?? 'verified';
+        setIbmMessage(`Verification complete for "${profile.profileName}" (${statusLabel}).`);
+        await refreshIbmProfiles();
+      } catch (error) {
+        setIbmError(toIbmProfileUserMessage(error));
+      } finally {
+        setBusyIbmProfileId(null);
+      }
+    },
+    [accessToken, baseUrl, refreshIbmProfiles]
+  );
+
+  const handleSetDefaultIbmProfile = useCallback(
+    async (profile: IbmProfileRecord) => {
+      if (!accessToken) return;
+      if (profile.isDefault) return;
+
+      setBusyIbmProfileId(profile.profileId);
+      setIbmError(null);
+      setIbmMessage(null);
+
+      try {
+        await updateIbmProfile(baseUrl, accessToken, profile.profileId, {
+          isDefault: true,
+        });
+        setIbmMessage(`"${profile.profileName}" is now your default IBM profile.`);
+        await refreshIbmProfiles();
+      } catch (error) {
+        setIbmError(toIbmProfileUserMessage(error));
+      } finally {
+        setBusyIbmProfileId(null);
+      }
+    },
+    [accessToken, baseUrl, refreshIbmProfiles]
+  );
 
   const handleCopy = useCallback(async (value: string, key: string) => {
     try {
@@ -1080,6 +1312,489 @@ export function QuantumAuthDashboardCard({
                   </View>
                 )}
               </View>
+
+              <View
+                className="rounded-2xl border p-4"
+                style={{
+                  backgroundColor: backgroundColor,
+                  borderColor: accentColor + '35',
+                }}
+              >
+                <View className="mb-3 flex-row items-center justify-between gap-3">
+                  <Pressable
+                    onPress={() => setShowIbmCredentials((value) => !value)}
+                    style={({ pressed }) => ({
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      gap: 10,
+                      opacity: pressed ? 0.72 : 1,
+                    })}
+                  >
+                    <Ionicons
+                      color={secondaryColor}
+                      name={showIbmCredentials ? 'chevron-down' : 'chevron-forward'}
+                      size={18}
+                    />
+                    <ThemedText type="defaultSemiBold" className="text-lg">
+                      IBM Credentials
+                    </ThemedText>
+                  </Pressable>
+
+                  <Pressable
+                    accessibilityLabel="IBM credentials help"
+                    onPress={() => setShowIbmInfoModal(true)}
+                    style={({ pressed }) => ({
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: pressed ? 0.72 : 1,
+                      padding: 4,
+                    })}
+                  >
+                    <Ionicons color={secondaryColor} name="information-circle-outline" size={20} />
+                  </Pressable>
+                </View>
+
+                {showIbmCredentials ? (
+                  <View className="gap-3">
+                    <ThemedText className="opacity-80 text-base leading-6">
+                      IBM credentials are optional. Without them, simulator-backed Quantum API
+                      features still work. Add a profile to enable IBM backend discovery,
+                      transpilation, and async hardware jobs through the same Quantum API account.
+                    </ThemedText>
+
+                    {ibmMessage ? (
+                      <View
+                        className="rounded-2xl border px-4 py-3"
+                        style={{
+                          backgroundColor: tintColor + '16',
+                          borderColor: tintColor + '40',
+                        }}
+                      >
+                        <ThemedText selectable className="text-base leading-6">
+                          {ibmMessage}
+                        </ThemedText>
+                      </View>
+                    ) : null}
+
+                    {ibmError ? (
+                      <View
+                        className="rounded-2xl border px-4 py-3"
+                        style={{
+                          backgroundColor: '#ef444418',
+                          borderColor: '#ef444455',
+                        }}
+                      >
+                        <ThemedText selectable className="text-base leading-6" style={{ color: '#f87171' }}>
+                          {ibmError}
+                        </ThemedText>
+                      </View>
+                    ) : null}
+
+                    <View
+                      className="rounded-2xl border p-4"
+                      style={{
+                        backgroundColor: accentColor + '10',
+                        borderColor: tintColor + '2f',
+                      }}
+                    >
+                      <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+                        {editingIbmProfileId ? 'Edit IBM Profile' : 'Create IBM Profile'}
+                      </ThemedText>
+
+                      <View className="gap-3">
+                        <TextInput
+                          autoCapitalize="words"
+                          onChangeText={(value) => handleIbmFormField('profileName', value)}
+                          placeholder="Profile name"
+                          placeholderTextColor={textColor + '70'}
+                          style={{
+                            backgroundColor: accentColor + '12',
+                            borderColor: tintColor + '30',
+                            borderCurve: 'continuous',
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            color: textColor,
+                            fontSize: 16,
+                            paddingHorizontal: 14,
+                            paddingVertical: 14,
+                          }}
+                          value={ibmForm.profileName}
+                        />
+
+                        <TextInput
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          onChangeText={(value) => handleIbmFormField('token', value)}
+                          placeholder={editingIbmProfileId ? 'IBM API token (leave blank to keep current)' : 'IBM API token'}
+                          placeholderTextColor={textColor + '70'}
+                          secureTextEntry
+                          style={{
+                            backgroundColor: accentColor + '12',
+                            borderColor: tintColor + '30',
+                            borderCurve: 'continuous',
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            color: textColor,
+                            fontSize: 16,
+                            paddingHorizontal: 14,
+                            paddingVertical: 14,
+                          }}
+                          value={ibmForm.token}
+                        />
+
+                        <TextInput
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          onChangeText={(value) => handleIbmFormField('instance', value)}
+                          placeholder="IBM instance / CRN"
+                          placeholderTextColor={textColor + '70'}
+                          style={{
+                            backgroundColor: accentColor + '12',
+                            borderColor: tintColor + '30',
+                            borderCurve: 'continuous',
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            color: textColor,
+                            fontSize: 16,
+                            paddingHorizontal: 14,
+                            paddingVertical: 14,
+                          }}
+                          value={ibmForm.instance}
+                        />
+
+                        <View className="gap-2">
+                          <ThemedText className="opacity-80 text-sm uppercase tracking-[0.12em]">
+                            Channel
+                          </ThemedText>
+                          <View
+                            style={{
+                              backgroundColor: ibmPickerBackgroundColor,
+                              borderColor: ibmPickerBorderColor,
+                              borderCurve: 'continuous',
+                              borderRadius: 16,
+                              borderWidth: 1,
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <Picker
+                              selectedValue={ibmForm.channel}
+                              onValueChange={(value) =>
+                                handleIbmFormField('channel', value as IbmProfileChannel)
+                              }
+                              style={{
+                                backgroundColor: ibmPickerBackgroundColor,
+                                borderRadius: 16,
+                                color: ibmPickerTextColor,
+                                height: 52,
+                              }}
+                              dropdownIconColor={ibmPickerTextColor}
+                            >
+                              <Picker.Item
+                                color={ibmPickerTextColor}
+                                label="ibm_quantum_platform"
+                                value="ibm_quantum_platform"
+                              />
+                              <Picker.Item
+                                color={ibmPickerTextColor}
+                                label="ibm_cloud"
+                                value="ibm_cloud"
+                              />
+                            </Picker>
+                          </View>
+                        </View>
+
+                        <Pressable
+                          onPress={() => handleIbmFormField('isDefault', !ibmForm.isDefault)}
+                          style={({ pressed }) => ({
+                            alignItems: 'center',
+                            alignSelf: 'flex-start',
+                            backgroundColor: ibmForm.isDefault ? tintColor : backgroundColor,
+                            borderColor: tintColor + '40',
+                            borderCurve: 'continuous',
+                            borderRadius: 14,
+                            borderWidth: 1,
+                            flexDirection: 'row',
+                            gap: 8,
+                            opacity: pressed ? 0.72 : 1,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                          })}
+                        >
+                          <Ionicons
+                            color={ibmForm.isDefault ? '#fff' : secondaryColor}
+                            name={ibmForm.isDefault ? 'checkmark-circle' : 'ellipse-outline'}
+                            size={16}
+                          />
+                          <ThemedText
+                            className="text-xs font-bold uppercase tracking-[0.12em]"
+                            style={{ color: ibmForm.isDefault ? '#fff' : secondaryColor }}
+                          >
+                            Set As Default
+                          </ThemedText>
+                        </Pressable>
+
+                        <View className="gap-3 md:flex-row">
+                          <Pressable
+                            disabled={submittingIbmForm}
+                            onPress={handleSubmitIbmProfile}
+                            style={({ pressed }) => ({
+                              alignItems: 'center',
+                              backgroundColor: tintColor,
+                              borderCurve: 'continuous',
+                              borderRadius: 14,
+                              flex: 1,
+                              justifyContent: 'center',
+                              opacity: pressed || submittingIbmForm ? 0.72 : 1,
+                              paddingHorizontal: 14,
+                              paddingVertical: 12,
+                            })}
+                          >
+                            {submittingIbmForm ? (
+                              <ActivityIndicator color="#fff" />
+                            ) : (
+                              <ThemedText inverse className="font-bold text-sm uppercase tracking-[0.14em]">
+                                {editingIbmProfileId ? 'Save Profile' : 'Create Profile'}
+                              </ThemedText>
+                            )}
+                          </Pressable>
+
+                          {editingIbmProfileId ? (
+                            <Pressable
+                              disabled={submittingIbmForm}
+                              onPress={handleCancelIbmEdit}
+                              style={({ pressed }) => ({
+                                alignItems: 'center',
+                                backgroundColor: backgroundColor,
+                                borderColor: tintColor + '40',
+                                borderCurve: 'continuous',
+                                borderRadius: 14,
+                                borderWidth: 1,
+                                flex: 1,
+                                justifyContent: 'center',
+                                opacity: pressed || submittingIbmForm ? 0.72 : 1,
+                                paddingHorizontal: 14,
+                                paddingVertical: 12,
+                              })}
+                            >
+                              <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: secondaryColor }}>
+                                Cancel Edit
+                              </ThemedText>
+                            </Pressable>
+                          ) : null}
+                        </View>
+                      </View>
+                    </View>
+
+                    <View
+                      className="rounded-2xl border p-4"
+                      style={{
+                        backgroundColor: accentColor + '10',
+                        borderColor: tintColor + '2f',
+                      }}
+                    >
+                      <View className="mb-4 flex-row items-center justify-between gap-3">
+                        <View>
+                          <ThemedText type="defaultSemiBold" className="text-lg">
+                            Saved IBM Profiles
+                          </ThemedText>
+                          <ThemedText className="opacity-75 text-base">
+                            Masked token metadata only
+                          </ThemedText>
+                        </View>
+
+                        <Pressable
+                          onPress={refreshIbmProfiles}
+                          style={({ pressed }) => ({
+                            opacity: pressed || loadingIbmProfiles ? 0.72 : 1,
+                            padding: 4,
+                          })}
+                        >
+                          {loadingIbmProfiles ? (
+                            <ActivityIndicator color={secondaryColor} />
+                          ) : (
+                            <Ionicons color={secondaryColor} name="refresh" size={18} />
+                          )}
+                        </Pressable>
+                      </View>
+
+                      {loadingIbmProfiles ? (
+                        <View className="items-center py-6">
+                          <ActivityIndicator color={tintColor} />
+                          <ThemedText className="mt-3 opacity-75">Loading IBM profiles...</ThemedText>
+                        </View>
+                      ) : ibmProfiles.length === 0 ? (
+                        <View
+                          className="rounded-2xl border border-dashed p-4"
+                          style={{
+                            backgroundColor: accentColor + '0d',
+                            borderColor: tintColor + '33',
+                          }}
+                        >
+                          <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                            No IBM profiles yet
+                          </ThemedText>
+                          <ThemedText className="opacity-80 text-base leading-6">
+                            Simulator-backed features still work without IBM credentials. Add a
+                            profile only when you want IBM backend discovery, transpilation, or
+                            hardware jobs.
+                          </ThemedText>
+                        </View>
+                      ) : (
+                        <View className="gap-3">
+                          {ibmProfiles.map((profile) => {
+                            const isBusy = busyIbmProfileId === profile.profileId;
+                            const verificationColor =
+                              profile.verificationStatus === 'verified'
+                                ? '#22c55e'
+                                : profile.verificationStatus === 'invalid'
+                                  ? '#f87171'
+                                  : secondaryColor;
+
+                            return (
+                              <View
+                                key={profile.profileId}
+                                className="rounded-2xl border p-4"
+                                style={{
+                                  backgroundColor: accentColor + '10',
+                                  borderColor: tintColor + '2f',
+                                }}
+                              >
+                                <View className="mb-2 flex-row items-start justify-between gap-3">
+                                  <View className="flex-1">
+                                    <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                                      {profile.profileName}
+                                    </ThemedText>
+                                    <ThemedText className="font-mono text-sm leading-6" style={{ color: secondaryColor }}>
+                                      {profile.maskedToken}
+                                    </ThemedText>
+                                  </View>
+
+                                  {profile.isDefault ? (
+                                    <View
+                                      className="rounded-full px-3 py-1"
+                                      style={{ backgroundColor: tintColor + '25' }}
+                                    >
+                                      <ThemedText className="text-xs font-bold uppercase tracking-[0.16em]">
+                                        Default
+                                      </ThemedText>
+                                    </View>
+                                  ) : null}
+                                </View>
+
+                                <View className="mb-3 gap-1">
+                                  <ThemedText className="opacity-75 text-sm">
+                                    Instance: {profile.instance}
+                                  </ThemedText>
+                                  <ThemedText className="opacity-75 text-sm">
+                                    Channel: {profile.channel}
+                                  </ThemedText>
+                                  <ThemedText className="opacity-75 text-sm" style={{ color: verificationColor }}>
+                                    Verification: {profile.verificationStatus}
+                                  </ThemedText>
+                                  <ThemedText className="opacity-75 text-sm">
+                                    Last verified: {formatTimestamp(profile.lastVerifiedAt)}
+                                  </ThemedText>
+                                  <ThemedText className="opacity-75 text-sm">
+                                    Updated: {formatTimestamp(profile.updatedAt)}
+                                  </ThemedText>
+                                </View>
+
+                                <View className="gap-2 md:flex-row md:flex-wrap">
+                                  <Pressable
+                                    disabled={isBusy}
+                                    onPress={() => handleVerifyIbmProfile(profile)}
+                                    style={({ pressed }) => ({
+                                      alignItems: 'center',
+                                      backgroundColor: tintColor,
+                                      borderCurve: 'continuous',
+                                      borderRadius: 12,
+                                      justifyContent: 'center',
+                                      opacity: pressed || isBusy ? 0.72 : 1,
+                                      paddingHorizontal: 12,
+                                      paddingVertical: 10,
+                                    })}
+                                  >
+                                    <ThemedText inverse className="font-bold text-xs uppercase tracking-[0.12em]">
+                                      Verify
+                                    </ThemedText>
+                                  </Pressable>
+
+                                  <Pressable
+                                    disabled={isBusy || profile.isDefault}
+                                    onPress={() => handleSetDefaultIbmProfile(profile)}
+                                    style={({ pressed }) => ({
+                                      alignItems: 'center',
+                                      backgroundColor: backgroundColor,
+                                      borderColor: tintColor + '40',
+                                      borderCurve: 'continuous',
+                                      borderRadius: 12,
+                                      borderWidth: 1,
+                                      justifyContent: 'center',
+                                      opacity: pressed || isBusy || profile.isDefault ? 0.72 : 1,
+                                      paddingHorizontal: 12,
+                                      paddingVertical: 10,
+                                    })}
+                                  >
+                                    <ThemedText className="font-bold text-xs uppercase tracking-[0.12em]" style={{ color: secondaryColor }}>
+                                      Set Default
+                                    </ThemedText>
+                                  </Pressable>
+
+                                  <Pressable
+                                    disabled={isBusy}
+                                    onPress={() => handleStartEditIbmProfile(profile)}
+                                    style={({ pressed }) => ({
+                                      alignItems: 'center',
+                                      backgroundColor: backgroundColor,
+                                      borderColor: tintColor + '40',
+                                      borderCurve: 'continuous',
+                                      borderRadius: 12,
+                                      borderWidth: 1,
+                                      justifyContent: 'center',
+                                      opacity: pressed || isBusy ? 0.72 : 1,
+                                      paddingHorizontal: 12,
+                                      paddingVertical: 10,
+                                    })}
+                                  >
+                                    <ThemedText className="font-bold text-xs uppercase tracking-[0.12em]" style={{ color: secondaryColor }}>
+                                      Edit
+                                    </ThemedText>
+                                  </Pressable>
+
+                                  <Pressable
+                                    disabled={isBusy}
+                                    onPress={() => handleDeleteIbmProfile(profile)}
+                                    style={({ pressed }) => ({
+                                      alignItems: 'center',
+                                      backgroundColor: backgroundColor,
+                                      borderColor: '#ef444466',
+                                      borderCurve: 'continuous',
+                                      borderRadius: 12,
+                                      borderWidth: 1,
+                                      justifyContent: 'center',
+                                      opacity: pressed || isBusy ? 0.72 : 1,
+                                      paddingHorizontal: 12,
+                                      paddingVertical: 10,
+                                    })}
+                                  >
+                                    {isBusy ? (
+                                      <ActivityIndicator color="#f87171" />
+                                    ) : (
+                                      <ThemedText className="font-bold text-xs uppercase tracking-[0.12em]" style={{ color: '#f87171' }}>
+                                        Delete
+                                      </ThemedText>
+                                    )}
+                                  </Pressable>
+                                </View>
+                              </View>
+                            );
+                          })}
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ) : null}
+              </View>
             </View>
           )}
         </View>
@@ -1193,6 +1908,67 @@ export function QuantumAuthDashboardCard({
                   </View>
                 </View>
               </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setShowIbmInfoModal(false)}
+        transparent
+        visible={showIbmInfoModal}
+      >
+        <View className="flex-1 items-center justify-center bg-black/60 px-4">
+          <Pressable
+            accessibilityLabel="Close IBM credentials info modal"
+            accessibilityRole="button"
+            className="absolute inset-0"
+            onPress={() => setShowIbmInfoModal(false)}
+          />
+
+          <View
+            className="z-10 w-full max-w-[680px] rounded-3xl border p-6 md:p-7"
+            style={{
+              backgroundColor,
+              borderColor: tintColor + '45',
+              maxHeight: 760,
+            }}
+          >
+            <ScrollView contentContainerStyle={{ paddingBottom: 4 }} showsVerticalScrollIndicator>
+              <View className="mb-3 flex-row items-start justify-between gap-3">
+                <View className="flex-1 flex-row items-center gap-2.5">
+                  <ThemedText type="defaultSemiBold" className="text-lg md:text-xl">
+                    About IBM Credentials
+                  </ThemedText>
+                </View>
+
+                <Pressable
+                  accessibilityLabel="Close IBM credentials info"
+                  accessibilityRole="button"
+                  onPress={() => setShowIbmInfoModal(false)}
+                  style={({ pressed }) => ({
+                    opacity: pressed ? 0.75 : 1,
+                    padding: 4,
+                  })}
+                >
+                  <Ionicons color={secondaryColor} name="close" size={20} />
+                </Pressable>
+              </View>
+
+              <ThemedText className="opacity-90 text-base leading-6">
+                IBM credentials are optional. You can keep using simulator-backed Quantum API features
+                without adding IBM credentials.
+              </ThemedText>
+
+              <ThemedText className="mt-2 opacity-90 text-base leading-6">
+                If you add your own IBM profile, this same Quantum API account can use IBM backend
+                discovery, transpilation, and async hardware jobs.
+              </ThemedText>
+
+              <ThemedText className="mt-2 opacity-80 text-base leading-6">
+                Your IBM token is write-only. After save, only masked token metadata is shown.
+              </ThemedText>
             </ScrollView>
           </View>
         </View>
