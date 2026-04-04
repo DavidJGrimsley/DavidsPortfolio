@@ -8,6 +8,7 @@ import { Picker } from '@react-native-picker/picker';
 interface EndpointCardProps {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   path: string;
+  displayPath?: string;
   summary: string;
   description?: string;
   parameters?: {
@@ -84,6 +85,7 @@ function degreesToRadians(value: number) {
 export function EndpointCard({
   method,
   path,
+  displayPath,
   summary,
   description,
   parameters,
@@ -403,7 +405,7 @@ export function EndpointCard({
             flex: 1,
             color: secondaryColor,
           }}>
-            {path}
+            {displayPath ?? path}
           </ThemedText>
           <ThemedText style={{ fontSize: 20 }}>
             {isExpanded ? '▼' : '▶'}

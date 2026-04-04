@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -12,13 +12,10 @@ import {
   QUANTUM_API_BASE_URL,
   QUANTUM_DOCS_URL,
   QUANTUM_PORTFOLIO_URL,
-  getQuantumApiHeaders,
-  hasQuantumApiKey,
 } from '@/lib/quantum-api-config';
 import apisData from '@json/apis.json';
 
-const QUANTUM_API_HEADERS = getQuantumApiHeaders({ includeContentType: false });
-const HAS_QUANTUM_API_KEY = hasQuantumApiKey();
+const QUANTUM_PROXY_BASE_PATH = '/api/quantum-backend';
 const SHOULD_DEBUG_PUBLIC_FACING =
   __DEV__ || process.env.EXPO_PUBLIC_PUBLIC_FACING_DEBUG === '1';
 
@@ -40,6 +37,7 @@ type QuantumPortfolioDetail = {
   endpoints: {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
     path: string;
+    operationPath?: string;
     summary: string;
     description?: string;
     auth?: 'public' | 'api_key' | 'bearer_jwt';
@@ -59,10 +57,35 @@ type QuantumPortfolioDetail = {
 
 type QuantumEndpoint = QuantumPortfolioDetail['endpoints'][number];
 
+function toMountedPath(path: string, baseUrl: string) {
+  const trimmed = path.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  if (!(withLeadingSlash === '/v1' || withLeadingSlash.startsWith('/v1/'))) {
+    return withLeadingSlash;
+  }
+
+  try {
+    const basePath = new URL(baseUrl).pathname.replace(/\/+$/, '');
+    if (!basePath || basePath === '/v1') {
+      return withLeadingSlash;
+    }
+
+    const suffix = withLeadingSlash.slice('/v1'.length);
+    return `${basePath}${suffix}`;
+  } catch {
+    return withLeadingSlash;
+  }
+}
+
 const FALLBACK_ENDPOINTS: QuantumEndpoint[] = [
   {
     method: 'GET',
     path: '/v1/health',
+    operationPath: '/v1/health',
     summary: 'Service health and runtime capability status',
     description:
       'Public liveness endpoint. Returns service status, version, and runtime availability details.',
@@ -84,6 +107,7 @@ const FALLBACK_ENDPOINTS: QuantumEndpoint[] = [
   {
     method: 'GET',
     path: '/v1/echo-types',
+    operationPath: '/v1/echo-types',
     summary: 'List canonical text transformation categories',
     description:
       'Returns transformation categories and descriptions used by text transformation clients.',
@@ -102,6 +126,7 @@ const FALLBACK_ENDPOINTS: QuantumEndpoint[] = [
   {
     method: 'POST',
     path: '/v1/gates/run',
+    operationPath: '/v1/gates/run',
     summary: 'Run a single-qubit gate and return measured output',
     description:
       'Supports bit_flip, phase_flip, and rotation gates. Rotation requests must include rotation_angle_rad.',
@@ -236,6 +261,7 @@ export default function QuantumAPIPage() {
   const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? QUANTUM_DOCS_URL;
   const apiVersion = portfolioDetail?.api?.version ?? apisData.apis[0].version;
   const apiStatusRaw = (portfolioDetail?.api?.status ?? apisData.apis[0].status ?? '').toLowerCase();
+  const endpointExecutionBaseUrl = Platform.OS === 'web' ? QUANTUM_PROXY_BASE_PATH : apiBaseUrl;
   const isLive =
     apiStatusRaw === 'active' ||
     apiStatusRaw === 'healthy' ||
@@ -246,9 +272,6 @@ export default function QuantumAPIPage() {
   const authHintForEndpoint = (
     auth: QuantumEndpoint['auth'],
   ): string | undefined => {
-    if (auth === 'api_key' && !HAS_QUANTUM_API_KEY) {
-      return 'Set EXPO_PUBLIC_QUANTUM_API_KEY to test this endpoint locally.';
-    }
     if (auth === 'bearer_jwt') {
       return 'This endpoint requires a signed user JWT. Test it in Swagger with Bearer auth.';
     }
@@ -401,15 +424,19 @@ export default function QuantumAPIPage() {
               <EndpointCard
                 key={`${normalizedMethod}:${endpoint.path}`}
                 method={methodForCard}
-                path={endpoint.path}
+                path={
+                  Platform.OS === 'web'
+                    ? endpoint.path
+                    : toMountedPath(endpoint.path, apiBaseUrl)
+                }
+                displayPath={endpoint.operationPath ?? endpoint.path}
                 summary={endpoint.summary}
                 description={endpoint.description}
                 auth={endpoint.auth ?? 'public'}
                 parameters={endpoint.parameters}
                 requestBody={endpoint.requestBody}
                 responses={endpoint.responses}
-                baseUrl={apiBaseUrl}
-                extraHeaders={endpoint.auth === 'api_key' && HAS_QUANTUM_API_KEY ? QUANTUM_API_HEADERS : undefined}
+                baseUrl={endpointExecutionBaseUrl}
                 liveDisabledReason={authHintForEndpoint(endpoint.auth)}
               />
             );

@@ -173,11 +173,12 @@ async function requestQuantumApiWithApiKey(
   path: string,
   init?: RequestInit
 ) {
+  const trimmedApiKey = apiKey.trim();
   const response = await fetch(joinUrl(baseUrl, path), {
     ...init,
     headers: {
       Accept: 'application/json',
-      'X-API-Key': apiKey,
+      ...(trimmedApiKey ? { 'X-API-Key': trimmedApiKey } : {}),
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...(init?.headers ?? {}),
     },
