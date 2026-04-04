@@ -2,6 +2,7 @@
 
 const path = require('path');
 const { Readable } = require('stream');
+const { pipeline } = require('stream/promises');
 const express = require('express');
 const compression = require('compression');
 const morgan = require('morgan');
@@ -11,19 +12,44 @@ const CLIENT_BUILD_DIR = path.join(process.cwd(), 'dist/client');
 const SERVER_BUILD_DIR = path.join(process.cwd(), 'dist/server');
 
 const app = express();
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 const QUANTUM_REMOTE_ORIGIN = 'https://davidjgrimsley.com';
+const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
 
 app.use(compression());
 app.disable('x-powered-by');
 app.use(morgan('tiny'));
 
+function normalizeRemoteAddress(address) {
+  const normalized = String(address || '').toLowerCase();
+  if (normalized.startsWith('::ffff:')) {
+    return normalized.slice(7);
+  }
+  return normalized;
+}
+
+function isLoopbackAddress(address) {
+  const normalized = normalizeRemoteAddress(address);
+  return normalized === '::1' || normalized === '127.0.0.1' || normalized.startsWith('127.');
+}
+
 function isLocalhostRequest(req) {
-  const hostname = String(req.hostname || '').toLowerCase();
-  return LOCAL_HOSTS.has(hostname);
+  if (!ENABLE_LOCAL_QUANTUM_PROXY) {
+    return false;
+  }
+
+  const remoteAddress = req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : req.ip;
+  return isLoopbackAddress(remoteAddress);
 }
 
 async function proxyToQuantumOrigin(req, res, targetUrl) {
+  const abortController = new AbortController();
+  const abortUpstream = () => {
+    abortController.abort();
+  };
+
+  req.on('aborted', abortUpstream);
+  res.on('close', abortUpstream);
+
   try {
     const headers = new Headers();
     Object.entries(req.headers).forEach(([key, value]) => {
@@ -44,6 +70,7 @@ async function proxyToQuantumOrigin(req, res, targetUrl) {
       body: hasBody ? Readable.toWeb(req) : undefined,
       duplex: hasBody ? 'half' : undefined,
       redirect: 'manual',
+      signal: abortController.signal,
     });
 
     res.status(response.status);
@@ -57,14 +84,31 @@ async function proxyToQuantumOrigin(req, res, targetUrl) {
       return;
     }
 
-    Readable.fromWeb(response.body).pipe(res);
+    await pipeline(Readable.fromWeb(response.body), res);
   } catch (error) {
+    if (abortController.signal.aborted || req.destroyed) {
+      if (!res.writableEnded) {
+        res.end();
+      }
+      return;
+    }
+
     const message = error instanceof Error ? error.message : String(error);
-    res.status(502).json({ error: 'Quantum proxy failed', message });
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'Quantum proxy failed', message });
+      return;
+    }
+
+    if (!res.writableEnded) {
+      res.destroy(error instanceof Error ? error : undefined);
+    }
+  } finally {
+    req.off('aborted', abortUpstream);
+    res.off('close', abortUpstream);
   }
 }
 
-app.use('/public-facing/api/quantum', async (req, res, next) => {
+app.use('/public-facing/api/quantum/v1', async (req, res, next) => {
   if (!isLocalhostRequest(req)) {
     return next();
   }
@@ -78,15 +122,16 @@ app.use('/api/quantum-backend', async (req, res, next) => {
     return next();
   }
 
-  const suffix = req.originalUrl.slice('/api/quantum-backend'.length);
+  const requestUrl = new URL(req.originalUrl, 'http://localhost');
+  const suffix = requestUrl.pathname.slice('/api/quantum-backend'.length);
   let normalizedSuffix = suffix.startsWith('/') ? suffix : `/${suffix}`;
   if (normalizedSuffix === '/v1' || normalizedSuffix.startsWith('/v1/')) {
     normalizedSuffix = normalizedSuffix.slice(3);
-    if (!normalizedSuffix.startsWith('/')) {
+    if (normalizedSuffix.length > 0 && !normalizedSuffix.startsWith('/')) {
       normalizedSuffix = `/${normalizedSuffix}`;
     }
   }
-  const targetUrl = `${QUANTUM_REMOTE_ORIGIN}/public-facing/api/quantum/v1${normalizedSuffix}`;
+  const targetUrl = `${QUANTUM_REMOTE_ORIGIN}/public-facing/api/quantum/v1${normalizedSuffix}${requestUrl.search}`;
   await proxyToQuantumOrigin(req, res, targetUrl);
 });
 
