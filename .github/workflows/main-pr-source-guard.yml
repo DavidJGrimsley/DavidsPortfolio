@@ -1,0 +1,30 @@
+name: Require Main PR Source
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  require-source:
+    name: Require Main PR Source
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate allowed source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_branch="${GITHUB_HEAD_REF}"
+
+          if [ "${source_branch}" = "test" ] || [[ "${source_branch}" == hotfix/* ]]; then
+            echo "Source branch '${source_branch}' is allowed for PRs into main."
+            exit 0
+          fi
+
+          echo "PRs into main must come from 'test' or 'hotfix/*'."
+          echo "Current source branch: '${source_branch}'"
+          exit 1

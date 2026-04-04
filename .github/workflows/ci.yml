@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - test
+      - main
+  push:
+    branches:
+      - test
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 23
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm run test
+
+      - name: Expo doctor
+        run: npm run doctor
+
+      - name: Build web deploy bundle
+        run: npm run build:web:deploy
+
+  deploy_staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/test'
+    timeout-minutes: 20
+    env:
+      PLESK_STAGING_WEBHOOK_URL: ${{ secrets.PLESK_STAGING_WEBHOOK_URL }}
+      PLESK_STAGING_SITE_ORIGIN: ${{ secrets.PLESK_STAGING_SITE_ORIGIN }}
+
+    steps:
+      - name: Validate staging deploy secrets
+        shell: bash
+        run: |
+          missing=0
+          if [ -z "${PLESK_STAGING_WEBHOOK_URL}" ]; then
+            echo "Missing secret: PLESK_STAGING_WEBHOOK_URL"
+            missing=1
+          fi
+          if [ -z "${PLESK_STAGING_SITE_ORIGIN}" ]; then
+            echo "Missing secret: PLESK_STAGING_SITE_ORIGIN"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Trigger staging deploy webhook
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --request POST "${PLESK_STAGING_WEBHOOK_URL}"
+
+      - name: Verify staging deployment commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          build_url="${PLESK_STAGING_SITE_ORIGIN%/}/__djsportfolio_build.txt"
+          expected_sha="${GITHUB_SHA}"
+
+          echo "Polling ${build_url} for commit ${expected_sha}"
+
+          for attempt in $(seq 1 36); do
+            if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
+              deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
+
+              if [ "${deployed_sha}" = "${expected_sha}" ]; then
+                echo "Staging deployment verified on attempt ${attempt}."
+                exit 0
+              fi
+
+              echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
+            else
+              echo "Attempt ${attempt}/36: build marker unavailable or request failed, waiting..."
+            fi
+            sleep 10
+          done
+
+          echo "Staging deployment verification failed. Expected '${expected_sha}'."
+          exit 1
+
+  deploy_production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 20
+    env:
+      PLESK_PRODUCTION_WEBHOOK_URL: ${{ secrets.PLESK_PRODUCTION_WEBHOOK_URL }}
+      PLESK_PRODUCTION_SITE_ORIGIN: ${{ secrets.PLESK_PRODUCTION_SITE_ORIGIN }}
+
+    steps:
+      - name: Validate production deploy secrets
+        shell: bash
+        run: |
+          missing=0
+          if [ -z "${PLESK_PRODUCTION_WEBHOOK_URL}" ]; then
+            echo "Missing secret: PLESK_PRODUCTION_WEBHOOK_URL"
+            missing=1
+          fi
+          if [ -z "${PLESK_PRODUCTION_SITE_ORIGIN}" ]; then
+            echo "Missing secret: PLESK_PRODUCTION_SITE_ORIGIN"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Trigger production deploy webhook
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --request POST "${PLESK_PRODUCTION_WEBHOOK_URL}"
+
+      - name: Verify production deployment commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          build_url="${PLESK_PRODUCTION_SITE_ORIGIN%/}/__djsportfolio_build.txt"
+          expected_sha="${GITHUB_SHA}"
+
+          echo "Polling ${build_url} for commit ${expected_sha}"
+
+          for attempt in $(seq 1 36); do
+            if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
+              deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
+
+              if [ "${deployed_sha}" = "${expected_sha}" ]; then
+                echo "Production deployment verified on attempt ${attempt}."
+                exit 0
+              fi
+
+              echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
+            else
+              echo "Attempt ${attempt}/36: build marker unavailable or request failed, waiting..."
+            fi
+            sleep 10
+          done
+
+          echo "Production deployment verification failed. Expected '${expected_sha}'."
+          exit 1

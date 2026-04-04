@@ -53,9 +53,37 @@ npm run web
 
 ```bash
 npm run lint
-npx tsc --noEmit
+npm run typecheck
 npm test -- --runInBand
+npm run doctor
+npm run build:web:deploy
 ```
+
+## CI + Deploy Flow
+
+- Branch model: `feature/* -> test -> main`.
+- GitHub Actions workflow: `.github/workflows/ci.yml`.
+- Main PR source guard workflow: `.github/workflows/main-pr-source-guard.yml`.
+- Deploy marker files generated during deploy build:
+  - `/__djsportfolio_build.txt`
+  - `/__djsportfolio_build.json`
+- Plesk post-deploy script for Git deployments: `scripts/plesk-post-deploy.sh`.
+
+### Required GitHub Actions Secrets
+
+- `PLESK_STAGING_WEBHOOK_URL`
+- `PLESK_STAGING_SITE_ORIGIN`
+- `PLESK_PRODUCTION_WEBHOOK_URL`
+- `PLESK_PRODUCTION_SITE_ORIGIN`
+
+### Deployment Verification Contract
+
+The CI deploy jobs verify live deployment by polling:
+
+- `${PLESK_STAGING_SITE_ORIGIN}/__djsportfolio_build.txt`
+- `${PLESK_PRODUCTION_SITE_ORIGIN}/__djsportfolio_build.txt`
+
+The endpoint must return the exact deployed commit SHA.
 
 ## Notes
 
