@@ -12,10 +12,10 @@ import {
   QUANTUM_API_BASE_URL,
   QUANTUM_DOCS_URL,
   QUANTUM_PORTFOLIO_URL,
+  resolveQuantumEndpointBaseUrl,
 } from '@/lib/quantum-api-config';
 import apisData from '@json/apis.json';
 
-const QUANTUM_PROXY_BASE_PATH = '/api/quantum-backend';
 const SHOULD_DEBUG_PUBLIC_FACING =
   __DEV__ || process.env.EXPO_PUBLIC_PUBLIC_FACING_DEBUG === '1';
 
@@ -261,7 +261,9 @@ export default function QuantumAPIPage() {
   const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? QUANTUM_DOCS_URL;
   const apiVersion = portfolioDetail?.api?.version ?? apisData.apis[0].version;
   const apiStatusRaw = (portfolioDetail?.api?.status ?? apisData.apis[0].status ?? '').toLowerCase();
-  const endpointExecutionBaseUrl = Platform.OS === 'web' ? QUANTUM_PROXY_BASE_PATH : apiBaseUrl;
+  const isWebRuntime = Platform.OS === 'web';
+  const publicEndpointExecutionBaseUrl = resolveQuantumEndpointBaseUrl('public', isWebRuntime);
+  const keyedEndpointExecutionBaseUrl = resolveQuantumEndpointBaseUrl('api_key', isWebRuntime);
   const isLive =
     apiStatusRaw === 'active' ||
     apiStatusRaw === 'healthy' ||
@@ -419,6 +421,10 @@ export default function QuantumAPIPage() {
               normalizedMethod === 'PATCH'
                 ? normalizedMethod
                 : 'GET';
+            const endpointBaseUrl =
+              endpoint.auth === 'api_key'
+                ? keyedEndpointExecutionBaseUrl
+                : publicEndpointExecutionBaseUrl;
 
             return (
               <EndpointCard
@@ -436,7 +442,7 @@ export default function QuantumAPIPage() {
                 parameters={endpoint.parameters}
                 requestBody={endpoint.requestBody}
                 responses={endpoint.responses}
-                baseUrl={endpointExecutionBaseUrl}
+                baseUrl={endpointBaseUrl}
                 liveDisabledReason={authHintForEndpoint(endpoint.auth)}
               />
             );

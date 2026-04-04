@@ -46,26 +46,48 @@ function joinEndpointUrl(baseUrl: string, path: string) {
   }
 
   const normalizedBase = normalizeUrl(baseUrl);
-  const isAbsolutePath = trimmedPath.startsWith('/');
-  const normalizedPath = isAbsolutePath ? trimmedPath : `/${trimmedPath}`;
+  const normalizedPath = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
+  const isV1Path = normalizedPath === '/v1' || normalizedPath.startsWith('/v1/');
   const baseMatch = normalizedBase.match(/^(https?:\/\/[^/]+)(\/.*)?$/i);
 
   if (!baseMatch) {
+    if (isV1Path && normalizedBase.endsWith('/v1')) {
+      return `${normalizedBase}${normalizedPath.slice('/v1'.length)}`;
+    }
+
     return `${normalizedBase}${normalizedPath}`;
   }
 
   const origin = baseMatch[1];
-  const basePath = baseMatch[2] ?? '';
+  const basePath = (baseMatch[2] ?? '').replace(/\/+$/, '');
 
-  if (isAbsolutePath) {
-    // OpenAPI endpoint paths are absolute; resolve from origin.
-    if (basePath && normalizedPath.startsWith(`${basePath}/`)) {
-      return `${origin}${normalizedPath}`;
-    }
+  if (isV1Path && basePath.endsWith('/v1')) {
+    return `${origin}${basePath}${normalizedPath.slice('/v1'.length)}`;
+  }
+
+  if (basePath && normalizedPath.startsWith(`${basePath}/`)) {
     return `${origin}${normalizedPath}`;
   }
 
-  return `${normalizedBase}${normalizedPath}`;
+  return `${origin}${basePath}${normalizedPath}`;
+}
+
+async function parseJsonResponse(response: Response) {
+  const rawBody = await response.text();
+
+  if (!rawBody) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    const contentType = response.headers.get('content-type') ?? 'unknown content-type';
+    const preview = rawBody.replace(/\s+/g, ' ').slice(0, 180);
+    throw new Error(
+      `Expected JSON response but received ${contentType} (HTTP ${response.status}). Preview: ${preview}`
+    );
+  }
 }
 
 const GATE_TYPE_OPTIONS = ['bit_flip', 'phase_flip', 'rotation'] as const;
@@ -305,7 +327,7 @@ export function EndpointCard({
       }
 
       const response = await fetch(url, options);
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
       
       setTestResult({
         status: response.status,
@@ -347,7 +369,7 @@ export function EndpointCard({
             ...(extraHeaders ?? {}),
           },
         });
-        const data = await response.json();
+        const data = await parseJsonResponse(response);
         setLiveResponse({
           status: response.status,
           statusText: response.statusText,
