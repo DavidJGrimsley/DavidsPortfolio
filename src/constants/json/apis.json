@@ -9,6 +9,8 @@
       "baseUrl": "https://davidjgrimsley.com/v1",
       "status": "active",
       "featured": true,
+      "endpoints": 46,
+      "uptime": "-",
       "tags": ["quantum", "simulation", "gaming", "text-processing"]
     }
   ]
