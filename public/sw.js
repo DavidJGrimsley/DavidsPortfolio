@@ -5,7 +5,6 @@ const CACHE_NAME = `djsportfolio-${CACHE_VERSION}`;
 
 const CORE_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.webmanifest',
   '/images/favicon.png',
   '/images/icon.png',
@@ -47,12 +46,15 @@ self.addEventListener('fetch', (event) => {
       (async () => {
         try {
           const response = await fetch(request);
+          if (!response || !response.ok) {
+            throw new Error('Navigation response was not OK');
+          }
           const cache = await caches.open(CACHE_NAME);
-          cache.put('/index.html', response.clone()).catch(() => {});
+          cache.put('/', response.clone()).catch(() => {});
           return response;
         } catch {
           const cache = await caches.open(CACHE_NAME);
-          return (await cache.match('/index.html')) || Response.error();
+          return (await cache.match('/')) || Response.error();
         }
       })()
     );

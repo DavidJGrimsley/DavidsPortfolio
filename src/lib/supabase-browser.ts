@@ -3,10 +3,16 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { SITE_URL } from '@/constants/seo';
 import { QUANTUM_AUTH_PATH } from '@/lib/quantum-api-config';
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
+const DEFAULT_SUPABASE_URL = 'https://qimeuflzonlcyruwczrx.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'sb_publishable_93HoHaYo1KIhvKKJvur0lQ_G0KUs9Yk';
+
+const SUPABASE_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() ?? DEFAULT_SUPABASE_URL;
 const SUPABASE_ANON_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ??
-  process.env.EXPO_PUBLIC_SUPABASE_KEY?.trim();
+  process.env.EXPO_PUBLIC_SUPABASE_KEY?.trim() ??
+  DEFAULT_SUPABASE_ANON_KEY;
 const HAS_LEGACY_SUPABASE_KEY = Boolean(process.env.EXPO_PUBLIC_SUPABASE_KEY?.trim());
 const HAS_ANON_SUPABASE_KEY = Boolean(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim());
 const isWeb = Platform.OS === 'web';

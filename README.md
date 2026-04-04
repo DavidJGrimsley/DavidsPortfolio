@@ -46,6 +46,7 @@ QUANTUM_BACKEND_API_KEY=qapi_...
 
 `EXPO_PUBLIC_*` variables are build-time for Expo web output. After changing them, rebuild and redeploy.
 On Plesk, set these variables in the Node.js environment before post-deploy runs.
+If your Git hook shell does not inherit Node.js GUI variables, add the same keys to `.env.plesk` in the project root on the server.
 
 3. Start the app:
 

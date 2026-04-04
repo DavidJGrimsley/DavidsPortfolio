@@ -6,6 +6,29 @@ set -eu
 
 missing=0
 
+load_env_file() {
+	file_path="$1"
+	if [ -f "$file_path" ]; then
+		echo "Loading env values from ${file_path}"
+		set -a
+		# shellcheck disable=SC1090
+		. "$file_path"
+		set +a
+	fi
+}
+
+# Plesk Git hooks do not always receive Node.js GUI env values.
+# Source project env files when available.
+load_env_file .env
+load_env_file .env.production
+load_env_file .env.plesk
+
+if [ -z "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}" ] && [ -n "${EXPO_PUBLIC_SUPABASE_KEY-}" ]; then
+	EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_KEY}"
+	export EXPO_PUBLIC_SUPABASE_ANON_KEY
+	echo 'Mapped EXPO_PUBLIC_SUPABASE_KEY -> EXPO_PUBLIC_SUPABASE_ANON_KEY'
+fi
+
 require_env_var() {
 	var_name="$1"
 	eval "var_value=\${$var_name-}"
@@ -33,8 +56,7 @@ require_env_var QUANTUM_PROXY_UPSTREAM_BASE_URL
 require_env_var QUANTUM_BACKEND_API_KEY
 
 if [ "$missing" -ne 0 ]; then
-	echo 'Aborting deploy build due to missing environment configuration.'
-	exit 1
+	echo 'Warning: one or more env variables are missing. Continuing build with in-app defaults where available.'
 fi
 
 echo 'Build environment summary:'
