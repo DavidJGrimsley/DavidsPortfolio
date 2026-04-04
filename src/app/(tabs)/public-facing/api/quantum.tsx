@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -56,6 +56,30 @@ type QuantumPortfolioDetail = {
 };
 
 type QuantumEndpoint = QuantumPortfolioDetail['endpoints'][number];
+
+function toMountedPath(path: string, baseUrl: string) {
+  const trimmed = path.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  if (!(withLeadingSlash === '/v1' || withLeadingSlash.startsWith('/v1/'))) {
+    return withLeadingSlash;
+  }
+
+  try {
+    const basePath = new URL(baseUrl).pathname.replace(/\/+$/, '');
+    if (!basePath || basePath === '/v1') {
+      return withLeadingSlash;
+    }
+
+    const suffix = withLeadingSlash.slice('/v1'.length);
+    return `${basePath}${suffix}`;
+  } catch {
+    return withLeadingSlash;
+  }
+}
 
 const FALLBACK_ENDPOINTS: QuantumEndpoint[] = [
   {
@@ -237,6 +261,7 @@ export default function QuantumAPIPage() {
   const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? QUANTUM_DOCS_URL;
   const apiVersion = portfolioDetail?.api?.version ?? apisData.apis[0].version;
   const apiStatusRaw = (portfolioDetail?.api?.status ?? apisData.apis[0].status ?? '').toLowerCase();
+  const endpointExecutionBaseUrl = Platform.OS === 'web' ? QUANTUM_PROXY_BASE_PATH : apiBaseUrl;
   const isLive =
     apiStatusRaw === 'active' ||
     apiStatusRaw === 'healthy' ||
@@ -399,7 +424,11 @@ export default function QuantumAPIPage() {
               <EndpointCard
                 key={`${normalizedMethod}:${endpoint.path}`}
                 method={methodForCard}
-                path={endpoint.operationPath ?? endpoint.path}
+                path={
+                  Platform.OS === 'web'
+                    ? endpoint.path
+                    : toMountedPath(endpoint.path, apiBaseUrl)
+                }
                 displayPath={endpoint.operationPath ?? endpoint.path}
                 summary={endpoint.summary}
                 description={endpoint.description}
@@ -407,7 +436,7 @@ export default function QuantumAPIPage() {
                 parameters={endpoint.parameters}
                 requestBody={endpoint.requestBody}
                 responses={endpoint.responses}
-                baseUrl={QUANTUM_PROXY_BASE_PATH}
+                baseUrl={endpointExecutionBaseUrl}
                 liveDisabledReason={authHintForEndpoint(endpoint.auth)}
               />
             );

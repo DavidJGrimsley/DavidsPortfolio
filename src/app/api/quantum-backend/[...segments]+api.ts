@@ -2,13 +2,15 @@ const DEFAULT_UPSTREAM_BASE_URL =
   'https://davidjgrimsley.com/public-facing/api/quantum/v1';
 const PROXY_ROUTE_PREFIX = '/api/quantum-backend';
 const ROUTE_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://davidjgrimsley.com',
+  'https://www.davidjgrimsley.com',
+  'http://localhost:8081',
+  'http://127.0.0.1:8081',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+] as const;
 const DISALLOWED_PREFIXES = ['/v1/keys', '/v1/ibm/profiles'] as const;
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': ROUTE_METHODS,
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Request-ID',
-};
 
 type Method =
   | 'GET'
@@ -50,7 +52,7 @@ function normalizeOperationPath(pathname: string) {
     return '/v1/health';
   }
 
-  return withLeadingSlash;
+  return `/v1${withLeadingSlash}`;
 }
 
 function isDisallowedPath(path: string) {
@@ -81,7 +83,6 @@ function pickForwardHeaders(request: Request, apiKey: string) {
   const headers = new Headers();
   const accept = request.headers.get('accept');
   const contentType = request.headers.get('content-type');
-  const authorization = request.headers.get('authorization');
   const requestId = request.headers.get('x-request-id');
 
   headers.set('Accept', accept ?? 'application/json');
@@ -91,10 +92,6 @@ function pickForwardHeaders(request: Request, apiKey: string) {
     headers.set('Content-Type', contentType);
   }
 
-  if (authorization) {
-    headers.set('Authorization', authorization);
-  }
-
   if (requestId) {
     headers.set('X-Request-ID', requestId);
   }
@@ -102,15 +99,72 @@ function pickForwardHeaders(request: Request, apiKey: string) {
   return headers;
 }
 
-function mergeCors(headers?: HeadersInit) {
+function getAllowedOrigins() {
+  const raw = process.env.QUANTUM_PROXY_ALLOWED_ORIGINS?.trim();
+  if (!raw) {
+    return [...DEFAULT_ALLOWED_ORIGINS];
+  }
+
+  return raw
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+}
+
+function appendVary(headers: Headers, value: string) {
+  const existing = headers.get('Vary');
+  if (!existing) {
+    headers.set('Vary', value);
+    return;
+  }
+
+  const parts = existing
+    .split(',')
+    .map((part) => part.trim().toLowerCase());
+  if (!parts.includes(value.toLowerCase())) {
+    headers.set('Vary', `${existing}, ${value}`);
+  }
+}
+
+function isOriginAllowed(origin: string | null, allowedOrigins: readonly string[]) {
+  if (!origin) {
+    return true;
+  }
+  if (allowedOrigins.includes('*')) {
+    return true;
+  }
+
+  return allowedOrigins.includes(origin);
+}
+
+function mergeCors(
+  request: Request,
+  allowedOrigins: readonly string[],
+  headers?: HeadersInit
+) {
   const merged = new Headers(headers);
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    merged.set(key, value);
-  });
+  merged.set('Access-Control-Allow-Methods', ROUTE_METHODS);
+  merged.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
+  const origin = request.headers.get('origin');
+  if (origin && isOriginAllowed(origin, allowedOrigins)) {
+    merged.set('Access-Control-Allow-Origin', origin);
+    appendVary(merged, 'Origin');
+  }
   return merged;
 }
 
 async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request) {
+  const allowedOrigins = getAllowedOrigins();
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
+    return Response.json(
+      {
+        error: 'proxy_origin_disallowed',
+        message: 'Origin is not allowed to use quantum-backend proxy.',
+      },
+      { status: 403, headers: mergeCors(request, allowedOrigins) }
+    );
+  }
+
   const apiKey = process.env.QUANTUM_BACKEND_API_KEY?.trim();
   if (!apiKey) {
     return Response.json(
@@ -118,7 +172,7 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
         error: 'proxy_not_configured',
         message: 'QUANTUM_BACKEND_API_KEY is missing on the server.',
       },
-      { status: 500, headers: mergeCors() }
+      { status: 500, headers: mergeCors(request, allowedOrigins) }
     );
   }
 
@@ -133,7 +187,7 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
         message:
           'This route is intentionally blocked on quantum-backend. Call the upstream endpoint directly with user JWT.',
       },
-      { status: 403, headers: mergeCors() }
+      { status: 403, headers: mergeCors(request, allowedOrigins) }
     );
   }
 
@@ -158,7 +212,7 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
       statusText: upstreamResponse.statusText,
-      headers: mergeCors(upstreamResponse.headers),
+      headers: mergeCors(request, allowedOrigins, upstreamResponse.headers),
     });
   } catch (error) {
     return Response.json(
@@ -167,13 +221,24 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
         message:
           error instanceof Error ? error.message : 'Unknown proxy failure',
       },
-      { status: 502, headers: mergeCors() }
+      { status: 502, headers: mergeCors(request, allowedOrigins) }
     );
   }
 }
 
-export function OPTIONS() {
-  return new Response(null, { headers: mergeCors() });
+export function OPTIONS(request: Request) {
+  const allowedOrigins = getAllowedOrigins();
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
+    return Response.json(
+      {
+        error: 'proxy_origin_disallowed',
+        message: 'Origin is not allowed to use quantum-backend proxy.',
+      },
+      { status: 403, headers: mergeCors(request, allowedOrigins) }
+    );
+  }
+
+  return new Response(null, { headers: mergeCors(request, allowedOrigins) });
 }
 
 export function GET(request: Request) {
