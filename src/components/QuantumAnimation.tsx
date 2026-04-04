@@ -5,7 +5,10 @@ import LottieView from 'lottie-react-native';
 
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { ThemedText } from '@/components/UI/ThemedText';
-import { QUANTUM_API_BASE_URL } from '@/lib/quantum-api-config';
+import {
+  QUANTUM_API_BASE_URL,
+  resolveQuantumEndpointBaseUrl,
+} from '@/lib/quantum-api-config';
 import {
   getIbmCircuitJobResult,
   getIbmCircuitJobStatus,
@@ -55,17 +58,12 @@ function getRandomAngle() {
   return angles[Math.floor(Math.random() * angles.length)] ?? Math.PI / 4;
 }
 
-const QUANTUM_PROXY_BASE_PATH = '/api/quantum-backend';
-
 export function HelloWave() {
   const isWeb = Platform.OS === 'web';
   const publicQuantumBaseUrl = QUANTUM_API_BASE_URL;
-  const quantumBaseUrl = isWeb ? QUANTUM_PROXY_BASE_PATH : QUANTUM_API_BASE_URL;
+  const quantumBaseUrl = resolveQuantumEndpointBaseUrl('api_key', isWeb);
   const quantumEndpoint = `${quantumBaseUrl}/gates/run`;
   const hasApiKey = isWeb;
-  const quantumApiHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
   const runtimeApiKey = '';
 
   const restartRef = useRef<LottieView>(null);
@@ -142,7 +140,9 @@ export function HelloWave() {
       try {
         response = await fetch(quantumEndpoint, {
           method: 'POST',
-          headers: quantumApiHeaders,
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             gate_type: 'rotation',
             rotation_angle_rad: angle,
@@ -184,7 +184,7 @@ export function HelloWave() {
         measurement: measured,
       };
     },
-    [quantumApiHeaders, quantumEndpoint]
+    [quantumEndpoint]
   );
 
   const runIbmHardware = useCallback(

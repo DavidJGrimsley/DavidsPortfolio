@@ -111,4 +111,28 @@ describe('quantum api config', () => {
 
     expect(config.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
   });
+
+  it('uses local web proxy url on localhost:8081 when env points at remote https origin', () => {
+    setWindowLocation('localhost', '8081');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = 'https://example.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
+  });
+
+  it('resolves api-key endpoints to the web proxy while keeping public endpoints on the configured base', () => {
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://example.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe('/api/quantum-backend');
+    expect(config.resolveQuantumEndpointBaseUrl('public', true)).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
+    expect(config.resolveQuantumEndpointBaseUrl('api_key', false)).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
+  });
 });

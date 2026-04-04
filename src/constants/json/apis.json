@@ -6,7 +6,7 @@
       "version": "0.1.0",
       "icon": "⚛️",
       "description": "General-purpose quantum services for games and applications: simulations, text transformations, gate operations, and more.",
-      "baseUrl": "https://davidjgrimsley.com/v1",
+      "baseUrl": "https://davidjgrimsley.com/public-facing/api/quantum/v1",
       "status": "active",
       "featured": true,
       "endpoints": 46,
