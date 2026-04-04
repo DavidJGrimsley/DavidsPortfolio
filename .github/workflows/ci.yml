@@ -94,14 +94,18 @@ jobs:
           echo "Polling ${build_url} for commit ${expected_sha}"
 
           for attempt in $(seq 1 36); do
-            deployed_sha="$(curl --silent --show-error --fail "${build_url}" | tr -d '\r\n[:space:]')"
+            if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
+              deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
 
-            if [ "${deployed_sha}" = "${expected_sha}" ]; then
-              echo "Staging deployment verified on attempt ${attempt}."
-              exit 0
+              if [ "${deployed_sha}" = "${expected_sha}" ]; then
+                echo "Staging deployment verified on attempt ${attempt}."
+                exit 0
+              fi
+
+              echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
+            else
+              echo "Attempt ${attempt}/36: build marker unavailable or request failed, waiting..."
             fi
-
-            echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
             sleep 10
           done
 
@@ -150,14 +154,18 @@ jobs:
           echo "Polling ${build_url} for commit ${expected_sha}"
 
           for attempt in $(seq 1 36); do
-            deployed_sha="$(curl --silent --show-error --fail "${build_url}" | tr -d '\r\n[:space:]')"
+            if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
+              deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
 
-            if [ "${deployed_sha}" = "${expected_sha}" ]; then
-              echo "Production deployment verified on attempt ${attempt}."
-              exit 0
+              if [ "${deployed_sha}" = "${expected_sha}" ]; then
+                echo "Production deployment verified on attempt ${attempt}."
+                exit 0
+              fi
+
+              echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
+            else
+              echo "Attempt ${attempt}/36: build marker unavailable or request failed, waiting..."
             fi
-
-            echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
             sleep 10
           done
 
