@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import LottieView from 'lottie-react-native';
 
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { ThemedText } from '@/components/UI/ThemedText';
-import {
-  QUANTUM_API_BASE_URL,
-  QUANTUM_API_KEY,
-  getQuantumApiHeaders,
-  hasQuantumApiKey,
-} from '@/lib/quantum-api-config';
+import { QUANTUM_API_BASE_URL } from '@/lib/quantum-api-config';
 import {
   getIbmCircuitJobResult,
   getIbmCircuitJobStatus,
@@ -60,11 +55,18 @@ function getRandomAngle() {
   return angles[Math.floor(Math.random() * angles.length)] ?? Math.PI / 4;
 }
 
+const QUANTUM_PROXY_BASE_PATH = '/api/quantum-backend';
+
 export function HelloWave() {
-  const quantumBaseUrl = QUANTUM_API_BASE_URL;
+  const isWeb = Platform.OS === 'web';
+  const publicQuantumBaseUrl = QUANTUM_API_BASE_URL;
+  const quantumBaseUrl = isWeb ? QUANTUM_PROXY_BASE_PATH : QUANTUM_API_BASE_URL;
   const quantumEndpoint = `${quantumBaseUrl}/gates/run`;
-  const hasApiKey = hasQuantumApiKey();
-  const quantumApiHeaders = getQuantumApiHeaders();
+  const hasApiKey = isWeb;
+  const quantumApiHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const runtimeApiKey = '';
 
   const restartRef = useRef<LottieView>(null);
   const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,7 +96,9 @@ export function HelloWave() {
     if (!hasApiKey) {
       setIbmBackends([]);
       setSelectedIbmBackend('');
-      setIbmBackendsError('Set EXPO_PUBLIC_QUANTUM_API_KEY to load IBM hardware backends.');
+      setIbmBackendsError(
+        'IBM hardware mode is available through the secure web proxy route.'
+      );
       return [] as IbmBackendRecord[];
     }
 
@@ -102,7 +106,7 @@ export function HelloWave() {
     setIbmBackendsError(null);
 
     try {
-      const backends = await listIbmBackends(quantumBaseUrl, QUANTUM_API_KEY, {
+      const backends = await listIbmBackends(quantumBaseUrl, runtimeApiKey, {
         minQubits: 1,
       });
 
@@ -125,7 +129,7 @@ export function HelloWave() {
     } finally {
       setLoadingIbmBackends(false);
     }
-  }, [hasApiKey, quantumBaseUrl, selectedIbmBackend]);
+  }, [hasApiKey, quantumBaseUrl, runtimeApiKey, selectedIbmBackend]);
 
   const runSimulator = useCallback(
     async (angle: number): Promise<QuantumRunResult> => {
@@ -157,7 +161,7 @@ export function HelloWave() {
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error(
-            'Quantum API key rejected (401). Create or rotate an active key, then update EXPO_PUBLIC_QUANTUM_API_KEY.'
+            'Quantum backend authentication failed (401). Rotate the server-side key and retry.'
           );
         }
         throw new Error(`Simulator call failed with HTTP ${response.status}.`);
@@ -198,7 +202,7 @@ export function HelloWave() {
 
       setJobStatusText(`Submitting IBM hardware job to ${backendName}...`);
 
-      const submitted = await submitIbmCircuitJob(quantumBaseUrl, QUANTUM_API_KEY, {
+      const submitted = await submitIbmCircuitJob(quantumBaseUrl, runtimeApiKey, {
         backendName,
         shots: 512,
         circuit: {
@@ -227,7 +231,7 @@ export function HelloWave() {
         }
 
         await wait(2000);
-        const next = await getIbmCircuitJobStatus(quantumBaseUrl, QUANTUM_API_KEY, submitted.jobId);
+        const next = await getIbmCircuitJobStatus(quantumBaseUrl, runtimeApiKey, submitted.jobId);
         status = next.status;
         remoteJobId = next.remoteJobId;
         setJobStatusText(`IBM job ${submitted.jobId} is ${status} (remote: ${remoteJobId}).`);
@@ -247,7 +251,7 @@ export function HelloWave() {
         }
       }
 
-      const result = await getIbmCircuitJobResult(quantumBaseUrl, QUANTUM_API_KEY, submitted.jobId);
+      const result = await getIbmCircuitJobResult(quantumBaseUrl, runtimeApiKey, submitted.jobId);
       const entries = Object.entries(result.result.counts);
       const total = entries.reduce((sum, [, count]) => sum + count, 0);
       const oneCount = entries.reduce(
@@ -289,7 +293,7 @@ export function HelloWave() {
         hardwareEvidence: evidence,
       };
     },
-    [ibmBackends, loadIbmHardwareBackends, quantumBaseUrl, selectedIbmBackend]
+    [ibmBackends, loadIbmHardwareBackends, quantumBaseUrl, runtimeApiKey, selectedIbmBackend]
   );
 
   const runQuantumAnimation = useCallback(async () => {
@@ -306,7 +310,7 @@ export function HelloWave() {
     setHardwareEvidence(null);
 
     if (!hasApiKey) {
-      setRobotMessage('Missing EXPO_PUBLIC_QUANTUM_API_KEY. Running fallback animation.');
+      setRobotMessage('Secure backend proxy unavailable in this runtime. Running fallback animation.');
       setBackendLabel('Local fallback');
       setGateAngle(0);
       setSuperpositionStrength(0);
@@ -708,14 +712,13 @@ export function HelloWave() {
       >
         <ThemedText style={{ fontSize: 12, fontStyle: 'italic', opacity: 0.8 }}>
           This demo defaults to simulator mode. Switch to IBM Hardware, load a backend, and run
-          again to submit a real IBM job through this same
-          Quantum API key. Hardware runs display backend plus local and remote job IDs so you can
-          verify IBM execution. Base URL:{' '}
+          again to submit a real IBM job through this same Quantum API backend. Hardware runs
+          display backend plus local and remote job IDs so you can verify IBM execution. Base URL:{' '}
           <ExternalLink
-            href={quantumBaseUrl}
+            href={publicQuantumBaseUrl}
             style={{ color: '#11181C', fontSize: 12, opacity: 0.8, textDecorationLine: 'underline' }}
           >
-            {quantumBaseUrl}
+            {publicQuantumBaseUrl}
           </ExternalLink>
           .
         </ThemedText>
