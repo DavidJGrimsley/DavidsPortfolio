@@ -38,7 +38,9 @@ require_env_var EXPO_PUBLIC_QUANTUM_API_BASE_URL
 require_env_var QUANTUM_BACKEND_API_KEY
 
 if [ "$missing" -ne 0 ]; then
-	echo 'Warning: one or more env variables are missing. Continuing build with in-app defaults where available.'
+	echo 'Aborting deploy build due to missing required environment variables.'
+	echo 'Set the required variables in Plesk Node.js environment settings, then redeploy.'
+	exit 1
 fi
 
 echo 'Build environment summary:'

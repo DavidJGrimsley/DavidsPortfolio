@@ -40,6 +40,23 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests.
   if (url.origin !== self.location.origin) return;
 
+  // Build marker files should always come from network so console logs reflect the latest deploy.
+  if (
+    url.pathname === '/__djsportfolio_build.json' ||
+    url.pathname === '/__djsportfolio_build.txt'
+  ) {
+    event.respondWith(
+      (async () => {
+        try {
+          return await fetch(request, { cache: 'no-store' });
+        } catch {
+          return Response.error();
+        }
+      })()
+    );
+    return;
+  }
+
   // Navigation requests: network-first, fallback to cached index.html.
   if (request.mode === 'navigate') {
     event.respondWith(

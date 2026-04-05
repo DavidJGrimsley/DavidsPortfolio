@@ -78,7 +78,9 @@ function RootLayoutClient() {
     if (typeof window === 'undefined') return;
     if ((window as any).__DJS_BUILD_LOGGED__) return;
 
-    fetch('/__djsportfolio_build.json', { cache: 'no-store' })
+    const buildMetadataUrl = `/__djsportfolio_build.json?ts=${Date.now()}`;
+
+    fetch(buildMetadataUrl, { cache: 'no-store' })
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);

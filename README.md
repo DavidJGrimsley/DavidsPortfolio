@@ -14,8 +14,8 @@ Expo Router portfolio app for web/mobile with public API docs, project showcases
   - list/create/edit/delete profile
   - verify profile
   - set default profile
-- Quantum animation supports simulator mode and IBM hardware mode through Quantum API runtime endpoints.
-- Simulator usage remains available without IBM credentials.
+- Quantum animation supports simulator mode and IBM hardware mode through Quantum API runtime endpoints when `EXPO_PUBLIC_QUANTUM_API_KEY` is set.
+- Without `EXPO_PUBLIC_QUANTUM_API_KEY`, the animation card runs a local fallback demo state.
 
 ## Tech Stack
 
@@ -47,6 +47,7 @@ QUANTUM_BACKEND_API_KEY=qapi_...
 
 `EXPO_PUBLIC_*` variables are build-time for Expo web output. After changing them, rebuild and redeploy.
 On Plesk, set these variables in the Node.js environment before post-deploy runs.
+The deploy hook fails fast when required variables are missing.
 
 3. Start the app:
 
