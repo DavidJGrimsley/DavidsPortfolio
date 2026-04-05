@@ -70,6 +70,7 @@ npm run build:web:deploy
 - Deploy marker files generated during deploy build:
   - `/__djsportfolio_build.txt`
   - `/__djsportfolio_build.json`
+- Browser console logs build metadata on load using `/__djsportfolio_build.json`.
 - Plesk post-deploy script for Git deployments: `scripts/plesk-post-deploy.sh`.
 
 ### Required GitHub Actions Secrets
