@@ -95,7 +95,7 @@ export function HelloWave() {
       setIbmBackends([]);
       setSelectedIbmBackend('');
       setIbmBackendsError(
-        'IBM hardware mode is available through the secure web proxy route.'
+        'IBM hardware mode requires a valid Quantum API key.'
       );
       return [] as IbmBackendRecord[];
     }

@@ -40,13 +40,11 @@ npm install
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
-QUANTUM_PROXY_UPSTREAM_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
 ```
 
 `EXPO_PUBLIC_*` variables are build-time for Expo web output. After changing them, rebuild and redeploy.
 On Plesk, set these variables in the Node.js environment before post-deploy runs.
-If your Git hook shell does not inherit Node.js GUI variables, add the same keys to `.env.plesk` in the project root on the server.
 
 3. Start the app:
 
@@ -95,4 +93,4 @@ The endpoint must return the exact deployed commit SHA.
 - IBM secrets are not written directly from frontend to Supabase.
 - IBM profile CRUD uses Quantum API bearer-authenticated endpoints.
 - Hardware jobs use API-key-authenticated Quantum API runtime endpoints.
-- Public endpoint calls use `EXPO_PUBLIC_QUANTUM_API_BASE_URL`; API-key endpoint demos route through `/api/quantum-backend`.
+- Client endpoint demos use `EXPO_PUBLIC_QUANTUM_API_BASE_URL` directly.

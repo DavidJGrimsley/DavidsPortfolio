@@ -121,13 +121,15 @@ describe('quantum api config', () => {
     expect(config.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
   });
 
-  it('resolves api-key endpoints to the web proxy while keeping public endpoints on the configured base', () => {
+  it('resolves api-key and public endpoints to the configured base url', () => {
     mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
       'https://example.com/public-facing/api/quantum/v1';
 
     const config = loadConfig();
 
-    expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe('/api/quantum-backend');
+    expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
     expect(config.resolveQuantumEndpointBaseUrl('public', true)).toBe(
       'https://example.com/public-facing/api/quantum/v1'
     );
