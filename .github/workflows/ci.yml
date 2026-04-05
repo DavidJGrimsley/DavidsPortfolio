@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -26,10 +29,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node 23
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 23
           cache: npm
@@ -62,7 +65,7 @@ jobs:
           cat dist/client/__djsportfolio_build.json
 
       - name: Upload quality build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quality-dist-client-${{ github.sha }}
           path: dist/client
