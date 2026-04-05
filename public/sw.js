@@ -43,7 +43,9 @@ self.addEventListener('fetch', (event) => {
   // Build marker files should always come from network so console logs reflect the latest deploy.
   if (
     url.pathname === '/__djsportfolio_build.json' ||
-    url.pathname === '/__djsportfolio_build.txt'
+    url.pathname === '/__djsportfolio_build.txt' ||
+    url.pathname === '/dist/client/__djsportfolio_build.json' ||
+    url.pathname === '/dist/client/__djsportfolio_build.txt'
   ) {
     event.respondWith(
       (async () => {
