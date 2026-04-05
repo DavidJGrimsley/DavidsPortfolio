@@ -63,8 +63,8 @@ export function HelloWave() {
   const publicQuantumBaseUrl = QUANTUM_API_BASE_URL;
   const quantumBaseUrl = resolveQuantumEndpointBaseUrl('api_key', isWeb);
   const quantumEndpoint = `${quantumBaseUrl}/gates/run`;
-  const hasApiKey = isWeb;
-  const runtimeApiKey = '';
+  const runtimeApiKey = process.env.EXPO_PUBLIC_QUANTUM_API_KEY?.trim() ?? '';
+  const hasApiKey = runtimeApiKey.length > 0;
 
   const restartRef = useRef<LottieView>(null);
   const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,7 +95,7 @@ export function HelloWave() {
       setIbmBackends([]);
       setSelectedIbmBackend('');
       setIbmBackendsError(
-        'IBM hardware mode requires a valid Quantum API key.'
+        'IBM hardware mode requires EXPO_PUBLIC_QUANTUM_API_KEY.'
       );
       return [] as IbmBackendRecord[];
     }
@@ -142,6 +142,7 @@ export function HelloWave() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-API-Key': runtimeApiKey,
           },
           body: JSON.stringify({
             gate_type: 'rotation',
@@ -184,7 +185,7 @@ export function HelloWave() {
         measurement: measured,
       };
     },
-    [quantumEndpoint]
+    [quantumEndpoint, runtimeApiKey]
   );
 
   const runIbmHardware = useCallback(
@@ -310,7 +311,7 @@ export function HelloWave() {
     setHardwareEvidence(null);
 
     if (!hasApiKey) {
-      setRobotMessage('Secure backend proxy unavailable in this runtime. Running fallback animation.');
+      setRobotMessage('EXPO_PUBLIC_QUANTUM_API_KEY is missing. Running fallback animation.');
       setBackendLabel('Local fallback');
       setGateAngle(0);
       setSuperpositionStrength(0);
