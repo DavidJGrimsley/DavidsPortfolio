@@ -67,6 +67,7 @@ jobs:
           name: quality-dist-client-${{ github.sha }}
           path: dist/client
           if-no-files-found: error
+          retention-days: 7
 
   deploy_staging:
     name: Deploy Staging
