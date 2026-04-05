@@ -75,6 +75,7 @@ npm run build:web:deploy
   - `/__djsportfolio_build.json`
 - Browser console logs build metadata on load using `/__djsportfolio_build.json`.
 - Plesk post-deploy script for Git deployments: `scripts/plesk-post-deploy.sh`.
+- Quality job uploads the generated `dist/client` directory as a GitHub Actions artifact (`quality-dist-client-<sha>`), including build marker files.
 
 ### Required GitHub Actions Secrets
 
@@ -89,6 +90,10 @@ The CI deploy jobs verify live deployment by polling:
 
 - `${PLESK_STAGING_SITE_ORIGIN}/__djsportfolio_build.txt`
 - `${PLESK_PRODUCTION_SITE_ORIGIN}/__djsportfolio_build.txt`
+
+If the deployment serves static files under `dist/client`, the verifier also checks:
+
+- `${SITE_ORIGIN}/dist/client/__djsportfolio_build.txt`
 
 The endpoint must return the exact deployed commit SHA.
 

@@ -52,6 +52,22 @@ jobs:
       - name: Build web deploy bundle
         run: npm run build:web:deploy
 
+      - name: Show build marker outputs
+        shell: bash
+        run: |
+          ls -la dist/client
+          echo "__djsportfolio_build.txt"
+          cat dist/client/__djsportfolio_build.txt
+          echo "__djsportfolio_build.json"
+          cat dist/client/__djsportfolio_build.json
+
+      - name: Upload quality build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-dist-client-${{ github.sha }}
+          path: dist/client
+          if-no-files-found: error
+
   deploy_staging:
     name: Deploy Staging
     runs-on: ubuntu-latest
@@ -88,24 +104,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          build_url="${PLESK_STAGING_SITE_ORIGIN%/}/__djsportfolio_build.txt"
+          build_urls=(
+            "${PLESK_STAGING_SITE_ORIGIN%/}/__djsportfolio_build.txt"
+            "${PLESK_STAGING_SITE_ORIGIN%/}/dist/client/__djsportfolio_build.txt"
+          )
           expected_sha="${GITHUB_SHA}"
 
-          echo "Polling ${build_url} for commit ${expected_sha}"
+          echo "Polling build markers for commit ${expected_sha}"
+          echo "Candidate URLs: ${build_urls[*]}"
 
           for attempt in $(seq 1 36); do
-            if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
-              deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
+            for build_url in "${build_urls[@]}"; do
+              if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
+                deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
 
-              if [ "${deployed_sha}" = "${expected_sha}" ]; then
-                echo "Staging deployment verified on attempt ${attempt}."
-                exit 0
+                if [ "${deployed_sha}" = "${expected_sha}" ]; then
+                  echo "Staging deployment verified on attempt ${attempt} via ${build_url}."
+                  exit 0
+                fi
+
+                echo "Attempt ${attempt}/36 via ${build_url}: got '${deployed_sha}', waiting..."
+              else
+                echo "Attempt ${attempt}/36 via ${build_url}: build marker unavailable or request failed, waiting..."
               fi
-
-              echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
-            else
-              echo "Attempt ${attempt}/36: build marker unavailable or request failed, waiting..."
-            fi
+            done
             sleep 10
           done
 
@@ -148,24 +170,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          build_url="${PLESK_PRODUCTION_SITE_ORIGIN%/}/__djsportfolio_build.txt"
+          build_urls=(
+            "${PLESK_PRODUCTION_SITE_ORIGIN%/}/__djsportfolio_build.txt"
+            "${PLESK_PRODUCTION_SITE_ORIGIN%/}/dist/client/__djsportfolio_build.txt"
+          )
           expected_sha="${GITHUB_SHA}"
 
-          echo "Polling ${build_url} for commit ${expected_sha}"
+          echo "Polling build markers for commit ${expected_sha}"
+          echo "Candidate URLs: ${build_urls[*]}"
 
           for attempt in $(seq 1 36); do
-            if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
-              deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
+            for build_url in "${build_urls[@]}"; do
+              if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
+                deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
 
-              if [ "${deployed_sha}" = "${expected_sha}" ]; then
-                echo "Production deployment verified on attempt ${attempt}."
-                exit 0
+                if [ "${deployed_sha}" = "${expected_sha}" ]; then
+                  echo "Production deployment verified on attempt ${attempt} via ${build_url}."
+                  exit 0
+                fi
+
+                echo "Attempt ${attempt}/36 via ${build_url}: got '${deployed_sha}', waiting..."
+              else
+                echo "Attempt ${attempt}/36 via ${build_url}: build marker unavailable or request failed, waiting..."
               fi
-
-              echo "Attempt ${attempt}/36: got '${deployed_sha}', waiting..."
-            else
-              echo "Attempt ${attempt}/36: build marker unavailable or request failed, waiting..."
-            fi
+            done
             sleep 10
           done
 

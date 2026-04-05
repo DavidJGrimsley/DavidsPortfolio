@@ -1,17 +1,49 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-function safeGit(command) {
+function safeGit(args, cwd) {
   try {
-    return execSync(command, { encoding: 'utf8' }).trim();
+    return execFileSync('git', args, {
+      cwd,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
   } catch {
     return '';
   }
 }
 
-const sha = process.env.GITHUB_SHA || safeGit('git rev-parse HEAD') || 'unknown';
-const branch = process.env.GITHUB_REF_NAME || safeGit('git rev-parse --abbrev-ref HEAD') || 'unknown';
+function getSearchDirectories(startDir, maxDepth = 6) {
+  const dirs = [];
+  let current = startDir;
+
+  for (let i = 0; i <= maxDepth; i += 1) {
+    dirs.push(current);
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+
+  return dirs;
+}
+
+function gitFromClosestRepo(args) {
+  const searchDirs = getSearchDirectories(process.cwd());
+  for (const cwd of searchDirs) {
+    const value = safeGit(args, cwd);
+    if (value) return value;
+  }
+  return '';
+}
+
+const envSha = process.env.DEPLOY_COMMIT_SHA?.trim() || process.env.GITHUB_SHA?.trim() || '';
+const resolvedSha = envSha || gitFromClosestRepo(['rev-parse', 'HEAD']);
+const sha = /^[0-9a-f]{40}$/i.test(resolvedSha) ? resolvedSha : 'unknown';
+const branch =
+  process.env.GITHUB_REF_NAME?.trim() ||
+  gitFromClosestRepo(['rev-parse', '--abbrev-ref', 'HEAD']) ||
+  'unknown';
 const shortSha = sha === 'unknown' ? 'unknown' : sha.slice(0, 7);
 const builtAt = new Date().toISOString();
 

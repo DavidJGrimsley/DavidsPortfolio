@@ -14,7 +14,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.addAll(CORE_ASSETS);
+      await Promise.allSettled(CORE_ASSETS.map((asset) => cache.add(asset)));
       await self.skipWaiting();
     })()
   );
@@ -43,7 +43,9 @@ self.addEventListener('fetch', (event) => {
   // Build marker files should always come from network so console logs reflect the latest deploy.
   if (
     url.pathname === '/__djsportfolio_build.json' ||
-    url.pathname === '/__djsportfolio_build.txt'
+    url.pathname === '/__djsportfolio_build.txt' ||
+    url.pathname === '/dist/client/__djsportfolio_build.json' ||
+    url.pathname === '/dist/client/__djsportfolio_build.txt'
   ) {
     event.respondWith(
       (async () => {
