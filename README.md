@@ -14,8 +14,8 @@ Expo Router portfolio app for web/mobile with public API docs, project showcases
   - list/create/edit/delete profile
   - verify profile
   - set default profile
-- Quantum animation supports simulator mode and IBM hardware mode through Quantum API runtime endpoints.
-- Simulator usage remains available without IBM credentials.
+- Quantum animation supports simulator mode and IBM hardware mode through Quantum API runtime endpoints when `EXPO_PUBLIC_QUANTUM_API_KEY` is set.
+- Without `EXPO_PUBLIC_QUANTUM_API_KEY`, the animation card runs a local fallback demo state.
 
 ## Tech Stack
 
@@ -40,12 +40,14 @@ npm install
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
-QUANTUM_PROXY_UPSTREAM_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
+# Optional for live simulator/hardware demo calls in Quantum animation:
+# EXPO_PUBLIC_QUANTUM_API_KEY=qapi_...
 ```
 
 `EXPO_PUBLIC_*` variables are build-time for Expo web output. After changing them, rebuild and redeploy.
 On Plesk, set these variables in the Node.js environment before post-deploy runs.
+The deploy hook fails fast when required variables are missing.
 
 3. Start the app:
 
@@ -71,6 +73,7 @@ npm run build:web:deploy
 - Deploy marker files generated during deploy build:
   - `/__djsportfolio_build.txt`
   - `/__djsportfolio_build.json`
+- Browser console logs build metadata on load using `/__djsportfolio_build.json`.
 - Plesk post-deploy script for Git deployments: `scripts/plesk-post-deploy.sh`.
 
 ### Required GitHub Actions Secrets
@@ -94,4 +97,4 @@ The endpoint must return the exact deployed commit SHA.
 - IBM secrets are not written directly from frontend to Supabase.
 - IBM profile CRUD uses Quantum API bearer-authenticated endpoints.
 - Hardware jobs use API-key-authenticated Quantum API runtime endpoints.
-- Public endpoint calls use `EXPO_PUBLIC_QUANTUM_API_BASE_URL`; API-key endpoint demos route through `/api/quantum-backend`.
+- Client endpoint demos use `EXPO_PUBLIC_QUANTUM_API_BASE_URL` directly.

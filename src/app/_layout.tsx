@@ -76,6 +76,37 @@ function RootLayoutClient() {
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (typeof window === 'undefined') return;
+    if ((window as any).__DJS_BUILD_LOGGED__) return;
+
+    const buildMetadataUrl = `/__djsportfolio_build.json?ts=${Date.now()}`;
+
+    fetch(buildMetadataUrl, { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const info = await response.json();
+        const buildNumber = info?.buildNumber ?? 'unknown';
+        const shortSha = info?.shortSha ?? 'unknown';
+        const branch = info?.branch ?? 'unknown';
+        const builtAt = info?.builtAt ?? 'unknown';
+
+        console.info(
+          `[DJsPortfolio] Build #${String(buildNumber)} | ${String(shortSha)} | ${String(branch)} | ${String(builtAt)}`
+        );
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`[DJsPortfolio] Build metadata unavailable: ${message}`);
+      })
+      .finally(() => {
+        (window as any).__DJS_BUILD_LOGGED__ = true;
+      });
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker

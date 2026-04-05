@@ -21,7 +21,7 @@ type Method =
   | 'OPTIONS';
 
 function normalizeUpstreamBaseUrl() {
-  const raw = process.env.QUANTUM_PROXY_UPSTREAM_BASE_URL?.trim();
+  const raw = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL?.trim();
   const base = raw && raw.length > 0 ? raw : DEFAULT_UPSTREAM_BASE_URL;
   const trimmed = base.replace(/\/+$/, '');
   return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
