@@ -87,38 +87,15 @@ describe('quantum api config', () => {
     expect(config.QUANTUM_PORTFOLIO_URL).toBe('https://example.com/api/quantum/portfolio.json');
   });
 
-  it('uses local web proxy url on localhost:3000 when env is missing or blank', () => {
-    mutableEnv.NODE_ENV = 'test';
-    setWindowLocation('localhost', '3000');
-    delete mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL;
-
-    const withoutEnv = loadConfig();
-
-    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = '   ';
-    jest.resetModules();
-    const withBlankEnv = loadConfig();
-
-    expect(withoutEnv.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
-    expect(withoutEnv.QUANTUM_PORTFOLIO_URL).toBe('/public-facing/api/quantum/v1/portfolio.json');
-    expect(withBlankEnv.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
-  });
-
-  it('uses local web proxy url on localhost:3000 when env points at remote https origin', () => {
+  it('does not rewrite env override to same-origin on localhost web runtime', () => {
     setWindowLocation('localhost', '3000');
     mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = 'https://example.com/public-facing/api/quantum/v1';
 
     const config = loadConfig();
 
-    expect(config.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
-  });
-
-  it('uses local web proxy url on localhost:8081 when env points at remote https origin', () => {
-    setWindowLocation('localhost', '8081');
-    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = 'https://example.com/public-facing/api/quantum/v1';
-
-    const config = loadConfig();
-
-    expect(config.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
+    expect(config.QUANTUM_API_BASE_URL).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
   });
 
   it('resolves api-key and public endpoints to the configured base url', () => {
