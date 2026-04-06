@@ -164,6 +164,21 @@ Goal: keep simulator usage seamless while enabling optional IBM profile manageme
 - [ ] Backend auth/key policy review for `/v1/gates/run` 401 debugging in live env
 - [ ] Add deeper component tests for IBM dashboard interactions
 
+### Quantum Journey Milestone Snapshot (Public API Page)
+
+Status: 6 of 10 milestones completed.
+
+- [x] Quantum Gate API - RY rotation gates for true randomness
+- [x] Quantum Text Transformation - Unicode effects powered by quantum randomness
+- [x] Portfolio Integration - Live quantum animation in Quantum Echo project
+- [x] Multi-qubit circuits for more complex quantum states
+- [ ] Quantum entanglement demonstration API
+- [x] Grover's algorithm for quantum search
+- [ ] Quantum random number generator (QRNG) endpoint
+- [ ] Quantum game mechanics for procedural generation
+- [ ] Quantum circuit visualization in the API response
+- [x] Real quantum hardware access via IBM Quantum cloud (BYO credentials)
+
 ## Later Enhancements (Post-3.5)
 
 - [ ] Add per-user plan tiers/policies without changing lifecycle endpoint contracts

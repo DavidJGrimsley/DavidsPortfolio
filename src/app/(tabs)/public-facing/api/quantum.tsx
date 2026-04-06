@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
@@ -14,6 +14,8 @@ import {
   QUANTUM_PORTFOLIO_URL,
   resolveQuantumEndpointBaseUrl,
 } from '@/lib/quantum-api-config';
+import { createQuantumPublicClient } from '@/lib/quantum-sdk-client';
+import { executeQuantumSdkEndpoint } from '@/lib/quantum-sdk-executor';
 import apisData from '@json/apis.json';
 
 const SHOULD_DEBUG_PUBLIC_FACING =
@@ -184,6 +186,10 @@ export default function QuantumAPIPage() {
   const [isQuantumMechanicsExpanded, setIsQuantumMechanicsExpanded] = useState(false);
   const [portfolioDetail, setPortfolioDetail] = useState<QuantumPortfolioDetail | null>(null);
   const [isDetailSynced, setIsDetailSynced] = useState(false);
+  const sdkPublicClient = useMemo(
+    () => createQuantumPublicClient(QUANTUM_API_BASE_URL),
+    []
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -196,35 +202,7 @@ export default function QuantumAPIPage() {
           });
         }
 
-        const response = await fetch(QUANTUM_PORTFOLIO_URL, {
-          method: 'GET',
-          cache: 'no-store' as any,
-        });
-
-        if (SHOULD_DEBUG_PUBLIC_FACING) {
-          console.log('[Quantum] Initial response', {
-            status: response.status,
-            ok: response.ok,
-          });
-        }
-
-        const finalResponse =
-          response.status === 304
-            ? await fetch(`${QUANTUM_PORTFOLIO_URL}?_=${Date.now()}`, {
-                method: 'GET',
-                cache: 'no-store' as any,
-              })
-            : response;
-
-        if (SHOULD_DEBUG_PUBLIC_FACING && finalResponse !== response) {
-          console.log('[Quantum] Retried after 304 with cache-bust', {
-            status: finalResponse.status,
-            ok: finalResponse.ok,
-          });
-        }
-
-        if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
-        const data = (await finalResponse.json()) as QuantumPortfolioDetail;
+        const data = (await sdkPublicClient.portfolio({ auth: 'none' })) as QuantumPortfolioDetail;
 
         if (SHOULD_DEBUG_PUBLIC_FACING) {
           console.log('[Quantum] Parsed payload', {
@@ -254,6 +232,20 @@ export default function QuantumAPIPage() {
     return () => {
       isMounted = false;
     };
+  }, [sdkPublicClient]);
+
+  const executeEndpointViaSdk = useCallback(async (input: {
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    path: string;
+    baseUrl: string;
+    body?: unknown;
+  }) => {
+    return executeQuantumSdkEndpoint({
+      method: input.method,
+      path: input.path,
+      baseUrl: input.baseUrl,
+      body: input.body,
+    });
   }, []);
 
   const apiName = portfolioDetail?.api?.name ?? apisData.apis[0].name;
@@ -319,7 +311,7 @@ export default function QuantumAPIPage() {
             </View>
 
             {/* Title + version */}
-            <View className="flex-1 flex-row mr-2">
+            <View className="mr-2 flex-1 flex-row flex-wrap items-end">
               <ThemedText
                 type="title"
                 headingLevel={1}
@@ -380,7 +372,7 @@ export default function QuantumAPIPage() {
               </ThemedText>
               <ExternalLink 
                 href={apiBaseUrl}
-                className="font-mono text-sm"
+                className="font-mono text-sm break-all"
                 style={{ color: tintColor }}
               >
                 {apiBaseUrl}
@@ -444,6 +436,7 @@ export default function QuantumAPIPage() {
                 responses={endpoint.responses}
                 baseUrl={endpointBaseUrl}
                 liveDisabledReason={authHintForEndpoint(endpoint.auth)}
+                requestExecutor={executeEndpointViaSdk}
               />
             );
           })}
@@ -471,11 +464,11 @@ export default function QuantumAPIPage() {
               backgroundColor: accentColor,
             }}
           >
-            <View className="flex-row items-center justify-between">
-              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl" style={{ color: textColor }}>
+            <View className="flex-row items-start justify-between gap-2">
+              <ThemedText type="subtitle" className="detail-section-header flex-1 text-2xl md:text-3xl" style={{ color: textColor }}>
                 What is Quantum Mechanics?
               </ThemedText>
-              <ThemedText className="detail-body text-lg md:text-xl" style={{ color: textColor }}>
+              <ThemedText className="detail-body pt-0.5 text-lg md:text-xl" style={{ color: textColor }}>
                 {isQuantumMechanicsExpanded ? 'v' : '>'}
               </ThemedText>
             </View>
@@ -659,7 +652,7 @@ export default function QuantumAPIPage() {
                   My Quantum Computing Journey
                 </ThemedText>
                 <ThemedText className="detail-body opacity-90 mb-3 text-[1.9%] leading-[2.6%]">
-                  Here's what I've built and what I'm planning:
+                  Here's what I've built and what I'm planning (6 of 10 milestones completed):
                 </ThemedText>
                 
                 <View
@@ -690,8 +683,8 @@ export default function QuantumAPIPage() {
                   
                   {/* To-Do Items */}
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
-                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">[x]</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Multi-qubit circuits for more complex quantum states
                     </ThemedText>
                   </View>
@@ -702,8 +695,8 @@ export default function QuantumAPIPage() {
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
-                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">[x]</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
                       Grover's algorithm for quantum search
                     </ThemedText>
                   </View>
@@ -726,9 +719,9 @@ export default function QuantumAPIPage() {
                     </ThemedText>
                   </View>
                   <View className="flex-row items-start">
-                    <ThemedText className="mr-2 opacity-60 text-[1.8%]">[ ]</ThemedText>
-                    <ThemedText className="flex-1 detail-body opacity-75 text-[1.8%]">
-                      Real quantum hardware access via IBM Quantum cloud
+                    <ThemedText className="mr-2 detail-body text-[1.8%] text-success">[x]</ThemedText>
+                    <ThemedText className="flex-1 detail-body opacity-90 text-[1.8%]">
+                      Real quantum hardware access via IBM Quantum cloud (BYO credentials)
                     </ThemedText>
                   </View>
                 </View>
@@ -760,11 +753,11 @@ export default function QuantumAPIPage() {
               backgroundColor: accentColor,
             }}
           >
-            <View className="flex-row items-center justify-between">
-              <ThemedText type="subtitle" className="detail-section-header text-2xl md:text-3xl" style={{ color: textColor }}>
+            <View className="flex-row items-start justify-between gap-2">
+              <ThemedText type="subtitle" className="detail-section-header flex-1 text-2xl md:text-3xl" style={{ color: textColor }}>
                 How to Use This API
               </ThemedText>
-              <ThemedText className="detail-body text-lg md:text-xl" style={{ color: textColor }}>
+              <ThemedText className="detail-body pt-0.5 text-lg md:text-xl" style={{ color: textColor }}>
                 {isHowToUseExpanded ? 'v' : '>'}
               </ThemedText>
             </View>
