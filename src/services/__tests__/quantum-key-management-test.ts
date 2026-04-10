@@ -15,14 +15,32 @@ import {
 type MockResponse = {
   ok: boolean;
   status: number;
+  headers: Headers;
   text: () => Promise<string>;
+  json: () => Promise<unknown>;
 };
 
 function createMockResponse(body: string, init?: Partial<Pick<MockResponse, 'ok' | 'status'>>) {
+  const parseBody = () => {
+    if (!body) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(body) as unknown;
+    } catch {
+      return body;
+    }
+  };
+
   return {
     ok: init?.ok ?? true,
     status: init?.status ?? 200,
+    headers: new Headers({
+      'content-type': 'application/json',
+    }),
     text: jest.fn().mockResolvedValue(body),
+    json: jest.fn().mockResolvedValue(parseBody()),
   } as MockResponse;
 }
 
@@ -72,13 +90,13 @@ describe('quantum key management', () => {
 
     const keys = await listQuantumKeys(baseUrl, accessToken);
 
-    expect(fetchMock).toHaveBeenCalledWith(`${baseUrl}/keys`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      method: 'GET',
-    });
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const calledHeaders = new Headers(calledInit.headers);
+
+    expect(calledUrl).toBe(`${baseUrl}/keys`);
+    expect(calledInit.method).toBe('GET');
+    expect(calledHeaders.get('Accept')).toBe('application/json');
+    expect(calledHeaders.get('Authorization')).toBe(`Bearer ${accessToken}`);
     expect(keys).toEqual([
       {
         id: 'key-001',
@@ -155,6 +173,21 @@ describe('quantum key management', () => {
       message: 'Validation failed',
       status: 422,
       details: { detail: 'Validation failed' },
+    });
+  });
+
+  it('surfaces invalid bearer token errors with preserved message', async () => {
+    fetchMock.mockResolvedValue(
+      createMockResponse(JSON.stringify({ detail: 'invalid token' }), {
+        ok: false,
+        status: 401,
+      })
+    );
+
+    await expect(listQuantumKeys(baseUrl, accessToken)).rejects.toMatchObject({
+      name: 'QuantumApiError',
+      message: 'invalid token',
+      status: 401,
     });
   });
 
