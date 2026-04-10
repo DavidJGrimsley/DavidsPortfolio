@@ -133,8 +133,23 @@ function appendVary(headers: Headers, value: string) {
   }
 }
 
-function isOriginAllowed(origin: string | null, allowedOrigins: readonly string[]) {
+function getRequestOrigin(request: Request) {
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isOriginAllowed(
+  origin: string | null,
+  allowedOrigins: readonly string[],
+  requestOrigin: string | null
+) {
   if (!origin) {
+    return true;
+  }
+  if (requestOrigin && origin === requestOrigin) {
     return true;
   }
   if (allowedOrigins.includes('*')) {
@@ -153,7 +168,8 @@ function mergeCors(
   merged.set('Access-Control-Allow-Methods', ROUTE_METHODS);
   merged.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
   const origin = request.headers.get('origin');
-  if (origin && isOriginAllowed(origin, allowedOrigins)) {
+  const requestOrigin = getRequestOrigin(request);
+  if (origin && isOriginAllowed(origin, allowedOrigins, requestOrigin)) {
     merged.set('Access-Control-Allow-Origin', origin);
     appendVary(merged, 'Origin');
   }
@@ -162,7 +178,7 @@ function mergeCors(
 
 async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request) {
   const allowedOrigins = getAllowedOrigins();
-  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',
@@ -246,7 +262,7 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
 
 export function OPTIONS(request: Request) {
   const allowedOrigins = getAllowedOrigins();
-  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',

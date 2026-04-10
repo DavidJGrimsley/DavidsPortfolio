@@ -192,7 +192,7 @@ describe('quantum ibm runtime service', () => {
     expect(calledUrl).toBe('https://example.com/api/quantum-backend/v1/gates/run');
     expect(calledInit.method).toBe('POST');
     expect(calledHeaders.get('Accept')).toBe('application/json');
-    expect(calledHeaders.get('X-API-Key')).toBeNull();
+    expect(calledHeaders.get('X-API-Key')).toBe(apiKey);
   });
 
   it('surfaces invalid key errors from runtime calls', async () => {

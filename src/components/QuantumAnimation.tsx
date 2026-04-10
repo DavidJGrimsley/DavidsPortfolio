@@ -66,6 +66,8 @@ export function HelloWave() {
 
   const restartRef = useRef<LottieView>(null);
   const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const simulatorAbortRef = useRef<AbortController | null>(null);
+  const runTokenRef = useRef(0);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
@@ -120,9 +122,14 @@ export function HelloWave() {
 
   const runSimulator = useCallback(
     async (angle: number): Promise<QuantumRunResult> => {
+      simulatorAbortRef.current?.abort();
+      const abortController = new AbortController();
+      simulatorAbortRef.current = abortController;
+
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
+          abortController.abort();
           reject(new Error('Simulator request timed out. Please try again.'));
         }, 10_000);
       });
@@ -131,11 +138,16 @@ export function HelloWave() {
         runQuantumGate(quantumBaseUrl, '', {
           gateType: 'rotation',
           rotationAngleRad: angle,
+        }, {
+          signal: abortController.signal,
         }),
         timeoutPromise,
       ]).finally(() => {
         if (timeoutId) {
           clearTimeout(timeoutId);
+        }
+        if (simulatorAbortRef.current === abortController) {
+          simulatorAbortRef.current = null;
         }
       });
 
@@ -263,6 +275,12 @@ export function HelloWave() {
   );
 
   const runQuantumAnimation = useCallback(async () => {
+    const runToken = runTokenRef.current + 1;
+    runTokenRef.current = runToken;
+
+    simulatorAbortRef.current?.abort();
+    simulatorAbortRef.current = null;
+
     if (completionTimerRef.current) {
       clearTimeout(completionTimerRef.current);
       completionTimerRef.current = null;
@@ -279,6 +297,9 @@ export function HelloWave() {
       const angle = getRandomAngle();
       const result =
         executionMode === 'simulator' ? await runSimulator(angle) : await runIbmHardware(angle);
+      if (runToken !== runTokenRef.current) {
+        return;
+      }
 
       setBackendLabel(result.backendLabel);
       setGateAngle(result.gateAngle);
@@ -302,12 +323,19 @@ export function HelloWave() {
           : 'IBM hardware run complete. Restart to submit another hardware job.'
       );
 
-      const finishDelayMs = result.measurement === 1 ? 10_000 : Math.max(1500, Math.floor(4000 / speed));
+      const finishDelayMs =
+        result.measurement === 1 ? 10_000 : Math.max(1500, Math.floor(4000 / speed));
       completionTimerRef.current = setTimeout(() => {
+        if (runToken !== runTokenRef.current) {
+          return;
+        }
         setIsComplete(true);
         completionTimerRef.current = null;
       }, finishDelayMs);
     } catch (error) {
+      if (runToken !== runTokenRef.current) {
+        return;
+      }
       setRobotMessage(error instanceof Error ? error.message : 'Quantum run failed.');
       setBackendLabel('Fallback');
       setGateAngle(0);
@@ -322,7 +350,9 @@ export function HelloWave() {
         completionTimerRef.current = null;
       }
     } finally {
-      setIsLoading(false);
+      if (runToken === runTokenRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [executionMode, runIbmHardware, runSimulator]);
 
@@ -339,8 +369,12 @@ export function HelloWave() {
 
   useEffect(
     () => () => {
+      runTokenRef.current += 1;
+      simulatorAbortRef.current?.abort();
+      simulatorAbortRef.current = null;
       if (completionTimerRef.current) {
         clearTimeout(completionTimerRef.current);
+        completionTimerRef.current = null;
       }
     },
     []

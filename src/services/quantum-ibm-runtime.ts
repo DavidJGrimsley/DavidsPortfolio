@@ -70,6 +70,10 @@ export type QuantumGateRunInput = {
   rotationAngleRad?: number;
 };
 
+type QuantumRuntimeCallOptions = {
+  signal?: AbortSignal;
+};
+
 export type QuantumGateRunResult = {
   gateType: 'bit_flip' | 'phase_flip' | 'rotation';
   measurement: 0 | 1;
@@ -230,7 +234,7 @@ function toRuntimeQuantumApiError(error: unknown, fallbackMessage: string) {
 
 async function requestQuantumApiWithApiKey(
   baseUrl: string,
-  _apiKey: string,
+  apiKey: string,
   path: string,
   init?: RequestInit
 ) {
@@ -238,11 +242,14 @@ async function requestQuantumApiWithApiKey(
   const method = (init?.method ?? 'GET').toUpperCase();
   const { pathname, searchParams } = normalizeRuntimePath(path);
   const parsedBody = asObject(parseRequestBody(init?.body));
+  const trimmedApiKey = apiKey.trim();
   const runtimeOptions = {
     auth: 'none' as const,
     headers: {
       Accept: 'application/json',
+      ...(trimmedApiKey ? { 'X-API-Key': trimmedApiKey } : {}),
     },
+    ...(init?.signal ? { signal: init.signal } : {}),
   };
 
   try {
@@ -453,9 +460,15 @@ function normalizeGateRunResponse(payload: unknown): QuantumGateRunResult {
   };
 }
 
-export async function runQuantumGate(baseUrl: string, apiKey: string, input: QuantumGateRunInput) {
+export async function runQuantumGate(
+  baseUrl: string,
+  apiKey: string,
+  input: QuantumGateRunInput,
+  options?: QuantumRuntimeCallOptions
+) {
   const payload = await requestQuantumApiWithApiKey(baseUrl, apiKey, '/gates/run', {
     method: 'POST',
+    ...(options?.signal ? { signal: options.signal } : {}),
     body: JSON.stringify({
       gate_type: input.gateType,
       ...(typeof input.rotationAngleRad === 'number'
