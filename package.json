@@ -48,6 +48,8 @@
     "@expo/vector-icons": "^15.0.3",
     "@lottiefiles/dotlottie-react": "^0.13.5",
     "@mr.dj2u/quantum-api": "^0.1.2",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@react-native-picker/picker": "2.11.1",
@@ -95,6 +97,7 @@
     "react-native-worklets": "0.5.1",
     "react-native-youtube-iframe": "^2.3.0",
     "tailwindcss": "^4.1.18",
+    "universal-tooltip": "^1.1.0",
     "uniwind": "^1.2.2"
   },
   "devDependencies": {

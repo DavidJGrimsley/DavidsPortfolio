@@ -23,3 +23,32 @@ export type QuantumGatewayProjectsLoadResult = {
   requiresAuth: boolean;
   message?: string;
 };
+
+export type CreateQuantumGatewayProjectInput = {
+  ownerUserId: string;
+  projectSlug: string;
+  displayName: string;
+  endpointPathPrefix: string;
+  status?: QuantumGatewayProjectStatus;
+  defaultApiKeyId?: string | null;
+  defaultIbmCredentialProfileId?: string | null;
+  routeAllowlist?: string[];
+  defaultRateLimitPerMinute?: number;
+  dailyRequestQuota?: number;
+  allowedOrigins?: string[];
+};
+
+export type UpdateQuantumGatewayProjectInput = {
+  id: string;
+  ownerUserId: string;
+  projectSlug: string;
+  displayName: string;
+  endpointPathPrefix: string;
+  status?: QuantumGatewayProjectStatus;
+  defaultApiKeyId?: string | null;
+  defaultIbmCredentialProfileId?: string | null;
+  routeAllowlist?: string[];
+  defaultRateLimitPerMinute?: number;
+  dailyRequestQuota?: number;
+  allowedOrigins?: string[];
+};

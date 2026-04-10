@@ -15,6 +15,7 @@ import type { Session } from '@supabase/supabase-js';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
 import Svg, { Line } from 'react-native-svg';
+import { OverlayTooltip } from '@/components/UI/OverlayTooltip';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { CompanyButton } from './CompanyButton';
@@ -167,7 +168,6 @@ export function QuantumAuthDashboardCard({
   const [ibmForm, setIbmForm] = useState<IbmProfileFormState>(createEmptyIbmProfileForm);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [showIdenterestInfo, setShowIdenterestInfo] = useState(false);
-  const [showIbmInfoModal, setShowIbmInfoModal] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supabaseClient = useMemo(() => {
@@ -1340,18 +1340,19 @@ export function QuantumAuthDashboardCard({
                     </ThemedText>
                   </Pressable>
 
-                  <Pressable
-                    accessibilityLabel="IBM credentials help"
-                    onPress={() => setShowIbmInfoModal(true)}
-                    style={({ pressed }) => ({
+                  <OverlayTooltip
+                    content="IBM credentials are optional. Simulator-backed Quantum API features still work without them. Add a profile only when you want IBM backend discovery, transpilation, and async hardware jobs. Tokens are write-only and only masked metadata is shown after save."
+                    maxWidth={360}
+                    side="top"
+                    triggerAccessibilityLabel="IBM credentials help"
+                    triggerStyle={{
                       alignItems: 'center',
                       justifyContent: 'center',
-                      opacity: pressed ? 0.72 : 1,
                       padding: 4,
-                    })}
+                    }}
                   >
                     <Ionicons color={secondaryColor} name="information-circle-outline" size={20} />
-                  </Pressable>
+                  </OverlayTooltip>
                 </View>
 
                 {showIbmCredentials ? (
@@ -1913,66 +1914,6 @@ export function QuantumAuthDashboardCard({
         </View>
       </Modal>
 
-      <Modal
-        animationType="fade"
-        onRequestClose={() => setShowIbmInfoModal(false)}
-        transparent
-        visible={showIbmInfoModal}
-      >
-        <View className="flex-1 items-center justify-center bg-black/60 px-4">
-          <Pressable
-            accessibilityLabel="Close IBM credentials info modal"
-            accessibilityRole="button"
-            className="absolute inset-0"
-            onPress={() => setShowIbmInfoModal(false)}
-          />
-
-          <View
-            className="z-10 w-full max-w-[680px] rounded-3xl border p-6 md:p-7"
-            style={{
-              backgroundColor,
-              borderColor: tintColor + '45',
-              maxHeight: 760,
-            }}
-          >
-            <ScrollView contentContainerStyle={{ paddingBottom: 4 }} showsVerticalScrollIndicator>
-              <View className="mb-3 flex-row items-start justify-between gap-3">
-                <View className="flex-1 flex-row items-center gap-2.5">
-                  <ThemedText type="defaultSemiBold" className="text-lg md:text-xl">
-                    About IBM Credentials
-                  </ThemedText>
-                </View>
-
-                <Pressable
-                  accessibilityLabel="Close IBM credentials info"
-                  accessibilityRole="button"
-                  onPress={() => setShowIbmInfoModal(false)}
-                  style={({ pressed }) => ({
-                    opacity: pressed ? 0.75 : 1,
-                    padding: 4,
-                  })}
-                >
-                  <Ionicons color={secondaryColor} name="close" size={20} />
-                </Pressable>
-              </View>
-
-              <ThemedText className="opacity-90 text-base leading-6">
-                IBM credentials are optional. You can keep using simulator-backed Quantum API features
-                without adding IBM credentials.
-              </ThemedText>
-
-              <ThemedText className="mt-2 opacity-90 text-base leading-6">
-                If you add your own IBM profile, this same Quantum API account can use IBM backend
-                discovery, transpilation, and async hardware jobs.
-              </ThemedText>
-
-              <ThemedText className="mt-2 opacity-80 text-base leading-6">
-                Your IBM token is write-only. After save, only masked token metadata is shown.
-              </ThemedText>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

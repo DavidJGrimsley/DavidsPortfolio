@@ -4,12 +4,17 @@ import {
   isSupabaseConfigured,
 } from '@/lib/supabase-browser';
 import type {
+  CreateQuantumGatewayProjectInput,
   QuantumGatewayProjectRecord,
   QuantumGatewayProjectStatus,
   QuantumGatewayProjectsLoadResult,
+  UpdateQuantumGatewayProjectInput,
 } from '@/types/quantum-gateway';
 
 type JsonObject = Record<string, unknown>;
+
+const PROJECT_SELECT_COLUMNS =
+  'id, owner_user_id, project_slug, display_name, status, endpoint_path_prefix, default_api_key_id, default_ibm_credential_profile_id, route_allowlist, default_rate_limit_per_minute, daily_request_quota, allowed_origins, created_at, updated_at';
 
 function asObject(value: unknown): JsonObject | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -63,6 +68,58 @@ function normalizeStatus(value: string | null): QuantumGatewayProjectStatus {
   }
 
   return 'active';
+}
+
+function sanitizeStringArray(value: string[] | undefined) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function normalizeEndpointPathPrefix(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error('Endpoint path prefix is required.');
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.replace(/\/+$/, '');
+}
+
+function mapCreateProjectError(error: { code?: string; message?: string } | null) {
+  if (!error) {
+    return 'Unable to create gateway project right now.';
+  }
+
+  if (error.code === '23505') {
+    return 'A gateway project with this slug already exists on your Identerest account.';
+  }
+
+  if (error.code === '42501') {
+    return 'Gateway project create is blocked by database RLS policy. Apply the latest core-monorepo DB migrations, then try again.';
+  }
+
+  return error.message ?? 'Unable to create gateway project right now.';
+}
+
+function mapUpdateProjectError(error: { code?: string; message?: string } | null) {
+  if (!error) {
+    return 'Unable to update gateway project right now.';
+  }
+
+  if (error.code === '23505') {
+    return 'A gateway project with this slug already exists on your Identerest account.';
+  }
+
+  if (error.code === '42501') {
+    return 'Gateway project update is blocked by database RLS policy. Apply the latest core-monorepo DB migrations, then try again.';
+  }
+
+  return error.message ?? 'Unable to update gateway project right now.';
 }
 
 function normalizeProject(input: unknown): QuantumGatewayProjectRecord | null {
@@ -135,9 +192,7 @@ export async function loadQuantumGatewayProjects(): Promise<QuantumGatewayProjec
 
   const { data, error } = await supabase
     .from('quantum_gateway_projects')
-    .select(
-      'id, owner_user_id, project_slug, display_name, status, endpoint_path_prefix, default_api_key_id, default_ibm_credential_profile_id, route_allowlist, default_rate_limit_per_minute, daily_request_quota, allowed_origins, created_at, updated_at'
-    )
+    .select(PROJECT_SELECT_COLUMNS)
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -159,4 +214,146 @@ export async function loadQuantumGatewayProjects(): Promise<QuantumGatewayProjec
     projects,
     requiresAuth: false,
   };
+}
+
+export async function createQuantumGatewayProject(
+  input: CreateQuantumGatewayProjectInput
+): Promise<QuantumGatewayProjectRecord> {
+  if (!isSupabaseConfigured()) {
+    throw new Error(getSupabaseConfigError() ?? 'Supabase environment variables are not configured.');
+  }
+
+  const supabase = getSupabaseBrowserClient();
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    throw new Error(sessionError.message);
+  }
+
+  const signedInUserId = sessionData.session?.user?.id ?? null;
+  if (!sessionData.session?.access_token || !signedInUserId) {
+    throw new Error('Sign in with Identerest to manage gateway projects.');
+  }
+
+  const ownerUserId = input.ownerUserId.trim();
+  if (!ownerUserId || ownerUserId !== signedInUserId) {
+    throw new Error('Signed-in Identerest account does not match project owner.');
+  }
+
+  const projectSlug = input.projectSlug.trim();
+  const displayName = input.displayName.trim();
+  const endpointPathPrefix = normalizeEndpointPathPrefix(input.endpointPathPrefix);
+
+  if (!projectSlug) {
+    throw new Error('Project slug is required.');
+  }
+
+  if (!displayName) {
+    throw new Error('Display name is required.');
+  }
+
+  const insertPayload = {
+    owner_user_id: ownerUserId,
+    project_slug: projectSlug,
+    display_name: displayName,
+    endpoint_path_prefix: endpointPathPrefix,
+    status: input.status ?? 'active',
+    default_api_key_id: input.defaultApiKeyId ?? null,
+    default_ibm_credential_profile_id: input.defaultIbmCredentialProfileId ?? null,
+    route_allowlist: sanitizeStringArray(input.routeAllowlist),
+    default_rate_limit_per_minute: input.defaultRateLimitPerMinute ?? 120,
+    daily_request_quota: input.dailyRequestQuota ?? 100000,
+    allowed_origins: sanitizeStringArray(input.allowedOrigins),
+  };
+
+  const { data, error } = await supabase
+    .from('quantum_gateway_projects')
+    .insert(insertPayload)
+    .select(PROJECT_SELECT_COLUMNS)
+    .single();
+
+  if (error) {
+    throw new Error(mapCreateProjectError(error));
+  }
+
+  const project = normalizeProject(data);
+  if (!project) {
+    throw new Error('Gateway project was created, but returned data was invalid.');
+  }
+
+  return project;
+}
+
+export async function updateQuantumGatewayProject(
+  input: UpdateQuantumGatewayProjectInput
+): Promise<QuantumGatewayProjectRecord> {
+  if (!isSupabaseConfigured()) {
+    throw new Error(getSupabaseConfigError() ?? 'Supabase environment variables are not configured.');
+  }
+
+  const supabase = getSupabaseBrowserClient();
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    throw new Error(sessionError.message);
+  }
+
+  const signedInUserId = sessionData.session?.user?.id ?? null;
+  if (!sessionData.session?.access_token || !signedInUserId) {
+    throw new Error('Sign in with Identerest to manage gateway projects.');
+  }
+
+  const projectId = input.id.trim();
+  if (!projectId) {
+    throw new Error('Project id is required for updates.');
+  }
+
+  const ownerUserId = input.ownerUserId.trim();
+  if (!ownerUserId || ownerUserId !== signedInUserId) {
+    throw new Error('Signed-in Identerest account does not match project owner.');
+  }
+
+  const projectSlug = input.projectSlug.trim();
+  const displayName = input.displayName.trim();
+  const endpointPathPrefix = normalizeEndpointPathPrefix(input.endpointPathPrefix);
+
+  if (!projectSlug) {
+    throw new Error('Project slug is required.');
+  }
+
+  if (!displayName) {
+    throw new Error('Display name is required.');
+  }
+
+  const updatePayload = {
+    project_slug: projectSlug,
+    display_name: displayName,
+    endpoint_path_prefix: endpointPathPrefix,
+    status: input.status ?? 'active',
+    default_api_key_id: input.defaultApiKeyId ?? null,
+    default_ibm_credential_profile_id: input.defaultIbmCredentialProfileId ?? null,
+    route_allowlist: sanitizeStringArray(input.routeAllowlist),
+    default_rate_limit_per_minute: input.defaultRateLimitPerMinute ?? 120,
+    daily_request_quota: input.dailyRequestQuota ?? 100000,
+    allowed_origins: sanitizeStringArray(input.allowedOrigins),
+  };
+
+  const { data, error } = await supabase
+    .from('quantum_gateway_projects')
+    .update(updatePayload)
+    .eq('id', projectId)
+    .eq('owner_user_id', ownerUserId)
+    .select(PROJECT_SELECT_COLUMNS)
+    .single();
+
+  if (error) {
+    throw new Error(mapUpdateProjectError(error));
+  }
+
+  const project = normalizeProject(data);
+  if (!project) {
+    throw new Error('Gateway project was updated, but returned data was invalid.');
+  }
+
+  return project;
 }
