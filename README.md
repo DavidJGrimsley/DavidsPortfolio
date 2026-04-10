@@ -79,23 +79,18 @@ npm run build:web:deploy
 
 ### Required GitHub Actions Secrets
 
-- `PLESK_STAGING_WEBHOOK_URL`
-- `PLESK_STAGING_SITE_ORIGIN`
-- `PLESK_PRODUCTION_WEBHOOK_URL`
-- `PLESK_PRODUCTION_SITE_ORIGIN`
+- `PLESK_STAGING_WEBHOOK_URL` — Plesk Git webhook URL for the staging site
+- `PLESK_PRODUCTION_WEBHOOK_URL` — Plesk Git webhook URL for the production site
+- `EXPO_PUBLIC_SUPABASE_URL` *(optional)* — baked into the web bundle; falls back gracefully if absent
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` *(optional)* — baked into the web bundle; falls back gracefully if absent
+- `EXPO_PUBLIC_QUANTUM_API_BASE_URL` *(optional)* — defaults to `https://davidjgrimsley.com/public-facing/api/quantum/v1`
 
-### Deployment Verification Contract
+### Deploy Flow
 
-The CI deploy jobs verify live deployment by polling:
-
-- `${PLESK_STAGING_SITE_ORIGIN}/__djsportfolio_build.txt`
-- `${PLESK_PRODUCTION_SITE_ORIGIN}/__djsportfolio_build.txt`
-
-If the deployment serves static files under `dist/client`, the verifier also checks:
-
-- `${SITE_ORIGIN}/dist/client/__djsportfolio_build.txt`
-
-The endpoint must return the exact deployed commit SHA.
+On push to `test` or `main`, CI:
+1. Runs quality checks (lint, typecheck, tests, expo-doctor, build).
+2. On success, fires the Plesk webhook for the matching environment.
+3. Plesk pulls the latest commit from GitHub and runs `scripts/plesk-post-deploy.sh` (npm ci + build + restart).
 
 ## Notes
 

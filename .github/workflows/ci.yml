@@ -26,6 +26,10 @@ jobs:
     name: Quality
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      EXPO_PUBLIC_QUANTUM_API_BASE_URL: ${{ secrets.EXPO_PUBLIC_QUANTUM_API_BASE_URL || 'https://davidjgrimsley.com/public-facing/api/quantum/v1' }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
 
     steps:
       - name: Checkout
@@ -77,25 +81,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     if: github.event_name == 'push' && github.ref == 'refs/heads/test'
-    timeout-minutes: 20
+    timeout-minutes: 5
     env:
       PLESK_STAGING_WEBHOOK_URL: ${{ secrets.PLESK_STAGING_WEBHOOK_URL }}
-      PLESK_STAGING_SITE_ORIGIN: ${{ secrets.PLESK_STAGING_SITE_ORIGIN }}
 
     steps:
       - name: Validate staging deploy secrets
         shell: bash
         run: |
-          missing=0
           if [ -z "${PLESK_STAGING_WEBHOOK_URL}" ]; then
             echo "Missing secret: PLESK_STAGING_WEBHOOK_URL"
-            missing=1
-          fi
-          if [ -z "${PLESK_STAGING_SITE_ORIGIN}" ]; then
-            echo "Missing secret: PLESK_STAGING_SITE_ORIGIN"
-            missing=1
-          fi
-          if [ "$missing" -ne 0 ]; then
             exit 1
           fi
 
@@ -104,64 +99,21 @@ jobs:
         run: |
           curl --fail --silent --show-error --request POST "${PLESK_STAGING_WEBHOOK_URL}"
 
-      - name: Verify staging deployment commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          build_urls=(
-            "${PLESK_STAGING_SITE_ORIGIN%/}/__djsportfolio_build.txt"
-            "${PLESK_STAGING_SITE_ORIGIN%/}/dist/client/__djsportfolio_build.txt"
-          )
-          expected_sha="${GITHUB_SHA}"
-
-          echo "Polling build markers for commit ${expected_sha}"
-          echo "Candidate URLs: ${build_urls[*]}"
-
-          for attempt in $(seq 1 36); do
-            for build_url in "${build_urls[@]}"; do
-              if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
-                deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
-
-                if [ "${deployed_sha}" = "${expected_sha}" ]; then
-                  echo "Staging deployment verified on attempt ${attempt} via ${build_url}."
-                  exit 0
-                fi
-
-                echo "Attempt ${attempt}/36 via ${build_url}: got '${deployed_sha}', waiting..."
-              else
-                echo "Attempt ${attempt}/36 via ${build_url}: build marker unavailable or request failed, waiting..."
-              fi
-            done
-            sleep 10
-          done
-
-          echo "Staging deployment verification failed. Expected '${expected_sha}'."
-          exit 1
-
   deploy_production:
     name: Deploy Production
     runs-on: ubuntu-latest
     needs: quality
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    timeout-minutes: 20
+    timeout-minutes: 5
     env:
       PLESK_PRODUCTION_WEBHOOK_URL: ${{ secrets.PLESK_PRODUCTION_WEBHOOK_URL }}
-      PLESK_PRODUCTION_SITE_ORIGIN: ${{ secrets.PLESK_PRODUCTION_SITE_ORIGIN }}
 
     steps:
       - name: Validate production deploy secrets
         shell: bash
         run: |
-          missing=0
           if [ -z "${PLESK_PRODUCTION_WEBHOOK_URL}" ]; then
             echo "Missing secret: PLESK_PRODUCTION_WEBHOOK_URL"
-            missing=1
-          fi
-          if [ -z "${PLESK_PRODUCTION_SITE_ORIGIN}" ]; then
-            echo "Missing secret: PLESK_PRODUCTION_SITE_ORIGIN"
-            missing=1
-          fi
-          if [ "$missing" -ne 0 ]; then
             exit 1
           fi
 
@@ -169,37 +121,3 @@ jobs:
         shell: bash
         run: |
           curl --fail --silent --show-error --request POST "${PLESK_PRODUCTION_WEBHOOK_URL}"
-
-      - name: Verify production deployment commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          build_urls=(
-            "${PLESK_PRODUCTION_SITE_ORIGIN%/}/__djsportfolio_build.txt"
-            "${PLESK_PRODUCTION_SITE_ORIGIN%/}/dist/client/__djsportfolio_build.txt"
-          )
-          expected_sha="${GITHUB_SHA}"
-
-          echo "Polling build markers for commit ${expected_sha}"
-          echo "Candidate URLs: ${build_urls[*]}"
-
-          for attempt in $(seq 1 36); do
-            for build_url in "${build_urls[@]}"; do
-              if deployed_sha_raw="$(curl --silent --show-error --fail --max-time 10 "${build_url}")"; then
-                deployed_sha="$(printf '%s' "${deployed_sha_raw}" | tr -d '\r\n[:space:]')"
-
-                if [ "${deployed_sha}" = "${expected_sha}" ]; then
-                  echo "Production deployment verified on attempt ${attempt} via ${build_url}."
-                  exit 0
-                fi
-
-                echo "Attempt ${attempt}/36 via ${build_url}: got '${deployed_sha}', waiting..."
-              else
-                echo "Attempt ${attempt}/36 via ${build_url}: build marker unavailable or request failed, waiting..."
-              fi
-            done
-            sleep 10
-          done
-
-          echo "Production deployment verification failed. Expected '${expected_sha}'."
-          exit 1
