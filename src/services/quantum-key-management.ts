@@ -1,3 +1,6 @@
+import { QuantumApiError as SdkQuantumApiError } from '@mr.dj2u/quantum-api';
+import { createQuantumBearerClient } from '@/lib/quantum-sdk-client';
+
 export type QuantumKeyRecord = {
   id: string;
   label: string;
@@ -55,30 +58,6 @@ export class QuantumApiError extends Error {
     this.status = status;
     this.details = details;
   }
-}
-
-function joinUrl(baseUrl: string, path: string) {
-  const trimmedPath = path.trim();
-  if (/^https?:\/\//i.test(trimmedPath)) {
-    return trimmedPath;
-  }
-
-  const normalizedBase = baseUrl.trim().replace(/\/+$/, '');
-  const normalizedPath = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
-  const baseMatch = normalizedBase.match(/^(https?:\/\/[^/]+)(\/.*)?$/i);
-
-  if (!baseMatch) {
-    return `${normalizedBase}${normalizedPath}`;
-  }
-
-  const origin = baseMatch[1];
-  const basePath = baseMatch[2] ?? '';
-
-  if (basePath && normalizedPath.startsWith(`${basePath}/`)) {
-    return `${origin}${normalizedPath}`;
-  }
-
-  return `${normalizedBase}${normalizedPath}`;
 }
 
 function asObject(value: unknown): JsonObject | null {
@@ -159,16 +138,6 @@ function readJsonOrText(text: string) {
   }
 }
 
-async function parseResponse(response: Response) {
-  const rawText = await response.text();
-
-  if (!rawText) {
-    return null;
-  }
-
-  return readJsonOrText(rawText);
-}
-
 function getErrorMessage(payload: unknown, fallback: string) {
   const objectPayload = asObject(payload);
   if (!objectPayload) {
@@ -181,33 +150,149 @@ function getErrorMessage(payload: unknown, fallback: string) {
   );
 }
 
+function normalizeQuantumPath(path: string) {
+  const trimmed = path.trim();
+  const urlMatch = trimmed.match(/^https?:\/\/[^/]+(\/.*)?$/i);
+  const pathOnly = (urlMatch?.[1] ?? trimmed).trim();
+  const withLeadingSlash = pathOnly.startsWith('/') ? pathOnly : `/${pathOnly}`;
+
+  if (withLeadingSlash === '/v1') {
+    return '/';
+  }
+
+  if (withLeadingSlash.startsWith('/v1/')) {
+    return withLeadingSlash.slice(3);
+  }
+
+  return withLeadingSlash;
+}
+
+function parseRequestBody(body: BodyInit | null | undefined) {
+  if (!body) {
+    return undefined;
+  }
+
+  if (typeof body === 'string') {
+    const trimmed = body.trim();
+    return trimmed.length > 0 ? readJsonOrText(trimmed) : undefined;
+  }
+
+  return body;
+}
+
+function toQuantumApiError(error: unknown, fallbackMessage: string) {
+  if (error instanceof QuantumApiError) {
+    return error;
+  }
+
+  if (error instanceof SdkQuantumApiError) {
+    const parsedBody = asObject(readJsonOrText(error.bodyText));
+    const details = parsedBody ?? error.body ?? error.details ?? null;
+    const fallbackHttpMessage = `Request failed with HTTP ${error.status}.`;
+
+    return new QuantumApiError(
+      getErrorMessage(details, fallbackHttpMessage),
+      error.status,
+      details
+    );
+  }
+
+  if (error instanceof Error) {
+    const status = /bearer token/i.test(error.message) ? 401 : 500;
+    return new QuantumApiError(error.message || fallbackMessage, status, {
+      message: error.message,
+    });
+  }
+
+  return new QuantumApiError(fallbackMessage, 500, error);
+}
+
 async function requestQuantumApi(
   baseUrl: string,
   accessToken: string,
   path: string,
   init?: RequestInit
 ) {
-  const response = await fetch(joinUrl(baseUrl, path), {
-    ...init,
+  const client = createQuantumBearerClient(baseUrl, accessToken);
+  const method = (init?.method ?? 'GET').toUpperCase();
+  const normalizedPath = normalizeQuantumPath(path);
+  const parsedBody = asObject(parseRequestBody(init?.body));
+  const bearerOptions = {
+    auth: 'bearer' as const,
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(init?.headers ?? {}),
     },
-  });
+  };
 
-  const payload = await parseResponse(response);
+  try {
+    if (method === 'GET' && normalizedPath === '/keys') {
+      return await client.listKeys(bearerOptions);
+    }
 
-  if (!response.ok) {
+    if (method === 'POST' && normalizedPath === '/keys') {
+      return await client.createKey((parsedBody ?? {}) as { name?: string | null }, bearerOptions);
+    }
+
+    if (method === 'DELETE' && normalizedPath === '/keys/revoked') {
+      return await client.deleteRevokedKeys(bearerOptions);
+    }
+
+    const keyRouteMatch = normalizedPath.match(/^\/keys\/([^/]+)(?:\/(revoke|rotate))?$/);
+    if (keyRouteMatch) {
+      const keyId = decodeURIComponent(keyRouteMatch[1] ?? '');
+      const action = keyRouteMatch[2] ?? null;
+
+      if (method === 'DELETE' && !action) {
+        return await client.deleteKey(keyId, bearerOptions);
+      }
+
+      if (method === 'POST' && action === 'revoke') {
+        return await client.revokeKey(keyId, bearerOptions);
+      }
+
+      if (method === 'POST' && action === 'rotate') {
+        return await client.rotateKey(keyId, bearerOptions);
+      }
+    }
+
+    if (method === 'GET' && normalizedPath === '/ibm/profiles') {
+      return await client.listIbmProfiles(bearerOptions);
+    }
+
+    if (method === 'POST' && normalizedPath === '/ibm/profiles') {
+      return await client.createIbmProfile((parsedBody ?? {}) as any, {
+        ...bearerOptions,
+      });
+    }
+
+    const ibmProfileRouteMatch = normalizedPath.match(/^\/ibm\/profiles\/([^/]+)(?:\/(verify))?$/);
+    if (ibmProfileRouteMatch) {
+      const profileId = decodeURIComponent(ibmProfileRouteMatch[1] ?? '');
+      const action = ibmProfileRouteMatch[2] ?? null;
+
+      if (method === 'PATCH' && !action) {
+        return await client.updateIbmProfile(profileId, (parsedBody ?? {}) as any, {
+          ...bearerOptions,
+        });
+      }
+
+      if (method === 'DELETE' && !action) {
+        return await client.deleteIbmProfile(profileId, bearerOptions);
+      }
+
+      if (method === 'POST' && action === 'verify') {
+        return await client.verifyIbmProfile(profileId, bearerOptions);
+      }
+    }
+
     throw new QuantumApiError(
-      getErrorMessage(payload, `Request failed with HTTP ${response.status}.`),
-      response.status,
-      payload
+      `Unsupported Quantum bearer route: ${method} ${normalizedPath}.`,
+      400,
+      { method, path: normalizedPath }
     );
+  } catch (error) {
+    throw toQuantumApiError(error, 'Unable to complete the Quantum API bearer request.');
   }
-
-  return payload;
 }
 
 function extractCollection(payload: unknown) {

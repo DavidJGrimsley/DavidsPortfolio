@@ -33,6 +33,17 @@ interface EndpointCardProps {
   auth?: 'public' | 'api_key' | 'bearer_jwt';
   extraHeaders?: Record<string, string>;
   liveDisabledReason?: string;
+  requestExecutor?: (input: {
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    path: string;
+    baseUrl: string;
+    body?: unknown;
+    headers?: Record<string, string>;
+  }) => Promise<{
+    status: number;
+    statusText: string;
+    data: unknown;
+  }>;
 }
 
 function normalizeUrl(value: string) {
@@ -116,7 +127,8 @@ export function EndpointCard({
   baseUrl,
   auth = 'public',
   extraHeaders,
-  liveDisabledReason
+  liveDisabledReason,
+  requestExecutor,
 }: EndpointCardProps) {
   const backgroundColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
@@ -296,7 +308,6 @@ export function EndpointCard({
     setTestResult(null);
 
     try {
-      const url = joinEndpointUrl(baseUrl, path);
       const options: RequestInit = {
         method,
         headers: {
@@ -305,9 +316,11 @@ export function EndpointCard({
         },
       };
 
+      let typedParams: Record<string, any> | undefined;
+
       if (method !== 'GET' && requestBody) {
         // Convert input strings back to typed JSON based on requestBody example values.
-        const typedParams: Record<string, any> = {};
+        typedParams = {};
         Object.keys(testParams).forEach((key) => {
           const param = parameters?.find((p) => p.name === key);
           if (!shouldIncludeField(key, param)) {
@@ -320,12 +333,26 @@ export function EndpointCard({
           if (isRadiansAngleField(key) && angleInputUnit === 'deg' && typeof typedValue === 'number') {
             typedValue = degreesToRadians(typedValue);
           }
-          typedParams[key] = typedValue;
+          typedParams![key] = typedValue;
         });
 
         options.body = JSON.stringify(typedParams);
       }
 
+      if (requestExecutor) {
+        const execution = await requestExecutor({
+          method,
+          path,
+          baseUrl,
+          body: typedParams,
+          headers: extraHeaders,
+        });
+
+        setTestResult(execution);
+        return;
+      }
+
+      const url = joinEndpointUrl(baseUrl, path);
       const response = await fetch(url, options);
       const data = await parseJsonResponse(response);
       
@@ -363,6 +390,18 @@ export function EndpointCard({
       setLiveError(null);
       setLiveResponse(null);
       try {
+        if (requestExecutor) {
+          const execution = await requestExecutor({
+            method: 'GET',
+            path,
+            baseUrl,
+            headers: extraHeaders,
+          });
+
+          setLiveResponse(execution);
+          return;
+        }
+
         const url = joinEndpointUrl(baseUrl, path);
         const response = await fetch(url, {
           headers: {
@@ -405,7 +444,7 @@ export function EndpointCard({
     }}>
       {/* Method and Path Header */}
       <Pressable onPress={handleExpand}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
           <View style={{
             backgroundColor: methodColors[method],
             paddingHorizontal: 12,
@@ -422,14 +461,18 @@ export function EndpointCard({
             </ThemedText>
           </View>
           <ThemedText type="defaultSemiBold" style={{ 
-            fontSize: 20,
+            fontSize: 17,
+            lineHeight: 23,
             fontFamily: 'monospace',
             flex: 1,
+            minWidth: 0,
+            flexShrink: 1,
             color: secondaryColor,
+            paddingRight: 8,
           }}>
             {displayPath ?? path}
           </ThemedText>
-          <ThemedText style={{ fontSize: 20 }}>
+          <ThemedText style={{ fontSize: 18, marginTop: 2, flexShrink: 0 }}>
             {isExpanded ? '▼' : '▶'}
           </ThemedText>
         </View>
@@ -471,7 +514,15 @@ export function EndpointCard({
                     marginBottom: 8,
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      rowGap: 4,
+                      marginBottom: 4,
+                    }}
+                  >
                     <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>
                       {param.name}
                     </ThemedText>
@@ -533,13 +584,15 @@ export function EndpointCard({
                 <ThemedText style={{ fontSize: 15, opacity: 0.85, marginBottom: 8 }}>
                   {requestBody.description}
                 </ThemedText>
-                <ThemedText style={{ 
-                  fontFamily: 'monospace',
-                  fontSize: 14,
-                  opacity: 0.78
-                }}>
-                  {JSON.stringify(requestBody.example, null, 2)}
-                </ThemedText>
+                <ScrollView horizontal>
+                  <ThemedText style={{
+                    fontFamily: 'monospace',
+                    fontSize: 14,
+                    opacity: 0.78,
+                  }}>
+                    {JSON.stringify(requestBody.example, null, 2)}
+                  </ThemedText>
+                </ScrollView>
               </View>
             </View>
           )}
@@ -633,14 +686,16 @@ export function EndpointCard({
                         </ThemedText>
                       </View>
                       {response.example && (
-                        <ThemedText style={{ 
-                          fontFamily: 'monospace',
-                          fontSize: 14,
-                          opacity: 0.78,
-                          marginTop: 4
-                        }}>
-                          {JSON.stringify(response.example, null, 2)}
-                        </ThemedText>
+                        <ScrollView horizontal>
+                          <ThemedText style={{ 
+                            fontFamily: 'monospace',
+                            fontSize: 14,
+                            opacity: 0.78,
+                            marginTop: 4
+                          }}>
+                            {JSON.stringify(response.example, null, 2)}
+                          </ThemedText>
+                        </ScrollView>
                       )}
                     </View>
                   ))}
@@ -701,7 +756,16 @@ export function EndpointCard({
                     
                     return (
                       <View key={key} style={{ marginBottom: 12 }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            flexWrap: 'wrap',
+                            rowGap: 6,
+                            marginBottom: 4,
+                          }}
+                        >
                           <ThemedText style={{ fontSize: RFPercentage(1.4) }}>
                             {fieldLabel}
                             {param?.required === false && (

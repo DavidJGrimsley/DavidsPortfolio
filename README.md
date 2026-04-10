@@ -14,8 +14,8 @@ Expo Router portfolio app for web/mobile with public API docs, project showcases
   - list/create/edit/delete profile
   - verify profile
   - set default profile
-- Quantum animation supports simulator mode and IBM hardware mode through Quantum API runtime endpoints when `EXPO_PUBLIC_QUANTUM_API_KEY` is set.
-- Without `EXPO_PUBLIC_QUANTUM_API_KEY`, the animation card runs a local fallback demo state.
+- Quantum animation supports simulator mode and IBM hardware mode through SDK-backed runtime calls routed via `/api/quantum-backend`.
+- Runtime API keys remain server-side only (`QUANTUM_BACKEND_API_KEY`), not client-exposed.
 
 ## Tech Stack
 
@@ -41,13 +41,16 @@ EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
-# Optional for live simulator/hardware demo calls in Quantum animation:
-# EXPO_PUBLIC_QUANTUM_API_KEY=qapi_...
+QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofstadter.108-175-12-95.plesk.page
 ```
 
 `EXPO_PUBLIC_*` variables are build-time for Expo web output. After changing them, rebuild and redeploy.
 On Plesk, set these variables in the Node.js environment before post-deploy runs.
 The deploy hook fails fast when required variables are missing.
+
+Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
+`QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
+For non-web runtimes that need runtime proxy calls, set `EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL` to an absolute proxy URL (for example `https://davidjgrimsley.com/api/quantum-backend`).
 
 3. Start the app:
 

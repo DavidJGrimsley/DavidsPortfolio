@@ -53,6 +53,8 @@ jobs:
         run: npm run doctor
 
       - name: Build web deploy bundle
+        env:
+          EXPO_PUBLIC_QUANTUM_API_BASE_URL: https://davidjgrimsley.com/public-facing/api/quantum/v1
         run: npm run build:web:deploy
 
       - name: Show build marker outputs

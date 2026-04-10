@@ -64,17 +64,12 @@ describe('quantum api config', () => {
     expect(withBlankEnv.QUANTUM_API_BASE_URL).toBe('http://127.0.0.1:8000/v1');
   });
 
-  it('falls back to hosted quantum path for production builds when env is missing', () => {
+  it('fails fast in production builds when env base URL is missing', () => {
     mutableEnv.NODE_ENV = 'production';
     delete mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL;
 
-    const config = loadConfig();
-
-    expect(config.QUANTUM_API_BASE_URL).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
-    );
-    expect(config.QUANTUM_PORTFOLIO_URL).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum/v1/portfolio.json'
+    expect(() => loadConfig()).toThrow(
+      'Missing EXPO_PUBLIC_QUANTUM_API_BASE_URL in production runtime. Set an explicit mounted Quantum API base URL.'
     );
   });
 

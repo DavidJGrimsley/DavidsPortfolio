@@ -13,6 +13,7 @@ import {
   getIbmCircuitJobResult,
   getIbmCircuitJobStatus,
   listIbmBackends,
+  runQuantumGate,
   submitIbmCircuitJob,
   type IbmBackendRecord,
 } from '@/services/quantum-ibm-runtime';
@@ -62,12 +63,11 @@ export function HelloWave() {
   const isWeb = Platform.OS === 'web';
   const publicQuantumBaseUrl = QUANTUM_API_BASE_URL;
   const quantumBaseUrl = resolveQuantumEndpointBaseUrl('api_key', isWeb);
-  const quantumEndpoint = `${quantumBaseUrl}/gates/run`;
-  const runtimeApiKey = process.env.EXPO_PUBLIC_QUANTUM_API_KEY?.trim() ?? '';
-  const hasApiKey = runtimeApiKey.length > 0;
 
   const restartRef = useRef<LottieView>(null);
   const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const simulatorAbortRef = useRef<AbortController | null>(null);
+  const runTokenRef = useRef(0);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
@@ -91,20 +91,11 @@ export function HelloWave() {
   const [lottieLevel, setLottieLevel] = useState<'low' | 'medium' | 'high'>('medium');
 
   const loadIbmHardwareBackends = useCallback(async () => {
-    if (!hasApiKey) {
-      setIbmBackends([]);
-      setSelectedIbmBackend('');
-      setIbmBackendsError(
-        'IBM hardware mode requires EXPO_PUBLIC_QUANTUM_API_KEY.'
-      );
-      return [] as IbmBackendRecord[];
-    }
-
     setLoadingIbmBackends(true);
     setIbmBackendsError(null);
 
     try {
-      const backends = await listIbmBackends(quantumBaseUrl, runtimeApiKey, {
+      const backends = await listIbmBackends(quantumBaseUrl, '', {
         minQubits: 1,
       });
 
@@ -127,54 +118,40 @@ export function HelloWave() {
     } finally {
       setLoadingIbmBackends(false);
     }
-  }, [hasApiKey, quantumBaseUrl, runtimeApiKey, selectedIbmBackend]);
+  }, [quantumBaseUrl, selectedIbmBackend]);
 
   const runSimulator = useCallback(
     async (angle: number): Promise<QuantumRunResult> => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 10_000);
+      simulatorAbortRef.current?.abort();
+      const abortController = new AbortController();
+      simulatorAbortRef.current = abortController;
 
-      let response: Response;
-      try {
-        response = await fetch(quantumEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': runtimeApiKey,
-          },
-          body: JSON.stringify({
-            gate_type: 'rotation',
-            rotation_angle_rad: angle,
-          }),
-          signal: controller.signal,
-        });
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Simulator request timed out. Please try again.');
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          abortController.abort();
+          reject(new Error('Simulator request timed out. Please try again.'));
+        }, 10_000);
+      });
+
+      const payload = await Promise.race([
+        runQuantumGate(quantumBaseUrl, '', {
+          gateType: 'rotation',
+          rotationAngleRad: angle,
+        }, {
+          signal: abortController.signal,
+        }),
+        timeoutPromise,
+      ]).finally(() => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
-        throw error;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error(
-            'Quantum backend authentication failed (401). Rotate the server-side key and retry.'
-          );
+        if (simulatorAbortRef.current === abortController) {
+          simulatorAbortRef.current = null;
         }
-        throw new Error(`Simulator call failed with HTTP ${response.status}.`);
-      }
+      });
 
-      const payload = (await response.json()) as {
-        superposition_strength?: number;
-        measurement?: number;
-        backend?: string;
-      };
-
-      const strength = Math.max(0, Math.min(1, Number(payload.superposition_strength ?? 0.5)));
+      const strength = Math.max(0, Math.min(1, Number(payload.superpositionStrength ?? 0.5)));
       const measured = payload.measurement === 1 ? 1 : 0;
 
       return {
@@ -185,7 +162,7 @@ export function HelloWave() {
         measurement: measured,
       };
     },
-    [quantumEndpoint, runtimeApiKey]
+    [quantumBaseUrl]
   );
 
   const runIbmHardware = useCallback(
@@ -203,7 +180,7 @@ export function HelloWave() {
 
       setJobStatusText(`Submitting IBM hardware job to ${backendName}...`);
 
-      const submitted = await submitIbmCircuitJob(quantumBaseUrl, runtimeApiKey, {
+      const submitted = await submitIbmCircuitJob(quantumBaseUrl, '', {
         backendName,
         shots: 512,
         circuit: {
@@ -232,7 +209,7 @@ export function HelloWave() {
         }
 
         await wait(2000);
-        const next = await getIbmCircuitJobStatus(quantumBaseUrl, runtimeApiKey, submitted.jobId);
+        const next = await getIbmCircuitJobStatus(quantumBaseUrl, '', submitted.jobId);
         status = next.status;
         remoteJobId = next.remoteJobId;
         setJobStatusText(`IBM job ${submitted.jobId} is ${status} (remote: ${remoteJobId}).`);
@@ -252,7 +229,7 @@ export function HelloWave() {
         }
       }
 
-      const result = await getIbmCircuitJobResult(quantumBaseUrl, runtimeApiKey, submitted.jobId);
+      const result = await getIbmCircuitJobResult(quantumBaseUrl, '', submitted.jobId);
       const entries = Object.entries(result.result.counts);
       const total = entries.reduce((sum, [, count]) => sum + count, 0);
       const oneCount = entries.reduce(
@@ -294,10 +271,16 @@ export function HelloWave() {
         hardwareEvidence: evidence,
       };
     },
-    [ibmBackends, loadIbmHardwareBackends, quantumBaseUrl, runtimeApiKey, selectedIbmBackend]
+    [ibmBackends, loadIbmHardwareBackends, quantumBaseUrl, selectedIbmBackend]
   );
 
   const runQuantumAnimation = useCallback(async () => {
+    const runToken = runTokenRef.current + 1;
+    runTokenRef.current = runToken;
+
+    simulatorAbortRef.current?.abort();
+    simulatorAbortRef.current = null;
+
     if (completionTimerRef.current) {
       clearTimeout(completionTimerRef.current);
       completionTimerRef.current = null;
@@ -310,25 +293,13 @@ export function HelloWave() {
     setRobotMessage('Running quantum workflow...');
     setHardwareEvidence(null);
 
-    if (!hasApiKey) {
-      setRobotMessage('EXPO_PUBLIC_QUANTUM_API_KEY is missing. Running fallback animation.');
-      setBackendLabel('Local fallback');
-      setGateAngle(0);
-      setSuperpositionStrength(0);
-      setMeasurement(0);
-      setLottieLoop(false);
-      setLottieSpeed(1);
-      setLottieLevel('low');
-      await wait(1200);
-      setIsLoading(false);
-      setIsComplete(true);
-      return;
-    }
-
     try {
       const angle = getRandomAngle();
       const result =
         executionMode === 'simulator' ? await runSimulator(angle) : await runIbmHardware(angle);
+      if (runToken !== runTokenRef.current) {
+        return;
+      }
 
       setBackendLabel(result.backendLabel);
       setGateAngle(result.gateAngle);
@@ -352,12 +323,19 @@ export function HelloWave() {
           : 'IBM hardware run complete. Restart to submit another hardware job.'
       );
 
-      const finishDelayMs = result.measurement === 1 ? 10_000 : Math.max(1500, Math.floor(4000 / speed));
+      const finishDelayMs =
+        result.measurement === 1 ? 10_000 : Math.max(1500, Math.floor(4000 / speed));
       completionTimerRef.current = setTimeout(() => {
+        if (runToken !== runTokenRef.current) {
+          return;
+        }
         setIsComplete(true);
         completionTimerRef.current = null;
       }, finishDelayMs);
     } catch (error) {
+      if (runToken !== runTokenRef.current) {
+        return;
+      }
       setRobotMessage(error instanceof Error ? error.message : 'Quantum run failed.');
       setBackendLabel('Fallback');
       setGateAngle(0);
@@ -372,9 +350,11 @@ export function HelloWave() {
         completionTimerRef.current = null;
       }
     } finally {
-      setIsLoading(false);
+      if (runToken === runTokenRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [executionMode, hasApiKey, runIbmHardware, runSimulator]);
+  }, [executionMode, runIbmHardware, runSimulator]);
 
   useEffect(() => {
     void runQuantumAnimation();
@@ -389,8 +369,12 @@ export function HelloWave() {
 
   useEffect(
     () => () => {
+      runTokenRef.current += 1;
+      simulatorAbortRef.current?.abort();
+      simulatorAbortRef.current = null;
       if (completionTimerRef.current) {
         clearTimeout(completionTimerRef.current);
+        completionTimerRef.current = null;
       }
     },
     []

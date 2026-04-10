@@ -78,6 +78,12 @@ function RootLayoutClient() {
     if (typeof window === 'undefined') return;
     if ((window as any).__DJS_BUILD_LOGGED__) return;
 
+    const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    if (process.env.NODE_ENV !== 'production' && isLocalHost) {
+      (window as any).__DJS_BUILD_LOGGED__ = true;
+      return;
+    }
+
     (async () => {
       const metadataPaths = ['/__djsportfolio_build.json', '/dist/client/__djsportfolio_build.json'];
       let lastErrorMessage = 'metadata not found';

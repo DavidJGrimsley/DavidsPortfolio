@@ -1,3 +1,5 @@
+import { QuantumApiError as SdkQuantumApiError } from '@mr.dj2u/quantum-api';
+import { createQuantumRuntimeProxyClient } from '@/lib/quantum-sdk-client';
 import { QuantumApiError } from './quantum-key-management';
 
 type JsonObject = Record<string, unknown>;
@@ -63,29 +65,22 @@ export type IbmCircuitJobResult = {
   };
 };
 
-function joinUrl(baseUrl: string, path: string) {
-  const trimmedPath = path.trim();
-  if (/^https?:\/\//i.test(trimmedPath)) {
-    return trimmedPath;
-  }
+export type QuantumGateRunInput = {
+  gateType: 'bit_flip' | 'phase_flip' | 'rotation';
+  rotationAngleRad?: number;
+};
 
-  const normalizedBase = baseUrl.trim().replace(/\/+$/, '');
-  const normalizedPath = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
-  const baseMatch = normalizedBase.match(/^(https?:\/\/[^/]+)(\/.*)?$/i);
+type QuantumRuntimeCallOptions = {
+  signal?: AbortSignal;
+};
 
-  if (!baseMatch) {
-    return `${normalizedBase}${normalizedPath}`;
-  }
-
-  const origin = baseMatch[1];
-  const basePath = baseMatch[2] ?? '';
-
-  if (basePath && normalizedPath.startsWith(`${basePath}/`)) {
-    return `${origin}${normalizedPath}`;
-  }
-
-  return `${normalizedBase}${normalizedPath}`;
-}
+export type QuantumGateRunResult = {
+  gateType: 'bit_flip' | 'phase_flip' | 'rotation';
+  measurement: 0 | 1;
+  superpositionStrength: number;
+  success: boolean;
+  backend?: string | null;
+};
 
 function asObject(value: unknown): JsonObject | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -147,14 +142,6 @@ function readJsonOrText(text: string) {
   }
 }
 
-async function parseResponse(response: Response) {
-  const rawText = await response.text();
-  if (!rawText) {
-    return null;
-  }
-  return readJsonOrText(rawText);
-}
-
 function getErrorMessage(payload: unknown, fallback: string) {
   const objectPayload = asObject(payload);
   if (!objectPayload) {
@@ -167,39 +154,160 @@ function getErrorMessage(payload: unknown, fallback: string) {
   );
 }
 
+function normalizeRuntimePath(path: string) {
+  const trimmed = path.trim();
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    const parsed = new URL(trimmed);
+    const normalizedPath = parsed.pathname === '/v1'
+      ? '/'
+      : parsed.pathname.startsWith('/v1/')
+        ? parsed.pathname.slice(3)
+        : parsed.pathname;
+
+    return {
+      pathname: normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`,
+      searchParams: parsed.searchParams,
+    };
+  }
+
+  const [pathPart, queryPart] = trimmed.split('?', 2);
+  const withLeadingSlash = pathPart.startsWith('/') ? pathPart : `/${pathPart}`;
+  const normalizedPath = withLeadingSlash === '/v1'
+    ? '/'
+    : withLeadingSlash.startsWith('/v1/')
+      ? withLeadingSlash.slice(3)
+      : withLeadingSlash;
+
+  return {
+    pathname: normalizedPath,
+    searchParams: new URLSearchParams(queryPart ?? ''),
+  };
+}
+
+function parseRequestBody(body: BodyInit | null | undefined) {
+  if (!body) {
+    return undefined;
+  }
+
+  if (typeof body === 'string') {
+    const trimmed = body.trim();
+    return trimmed.length > 0 ? readJsonOrText(trimmed) : undefined;
+  }
+
+  return body;
+}
+
+function toRuntimeQuantumApiError(error: unknown, fallbackMessage: string) {
+  if (error instanceof QuantumApiError) {
+    return error;
+  }
+
+  if (error instanceof SdkQuantumApiError) {
+    const parsedBody = asObject(readJsonOrText(error.bodyText));
+    const details = parsedBody ?? error.body ?? error.details ?? null;
+    const fallbackStatusMessage =
+      error.status === 401
+        ? 'Quantum API key rejected (401). Create or rotate an active key and retry.'
+        : fallbackMessage;
+
+    return new QuantumApiError(
+      getErrorMessage(details, error.message || fallbackStatusMessage),
+      error.status,
+      details
+    );
+  }
+
+  if (error instanceof Error) {
+    const status = /api key/i.test(error.message) ? 401 : 500;
+    const fallbackStatusMessage =
+      status === 401
+        ? 'Quantum API key rejected (401). Create or rotate an active key and retry.'
+        : fallbackMessage;
+    return new QuantumApiError(error.message || fallbackStatusMessage, status, {
+      message: error.message,
+    });
+  }
+
+  return new QuantumApiError(fallbackMessage, 500, error);
+}
+
 async function requestQuantumApiWithApiKey(
   baseUrl: string,
   apiKey: string,
   path: string,
   init?: RequestInit
 ) {
+  const client = createQuantumRuntimeProxyClient(baseUrl);
+  const method = (init?.method ?? 'GET').toUpperCase();
+  const { pathname, searchParams } = normalizeRuntimePath(path);
+  const parsedBody = asObject(parseRequestBody(init?.body));
   const trimmedApiKey = apiKey.trim();
-  const response = await fetch(joinUrl(baseUrl, path), {
-    ...init,
+  const runtimeOptions = {
+    auth: 'none' as const,
     headers: {
       Accept: 'application/json',
       ...(trimmedApiKey ? { 'X-API-Key': trimmedApiKey } : {}),
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(init?.headers ?? {}),
     },
-  });
+    ...(init?.signal ? { signal: init.signal } : {}),
+  };
 
-  const payload = await parseResponse(response);
+  try {
+    if (method === 'GET' && pathname === '/list_backends') {
+      const provider = asString(searchParams.get('provider'));
+      const simulatorOnly = asString(searchParams.get('simulator_only'));
+      const minQubits = asString(searchParams.get('min_qubits'));
+      const ibmProfile = asString(searchParams.get('ibm_profile'));
+      const parsedMinQubits = minQubits ? Number(minQubits) : NaN;
 
-  if (!response.ok) {
-    const fallbackMessage =
-      response.status === 401
-        ? 'Quantum API key rejected (401). Create or rotate an active key and retry.'
-        : `Request failed with HTTP ${response.status}.`;
+      return await client.listBackends(
+        {
+          ...(provider ? { provider: provider as 'ibm' | 'aer' } : {}),
+          ...(simulatorOnly ? { simulator_only: simulatorOnly === 'true' } : {}),
+          ...(Number.isFinite(parsedMinQubits) ? { min_qubits: parsedMinQubits } : {}),
+          ...(ibmProfile ? { ibm_profile: ibmProfile } : {}),
+        },
+        runtimeOptions
+      );
+    }
+
+    if (method === 'POST' && pathname === '/gates/run') {
+      return await client.runGate((parsedBody ?? {}) as any, runtimeOptions);
+    }
+
+    if (method === 'POST' && pathname === '/jobs/circuits') {
+      return await client.submitCircuitJob((parsedBody ?? {}) as any, runtimeOptions);
+    }
+
+    const jobStatusMatch = pathname.match(/^\/jobs\/([^/]+)$/);
+    if (method === 'GET' && jobStatusMatch) {
+      return await client.getCircuitJob(decodeURIComponent(jobStatusMatch[1] ?? ''), {
+        ...runtimeOptions,
+      });
+    }
+
+    const jobResultMatch = pathname.match(/^\/jobs\/([^/]+)\/result$/);
+    if (method === 'GET' && jobResultMatch) {
+      return await client.getCircuitJobResult(decodeURIComponent(jobResultMatch[1] ?? ''), {
+        ...runtimeOptions,
+      });
+    }
+
+    const jobCancelMatch = pathname.match(/^\/jobs\/([^/]+)\/cancel$/);
+    if (method === 'POST' && jobCancelMatch) {
+      return await client.cancelCircuitJob(decodeURIComponent(jobCancelMatch[1] ?? ''), {
+        ...runtimeOptions,
+      });
+    }
 
     throw new QuantumApiError(
-      getErrorMessage(payload, fallbackMessage),
-      response.status,
-      payload
+      `Unsupported Quantum runtime route: ${method} ${pathname}.`,
+      400,
+      { method, path: pathname }
     );
+  } catch (error) {
+    throw toRuntimeQuantumApiError(error, 'Unable to complete the Quantum runtime request.');
   }
-
-  return payload;
 }
 
 function extractCollection(payload: unknown) {
@@ -331,6 +439,45 @@ function normalizeJobResultResponse(payload: unknown): IbmCircuitJobResult {
       counts,
     },
   };
+}
+
+function normalizeGateRunResponse(payload: unknown): QuantumGateRunResult {
+  const record = asObject(payload);
+  const gateType = pickString(record, 'gate_type', 'gateType');
+
+  return {
+    gateType:
+      gateType === 'bit_flip' || gateType === 'phase_flip' || gateType === 'rotation'
+        ? gateType
+        : 'rotation',
+    measurement: asNumber(record?.measurement) === 1 ? 1 : 0,
+    superpositionStrength: Math.max(
+      0,
+      Math.min(1, asNumber(record?.superposition_strength ?? record?.superpositionStrength) ?? 0)
+    ),
+    success: asBoolean(record?.success) ?? true,
+    backend: pickString(record, 'backend', 'backend_name', 'backendName'),
+  };
+}
+
+export async function runQuantumGate(
+  baseUrl: string,
+  apiKey: string,
+  input: QuantumGateRunInput,
+  options?: QuantumRuntimeCallOptions
+) {
+  const payload = await requestQuantumApiWithApiKey(baseUrl, apiKey, '/gates/run', {
+    method: 'POST',
+    ...(options?.signal ? { signal: options.signal } : {}),
+    body: JSON.stringify({
+      gate_type: input.gateType,
+      ...(typeof input.rotationAngleRad === 'number'
+        ? { rotation_angle_rad: input.rotationAngleRad }
+        : {}),
+    }),
+  });
+
+  return normalizeGateRunResponse(payload);
 }
 
 export async function listIbmBackends(

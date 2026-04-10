@@ -49,14 +49,8 @@ Goal: close obvious repo hygiene gaps before major integration work.
 - [ ] Expand test coverage beyond current minimal baseline
 - [ ] Resolve known lint gaps in SEO/public-facing components
 
-### Consistency and Maintainability
 
-- [ ] Reconcile Quantum API base URL messaging (`/api/quantum` vs `/public-facing/api/quantum`)
-- [ ] Reconcile request schema wording/examples (`gate` vs `gate_type`) in API docs page content
-- [ ] Remove stale "no auth/no API keys" copy before Phase 3.5 rollout
-- [ ] Split large public-facing files into smaller maintainable modules
-
-## Phase 3.5 / 3.75 - Portfolio Integration for Real API Key Management
+## Phase 3.5 / 3.75 (Quantum-API Todo phase) - Portfolio Integration for Real API Key Management
 
 Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Postgres + Redis), without implementing backend changes in this repo yet.
 
@@ -87,6 +81,15 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
   - [x] `SUPABASE_JWT_ISSUER`
   - [x] `API_KEY_HASH_SECRET`
 - [x] Preserve Redis requirement for rate limiting + key metadata cache
+- [x] Swap frontend integration from local SDK path to published npm package `@mr.dj2u/quantum-api` and validate compatibility
+
+
+### Consistency and Maintainability
+
+- [x] Reconcile Quantum API base URL messaging (public mount: `/public-facing/api/quantum/v1`; app proxy: `/api/quantum-backend`)
+- [x] Reconcile request schema wording/examples to `gate_type` in API docs page content
+- [x] Remove stale auth copy conflicts (runtime endpoints require `X-API-Key`; key/profile dashboard requires Identerest auth)
+- [ ] Split large public-facing files into smaller maintainable modules (deferred refactor)
 
 ### Portfolio UI Work (Phase 3.75 Focus)
 
@@ -105,6 +108,10 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
 ### Validation and Security
 
 - [x] Portfolio-side unit tests for Quantum API base URL fallback and key service normalization/error handling
+- [x] Add deeper component tests for IBM dashboard interactions (auth config warning + IBM profile required-field validation)
+
+#### External Blockers (Backend-Owned Validation)
+
 - [ ] Backend-owned unit tests for key generation/parsing/hashing/constant-time verification
 - [ ] Unit tests for JWT validation paths (valid/expired/wrong issuer/wrong audience/malformed)
 - [ ] Integration tests for user-scoped key ownership boundaries
@@ -117,10 +124,12 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
 
 - [x] Portfolio and backend contracts align for authenticated self-serve key management
 - [x] Public copy and code examples no longer conflict with auth/key requirements
-- [ ] Cutover plan for deprecating env-based keys is approved and documented
+- [x] Cutover plan for deprecating env-based keys is documented and linked in repo docs
 - [x] Phase 3.5 implementation can begin without unresolved planning gaps
 
-## Phase 4 V1 - BYO IBM Credentials + Hardware Runtime
+Reference: `docs/quantum-api-cutover-plan.md`
+
+## Phase 4 V1 - BYO IBM Credentials + Hardware Runtime (for Quantum-API)
 
 Goal: keep simulator usage seamless while enabling optional IBM profile management and IBM hardware execution via existing Quantum API contracts.
 
@@ -160,12 +169,17 @@ Goal: keep simulator usage seamless while enabling optional IBM profile manageme
 
 ### Remaining Follow-ups
 
-- [ ] Backend CORS policy must include localhost web origin for bearer IBM/key routes
-- [ ] Backend auth/key policy review for `/v1/gates/run` 401 debugging in live env
-- [ ] Add deeper component tests for IBM dashboard interactions
+- [ ] Backend CORS policy must include localhost web origin for bearer IBM/key routes (external blocker)
+- [ ] Backend auth/key policy review for `/v1/gates/run` 401 debugging in live env (external blocker)
+- [x] Add deeper component tests for IBM dashboard interactions
+
 
 ## Later Enhancements (Post-3.5)
 
 - [ ] Add per-user plan tiers/policies without changing lifecycle endpoint contracts
 - [ ] Add richer dashboard analytics (usage, quota consumption, recent key events)
 - [ ] Add long-term content governance checks to reduce stale claims on public-facing pages
+
+
+## [API] page (deferred until after sdk55 branch merge)
+- [ ] remove extra content from this page from being hardcoded to be more like the content.ts strategy I've used in landing pages such as in time2pay. https://github.com/DavidJGrimsley/time2pay/blob/main/src/app/index.tsx

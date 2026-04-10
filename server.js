@@ -12,8 +12,27 @@ const CLIENT_BUILD_DIR = path.join(process.cwd(), 'dist/client');
 const SERVER_BUILD_DIR = path.join(process.cwd(), 'dist/server');
 
 const app = express();
-const QUANTUM_REMOTE_ORIGIN = 'https://davidjgrimsley.com';
 const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
+const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
+
+function normalizeQuantumUpstreamBaseUrl() {
+  const raw = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL
+    ? String(process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL).trim()
+    : '';
+
+  if (raw.length > 0) {
+    const trimmed = raw.replace(/\/+$/, '');
+    return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
+
+  return DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL;
+}
+
+const QUANTUM_UPSTREAM_BASE_URL = normalizeQuantumUpstreamBaseUrl();
 
 app.use(compression());
 app.disable('x-powered-by');
@@ -113,12 +132,26 @@ app.use('/public-facing/api/quantum/v1', async (req, res, next) => {
     return next();
   }
 
-  const targetUrl = `${QUANTUM_REMOTE_ORIGIN}${req.originalUrl}`;
+  if (!QUANTUM_UPSTREAM_BASE_URL) {
+    return next();
+  }
+
+  const requestUrl = new URL(req.originalUrl, 'http://localhost');
+  const publicPrefix = '/public-facing/api/quantum/v1';
+  const suffix = requestUrl.pathname.startsWith(publicPrefix)
+    ? requestUrl.pathname.slice(publicPrefix.length)
+    : requestUrl.pathname;
+  const normalizedSuffix = suffix.length > 0 ? suffix : '';
+  const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${requestUrl.search}`;
   await proxyToQuantumOrigin(req, res, targetUrl);
 });
 
 app.use('/api/quantum-backend', async (req, res, next) => {
   if (!isLocalhostRequest(req)) {
+    return next();
+  }
+
+  if (!QUANTUM_UPSTREAM_BASE_URL) {
     return next();
   }
 
@@ -131,7 +164,7 @@ app.use('/api/quantum-backend', async (req, res, next) => {
       normalizedSuffix = `/${normalizedSuffix}`;
     }
   }
-  const targetUrl = `${QUANTUM_REMOTE_ORIGIN}/public-facing/api/quantum/v1${normalizedSuffix}${requestUrl.search}`;
+  const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${requestUrl.search}`;
   await proxyToQuantumOrigin(req, res, targetUrl);
 });
 
