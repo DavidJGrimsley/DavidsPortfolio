@@ -135,6 +135,17 @@ const DEFAULT_TABS: TabConfig[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Quantum Gateway - standalone (matches: src/app/(tabs)/quantum-gateway.tsx)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    name: 'quantum-gateway',
+    route: '/(tabs)/quantum-gateway',
+    icon: 'shield-checkmark',
+    iconOutline: 'shield-checkmark-outline',
+    label: 'Q Gateway',
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Services - standalone (matches: src/app/(tabs)/services/)
   // ─────────────────────────────────────────────────────────────────────────
   {

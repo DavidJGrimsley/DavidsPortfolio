@@ -33,6 +33,7 @@ const TabLayout = () => {
           />
           <Tabs.Screen name="portfolio" />
           <Tabs.Screen name="public-facing" />
+          <Tabs.Screen name="quantum-gateway" options={{ href: null }} />
           <Tabs.Screen name="pokemon" options={{ href: null }} />
         </Tabs>
       </View>
