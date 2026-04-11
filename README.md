@@ -1,6 +1,6 @@
 # DJ's Portfolio
 
-Expo Router portfolio app for web/mobile with public API docs, project showcases, and Quantum API self-serve authentication tooling.
+Expo Router portfolio app for web/mobile with public API docs, project showcases, Quantum API self-serve authentication tooling, and public Gateway project management.
 
 ## Current Status
 
@@ -10,6 +10,11 @@ Expo Router portfolio app for web/mobile with public API docs, project showcases
   - rotate key
   - revoke key
   - delete revoked keys
+- Gateway page supports Identerest-authenticated Gateway project management:
+  - list/create/update Gateway projects
+  - choose a default Quantum API key and IBM profile
+  - create/rotate/revoke publishable Gateway client keys
+  - mint short-lived runtime tokens for client calls
 - IBM Credentials section supports BYO profile management through Quantum API bearer endpoints:
   - list/create/edit/delete profile
   - verify profile
@@ -42,6 +47,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofstadter.108-175-12-95.plesk.page
+EXPO_PUBLIC_QUANTUM_GATEWAY_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum-gateway/v1
 ```
 
 `EXPO_PUBLIC_*` variables are build-time for Expo web output. After changing them, rebuild and redeploy.
@@ -50,6 +56,7 @@ The deploy hook fails fast when required variables are missing.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
+For local exported web builds, the app will proxy the Quantum API and Gateway mounted paths through the local server when running on localhost.
 For non-web runtimes that need runtime proxy calls, set `EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL` to an absolute proxy URL (for example `https://davidjgrimsley.com/api/quantum-backend`).
 
 3. Start the app:
@@ -106,3 +113,5 @@ The endpoint must return the exact deployed commit SHA.
 - IBM profile CRUD uses Quantum API bearer-authenticated endpoints.
 - Hardware jobs use API-key-authenticated Quantum API runtime endpoints.
 - Client endpoint demos use `EXPO_PUBLIC_QUANTUM_API_BASE_URL` directly.
+- Gateway runtime calls use publishable Gateway client keys to mint short-lived runtime tokens.
+- Direct Quantum API key mode remains an explicit local/dev fallback, not the shipped Gateway runtime path.

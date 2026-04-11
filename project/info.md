@@ -2,7 +2,7 @@
 
 ## Product Goal
 
-Build a production-ready portfolio app (Expo Router + React Native Web) that showcases projects, exposes public developer resources, and supports Quantum API self-serve key management plus BYO IBM credential workflows.
+Build a production-ready portfolio app (Expo Router + React Native Web) that showcases projects, exposes public developer resources, and supports Quantum API self-serve key management plus public Gateway project onboarding and BYO IBM credential workflows.
 
 ## Primary Consumers
 
@@ -28,8 +28,9 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 - Revoked-key cleanup UX is implemented (single-key delete + bulk delete revoked).
 - Portfolio UI is integrated with backend key-management endpoints using bearer tokens.
 - Portfolio copy/docs now reflect key lifecycle semantics (one-time secret reveal, revoke/rotate behavior).
-- Identerest Account branding is now used for auth UX.
+- Identerest account branding is now used for auth UX.
 - Quantum API base URL configuration is env-driven with fallback (no longer hardcoded throughout page/components).
+- Gateway project management uses Identerest-backed API calls instead of direct browser table reads.
 - Portfolio-side validation now covers Quantum API base URL fallback plus key service normalization/error handling; backend-heavy security coverage is still pending.
 
 ## Scope (Phase 4 V1 Status - BYO IBM)
@@ -71,7 +72,8 @@ Build a production-ready portfolio app (Expo Router + React Native Web) that sho
 ## Success Criteria
 
 - Portfolio docs and planning artifacts clearly reflect current baseline and Phase 4 V1 rollout status.
-- Auth/key-management flows are live in UI with Identerest Account branding.
+- Auth/key-management flows are live in UI with Identerest account branding.
+- Gateway project onboarding/settings flows are live in UI with precise Gateway/runtime terminology.
 - IBM profile management is live in UI through Quantum API bearer endpoints (no direct secret writes to Supabase).
 - Simulator and BYO IBM messaging is consistent across dashboard UX and API page copy.
 - Remaining work is limited to backend CORS/auth policy stabilization plus validation hardening.

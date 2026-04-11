@@ -1,66 +1,78 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
+  Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   TextInput,
   View,
 } from 'react-native';
-import { type Session } from '@supabase/supabase-js';
-import { type Href, useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import Animated, {
-  Easing,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-
+import { Picker } from '@react-native-picker/picker';
 import { TabContainer } from '@/components/navigation/TabContainer';
-import { CompanyButton } from '@/components/PublicFacing/api/CompanyButton';
-import { FormFieldHelpLabel } from '@/components/UI/FormFieldHelpLabel';
+import { ExternalLink } from '@/components/UI/ExternalLink';
 import { ThemedText } from '@/components/UI/ThemedText';
-import {
-  quantumGatewayHighlights,
-  quantumGatewayIntegrationNotes,
-  quantumGatewayQuickActions,
-  quantumGatewaySettingsSections,
-} from '@/constants/quantumContent';
-import { SITE_URL } from '@/constants/seo';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import {
+  getQuantumAuthRedirectUrl,
   getSupabaseBrowserClient,
   getSupabaseConfigError,
   isSupabaseConfigured,
 } from '@/lib/supabase-browser';
+import { QUANTUM_API_BASE_URL, QUANTUM_GATEWAY_BASE_URL, QUANTUM_GATEWAY_DOCS_URL } from '@/lib/quantum-api-config';
 import {
-  createQuantumGatewayProject,
+  createQuantumGatewayPublishableKey,
+  listQuantumGatewayPublishableKeys,
   loadQuantumGatewayProjects,
+  mintGatewayRuntimeSession,
+  revokeQuantumGatewayPublishableKey,
+  rotateQuantumGatewayPublishableKey,
+  saveQuantumGatewayProject,
+  toQuantumGatewayUserMessage,
   updateQuantumGatewayProject,
 } from '@/services/quantum-gateway-projects';
-import type { QuantumGatewayProjectRecord } from '@/types/quantum-gateway';
+import {
+  listIbmProfiles,
+  listQuantumKeys,
+  type IbmProfileRecord,
+  type QuantumKeyRecord,
+  QuantumApiError,
+} from '@/services/quantum-key-management';
+import type {
+  QuantumGatewayProjectInput,
+  QuantumGatewayProjectRecord,
+  QuantumGatewayProjectStatus,
+  QuantumGatewayPublishableKeyRecord,
+  QuantumGatewayRuntimeSessionResult,
+} from '@/types/quantum-gateway';
 
-const IDENTEREST_LOGO = require('~/assets/images/identerest-logo.png');
-const CREATISPHERE_LOGO = require('~/assets/images/creatisphere-logo.png');
-const HIGHER_LOGO = require('~/assets/images/higher-logo.png');
+type GatewayProjectFormState = {
+  projectSlug: string;
+  displayName: string;
+  status: QuantumGatewayProjectStatus;
+  endpointPathPrefix: string;
+  defaultApiKeyId: string;
+  defaultIbmCredentialProfileId: string;
+  routeAllowlistText: string;
+  defaultRateLimitPerMinute: string;
+  dailyRequestQuota: string;
+  allowedOriginsText: string;
+};
 
-const BRAND_COLORS = {
-  identerest: { primary: '#475569', secondary: '#94a3b8' },
-  creatisphere: { primary: '#ff5e00', secondary: '#1058bc' },
-  higher: { primary: '#228B22', secondary: '#C3B091' },
-} as const;
+type PublishableKeyReveal = {
+  action: 'created' | 'rotated';
+  label: string;
+  rawKey: string;
+};
 
-const GATEWAY_AUTH_PATH = '/quantum-gateway';
-const PROJECT_FORM_FADE_OUT_MS = 180;
-const PROJECT_FORM_HOLD_MS = 300;
-const PROJECT_FORM_COLLAPSE_MS = 460;
-const PROJECT_FORM_EXPAND_MS = 320;
-const PROJECT_FORM_FADE_IN_MS = 220;
-const PROJECT_FORM_FALLBACK_HEIGHT = 420;
-const ADD_BUTTON_SLOT_WIDTH = 84;
+type RuntimeTokenReveal = {
+  token: string;
+  expiresAt?: string | null;
+  projectId?: string | null;
+};
 
 const hexToRgba = (hex: string, alpha: number) => {
   const sanitized = hex.replace('#', '');
@@ -73,159 +85,275 @@ const hexToRgba = (hex: string, alpha: number) => {
 
 const shortenId = (value?: string | null) => {
   if (!value) return 'Not set';
-  if (value.length <= 10) return value;
-  return `${value.slice(0, 8)}...`;
+  if (value.length <= 12) return value;
+  return `${value.slice(0, 8)}...${value.slice(-4)}`;
 };
 
-const parseListInput = (rawValue: string) =>
-  rawValue
+const formatTimestamp = (value?: string | null) => {
+  if (!value) return 'Never';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString();
+};
+
+const splitListInput = (value: string) =>
+  value
     .split(/[\n,]/g)
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
 
-const slugifyProjectName = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+const joinListInput = (value: string[]) => value.join('\n');
 
-const getGatewayAuthRedirectUrl = () => {
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return `${window.location.origin}${GATEWAY_AUTH_PATH}`;
+const createEmptyProjectForm = (): GatewayProjectFormState => ({
+  projectSlug: '',
+  displayName: '',
+  status: 'active',
+  endpointPathPrefix: '/public-facing/api/quantum-gateway/v1',
+  defaultApiKeyId: '',
+  defaultIbmCredentialProfileId: '',
+  routeAllowlistText: '/v1/health\n/v1/gates/run',
+  defaultRateLimitPerMinute: '120',
+  dailyRequestQuota: '100000',
+  allowedOriginsText: 'http://localhost:3000\nhttp://127.0.0.1:3000',
+});
+
+async function copyToClipboard(value: string) {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
   }
 
-  return `${SITE_URL}${GATEWAY_AUTH_PATH}`;
-};
+  await Clipboard.setStringAsync(value);
+}
 
-const decodeOauthError = (rawValue: string | null) => {
-  if (!rawValue) return null;
-  try {
-    return decodeURIComponent(rawValue.replace(/\+/g, ' '));
-  } catch {
-    return rawValue;
+function confirmAction(message: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    return Promise.resolve(window.confirm(message));
   }
-};
 
-type ProjectFormFieldKey =
-  | 'displayName'
-  | 'projectSlug'
-  | 'allowedOrigins';
+  return new Promise((resolve) => {
+    Alert.alert('Confirm', message, [
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'Continue', style: 'destructive', onPress: () => resolve(true) },
+    ]);
+  });
+}
 
-const PROJECT_FORM_FIELD_HELP: Record<ProjectFormFieldKey, { label: string; help: string }> = {
-  displayName: {
-    label: 'Project Display Name',
-    help: 'Human-readable name shown in your gateway dashboard and project lists.',
-  },
-  projectSlug: {
-    label: 'Project Slug',
-    help: 'This is your project URL ID. Base route becomes /gateway/<slug>, so clients and docs use it directly. Keep it short/stable (lowercase + hyphens). Renaming it changes the endpoint path.',
-  },
-  allowedOrigins: {
-    label: 'Allowed Origins',
-    help: 'Optional, mainly for browser/web clients (CORS). Use ORIGIN only: scheme + host + optional port. Do NOT include page path, query, or hash. Example: use https://username.itch.io (not https://username.itch.io/game). Local examples: http://localhost:3000, http://127.0.0.1:3000. Mobile native and console games usually leave this blank.',
-  },
-};
+function projectToForm(project: QuantumGatewayProjectRecord): GatewayProjectFormState {
+  return {
+    projectSlug: project.projectSlug,
+    displayName: project.displayName,
+    status: project.status,
+    endpointPathPrefix: project.endpointPathPrefix,
+    defaultApiKeyId: project.defaultApiKeyId ?? '',
+    defaultIbmCredentialProfileId: project.defaultIbmCredentialProfileId ?? '',
+    routeAllowlistText: joinListInput(project.routeAllowlist),
+    defaultRateLimitPerMinute: String(project.defaultRateLimitPerMinute),
+    dailyRequestQuota: String(project.dailyRequestQuota),
+    allowedOriginsText: joinListInput(project.allowedOrigins),
+  };
+}
+
+function buildProjectInput(form: GatewayProjectFormState): QuantumGatewayProjectInput {
+  return {
+    projectSlug: form.projectSlug.trim(),
+    displayName: form.displayName.trim(),
+    status: form.status,
+    endpointPathPrefix: form.endpointPathPrefix.trim(),
+    defaultApiKeyId: form.defaultApiKeyId.trim() || null,
+    defaultIbmCredentialProfileId: form.defaultIbmCredentialProfileId.trim() || null,
+    routeAllowlist: splitListInput(form.routeAllowlistText),
+    defaultRateLimitPerMinute: Number(form.defaultRateLimitPerMinute) || 120,
+    dailyRequestQuota: Number(form.dailyRequestQuota) || 100000,
+    allowedOrigins: splitListInput(form.allowedOriginsText),
+  };
+}
+
+function useSelectedProject(
+  projects: QuantumGatewayProjectRecord[],
+  selectedProjectSlug: string | null
+) {
+  return useMemo(
+    () => projects.find((project) => project.projectSlug === selectedProjectSlug) ?? projects[0] ?? null,
+    [projects, selectedProjectSlug]
+  );
+}
 
 export default function QuantumGatewayPage() {
-  const router = useRouter();
-
-  const textColor = useThemeColor({}, 'text');
-  const tintColor = useThemeColor({}, 'tint');
-  const accentColor = useThemeColor({}, 'accent');
+  const isWeb = Platform.OS === 'web';
   const backgroundColor = useThemeColor({}, 'background');
-  const whiteOrBlackColor = useThemeColor({}, 'whiteOrBlack');
+  const accentColor = useThemeColor({}, 'accent');
+  const tintColor = useThemeColor({}, 'tint');
+  const textColor = useThemeColor({}, 'text');
   const secondaryColor = useThemeColor({}, 'secondary');
-
-  const [liveProjects, setLiveProjects] = useState<QuantumGatewayProjectRecord[]>([]);
-  const [isSyncingLiveProjects, setIsSyncingLiveProjects] = useState(true);
-  const [liveSyncMessage, setLiveSyncMessage] = useState<string | null>(null);
-  const [liveSource, setLiveSource] = useState<'supabase' | 'static'>('static');
-
-  const [session, setSession] = useState<Session | null>(null);
-  const [bootstrappingAuth, setBootstrappingAuth] = useState(true);
-  const [showIdenterestInfo, setShowIdenterestInfo] = useState(false);
-
-  const [email, setEmail] = useState('');
-  const [authMessage, setAuthMessage] = useState<string | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [sendingMagicLink, setSendingMagicLink] = useState(false);
-  const [startingGithubSignIn, setStartingGithubSignIn] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
-
-  const [displayNameInput, setDisplayNameInput] = useState('');
-  const [projectSlugInput, setProjectSlugInput] = useState('');
-  const [allowedOriginsInput, setAllowedOriginsInput] = useState('');
-  const [creatingProject, setCreatingProject] = useState(false);
-  const [createProjectMessage, setCreateProjectMessage] = useState<string | null>(null);
-  const [createProjectError, setCreateProjectError] = useState<string | null>(null);
-  const [hasEditedSlug, setHasEditedSlug] = useState(false);
-  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
-  const [showProjectForm, setShowProjectForm] = useState(true);
-  const [lockProjectFormHeight, setLockProjectFormHeight] = useState(false);
-  const [projectFormMeasuredHeight, setProjectFormMeasuredHeight] = useState(0);
-
-  const projectFormOpacity = useSharedValue(1);
-  const projectFormSlotHeight = useSharedValue(0);
-  const addButtonOpacity = useSharedValue(0);
-  const addButtonScale = useSharedValue(0.96);
-  const projectFormTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const projectFormOpacityStyle = useAnimatedStyle(() => ({
-    opacity: projectFormOpacity.value,
-  }));
-
-  const projectFormSlotStyle = useAnimatedStyle(
-    () => ({
-      height: lockProjectFormHeight ? projectFormSlotHeight.value : undefined,
-    }),
-    [lockProjectFormHeight]
-  );
-
-  const addButtonStyle = useAnimatedStyle(() => ({
-    opacity: addButtonOpacity.value,
-    transform: [{ scale: addButtonScale.value }],
-  }));
-
+  const whiteOrBlackColor = useThemeColor({}, 'whiteOrBlack');
+  const isPickerWeb = isWeb;
+  const pickerBackgroundColor = isPickerWeb ? '#ffffff' : accentColor + '12';
+  const pickerTextColor = isPickerWeb ? '#11181C' : textColor;
+  const pickerBorderColor = isPickerWeb ? '#9ca3af' : tintColor + '30';
   const supabaseClient = useMemo(() => {
     if (!isSupabaseConfigured()) {
       return null;
     }
-
     return getSupabaseBrowserClient();
   }, []);
 
-  const syncProjects = useCallback(async () => {
-    setIsSyncingLiveProjects(true);
-    setLiveSyncMessage(null);
+  const [email, setEmail] = useState('');
+  const [session, setSession] = useState<any>(null);
+  const [bootstrapping, setBootstrapping] = useState(true);
+  const [sendingMagicLink, setSendingMagicLink] = useState(false);
+  const [startingGithubSignIn, setStartingGithubSignIn] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+
+  const [projects, setProjects] = useState<QuantumGatewayProjectRecord[]>([]);
+  const [selectedProjectSlug, setSelectedProjectSlug] = useState<string | null>(null);
+  const [editingProjectSlug, setEditingProjectSlug] = useState<string | null>(null);
+  const [isCreatingNewProject, setIsCreatingNewProject] = useState(false);
+  const [projectForm, setProjectForm] = useState(createEmptyProjectForm());
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [projectMessage, setProjectMessage] = useState<string | null>(null);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [savingProject, setSavingProject] = useState(false);
+
+  const [availableQuantumKeys, setAvailableQuantumKeys] = useState<QuantumKeyRecord[]>([]);
+  const [availableIbmProfiles, setAvailableIbmProfiles] = useState<IbmProfileRecord[]>([]);
+  const [loadingCredentials, setLoadingCredentials] = useState(true);
+  const [credentialsMessage, setCredentialsMessage] = useState<string | null>(null);
+
+  const [publishableKeys, setPublishableKeys] = useState<QuantumGatewayPublishableKeyRecord[]>([]);
+  const [loadingPublishableKeys, setLoadingPublishableKeys] = useState(false);
+  const [publishableKeyLabel, setPublishableKeyLabel] = useState('');
+  const [publishableKeyError, setPublishableKeyError] = useState<string | null>(null);
+  const [publishableKeyMessage, setPublishableKeyMessage] = useState<string | null>(null);
+  const [creatingPublishableKey, setCreatingPublishableKey] = useState(false);
+  const [busyPublishableKeyId, setBusyPublishableKeyId] = useState<string | null>(null);
+  const [publishableKeyReveal, setPublishableKeyReveal] = useState<PublishableKeyReveal | null>(
+    null
+  );
+
+  const [runtimePublishableKey, setRuntimePublishableKey] = useState('');
+  const [runtimeSessionResult, setRuntimeSessionResult] = useState<RuntimeTokenReveal | null>(null);
+  const [mintingRuntimeSession, setMintingRuntimeSession] = useState(false);
+  const [runtimeSessionError, setRuntimeSessionError] = useState<string | null>(null);
+
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
+
+  const accessToken = session?.access_token ?? null;
+  const selectedProject = useSelectedProject(projects, selectedProjectSlug);
+  const activeProjectCount = useMemo(
+    () => projects.filter((project) => project.status === 'active').length,
+    [projects]
+  );
+
+  const refreshProjects = useCallback(async () => {
+    setLoadingProjects(true);
+    setProjectError(null);
 
     try {
-      const result = await loadQuantumGatewayProjects();
-      setLiveProjects(result.projects);
-      setLiveSource(result.source);
-      setLiveSyncMessage(result.message ?? null);
+      const result = await loadQuantumGatewayProjects(QUANTUM_GATEWAY_BASE_URL, accessToken);
+      setProjects(result.projects);
+      if (result.requiresAuth) {
+        setProjectMessage(result.message ?? 'Sign in to load gateway projects.');
+      } else {
+        setProjectMessage(result.message ?? null);
+      }
     } catch (error) {
-      setLiveProjects([]);
-      setLiveSource('static');
-      setLiveSyncMessage(
-        error instanceof Error ? error.message : 'Unable to load live gateway projects.'
+      setProjects([]);
+      setProjectMessage(null);
+      setProjectError(
+        error instanceof Error ? error.message : 'Unable to load gateway projects right now.'
       );
     } finally {
-      setIsSyncingLiveProjects(false);
+      setLoadingProjects(false);
     }
-  }, []);
+  }, [accessToken]);
+
+  const refreshCredentialOptions = useCallback(async () => {
+    if (!accessToken) {
+      setAvailableQuantumKeys([]);
+      setAvailableIbmProfiles([]);
+      setCredentialsMessage(null);
+      setLoadingCredentials(false);
+      return;
+    }
+
+    setLoadingCredentials(true);
+    setCredentialsMessage(null);
+
+    const [keysResult, profilesResult] = await Promise.allSettled([
+      listQuantumKeys(QUANTUM_API_BASE_URL, accessToken),
+      listIbmProfiles(QUANTUM_API_BASE_URL, accessToken),
+    ]);
+
+    if (keysResult.status === 'fulfilled') {
+      setAvailableQuantumKeys(keysResult.value);
+    } else {
+      setAvailableQuantumKeys([]);
+    }
+
+    if (profilesResult.status === 'fulfilled') {
+      setAvailableIbmProfiles(profilesResult.value);
+    } else {
+      setAvailableIbmProfiles([]);
+    }
+
+    const messages = [
+      keysResult.status === 'rejected'
+        ? keysResult.reason instanceof QuantumApiError
+          ? keysResult.reason.message
+          : 'Unable to load Quantum API keys.'
+        : null,
+      profilesResult.status === 'rejected'
+        ? profilesResult.reason instanceof Error
+          ? profilesResult.reason.message
+          : 'Unable to load IBM profiles.'
+        : null,
+    ].filter((value): value is string => Boolean(value));
+
+    setCredentialsMessage(messages.length > 0 ? messages.join(' ') : null);
+    setLoadingCredentials(false);
+  }, [accessToken]);
+
+  const refreshPublishableKeys = useCallback(
+    async (projectSlug: string | null) => {
+      if (!accessToken || !projectSlug) {
+        setPublishableKeys([]);
+        return;
+      }
+
+      setLoadingPublishableKeys(true);
+      setPublishableKeyError(null);
+
+      try {
+        const keys = await listQuantumGatewayPublishableKeys(
+          QUANTUM_GATEWAY_BASE_URL,
+          accessToken,
+          projectSlug
+        );
+        setPublishableKeys(keys);
+      } catch (error) {
+        setPublishableKeys([]);
+        setPublishableKeyError(
+          error instanceof Error ? error.message : 'Unable to load publishable keys.'
+        );
+      } finally {
+        setLoadingPublishableKeys(false);
+      }
+    },
+    [accessToken]
+  );
 
   useEffect(() => {
     let isActive = true;
 
     if (!supabaseClient) {
-      setSession(null);
-      setBootstrappingAuth(false);
-      return () => {
-        isActive = false;
-      };
+      setBootstrapping(false);
+      return;
     }
 
     const bootstrapSession = async () => {
@@ -237,7 +365,7 @@ export default function QuantumGatewayPage() {
       }
 
       setSession(data.session);
-      setBootstrappingAuth(false);
+      setBootstrapping(false);
     };
 
     bootstrapSession();
@@ -246,13 +374,10 @@ export default function QuantumGatewayPage() {
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange((_event, nextSession) => {
       if (!isActive) return;
+
       setSession(nextSession);
       setAuthError(null);
-      setAuthMessage(
-        nextSession
-          ? 'Signed in with Identerest. You can now create and manage gateway projects.'
-          : null
-      );
+      setAuthMessage(null);
     });
 
     return () => {
@@ -260,9 +385,58 @@ export default function QuantumGatewayPage() {
       subscription.unsubscribe();
     };
   }, [supabaseClient]);
+
   useEffect(() => {
-    void syncProjects();
-  }, [syncProjects, session?.access_token]);
+    if (!accessToken) {
+      setProjects([]);
+      setAvailableQuantumKeys([]);
+      setAvailableIbmProfiles([]);
+      setPublishableKeys([]);
+      setSelectedProjectSlug(null);
+      setEditingProjectSlug(null);
+      setIsCreatingNewProject(false);
+      setProjectForm(createEmptyProjectForm());
+      setLoadingProjects(false);
+      setLoadingCredentials(false);
+      setLoadingPublishableKeys(false);
+      setProjectMessage(null);
+      setProjectError(null);
+      setCredentialsMessage(null);
+      setPublishableKeyError(null);
+      setPublishableKeyMessage(null);
+      setPublishableKeyReveal(null);
+      setRuntimeSessionError(null);
+      setRuntimeSessionResult(null);
+      return;
+    }
+
+    refreshProjects();
+    refreshCredentialOptions();
+  }, [accessToken, refreshCredentialOptions, refreshProjects]);
+
+  useEffect(() => {
+    if (!selectedProject) {
+      setPublishableKeys([]);
+      return;
+    }
+
+    if (selectedProjectSlug !== selectedProject.projectSlug) {
+      setSelectedProjectSlug(selectedProject.projectSlug);
+    }
+
+    if (editingProjectSlug === null && !isCreatingNewProject && !projectForm.projectSlug) {
+      setProjectForm(projectToForm(selectedProject));
+    }
+
+    refreshPublishableKeys(selectedProject.projectSlug);
+  }, [
+    editingProjectSlug,
+    isCreatingNewProject,
+    projectForm.projectSlug,
+    refreshPublishableKeys,
+    selectedProject,
+    selectedProjectSlug,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -277,189 +451,17 @@ export default function QuantumGatewayPage() {
       hashParams.get('error_description') ??
       hashParams.get('error');
 
-    const decoded = decodeOauthError(oauthError);
-    if (decoded) {
-      setAuthError(decoded);
+    if (oauthError) {
+      setAuthError(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
     }
   }, []);
-
-  useEffect(() => {
-    if (hasEditedSlug) {
-      return;
-    }
-    setProjectSlugInput(slugifyProjectName(displayNameInput));
-  }, [displayNameInput, hasEditedSlug]);
-
-  useEffect(() => {
-    if (showProjectForm) {
-      addButtonOpacity.value = withTiming(0, { duration: 120, easing: Easing.out(Easing.quad) });
-      addButtonScale.value = withTiming(0.96, { duration: 120, easing: Easing.out(Easing.quad) });
-      return;
-    }
-
-    addButtonOpacity.value = withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
-    addButtonScale.value = withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
-  }, [addButtonOpacity, addButtonScale, showProjectForm]);
-
-  const clearProjectFormTimers = useCallback(() => {
-    projectFormTimersRef.current.forEach((timerId) => clearTimeout(timerId));
-    projectFormTimersRef.current = [];
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      clearProjectFormTimers();
-    };
-  }, [clearProjectFormTimers]);
-
-  const resetProjectForm = useCallback(() => {
-    setDisplayNameInput('');
-    setProjectSlugInput('');
-    setAllowedOriginsInput('');
-    setHasEditedSlug(false);
-    setEditingProjectId(null);
-    setCreateProjectError(null);
-    setCreateProjectMessage(null);
-  }, []);
-
-  const handleProjectFormLayout = useCallback(
-    (event: { nativeEvent: { layout: { height: number } } }) => {
-      const nextHeight = Math.round(event.nativeEvent.layout.height);
-      if (nextHeight <= 0) {
-        return;
-      }
-
-      if (Math.abs(nextHeight - projectFormMeasuredHeight) > 2) {
-        setProjectFormMeasuredHeight(nextHeight);
-      }
-    },
-    [projectFormMeasuredHeight]
-  );
-
-  const revealProjectForm = useCallback(() => {
-    clearProjectFormTimers();
-
-    if (showProjectForm) {
-      projectFormOpacity.value = 1;
-      return;
-    }
-
-    const targetHeight =
-      projectFormMeasuredHeight > 0 ? projectFormMeasuredHeight : PROJECT_FORM_FALLBACK_HEIGHT;
-
-    setShowProjectForm(true);
-    setLockProjectFormHeight(true);
-    projectFormSlotHeight.value = 0;
-    projectFormOpacity.value = 0;
-
-    const openTimer = setTimeout(() => {
-      projectFormSlotHeight.value = withTiming(targetHeight, {
-        duration: PROJECT_FORM_EXPAND_MS,
-        easing: Easing.out(Easing.cubic),
-      });
-      projectFormOpacity.value = withTiming(1, {
-        duration: PROJECT_FORM_FADE_IN_MS,
-        easing: Easing.out(Easing.quad),
-      });
-
-      const unlockTimer = setTimeout(() => {
-        setLockProjectFormHeight(false);
-      }, PROJECT_FORM_EXPAND_MS);
-      projectFormTimersRef.current.push(unlockTimer);
-    }, 16);
-
-    projectFormTimersRef.current.push(openTimer);
-  }, [
-    clearProjectFormTimers,
-    projectFormMeasuredHeight,
-    projectFormOpacity,
-    projectFormSlotHeight,
-    showProjectForm,
-  ]);
-
-  const runHideProjectFormSequence = useCallback(
-    (options?: { reset?: boolean }) => {
-      if (!showProjectForm) {
-        return;
-      }
-
-      clearProjectFormTimers();
-      const shouldReset = options?.reset ?? false;
-      const measuredHeight =
-        projectFormMeasuredHeight > 0 ? projectFormMeasuredHeight : PROJECT_FORM_FALLBACK_HEIGHT;
-
-      setLockProjectFormHeight(true);
-      projectFormSlotHeight.value = measuredHeight;
-      projectFormOpacity.value = withTiming(0, {
-        duration: PROJECT_FORM_FADE_OUT_MS,
-        easing: Easing.out(Easing.quad),
-      });
-
-      const collapseTimer = setTimeout(() => {
-        projectFormSlotHeight.value = withTiming(
-          0,
-          {
-            duration: PROJECT_FORM_COLLAPSE_MS,
-            easing: Easing.out(Easing.cubic),
-          },
-          (finished) => {
-            if (!finished) {
-              return;
-            }
-
-            runOnJS(() => {
-              setShowProjectForm(false);
-              setLockProjectFormHeight(false);
-              projectFormOpacity.value = 1;
-              if (shouldReset) {
-                resetProjectForm();
-              }
-            })();
-          }
-        );
-      }, PROJECT_FORM_FADE_OUT_MS + PROJECT_FORM_HOLD_MS);
-
-      projectFormTimersRef.current.push(collapseTimer);
-    },
-    [
-      clearProjectFormTimers,
-      projectFormMeasuredHeight,
-      projectFormOpacity,
-      projectFormSlotHeight,
-      resetProjectForm,
-      showProjectForm,
-    ]
-  );
-
-  const handleStartCreateProject = useCallback(() => {
-    resetProjectForm();
-    revealProjectForm();
-  }, [resetProjectForm, revealProjectForm]);
-
-  const handleStartEditProject = useCallback((project: QuantumGatewayProjectRecord) => {
-    revealProjectForm();
-    setDisplayNameInput(project.displayName);
-    setProjectSlugInput(project.projectSlug);
-    setAllowedOriginsInput(project.allowedOrigins.join(', '));
-    setHasEditedSlug(true);
-    setEditingProjectId(project.id);
-    setCreateProjectError(null);
-    setCreateProjectMessage(null);
-  }, [revealProjectForm]);
-
-  const handleDismissProjectForm = useCallback(() => {
-    if (creatingProject) {
-      return;
-    }
-    runHideProjectFormSequence({ reset: true });
-  }, [creatingProject, runHideProjectFormSequence]);
 
   const handleMagicLink = useCallback(async () => {
     if (!supabaseClient) return;
 
     const normalizedEmail = email.trim();
     if (!normalizedEmail) {
-      setAuthError('Enter an email address to receive a magic link.');
+      setAuthError('Enter an email address to receive an Identerest sign-in link.');
       return;
     }
 
@@ -470,16 +472,16 @@ export default function QuantumGatewayPage() {
     try {
       const { error } = await supabaseClient.auth.signInWithOtp({
         email: normalizedEmail,
-        options: { emailRedirectTo: getGatewayAuthRedirectUrl() },
+        options: {
+          emailRedirectTo: getQuantumAuthRedirectUrl(),
+        },
       });
 
       if (error) {
         throw error;
       }
 
-      setAuthMessage(
-        `Magic link sent to ${normalizedEmail}. Open it in this browser to finish sign in.`
-      );
+      setAuthMessage(`Magic link sent to ${normalizedEmail}. Open it in this browser to finish sign in.`);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Unable to send the magic link.');
     } finally {
@@ -497,7 +499,9 @@ export default function QuantumGatewayPage() {
     try {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'github',
-        options: { redirectTo: getGatewayAuthRedirectUrl() },
+        options: {
+          redirectTo: getQuantumAuthRedirectUrl(),
+        },
       });
 
       if (error) {
@@ -522,1092 +526,1733 @@ export default function QuantumGatewayPage() {
         throw error;
       }
 
-      clearProjectFormTimers();
       setSession(null);
-      setAuthMessage('Signed out from Identerest.');
-      setCreateProjectError(null);
-      setCreateProjectMessage(null);
-      setEditingProjectId(null);
-      setShowProjectForm(true);
-      setLockProjectFormHeight(false);
-      projectFormOpacity.value = 1;
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Unable to sign out.');
     } finally {
       setSigningOut(false);
     }
-  }, [clearProjectFormTimers, projectFormOpacity, supabaseClient]);
+  }, [supabaseClient]);
 
-  const handleSaveGatewayProject = useCallback(async () => {
-    if (!session?.user?.id) {
-      setCreateProjectError('Sign in with Identerest to manage gateway projects.');
-      return;
-    }
-
-    const displayName = displayNameInput.trim();
-    const projectSlug = slugifyProjectName(projectSlugInput);
-    const endpointPathPrefix = projectSlug ? `/gateway/${projectSlug}` : '/gateway';
-
-    if (!displayName) {
-      setCreateProjectError('Project display name is required.');
-      return;
-    }
-    if (!projectSlug) {
-      setCreateProjectError('Project slug is required. Use lowercase letters, numbers, and hyphens.');
-      return;
-    }
-
-    setCreatingProject(true);
-    setCreateProjectError(null);
-    setCreateProjectMessage(null);
-
-    try {
-      if (editingProjectId) {
-        const updatedProject = await updateQuantumGatewayProject({
-          id: editingProjectId,
-          ownerUserId: session.user.id,
-          displayName,
-          projectSlug,
-          endpointPathPrefix,
-          allowedOrigins: parseListInput(allowedOriginsInput),
-        });
-
-        setCreateProjectMessage(
-          `Updated gateway project "${updatedProject.displayName}" at ${updatedProject.endpointPathPrefix}.`
-        );
-      } else {
-        const createdProject = await createQuantumGatewayProject({
-          ownerUserId: session.user.id,
-          displayName,
-          projectSlug,
-          endpointPathPrefix,
-          allowedOrigins: parseListInput(allowedOriginsInput),
-        });
-
-        setCreateProjectMessage(
-          `Created gateway project "${createdProject.displayName}" at ${createdProject.endpointPathPrefix}.`
-        );
-      }
-
-      await syncProjects();
-      runHideProjectFormSequence({ reset: true });
-    } catch (error) {
-      setCreateProjectError(
-        error instanceof Error ? error.message : 'Unable to save gateway project.'
-      );
-    } finally {
-      setCreatingProject(false);
-    }
-  }, [
-    allowedOriginsInput,
-    displayNameInput,
-    editingProjectId,
-    projectSlugInput,
-    runHideProjectFormSequence,
-    session?.user?.id,
-    syncProjects,
-  ]);
-
-  const isEditingProject = editingProjectId !== null;
-
-  const primaryProject = liveProjects[0] ?? null;
-  const activeProjectCount = useMemo(
-    () => liveProjects.filter((project) => project.status === 'active').length,
-    [liveProjects]
+  const handleSelectProject = useCallback(
+    (project: QuantumGatewayProjectRecord) => {
+    setSelectedProjectSlug(project.projectSlug);
+    setEditingProjectSlug(project.projectSlug);
+    setIsCreatingNewProject(false);
+    setProjectForm(projectToForm(project));
+      setProjectMessage(`Editing gateway project "${project.displayName}".`);
+      setProjectError(null);
+    },
+    []
   );
 
-  const runtimeHighlights = useMemo(() => {
-    const loadedCount = liveProjects.length;
-    if (loadedCount === 0) return quantumGatewayHighlights;
+  const handleNewProject = useCallback(() => {
+    setEditingProjectSlug(null);
+    setIsCreatingNewProject(true);
+    setProjectForm(createEmptyProjectForm());
+    setProjectMessage('Create a new Gateway project for this Identerest account.');
+    setProjectError(null);
+  }, []);
 
-    return quantumGatewayHighlights.map((item) => {
-      if (item.id !== 'usage') {
-        return item;
-      }
+  const handleProjectField = useCallback(
+    (field: keyof GatewayProjectFormState, value: string) => {
+      setProjectForm((current) => ({ ...current, [field]: value }));
+    },
+    []
+  );
 
-      const label = loadedCount === 1 ? 'project' : 'projects';
-      return {
-        ...item,
-        description: `${loadedCount} live gateway ${label} loaded from Identerest with ${activeProjectCount} currently active.`,
-        status: liveSource === 'supabase' ? 'Live sync from Identerest' : item.status,
-      };
-    });
-  }, [activeProjectCount, liveProjects.length, liveSource]);
+  const handleSaveProject = useCallback(async () => {
+    if (!accessToken) return;
 
-  const runtimeSettingsSections = useMemo(() => {
-    if (!primaryProject) {
-      return quantumGatewaySettingsSections;
+    const payload = buildProjectInput(projectForm);
+    if (!payload.projectSlug) {
+      setProjectError('Project slug is required.');
+      return;
+    }
+    if (!payload.displayName) {
+      setProjectError('Display name is required.');
+      return;
+    }
+    if (!payload.endpointPathPrefix) {
+      setProjectError('Endpoint path prefix is required.');
+      return;
     }
 
-    return quantumGatewaySettingsSections.map((section) => {
-      if (section.id === 'routing') {
-        return {
-          ...section,
-          rows: section.rows.map((row) => {
-            if (row.id === 'slug') {
-              return {
-                ...row,
-                value: primaryProject.projectSlug,
-              };
-            }
-            if (row.id === 'path-prefix') {
-              return {
-                ...row,
-                value: primaryProject.endpointPathPrefix,
-              };
-            }
-            if (row.id === 'status') {
-              return {
-                ...row,
-                value: primaryProject.status,
-              };
-            }
-            return row;
-          }),
-        };
+    setSavingProject(true);
+    setProjectError(null);
+    setProjectMessage(null);
+
+    try {
+      const result = editingProjectSlug
+        ? await updateQuantumGatewayProject(
+            QUANTUM_GATEWAY_BASE_URL,
+            accessToken,
+            editingProjectSlug,
+            payload
+          )
+        : await saveQuantumGatewayProject(QUANTUM_GATEWAY_BASE_URL, accessToken, payload);
+
+      if (!result.project) {
+        throw new Error('The gateway API saved the project, but no project record was returned.');
       }
 
-      if (section.id === 'limits') {
-        return {
-          ...section,
-          rows: section.rows.map((row) => {
-            if (row.id === 'rpm') {
-              return {
-                ...row,
-                value: `${primaryProject.defaultRateLimitPerMinute} requests/min`,
-              };
-            }
-            if (row.id === 'daily') {
-              return {
-                ...row,
-                value: `${primaryProject.dailyRequestQuota} requests/day`,
-              };
-            }
-            if (row.id === 'origins') {
-              return {
-                ...row,
-                value:
-                  primaryProject.allowedOrigins.length > 0
-                    ? `${primaryProject.allowedOrigins.length} configured origins`
-                    : 'No origins configured',
-              };
-            }
-            return row;
-          }),
-        };
+      const savedProject = result.project;
+      setProjectMessage(
+        result.message ??
+          `Saved gateway project "${savedProject.displayName}".`
+      );
+      setEditingProjectSlug(savedProject.projectSlug);
+      setIsCreatingNewProject(false);
+      setSelectedProjectSlug(savedProject.projectSlug);
+      setProjectForm(projectToForm(savedProject));
+      await refreshProjects();
+    } catch (error) {
+      setProjectError(toQuantumGatewayUserMessage(error));
+    } finally {
+      setSavingProject(false);
+    }
+  }, [accessToken, editingProjectSlug, projectForm, refreshProjects]);
+
+  const handleCopy = useCallback(async (value: string, key: string) => {
+    try {
+      await copyToClipboard(value);
+      setCopiedValue(key);
+      if (copiedTimerRef.current) {
+        clearTimeout(copiedTimerRef.current);
+      }
+      copiedTimerRef.current = setTimeout(
+        () => setCopiedValue((current) => (current === key ? null : current)),
+        1800
+      );
+    } catch (error) {
+      setProjectError(error instanceof Error ? error.message : 'Unable to copy to clipboard.');
+    }
+  }, []);
+
+  const handleCreatePublishableKey = useCallback(async () => {
+    if (!accessToken || !selectedProject) {
+      setPublishableKeyError('Select a Gateway project before creating a client key.');
+      return;
+    }
+
+    const label = publishableKeyLabel.trim();
+    if (!label) {
+      setPublishableKeyError('Enter a publishable Gateway client key label.');
+      return;
+    }
+
+    setCreatingPublishableKey(true);
+    setPublishableKeyError(null);
+    setPublishableKeyMessage(null);
+
+    try {
+      const result = await createQuantumGatewayPublishableKey(
+        QUANTUM_GATEWAY_BASE_URL,
+        accessToken,
+        selectedProject.projectSlug,
+        { label }
+      );
+
+      if (!result.rawKey) {
+        throw new Error('The gateway API created the client key, but no secret was returned.');
       }
 
-      if (section.id === 'credentials') {
-        return {
-          ...section,
-          rows: section.rows.map((row) => {
-            if (row.id === 'primary-api-key') {
-              return {
-                ...row,
-                value: shortenId(primaryProject.defaultApiKeyId),
-              };
-            }
-            if (row.id === 'ibm-default') {
-              return {
-                ...row,
-                value: shortenId(primaryProject.defaultIbmCredentialProfileId),
-              };
-            }
-            return row;
-          }),
-        };
+      setPublishableKeyReveal({
+        action: 'created',
+        label: result.key?.label ?? label,
+        rawKey: result.rawKey,
+      });
+      setPublishableKeyLabel('');
+      setPublishableKeyMessage(result.message ?? `Created client key "${label}".`);
+      await refreshPublishableKeys(selectedProject.projectSlug);
+    } catch (error) {
+      setPublishableKeyError(toQuantumGatewayUserMessage(error));
+    } finally {
+      setCreatingPublishableKey(false);
+    }
+  }, [
+    accessToken,
+    publishableKeyLabel,
+    refreshPublishableKeys,
+    selectedProject,
+  ]);
+
+  const handleRotatePublishableKey = useCallback(
+    async (key: QuantumGatewayPublishableKeyRecord) => {
+      if (!accessToken || !selectedProject) return;
+
+      setBusyPublishableKeyId(key.keyId);
+      setPublishableKeyError(null);
+      setPublishableKeyMessage(null);
+
+      try {
+        const result = await rotateQuantumGatewayPublishableKey(
+          QUANTUM_GATEWAY_BASE_URL,
+          accessToken,
+          selectedProject.projectSlug,
+          key.keyId
+        );
+
+        if (!result.rawKey) {
+          throw new Error('The gateway API rotated the client key, but no secret was returned.');
+        }
+
+        setPublishableKeyReveal({
+          action: 'rotated',
+          label: result.newKey?.label ?? result.key?.label ?? key.label,
+          rawKey: result.rawKey,
+        });
+        setPublishableKeyMessage(
+          result.message ?? `Rotated client key "${result.newKey?.label ?? key.label}".`
+        );
+        await refreshPublishableKeys(selectedProject.projectSlug);
+      } catch (error) {
+        setPublishableKeyError(toQuantumGatewayUserMessage(error));
+      } finally {
+        setBusyPublishableKeyId(null);
+      }
+    },
+    [accessToken, refreshPublishableKeys, selectedProject]
+  );
+
+  const handleRevokePublishableKey = useCallback(
+    async (key: QuantumGatewayPublishableKeyRecord) => {
+      if (!accessToken || !selectedProject) return;
+
+      const confirmed = await confirmAction(
+        `Revoke publishable Gateway client key "${key.label}"?`
+      );
+      if (!confirmed) return;
+
+      setBusyPublishableKeyId(key.keyId);
+      setPublishableKeyError(null);
+      setPublishableKeyMessage(null);
+
+      try {
+        const result = await revokeQuantumGatewayPublishableKey(
+          QUANTUM_GATEWAY_BASE_URL,
+          accessToken,
+          selectedProject.projectSlug,
+          key.keyId
+        );
+
+        setPublishableKeyMessage(result.message ?? `Revoked client key "${key.label}".`);
+        await refreshPublishableKeys(selectedProject.projectSlug);
+      } catch (error) {
+        setPublishableKeyError(toQuantumGatewayUserMessage(error));
+      } finally {
+        setBusyPublishableKeyId(null);
+      }
+    },
+    [accessToken, refreshPublishableKeys, selectedProject]
+  );
+
+  const handleMintRuntimeSession = useCallback(async () => {
+    const secret = runtimePublishableKey.trim();
+    if (!secret) {
+      setRuntimeSessionError('Paste a publishable Gateway client key to mint a runtime token.');
+      return;
+    }
+
+    setMintingRuntimeSession(true);
+    setRuntimeSessionError(null);
+    setRuntimeSessionResult(null);
+
+    try {
+      const result = await mintGatewayRuntimeSession(QUANTUM_GATEWAY_BASE_URL, secret);
+      if (!result.token) {
+        throw new Error('The gateway API did not return a runtime token.');
       }
 
-      return section;
-    });
-  }, [primaryProject]);
+      setRuntimeSessionResult({
+        token: result.token,
+        expiresAt: result.expiresAt ?? null,
+        projectId: result.projectId ?? null,
+      });
+    } catch (error) {
+      setRuntimeSessionError(
+        error instanceof Error ? error.message : 'Unable to mint a runtime token.'
+      );
+    } finally {
+      setMintingRuntimeSession(false);
+    }
+  }, [runtimePublishableKey]);
 
-  const liveSyncBody = (
-    <Animated.View className="gap-3 overflow-hidden">
-      {!isSupabaseConfigured() ? (
-        <View
-          className="rounded-2xl border p-4"
-          style={{
-            backgroundColor: backgroundColor,
-            borderColor: '#ef444466',
-          }}
-        >
-          <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
-            Identerest auth is not configured yet
-          </ThemedText>
-          <ThemedText selectable className="opacity-85 text-base leading-6">
-            {getSupabaseConfigError()} Add `EXPO_PUBLIC_SUPABASE_URL` and
-            ` EXPO_PUBLIC_SUPABASE_ANON_KEY` to enable Identerest Account sign in and live
-            gateway project creation on this page.
-          </ThemedText>
-        </View>
-      ) : bootstrappingAuth ? (
-        <View className="rounded-2xl p-5" style={{ backgroundColor: backgroundColor }}>
-          <ActivityIndicator color={tintColor} />
-          <ThemedText className="mt-3 text-center opacity-80">
-            Restoring your Identerest session...
-          </ThemedText>
-        </View>
-      ) : !session ? (
-        <View
-          className="rounded-2xl border p-4"
-          style={{
-            backgroundColor: backgroundColor,
-            borderColor: accentColor + '35',
-          }}
-        >
-          <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
-            Sign in with Identerest to start managing projects.
-          </ThemedText>
-          <ThemedText className="mb-4 opacity-80 text-base leading-6">
-            Live project creation happens here. Use a passwordless email magic link or continue
-            with GitHub.
-          </ThemedText>
+  useEffect(
+    () => () => {
+      if (copiedTimerRef.current) {
+        clearTimeout(copiedTimerRef.current);
+      }
+    },
+    []
+  );
 
-          {authError ? (
-            <View
-              className="mb-3 rounded-2xl border px-4 py-3"
-              style={{
-                backgroundColor: '#ef444418',
-                borderColor: '#ef444455',
-              }}
-            >
-              <ThemedText selectable className="text-base leading-6" style={{ color: '#f87171' }}>
-                {authError}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          {authMessage ? (
-            <View
-              className="mb-3 rounded-2xl border px-4 py-3"
-              style={{
-                backgroundColor: tintColor + '16',
-                borderColor: tintColor + '40',
-              }}
-            >
-              <ThemedText selectable className="text-base leading-6">
-                {authMessage}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          <View className="gap-3">
-            <TextInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              placeholderTextColor={textColor + '70'}
-              style={{
-                backgroundColor: accentColor + '12',
-                borderColor: tintColor + '30',
-                borderCurve: 'continuous',
-                borderRadius: 16,
-                borderWidth: 1,
-                color: textColor,
-                fontSize: 16,
-                paddingHorizontal: 14,
-                paddingVertical: 14,
-              }}
-              value={email}
-            />
-
-            <View className="gap-3 md:flex-row">
-              <Pressable
-                disabled={sendingMagicLink}
-                onPress={() => {
-                  void handleMagicLink();
-                }}
-                style={({ pressed }) => ({
-                  alignItems: 'center',
-                  backgroundColor: tintColor,
-                  borderCurve: 'continuous',
-                  borderRadius: 16,
-                  flex: 1,
-                  flexDirection: 'row',
-                  gap: 10,
-                  justifyContent: 'center',
-                  opacity: pressed || sendingMagicLink ? 0.72 : 1,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                })}
-              >
-                {sendingMagicLink ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons color="#fff" name="mail-outline" size={18} />
-                    <ThemedText inverse className="font-bold text-base">
-                      Email Magic Link
-                    </ThemedText>
-                  </>
-                )}
-              </Pressable>
-
-              <Pressable
-                disabled={startingGithubSignIn}
-                onPress={() => {
-                  void handleGithubSignIn();
-                }}
-                style={({ pressed }) => ({
-                  alignItems: 'center',
-                  backgroundColor: backgroundColor,
-                  borderColor: accentColor + '45',
-                  borderCurve: 'continuous',
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  flex: 1,
-                  flexDirection: 'row',
-                  gap: 10,
-                  justifyContent: 'center',
-                  opacity: pressed || startingGithubSignIn ? 0.72 : 1,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                })}
-              >
-                {startingGithubSignIn ? (
-                  <ActivityIndicator color={secondaryColor} />
-                ) : (
-                  <>
-                    <Ionicons color={secondaryColor} name="logo-github" size={18} />
-                    <ThemedText className="font-bold text-base" style={{ color: secondaryColor }}>
-                      Continue with GitHub
-                    </ThemedText>
-                  </>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      ) : (
-        <View className="gap-3">
-          <View
-            className="rounded-2xl border p-4"
-            style={{
-              backgroundColor: backgroundColor,
-              borderColor: accentColor + '35',
-            }}
-          >
-            <View className="mb-3 flex-row flex-wrap items-start justify-between gap-3">
-              <View className="flex-1">
-                <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
-                  Signed in via Identerest Account
-                </ThemedText>
-                <ThemedText selectable className="opacity-80 text-base leading-6">
-                  {session.user.email ?? 'Authenticated Quantum Gateway user'}
-                </ThemedText>
-              </View>
-
-              <Pressable
-                disabled={signingOut}
-                onPress={() => {
-                  void handleSignOut();
-                }}
-                style={({ pressed }) => ({
-                  backgroundColor: accentColor + '18',
-                  borderCurve: 'continuous',
-                  borderRadius: 14,
-                  opacity: pressed || signingOut ? 0.72 : 1,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                })}
-              >
-                {signingOut ? (
-                  <ActivityIndicator color={secondaryColor} />
-                ) : (
-                  <ThemedText
-                    className="font-bold text-sm uppercase tracking-[0.16em]"
-                    style={{ color: secondaryColor }}
-                  >
-                    Sign out
-                  </ThemedText>
-                )}
-              </Pressable>
-            </View>
-
-            {showProjectForm ? (
-              <Animated.View
-                style={[lockProjectFormHeight ? { overflow: 'hidden' } : null, projectFormSlotStyle]}
-              >
-                <Animated.View
-                  className="gap-3"
-                  onLayout={handleProjectFormLayout}
-                  style={projectFormOpacityStyle}
-                >
-                <View className="flex-row items-center justify-between">
-                  <ThemedText type="defaultSemiBold" className="text-lg">
-                    {isEditingProject ? 'Edit Gateway Project' : 'Create Gateway Project'}
-                  </ThemedText>
-                  <View className="flex-row items-center gap-2">
-                    {isEditingProject ? (
-                      <Pressable
-                        accessibilityLabel="Cancel editing gateway project"
-                        onPress={handleStartCreateProject}
-                        style={({ pressed }) => ({
-                          backgroundColor: accentColor + '18',
-                          borderCurve: 'continuous',
-                          borderRadius: 12,
-                          opacity: pressed ? 0.72 : 1,
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                        })}
-                      >
-                        <ThemedText
-                          className="font-semibold text-sm"
-                          style={{ color: secondaryColor }}
-                        >
-                          Cancel Edit
-                        </ThemedText>
-                      </Pressable>
-                    ) : null}
-                    <Pressable
-                      accessibilityLabel="Hide gateway project form"
-                      onPress={handleDismissProjectForm}
-                      style={({ pressed }) => ({
-                        alignItems: 'center',
-                        backgroundColor: accentColor + '16',
-                        borderCurve: 'continuous',
-                        borderRadius: 12,
-                        justifyContent: 'center',
-                        opacity: pressed ? 0.72 : 1,
-                        padding: 8,
-                      })}
-                    >
-                      <Ionicons color={secondaryColor} name="close" size={16} />
-                    </Pressable>
-                  </View>
-                </View>
-
-                <View>
-                  <FormFieldHelpLabel
-                    helpText={PROJECT_FORM_FIELD_HELP.displayName.help}
-                    label={PROJECT_FORM_FIELD_HELP.displayName.label}
-                    required
-                  />
-                  <TextInput
-                    autoCapitalize="words"
-                    onChangeText={(value) => {
-                      setDisplayNameInput(value);
-                      setCreateProjectError(null);
-                      setCreateProjectMessage(null);
-                    }}
-                    placeholder="Project display name"
-                    placeholderTextColor={textColor + '70'}
-                    style={{
-                      backgroundColor: accentColor + '12',
-                      borderColor: tintColor + '30',
-                      borderCurve: 'continuous',
-                      borderRadius: 16,
-                      borderWidth: 1,
-                      color: textColor,
-                      fontSize: 16,
-                      paddingHorizontal: 14,
-                      paddingVertical: 14,
-                    }}
-                    value={displayNameInput}
-                  />
-                </View>
-
-                <View>
-                  <FormFieldHelpLabel
-                    helpText={PROJECT_FORM_FIELD_HELP.projectSlug.help}
-                    label={PROJECT_FORM_FIELD_HELP.projectSlug.label}
-                    required
-                  />
-                  <TextInput
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    onChangeText={(value) => {
-                      setHasEditedSlug(true);
-                      setProjectSlugInput(value);
-                      setCreateProjectError(null);
-                      setCreateProjectMessage(null);
-                    }}
-                    placeholder="project-slug"
-                    placeholderTextColor={textColor + '70'}
-                    style={{
-                      backgroundColor: accentColor + '12',
-                      borderColor: tintColor + '30',
-                      borderCurve: 'continuous',
-                      borderRadius: 16,
-                      borderWidth: 1,
-                      color: textColor,
-                      fontSize: 16,
-                      paddingHorizontal: 14,
-                      paddingVertical: 14,
-                    }}
-                    value={projectSlugInput}
-                  />
-                </View>
-
-                <View>
-                  <FormFieldHelpLabel
-                    helpText={PROJECT_FORM_FIELD_HELP.allowedOrigins.help}
-                    label={PROJECT_FORM_FIELD_HELP.allowedOrigins.label}
-                  />
-                  <TextInput
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    multiline
-                    numberOfLines={2}
-                    onChangeText={(value) => {
-                      setAllowedOriginsInput(value);
-                      setCreateProjectError(null);
-                      setCreateProjectMessage(null);
-                    }}
-                    placeholder="Allowed origins (comma/newline separated, optional)"
-                    placeholderTextColor={textColor + '70'}
-                    style={{
-                      backgroundColor: accentColor + '12',
-                      borderColor: tintColor + '30',
-                      borderCurve: 'continuous',
-                      borderRadius: 16,
-                      borderWidth: 1,
-                      color: textColor,
-                      fontSize: 15,
-                      minHeight: 84,
-                      paddingHorizontal: 14,
-                      paddingVertical: 14,
-                      textAlignVertical: 'top',
-                    }}
-                    value={allowedOriginsInput}
-                  />
-                </View>
-
-                <Pressable
-                  disabled={creatingProject}
-                  onPress={() => {
-                    void handleSaveGatewayProject();
-                  }}
-                  style={({ pressed }) => ({
-                    alignItems: 'center',
-                    backgroundColor: tintColor,
-                    borderCurve: 'continuous',
-                    borderRadius: 16,
-                    flexDirection: 'row',
-                    gap: 10,
-                    justifyContent: 'center',
-                    opacity: pressed || creatingProject ? 0.72 : 1,
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                  })}
-                >
-                  {creatingProject ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons
-                        color="#fff"
-                        name={isEditingProject ? 'create-outline' : 'add-circle-outline'}
-                        size={18}
-                      />
-                      <ThemedText inverse className="font-bold text-base">
-                        {isEditingProject ? 'Save Project Changes' : 'Create Gateway Project'}
-                      </ThemedText>
-                    </>
-                  )}
-                </Pressable>
-
-                {createProjectError ? (
-                  <View
-                    className="mt-1 rounded-2xl border px-4 py-3"
-                    style={{
-                      backgroundColor: '#ef444418',
-                      borderColor: '#ef444455',
-                    }}
-                  >
-                    <ThemedText className="text-base leading-6" style={{ color: '#f87171' }}>
-                      {createProjectError}
-                    </ThemedText>
-                  </View>
-                ) : null}
-
-                {createProjectMessage ? (
-                  <View
-                    className="mt-1 rounded-2xl border px-4 py-3"
-                    style={{
-                      backgroundColor: tintColor + '16',
-                      borderColor: tintColor + '40',
-                    }}
-                  >
-                    <ThemedText className="text-base leading-6">{createProjectMessage}</ThemedText>
-                  </View>
-                ) : null}
-                </Animated.View>
-              </Animated.View>
-            ) : null}
-          </View>
-
-          <Animated.View
-            className="rounded-2xl border p-4"
-            style={[
-              {
-                backgroundColor: backgroundColor,
-                borderColor: accentColor + '35',
-              },
-            ]}
-          >
-            <View className="mb-2 flex-row items-center justify-between gap-2">
-              <ThemedText type="defaultSemiBold" className="text-lg">
-                Synced gateway projects
-              </ThemedText>
-              <View
-                style={{
-                  alignItems: 'flex-end',
-                  justifyContent: 'center',
-                  minHeight: 34,
-                  width: ADD_BUTTON_SLOT_WIDTH,
-                }}
-              >
-                <Animated.View style={addButtonStyle}>
-                  <Pressable
-                    accessibilityLabel="Add gateway project"
-                    disabled={showProjectForm}
-                    onPress={handleStartCreateProject}
-                    style={({ pressed }) => ({
-                      alignItems: 'center',
-                      backgroundColor: '#ffffff',
-                      borderColor: '#ffffffcc',
-                      borderCurve: 'continuous',
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      flexDirection: 'row',
-                      gap: 6,
-                      justifyContent: 'center',
-                      opacity: pressed || showProjectForm ? 0.78 : 1,
-                      paddingHorizontal: 10,
-                      paddingVertical: 7,
-                    })}
-                  >
-                    <Ionicons color="#475569" name="add" size={14} />
-                    <ThemedText
-                      className="text-xs font-bold tracking-[0.06em]"
-                      style={{ color: '#475569' }}
-                    >
-                      ADD
-                    </ThemedText>
-                  </Pressable>
-                </Animated.View>
-              </View>
-            </View>
-            {liveProjects.length === 0 ? (
-              <View
-                className="rounded-xl border border-dashed px-3 py-3"
-                style={{
-                  backgroundColor: accentColor + '0f',
-                  borderColor: tintColor + '33',
-                }}
-              >
-                <ThemedText className="opacity-85">
-                  {showProjectForm
-                    ? 'No gateway projects yet. Create your first one with the form above.'
-                    : 'No gateway projects yet. Click Add to open the project form.'}
-                </ThemedText>
-              </View>
-            ) : (
-              <View>
-                <ThemedText className="opacity-90 mb-2">
-                  {liveProjects.length} projects loaded, {activeProjectCount} active.
-                </ThemedText>
-                {liveProjects.slice(0, 4).map((project) => (
-                  <View
-                    key={project.id}
-                    className="mb-2 rounded-xl border border-white/10 px-3 py-2"
-                    style={{ backgroundColor: hexToRgba(backgroundColor, 0.2) }}
-                  >
-                    <View className="flex-row items-center justify-between gap-3">
-                      <View className="flex-1">
-                        <ThemedText className="font-semibold">{project.displayName}</ThemedText>
-                        <ThemedText className="opacity-80 text-sm">
-                          /{project.projectSlug} - {project.status}
-                        </ThemedText>
-                      </View>
-                      <Pressable
-                        accessibilityLabel={`Edit ${project.displayName}`}
-                        onPress={() => handleStartEditProject(project)}
-                        style={({ pressed }) => ({
-                          alignItems: 'center',
-                          backgroundColor: '#ffffff',
-                          borderColor: '#ffffffcc',
-                          borderCurve: 'continuous',
-                          borderRadius: 10,
-                          borderWidth: 1,
-                          flexDirection: 'row',
-                          gap: 6,
-                          justifyContent: 'center',
-                          opacity: pressed ? 0.78 : 1,
-                          paddingHorizontal: 10,
-                          paddingVertical: 7,
-                        })}
-                      >
-                        <Ionicons color="#475569" name="create-outline" size={14} />
-                        <ThemedText
-                          className="text-xs font-bold tracking-[0.06em]"
-                          style={{ color: '#475569' }}
-                        >
-                          EDIT
-                        </ThemedText>
-                      </Pressable>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {liveSyncMessage ? (
-              <ThemedText className="opacity-75 text-sm mt-2">{liveSyncMessage}</ThemedText>
-            ) : null}
-          </Animated.View>
-        </View>
-      )}
-    </Animated.View>
+  const gatewayCopy = useMemo(
+    () => [
+      'Gateway projects live in Identerest-backed Gateway records.',
+      'Quantum API keys and IBM profiles stay in Quantum API tables; the Gateway only stores references.',
+      'Publishable Gateway client keys mint short-lived runtime tokens for public traffic.',
+      'Direct Quantum API key mode stays as a local/dev fallback, not the shipped runtime story.',
+    ],
+    []
   );
 
   return (
     <TabContainer
       titleA="Quantum"
       titleB="Gateway"
-      leadBody="This page is the gateway display and settings hub. Users can keep one Identerest sign-in while reusing Quantum API keys and IBM credential profiles for gateway-managed projects."
-      leadSubBody="Initial UI is now wired and styled to match the rest of your site, with identerest schema focused on gateway project settings and default credential references."
+      leadBody="Manage public Gateway projects, bind Quantum API keys and IBM profiles, and mint runtime tokens for clients without exposing raw secrets."
+      leadSubBody="This page is the onboarding and settings hub for the public Gateway story. Signed-in Identerest accounts can create projects, manage publishable Gateway client keys, and keep the runtime path separate from direct Quantum API access."
       seo={{
         title: 'Quantum Gateway',
         description:
-          'Quantum Gateway settings and landing page for project routing, key/profile bindings, and usage controls tied to one Identerest account.',
+          'Public Gateway project onboarding, settings, and publishable client key management tied to one Identerest account.',
         path: '/quantum-gateway',
         keywords: [
           'quantum gateway',
-          'quantum api',
-          'ibm credentials',
-          'project settings',
-          'api gateway',
-          'identerest',
+          'gateway project',
+          'publishable gateway client key',
+          'runtime token',
+          'identerest account',
+          'quantum api key',
         ],
         type: 'website',
       }}
     >
-      <View className="w-full max-w-[1080px]">
+      <View className="w-full max-w-[1120px] gap-4">
         <View
-          className="rounded-3xl border border-white/10 p-[4%] mb-4"
+          className="rounded-3xl border p-4 md:p-5"
           style={{
-            backgroundColor: hexToRgba(accentColor, 0.58),
+            backgroundColor: accentColor + '18',
+            borderColor: tintColor + '33',
           }}
         >
-          <View className="mb-3 flex-row flex-wrap items-center justify-between gap-3">
-            <View className="flex-row items-center">
-              <Ionicons name="cloud-done-outline" size={20} color={tintColor} />
-              <ThemedText className="ml-2 font-bold text-lg">Live Identerest sync</ThemedText>
-            </View>
-
-            <View className="flex-row items-center gap-2">
-              <Pressable
-                accessibilityLabel="Refresh gateway projects"
-                onPress={() => {
-                  void syncProjects();
-                }}
-                style={({ pressed }) => ({
-                  alignItems: 'center',
-                  backgroundColor: '#ffffff',
-                  borderColor: '#ffffffcc',
-                  borderCurve: 'continuous',
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  justifyContent: 'center',
-                  opacity: pressed || isSyncingLiveProjects ? 0.78 : 1,
-                  paddingHorizontal: 10,
-                  paddingVertical: 8,
-                })}
-              >
-                {isSyncingLiveProjects ? (
-                  <ActivityIndicator color="#475569" />
-                ) : (
-                  <Ionicons color="#475569" name="refresh" size={16} />
-                )}
-              </Pressable>
-
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="About Identerest account"
-                onPress={() => setShowIdenterestInfo(true)}
-                style={({ pressed }) => ({
-                  backgroundColor: '#ffffff',
-                  borderColor: '#ffffffcc',
-                  borderCurve: 'continuous',
-                  borderRadius: 18,
-                  borderWidth: 1,
-                  opacity: pressed ? 0.78 : 1,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                })}
-              >
-                <View className="flex-row items-center gap-2">
-                  <Image
-                    source={IDENTEREST_LOGO}
-                    resizeMode="contain"
-                    style={{ height: 20, width: 20 }}
-                  />
-                  <ThemedText
-                    className="text-xs tracking-[0.08em]"
-                    style={{ color: '#4b5563', fontFamily: 'Emblema One' }}
-                  >
-                    Identerest
-                  </ThemedText>
-                </View>
-              </Pressable>
-            </View>
-          </View>
-
-          {liveSyncBody}
-        </View>
-
-        <View
-          className="rounded-3xl border border-white/10 p-[4%] mb-4"
-          style={{
-            backgroundColor: hexToRgba(accentColor, 0.72),
-          }}
-        >
-          <View className="flex-row items-center mb-3">
-            <View
-              className="w-14 h-14 rounded-2xl items-center justify-center mr-3"
-              style={{ backgroundColor: hexToRgba(tintColor, 0.2) }}
-            >
-              <Ionicons name="shield-checkmark-outline" size={28} color={tintColor} />
-            </View>
-
+          <View className="flex-row items-start justify-between gap-4">
             <View className="flex-1">
-              <ThemedText headingLevel={1} visualHeadingLevel={2} className="font-bold">
-                Gateway Portal Overview
+              <View className="flex-row items-center gap-2 mb-2">
+                <Ionicons name="globe-outline" size={20} color={tintColor} />
+                <ThemedText className="font-bold text-lg">Public Gateway management</ThemedText>
+              </View>
+              <ThemedText className="opacity-85 leading-6">
+                Build the public runtime surface around Gateway projects, not around personal API key sharing.
               </ThemedText>
-              <ThemedText className="opacity-85">
-                One account identity, shared credentials, project-level controls.
+            </View>
+
+            <ExternalLink
+              href={QUANTUM_GATEWAY_DOCS_URL}
+              className="rounded-2xl px-4 py-3"
+              style={{ backgroundColor: tintColor }}
+            >
+              <ThemedText inverse className="font-bold text-sm uppercase tracking-[0.14em]">
+                Gateway docs
+              </ThemedText>
+            </ExternalLink>
+          </View>
+
+          <View className="mt-4 gap-2">
+            {gatewayCopy.map((line) => (
+              <View key={line} className="flex-row items-start gap-2">
+                <Ionicons name="checkmark-circle-outline" size={18} color={tintColor} />
+                <ThemedText className="flex-1 opacity-90 leading-6">{line}</ThemedText>
+              </View>
+            ))}
+          </View>
+
+          <View className="mt-4 flex-row flex-wrap gap-2">
+            <View
+              className="rounded-full px-3 py-1"
+              style={{ backgroundColor: tintColor + '22' }}
+            >
+              <ThemedText className="text-xs font-bold uppercase tracking-[0.14em]">
+                Runtime base: {QUANTUM_GATEWAY_BASE_URL}
+              </ThemedText>
+            </View>
+            <View
+              className="rounded-full px-3 py-1"
+              style={{ backgroundColor: tintColor + '16' }}
+            >
+              <ThemedText className="text-xs font-bold uppercase tracking-[0.14em]">
+                Quantum API base: {QUANTUM_API_BASE_URL}
               </ThemedText>
             </View>
           </View>
-
-          <ThemedText className="leading-6 opacity-90 mb-3">
-            Users do not need separate accounts across Quantum API, Gateway, Identerest,
-            Creatisphere, or Higher. This UI is organized around that single-account model and the
-            existing credential records already stored in Identerest.
-          </ThemedText>
-
-          <View className="gap-2">
-            {quantumGatewayIntegrationNotes.slice(0, 2).map((note) => (
-              <View key={note} className="flex-row items-start">
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={18}
-                  color={tintColor}
-                  style={{ marginTop: 2 }}
-                />
-                <ThemedText className="ml-2 flex-1 opacity-90">{note}</ThemedText>
-              </View>
-            ))}
-          </View>
-
-          <View className="flex-row flex-wrap gap-2 mt-4">
-            {quantumGatewayQuickActions.map((action) => (
-              <Pressable
-                key={action.id}
-                className="px-3 py-2 rounded-xl border"
-                style={{
-                  borderColor: hexToRgba(tintColor, 0.35),
-                  backgroundColor: hexToRgba(backgroundColor, 0.45),
-                }}
-                onPress={() => router.push(action.route as Href)}
-              >
-                <View className="flex-row items-center">
-                  <Ionicons name={action.icon as any} size={16} color={textColor} />
-                  <ThemedText className="ml-2 font-semibold">{action.label}</ThemedText>
-                </View>
-              </Pressable>
-            ))}
-          </View>
         </View>
 
-        <View className="mb-4">
-          <ThemedText type="subtitle" className="mb-3 text-2xl font-bold">
-            What users can manage
-          </ThemedText>
-
-          <View className="gap-3">
-            {runtimeHighlights.map((item) => (
-              <View
-                key={item.id}
-                className="rounded-2xl border border-white/10 p-4"
-                style={{ backgroundColor: hexToRgba(accentColor, 0.55) }}
-              >
-                <View className="flex-row items-center mb-2">
-                  <Ionicons name={item.icon as any} size={20} color={tintColor} />
-                  <ThemedText className="ml-2 font-bold text-lg">{item.title}</ThemedText>
-                </View>
-                <ThemedText className="opacity-90 leading-6 mb-2">{item.description}</ThemedText>
-                <View
-                  className="self-start px-2 py-1 rounded-lg"
-                  style={{ backgroundColor: hexToRgba(tintColor, 0.2) }}
-                >
-                  <ThemedText className="text-sm font-semibold">{item.status}</ThemedText>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View className="mb-4">
-          <ThemedText type="subtitle" className="mb-3 text-2xl font-bold">
-            Settings preview
-          </ThemedText>
-
-          <View className="gap-3">
-            {runtimeSettingsSections.map((section) => (
-              <View
-                key={section.id}
-                className="rounded-2xl border border-white/10 p-4"
-                style={{ backgroundColor: hexToRgba(accentColor, 0.55) }}
-              >
-                <ThemedText className="font-bold text-xl mb-1">{section.title}</ThemedText>
-                <ThemedText className="opacity-85 mb-3">{section.description}</ThemedText>
-
-                <View className="rounded-xl overflow-hidden border border-white/10">
-                  {section.rows.map((row, index) => (
-                    <View
-                      key={row.id}
-                      className="px-3 py-2"
-                      style={{
-                        backgroundColor:
-                          index % 2 === 0 ? hexToRgba(backgroundColor, 0.2) : 'transparent',
-                      }}
-                    >
-                      <View className="flex-row items-start justify-between">
-                        <ThemedText className="font-semibold flex-1 mr-3">{row.label}</ThemedText>
-                        <ThemedText className="font-semibold">{row.value}</ThemedText>
-                      </View>
-                      {row.hint ? (
-                        <ThemedText className="opacity-75 text-sm mt-1">{row.hint}</ThemedText>
-                      ) : null}
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View
-          className="rounded-2xl border border-white/10 p-4"
-          style={{ backgroundColor: hexToRgba(accentColor, 0.55) }}
-        >
-          <ThemedText type="subtitle" className="mb-3 text-xl font-bold">
-            Data flow model
-          </ThemedText>
-
-          <View className="gap-2">
-            {quantumGatewayIntegrationNotes.map((note, index) => (
-              <View key={note} className="flex-row items-start">
-                <View
-                  className="w-6 h-6 rounded-full items-center justify-center mr-2"
-                  style={{ backgroundColor: hexToRgba(tintColor, 0.22) }}
-                >
-                  <ThemedText className="text-xs font-bold" style={{ color: whiteOrBlackColor }}>
-                    {index + 1}
-                  </ThemedText>
-                </View>
-                <ThemedText className="flex-1 leading-6">{note}</ThemedText>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      <Modal
-        animationType="fade"
-        onRequestClose={() => setShowIdenterestInfo(false)}
-        transparent
-        visible={showIdenterestInfo}
-      >
-        <View className="flex-1 items-center justify-center bg-black/60 px-4">
-          <Pressable
-            accessibilityLabel="Close Identerest info modal"
-            accessibilityRole="button"
-            className="absolute inset-0"
-            onPress={() => setShowIdenterestInfo(false)}
-          />
-
+        {!isSupabaseConfigured() ? (
           <View
-            className="z-10 w-full max-w-[680px] rounded-3xl border p-6 md:p-7"
+            className="rounded-2xl border p-4"
             style={{
-              backgroundColor,
-              borderColor: tintColor + '45',
-              maxHeight: 760,
+              backgroundColor: backgroundColor,
+              borderColor: '#ef444466',
             }}
           >
-            <ScrollView contentContainerStyle={{ paddingBottom: 4 }} showsVerticalScrollIndicator>
-              <View className="mb-3 flex-row items-start justify-between gap-3">
-                <View className="flex-1 flex-row items-center gap-2.5">
-                  <ThemedText type="defaultSemiBold" className="text-lg md:text-xl">
-                    About Identerest Ecosystem
+            <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+              Identerest auth is not configured yet
+            </ThemedText>
+            <ThemedText selectable className="opacity-85 leading-6">
+              {getSupabaseConfigError()} Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to enable Identerest account sign in on this page.
+            </ThemedText>
+          </View>
+        ) : bootstrapping ? (
+          <View className="rounded-2xl p-5" style={{ backgroundColor: backgroundColor }}>
+            <ActivityIndicator color={tintColor} />
+            <ThemedText className="mt-3 text-center opacity-80">
+              Restoring your Identerest session...
+            </ThemedText>
+          </View>
+        ) : (
+          <View className="gap-4">
+            {authError ? (
+              <View
+                className="rounded-2xl border px-4 py-3"
+                style={{
+                  backgroundColor: '#ef444418',
+                  borderColor: '#ef444455',
+                }}
+              >
+                <ThemedText selectable className="text-base leading-6" style={{ color: '#f87171' }}>
+                  {authError}
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {authMessage ? (
+              <View
+                className="rounded-2xl border px-4 py-3"
+                style={{
+                  backgroundColor: tintColor + '16',
+                  borderColor: tintColor + '40',
+                }}
+              >
+                <ThemedText selectable className="text-base leading-6">
+                  {authMessage}
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {!session ? (
+              <View
+                className="rounded-2xl border p-4"
+                style={{
+                  backgroundColor: backgroundColor,
+                  borderColor: accentColor + '35',
+                }}
+              >
+                <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+                  Sign in with your Identerest account
+                </ThemedText>
+                <ThemedText className="mb-4 opacity-80 leading-6">
+                  Use a passwordless email link or continue with GitHub. This same Identerest account can own Gateway projects, Quantum API keys, and IBM credential profiles.
+                </ThemedText>
+
+                <View className="gap-3">
+                  <TextInput
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    onChangeText={setEmail}
+                    placeholder="you@example.com"
+                    placeholderTextColor={textColor + '70'}
+                    style={{
+                      backgroundColor: accentColor + '12',
+                      borderColor: tintColor + '30',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      color: textColor,
+                      fontSize: 16,
+                      paddingHorizontal: 14,
+                      paddingVertical: 14,
+                    }}
+                    value={email}
+                  />
+
+                  <View className="gap-3 md:flex-row">
+                    <Pressable
+                      disabled={sendingMagicLink}
+                      onPress={handleMagicLink}
+                      style={({ pressed }) => ({
+                        alignItems: 'center',
+                        backgroundColor: tintColor,
+                        borderRadius: 16,
+                        flex: 1,
+                        flexDirection: 'row',
+                        gap: 10,
+                        justifyContent: 'center',
+                        opacity: pressed || sendingMagicLink ? 0.72 : 1,
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                      })}
+                    >
+                      {sendingMagicLink ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons color="#fff" name="mail-outline" size={18} />
+                          <ThemedText inverse className="font-bold text-base">
+                            Email magic link
+                          </ThemedText>
+                        </>
+                      )}
+                    </Pressable>
+
+                    <Pressable
+                      disabled={startingGithubSignIn}
+                      onPress={handleGithubSignIn}
+                      style={({ pressed }) => ({
+                        alignItems: 'center',
+                        backgroundColor: backgroundColor,
+                        borderColor: accentColor + '45',
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        flex: 1,
+                        flexDirection: 'row',
+                        gap: 10,
+                        justifyContent: 'center',
+                        opacity: pressed || startingGithubSignIn ? 0.72 : 1,
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                      })}
+                    >
+                      {startingGithubSignIn ? (
+                        <ActivityIndicator color={secondaryColor} />
+                      ) : (
+                        <>
+                          <Ionicons color={secondaryColor} name="logo-github" size={18} />
+                          <ThemedText className="font-bold text-base" style={{ color: secondaryColor }}>
+                            Continue with GitHub
+                          </ThemedText>
+                        </>
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View className="gap-4">
+                <View
+                  className="rounded-2xl border p-4"
+                  style={{
+                    backgroundColor: backgroundColor,
+                    borderColor: accentColor + '35',
+                  }}
+                >
+                  <View className="mb-4 flex-row items-start justify-between gap-3">
+                    <View className="flex-1">
+                      <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                        Signed in via Identerest account
+                      </ThemedText>
+                      <ThemedText selectable className="opacity-80 text-base leading-6">
+                        {session.user.email ?? 'Authenticated Gateway operator'}
+                      </ThemedText>
+                    </View>
+
+                    <Pressable
+                      disabled={signingOut}
+                      onPress={handleSignOut}
+                      style={({ pressed }) => ({
+                        backgroundColor: accentColor + '18',
+                        borderRadius: 14,
+                        opacity: pressed || signingOut ? 0.72 : 1,
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                      })}
+                    >
+                      {signingOut ? (
+                        <ActivityIndicator color={secondaryColor} />
+                      ) : (
+                        <ThemedText
+                          className="font-bold text-sm uppercase tracking-[0.16em]"
+                          style={{ color: secondaryColor }}
+                        >
+                          Sign out
+                        </ThemedText>
+                      )}
+                    </Pressable>
+                  </View>
+
+                  <View className="gap-3 md:flex-row">
+                    <View className="flex-1 gap-2">
+                      <ThemedText className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">
+                        Choose a default Quantum API key
+                      </ThemedText>
+                      {availableQuantumKeys.length > 0 ? (
+                        <View
+                          style={{
+                            backgroundColor: pickerBackgroundColor,
+                            borderColor: pickerBorderColor,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Picker
+                            selectedValue={projectForm.defaultApiKeyId || ''}
+                            onValueChange={(value) =>
+                              handleProjectField('defaultApiKeyId', String(value))
+                            }
+                            style={{
+                              backgroundColor: pickerBackgroundColor,
+                              color: pickerTextColor,
+                              height: 52,
+                            }}
+                            dropdownIconColor={pickerTextColor}
+                          >
+                            <Picker.Item color={pickerTextColor} label="None" value="" />
+                            {availableQuantumKeys.map((key) => (
+                              <Picker.Item
+                                key={key.id}
+                                color={pickerTextColor}
+                                label={`${key.label} • ${key.maskedKey}`}
+                                value={key.id}
+                              />
+                            ))}
+                          </Picker>
+                        </View>
+                      ) : (
+                        <TextInput
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          onChangeText={(value) => handleProjectField('defaultApiKeyId', value)}
+                          placeholder="Quantum API key id"
+                          placeholderTextColor={textColor + '70'}
+                          style={{
+                            backgroundColor: accentColor + '12',
+                            borderColor: tintColor + '30',
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            color: textColor,
+                            fontSize: 16,
+                            paddingHorizontal: 14,
+                            paddingVertical: 14,
+                          }}
+                          value={projectForm.defaultApiKeyId}
+                        />
+                      )}
+                    </View>
+
+                    <View className="flex-1 gap-2">
+                      <ThemedText className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">
+                        Choose a default IBM profile
+                      </ThemedText>
+                      {availableIbmProfiles.length > 0 ? (
+                        <View
+                          style={{
+                            backgroundColor: pickerBackgroundColor,
+                            borderColor: pickerBorderColor,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Picker
+                            selectedValue={projectForm.defaultIbmCredentialProfileId || ''}
+                            onValueChange={(value) =>
+                              handleProjectField('defaultIbmCredentialProfileId', String(value))
+                            }
+                            style={{
+                              backgroundColor: pickerBackgroundColor,
+                              color: pickerTextColor,
+                              height: 52,
+                            }}
+                            dropdownIconColor={pickerTextColor}
+                          >
+                            <Picker.Item color={pickerTextColor} label="None" value="" />
+                            {availableIbmProfiles.map((profile) => (
+                              <Picker.Item
+                                key={profile.profileId}
+                                color={pickerTextColor}
+                                label={`${profile.profileName} • ${profile.maskedToken}`}
+                                value={profile.profileId}
+                              />
+                            ))}
+                          </Picker>
+                        </View>
+                      ) : (
+                        <TextInput
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          onChangeText={(value) =>
+                            handleProjectField('defaultIbmCredentialProfileId', value)
+                          }
+                          placeholder="IBM profile id"
+                          placeholderTextColor={textColor + '70'}
+                          style={{
+                            backgroundColor: accentColor + '12',
+                            borderColor: tintColor + '30',
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            color: textColor,
+                            fontSize: 16,
+                            paddingHorizontal: 14,
+                            paddingVertical: 14,
+                          }}
+                          value={projectForm.defaultIbmCredentialProfileId}
+                        />
+                      )}
+                    </View>
+                  </View>
+
+                  <View className="mt-4 flex-row flex-wrap gap-2">
+                    <Pressable
+                      onPress={handleNewProject}
+                      style={({ pressed }) => ({
+                        backgroundColor: backgroundColor,
+                        borderColor: tintColor + '35',
+                        borderRadius: 14,
+                        borderWidth: 1,
+                        opacity: pressed ? 0.72 : 1,
+                        paddingHorizontal: 12,
+                        paddingVertical: 10,
+                      })}
+                    >
+                      <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: secondaryColor }}>
+                        New project
+                      </ThemedText>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={refreshProjects}
+                      style={({ pressed }) => ({
+                        backgroundColor: backgroundColor,
+                        borderColor: tintColor + '35',
+                        borderRadius: 14,
+                        borderWidth: 1,
+                        opacity: pressed ? 0.72 : 1,
+                        paddingHorizontal: 12,
+                        paddingVertical: 10,
+                      })}
+                    >
+                      <ThemedText className="font-bold text-sm uppercase tracking-[0.14em]" style={{ color: secondaryColor }}>
+                        Refresh projects
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {projectError ? (
+                  <View
+                    className="rounded-2xl border px-4 py-3"
+                    style={{ backgroundColor: '#ef444418', borderColor: '#ef444455' }}
+                  >
+                    <ThemedText selectable className="leading-6" style={{ color: '#f87171' }}>
+                      {projectError}
+                    </ThemedText>
+                  </View>
+                ) : null}
+
+                {projectMessage ? (
+                  <View
+                    className="rounded-2xl border px-4 py-3"
+                    style={{ backgroundColor: tintColor + '16', borderColor: tintColor + '40' }}
+                  >
+                    <ThemedText selectable className="leading-6">
+                      {projectMessage}
+                    </ThemedText>
+                  </View>
+                ) : null}
+
+                <View className="rounded-2xl border p-4" style={{ backgroundColor: backgroundColor, borderColor: accentColor + '35' }}>
+                  <View className="mb-3 flex-row items-center justify-between gap-3">
+                    <View>
+                      <ThemedText type="defaultSemiBold" className="text-lg">
+                        {editingProjectSlug ? 'Edit Gateway project' : 'Create Gateway project'}
+                      </ThemedText>
+                      <ThemedText className="opacity-75 text-base">
+                        Project routing, limits, and credential references
+                      </ThemedText>
+                    </View>
+
+                    {loadingProjects ? <ActivityIndicator color={tintColor} /> : null}
+                  </View>
+
+                  <View className="gap-3">
+                    <TextInput
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      onChangeText={(value) => handleProjectField('projectSlug', value)}
+                      placeholder="project slug"
+                      placeholderTextColor={textColor + '70'}
+                      style={{
+                        backgroundColor: accentColor + '12',
+                        borderColor: tintColor + '30',
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        color: textColor,
+                        fontSize: 16,
+                        paddingHorizontal: 14,
+                        paddingVertical: 14,
+                      }}
+                      value={projectForm.projectSlug}
+                    />
+
+                    <TextInput
+                      autoCapitalize="words"
+                      onChangeText={(value) => handleProjectField('displayName', value)}
+                      placeholder="display name"
+                      placeholderTextColor={textColor + '70'}
+                      style={{
+                        backgroundColor: accentColor + '12',
+                        borderColor: tintColor + '30',
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        color: textColor,
+                        fontSize: 16,
+                        paddingHorizontal: 14,
+                        paddingVertical: 14,
+                      }}
+                      value={projectForm.displayName}
+                    />
+
+                    <View className="gap-2">
+                      <ThemedText className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">
+                        Project status
+                      </ThemedText>
+                      <View
+                        style={{
+                          backgroundColor: pickerBackgroundColor,
+                          borderColor: pickerBorderColor,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Picker
+                          selectedValue={projectForm.status}
+                          onValueChange={(value) => handleProjectField('status', String(value))}
+                          style={{
+                            backgroundColor: pickerBackgroundColor,
+                            color: pickerTextColor,
+                            height: 52,
+                          }}
+                          dropdownIconColor={pickerTextColor}
+                        >
+                          <Picker.Item color={pickerTextColor} label="active" value="active" />
+                          <Picker.Item color={pickerTextColor} label="paused" value="paused" />
+                          <Picker.Item color={pickerTextColor} label="archived" value="archived" />
+                        </Picker>
+                      </View>
+                    </View>
+
+                    <TextInput
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      onChangeText={(value) => handleProjectField('endpointPathPrefix', value)}
+                      placeholder="/public-facing/api/quantum-gateway/v1"
+                      placeholderTextColor={textColor + '70'}
+                      style={{
+                        backgroundColor: accentColor + '12',
+                        borderColor: tintColor + '30',
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        color: textColor,
+                        fontSize: 16,
+                        paddingHorizontal: 14,
+                        paddingVertical: 14,
+                      }}
+                      value={projectForm.endpointPathPrefix}
+                    />
+
+                    <TextInput
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="numeric"
+                      onChangeText={(value) => handleProjectField('defaultRateLimitPerMinute', value)}
+                      placeholder="default rate limit per minute"
+                      placeholderTextColor={textColor + '70'}
+                      style={{
+                        backgroundColor: accentColor + '12',
+                        borderColor: tintColor + '30',
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        color: textColor,
+                        fontSize: 16,
+                        paddingHorizontal: 14,
+                        paddingVertical: 14,
+                      }}
+                      value={projectForm.defaultRateLimitPerMinute}
+                    />
+
+                    <TextInput
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="numeric"
+                      onChangeText={(value) => handleProjectField('dailyRequestQuota', value)}
+                      placeholder="daily request quota"
+                      placeholderTextColor={textColor + '70'}
+                      style={{
+                        backgroundColor: accentColor + '12',
+                        borderColor: tintColor + '30',
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        color: textColor,
+                        fontSize: 16,
+                        paddingHorizontal: 14,
+                        paddingVertical: 14,
+                      }}
+                      value={projectForm.dailyRequestQuota}
+                    />
+
+                    <View className="gap-2">
+                      <ThemedText className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">
+                        Route allowlist
+                      </ThemedText>
+                      <TextInput
+                        multiline
+                        numberOfLines={3}
+                        onChangeText={(value) => handleProjectField('routeAllowlistText', value)}
+                        placeholder="/v1/health, /v1/gates/run"
+                        placeholderTextColor={textColor + '70'}
+                        style={{
+                          backgroundColor: accentColor + '12',
+                          borderColor: tintColor + '30',
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          color: textColor,
+                          fontSize: 16,
+                          minHeight: 92,
+                          paddingHorizontal: 14,
+                          paddingVertical: 14,
+                          textAlignVertical: 'top',
+                        }}
+                        value={projectForm.routeAllowlistText}
+                      />
+                    </View>
+
+                    <View className="gap-2">
+                      <ThemedText className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">
+                        Allowed origins
+                      </ThemedText>
+                      <TextInput
+                        multiline
+                        numberOfLines={3}
+                        onChangeText={(value) => handleProjectField('allowedOriginsText', value)}
+                        placeholder="https://example.com, https://www.example.com"
+                        placeholderTextColor={textColor + '70'}
+                        style={{
+                          backgroundColor: accentColor + '12',
+                          borderColor: tintColor + '30',
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          color: textColor,
+                          fontSize: 16,
+                          minHeight: 92,
+                          paddingHorizontal: 14,
+                          paddingVertical: 14,
+                          textAlignVertical: 'top',
+                        }}
+                        value={projectForm.allowedOriginsText}
+                      />
+                    </View>
+
+                    <View className="gap-3 md:flex-row">
+                      <Pressable
+                        disabled={savingProject}
+                        onPress={handleSaveProject}
+                        style={({ pressed }) => ({
+                          alignItems: 'center',
+                          backgroundColor: tintColor,
+                          borderRadius: 16,
+                          flex: 1,
+                          justifyContent: 'center',
+                          opacity: pressed || savingProject ? 0.72 : 1,
+                          paddingHorizontal: 16,
+                          paddingVertical: 14,
+                        })}
+                      >
+                        {savingProject ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <ThemedText inverse className="font-bold text-base">
+                            {editingProjectSlug ? 'Save project' : 'Create project'}
+                          </ThemedText>
+                        )}
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => setProjectForm(createEmptyProjectForm())}
+                        style={({ pressed }) => ({
+                          alignItems: 'center',
+                          backgroundColor: backgroundColor,
+                          borderColor: tintColor + '40',
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          flex: 1,
+                          justifyContent: 'center',
+                          opacity: pressed ? 0.72 : 1,
+                          paddingHorizontal: 16,
+                          paddingVertical: 14,
+                        })}
+                      >
+                        <ThemedText className="font-bold text-base" style={{ color: secondaryColor }}>
+                          Reset form
+                        </ThemedText>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+
+                <View className="rounded-2xl border p-4" style={{ backgroundColor: backgroundColor, borderColor: accentColor + '35' }}>
+                  <View className="mb-3 flex-row items-center justify-between gap-3">
+                    <View>
+                      <ThemedText type="defaultSemiBold" className="text-lg">
+                        Gateway projects
+                      </ThemedText>
+                      <ThemedText className="opacity-75 text-base">
+                        {projects.length} total, {activeProjectCount} active
+                      </ThemedText>
+                    </View>
+
+                    <Pressable
+                      onPress={refreshProjects}
+                      style={({ pressed }) => ({
+                        opacity: pressed || loadingProjects ? 0.72 : 1,
+                        padding: 4,
+                      })}
+                    >
+                      {loadingProjects ? (
+                        <ActivityIndicator color={secondaryColor} />
+                      ) : (
+                        <Ionicons color={secondaryColor} name="refresh" size={18} />
+                      )}
+                    </Pressable>
+                  </View>
+
+                  {loadingProjects ? (
+                    <View className="items-center py-6">
+                      <ActivityIndicator color={tintColor} />
+                      <ThemedText className="mt-3 opacity-75">Loading gateway projects...</ThemedText>
+                    </View>
+                  ) : projects.length === 0 ? (
+                    <View
+                      className="rounded-2xl border border-dashed p-4"
+                      style={{
+                        backgroundColor: accentColor + '0d',
+                        borderColor: tintColor + '33',
+                      }}
+                    >
+                      <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                        No Gateway projects yet
+                      </ThemedText>
+                      <ThemedText className="opacity-80 leading-6">
+                        Create the first Gateway project, bind a default Quantum API key and IBM profile, then publish a client key for runtime access.
+                      </ThemedText>
+                    </View>
+                  ) : (
+                    <View className="gap-3">
+                      {projects.map((project) => {
+                        const isSelected = selectedProject?.projectSlug === project.projectSlug;
+                        const isEditing = editingProjectSlug === project.projectSlug;
+                        const isBusy = savingProject && editingProjectSlug === project.projectSlug;
+
+                        return (
+                          <View
+                            key={project.id}
+                            className="rounded-2xl border p-4"
+                            style={{
+                              backgroundColor: isSelected ? accentColor + '16' : accentColor + '10',
+                              borderColor: isSelected ? tintColor + '55' : tintColor + '2f',
+                            }}
+                          >
+                            <View className="mb-3 flex-row items-start justify-between gap-3">
+                              <View className="flex-1">
+                                <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                                  {project.displayName}
+                                </ThemedText>
+                                <ThemedText className="font-mono text-sm leading-6" style={{ color: secondaryColor }}>
+                                  /{project.projectSlug} • {project.status}
+                                </ThemedText>
+                              </View>
+
+                              <View
+                                className="rounded-full px-3 py-1"
+                                style={{ backgroundColor: tintColor + '22' }}
+                              >
+                                <ThemedText className="text-xs font-bold uppercase tracking-[0.14em]">
+                                  {isSelected ? 'Selected' : 'Gateway project'}
+                                </ThemedText>
+                              </View>
+                            </View>
+
+                            <View className="gap-1 mb-3">
+                              <ThemedText className="opacity-75 text-sm">
+                                Path prefix: {project.endpointPathPrefix}
+                              </ThemedText>
+                              <ThemedText className="opacity-75 text-sm">
+                                Quantum API key: {shortenId(project.defaultApiKeyId)}
+                              </ThemedText>
+                              <ThemedText className="opacity-75 text-sm">
+                                IBM profile: {shortenId(project.defaultIbmCredentialProfileId)}
+                              </ThemedText>
+                              <ThemedText className="opacity-75 text-sm">
+                                Origins: {project.allowedOrigins.length > 0 ? project.allowedOrigins.join(', ') : 'None'}
+                              </ThemedText>
+                            </View>
+
+                            <View className="gap-2 md:flex-row md:flex-wrap">
+                              <Pressable
+                                disabled={isBusy}
+                                onPress={() => {
+                                  setSelectedProjectSlug(project.projectSlug);
+                                  refreshPublishableKeys(project.projectSlug);
+                                }}
+                                style={({ pressed }) => ({
+                                  alignItems: 'center',
+                                  backgroundColor: tintColor,
+                                  borderRadius: 12,
+                                  justifyContent: 'center',
+                                  opacity: pressed || isBusy ? 0.72 : 1,
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 10,
+                                })}
+                              >
+                                <ThemedText inverse className="font-bold text-xs uppercase tracking-[0.12em]">
+                                  Select
+                                </ThemedText>
+                              </Pressable>
+
+                              <Pressable
+                                disabled={isBusy}
+                                onPress={() => handleSelectProject(project)}
+                                style={({ pressed }) => ({
+                                  alignItems: 'center',
+                                  backgroundColor: backgroundColor,
+                                  borderColor: tintColor + '40',
+                                  borderRadius: 12,
+                                  borderWidth: 1,
+                                  justifyContent: 'center',
+                                  opacity: pressed || isBusy ? 0.72 : 1,
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 10,
+                                })}
+                              >
+                                <ThemedText
+                                  className="font-bold text-xs uppercase tracking-[0.12em]"
+                                  style={{ color: secondaryColor }}
+                                >
+                                  {isEditing ? 'Editing' : 'Edit'}
+                                </ThemedText>
+                              </Pressable>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+
+                <View className="rounded-2xl border p-4" style={{ backgroundColor: backgroundColor, borderColor: accentColor + '35' }}>
+                  <View className="mb-3 flex-row items-start justify-between gap-3">
+                    <View className="flex-1">
+                      <ThemedText type="defaultSemiBold" className="text-lg">
+                        Publishable Gateway client keys
+                      </ThemedText>
+                      <ThemedText className="opacity-75 text-base">
+                        {selectedProject
+                          ? `Keys for /${selectedProject.projectSlug}`
+                          : 'Select a Gateway project to manage client keys'}
+                      </ThemedText>
+                    </View>
+
+                    <Pressable
+                      onPress={() => refreshPublishableKeys(selectedProject?.projectSlug ?? null)}
+                      style={({ pressed }) => ({
+                        opacity: pressed || loadingPublishableKeys ? 0.72 : 1,
+                        padding: 4,
+                      })}
+                    >
+                      {loadingPublishableKeys ? (
+                        <ActivityIndicator color={secondaryColor} />
+                      ) : (
+                        <Ionicons color={secondaryColor} name="refresh" size={18} />
+                      )}
+                    </Pressable>
+                  </View>
+
+                  {selectedProject ? (
+                    <View className="gap-3">
+                      <TextInput
+                        autoCapitalize="words"
+                        autoCorrect={false}
+                        onChangeText={setPublishableKeyLabel}
+                        placeholder="Publishable client key label"
+                        placeholderTextColor={textColor + '70'}
+                        style={{
+                          backgroundColor: accentColor + '12',
+                          borderColor: tintColor + '30',
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          color: textColor,
+                          fontSize: 16,
+                          paddingHorizontal: 14,
+                          paddingVertical: 14,
+                        }}
+                        value={publishableKeyLabel}
+                      />
+
+                      <View className="gap-3 md:flex-row">
+                        <Pressable
+                          disabled={creatingPublishableKey}
+                          onPress={handleCreatePublishableKey}
+                          style={({ pressed }) => ({
+                            alignItems: 'center',
+                            backgroundColor: tintColor,
+                            borderRadius: 16,
+                            flex: 1,
+                            justifyContent: 'center',
+                            opacity: pressed || creatingPublishableKey ? 0.72 : 1,
+                            paddingHorizontal: 16,
+                            paddingVertical: 14,
+                          })}
+                        >
+                          {creatingPublishableKey ? (
+                            <ActivityIndicator color="#fff" />
+                          ) : (
+                            <ThemedText inverse className="font-bold text-base">
+                              Create client key
+                            </ThemedText>
+                          )}
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => setRuntimePublishableKey(publishableKeyReveal?.rawKey ?? '')}
+                          style={({ pressed }) => ({
+                            alignItems: 'center',
+                            backgroundColor: backgroundColor,
+                            borderColor: tintColor + '40',
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            flex: 1,
+                            justifyContent: 'center',
+                            opacity: pressed ? 0.72 : 1,
+                            paddingHorizontal: 16,
+                            paddingVertical: 14,
+                          })}
+                        >
+                          <ThemedText className="font-bold text-base" style={{ color: secondaryColor }}>
+                            Use last secret for runtime test
+                          </ThemedText>
+                        </Pressable>
+                      </View>
+
+                      {publishableKeyReveal ? (
+                        <View
+                          className="rounded-2xl border p-4"
+                          style={{
+                            backgroundColor: tintColor + '12',
+                            borderColor: tintColor + '3f',
+                          }}
+                        >
+                          <View className="mb-2 flex-row items-start justify-between gap-3">
+                            <View className="flex-1">
+                              <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                                {publishableKeyReveal.action === 'created'
+                                  ? 'New client key generated'
+                                  : 'Client key rotated'}
+                              </ThemedText>
+                              <ThemedText className="opacity-80 leading-6">
+                                Save this secret now. It is visible once and then only the masked version remains.
+                              </ThemedText>
+                            </View>
+
+                            <Pressable
+                              onPress={() => setPublishableKeyReveal(null)}
+                              style={({ pressed }) => ({
+                                opacity: pressed ? 0.72 : 1,
+                                padding: 2,
+                              })}
+                            >
+                              <Ionicons color={textColor} name="close" size={18} />
+                            </Pressable>
+                          </View>
+
+                          <View
+                            className="rounded-2xl border p-3"
+                            style={{
+                              backgroundColor: backgroundColor,
+                              borderColor: tintColor + '2a',
+                            }}
+                          >
+                            <ThemedText className="mb-1 opacity-70 text-sm uppercase tracking-[0.14em]">
+                              {publishableKeyReveal.label}
+                            </ThemedText>
+                            <ThemedText
+                              selectable
+                              className="font-mono text-sm leading-6"
+                              style={{ color: secondaryColor }}
+                            >
+                              {publishableKeyReveal.rawKey}
+                            </ThemedText>
+                          </View>
+
+                          <Pressable
+                            onPress={() =>
+                              handleCopy(publishableKeyReveal.rawKey, publishableKeyReveal.rawKey)
+                            }
+                            style={({ pressed }) => ({
+                              alignItems: 'center',
+                              alignSelf: 'flex-start',
+                              backgroundColor: backgroundColor,
+                              borderColor: tintColor + '30',
+                              borderRadius: 14,
+                              borderWidth: 1,
+                              flexDirection: 'row',
+                              gap: 8,
+                              marginTop: 12,
+                              opacity: pressed ? 0.72 : 1,
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            })}
+                          >
+                            <Ionicons
+                              color={secondaryColor}
+                              name={copiedValue === publishableKeyReveal.rawKey ? 'checkmark' : 'copy-outline'}
+                              size={16}
+                            />
+                            <ThemedText
+                              className="font-bold text-sm uppercase tracking-[0.14em]"
+                              style={{ color: secondaryColor }}
+                            >
+                              {copiedValue === publishableKeyReveal.rawKey ? 'Copied' : 'Copy secret'}
+                            </ThemedText>
+                          </Pressable>
+                        </View>
+                      ) : null}
+
+                      {publishableKeyError ? (
+                        <View
+                          className="rounded-2xl border px-4 py-3"
+                          style={{
+                            backgroundColor: '#ef444418',
+                            borderColor: '#ef444455',
+                          }}
+                        >
+                          <ThemedText selectable className="leading-6" style={{ color: '#f87171' }}>
+                            {publishableKeyError}
+                          </ThemedText>
+                        </View>
+                      ) : null}
+
+                      {publishableKeyMessage ? (
+                        <View
+                          className="rounded-2xl border px-4 py-3"
+                          style={{ backgroundColor: tintColor + '16', borderColor: tintColor + '40' }}
+                        >
+                          <ThemedText selectable className="leading-6">
+                            {publishableKeyMessage}
+                          </ThemedText>
+                        </View>
+                      ) : null}
+
+                      {runtimeSessionError ? (
+                        <View
+                          className="rounded-2xl border px-4 py-3"
+                          style={{
+                            backgroundColor: '#ef444418',
+                            borderColor: '#ef444455',
+                          }}
+                        >
+                          <ThemedText selectable className="leading-6" style={{ color: '#f87171' }}>
+                            {runtimeSessionError}
+                          </ThemedText>
+                        </View>
+                      ) : null}
+
+                      {runtimeSessionResult ? (
+                        <View
+                          className="rounded-2xl border p-4"
+                          style={{
+                            backgroundColor: tintColor + '12',
+                            borderColor: tintColor + '3f',
+                          }}
+                        >
+                          <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                            Runtime token minted
+                          </ThemedText>
+                          <ThemedText className="opacity-80 leading-6">
+                            The runtime token is short-lived and project-bound. Keep it on the client only long enough to call Gateway runtime routes.
+                          </ThemedText>
+                          <View
+                            className="rounded-2xl border p-3 mt-3"
+                            style={{ backgroundColor: backgroundColor, borderColor: tintColor + '2a' }}
+                          >
+                            <ThemedText className="mb-1 opacity-70 text-sm uppercase tracking-[0.14em]">
+                              runtime token
+                            </ThemedText>
+                            <ThemedText selectable className="font-mono text-sm leading-6" style={{ color: secondaryColor }}>
+                              {runtimeSessionResult.token}
+                            </ThemedText>
+                          </View>
+                          <ThemedText className="mt-2 opacity-75 text-sm">
+                            Project: {runtimeSessionResult.projectId ?? 'Not returned'} • Expires: {formatTimestamp(runtimeSessionResult.expiresAt)}
+                          </ThemedText>
+                          <Pressable
+                            onPress={() => handleCopy(runtimeSessionResult.token, 'runtime-token')}
+                            style={({ pressed }) => ({
+                              alignItems: 'center',
+                              alignSelf: 'flex-start',
+                              backgroundColor: backgroundColor,
+                              borderColor: tintColor + '30',
+                              borderRadius: 14,
+                              borderWidth: 1,
+                              flexDirection: 'row',
+                              gap: 8,
+                              marginTop: 12,
+                              opacity: pressed ? 0.72 : 1,
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            })}
+                          >
+                            <Ionicons
+                              color={secondaryColor}
+                              name={copiedValue === 'runtime-token' ? 'checkmark' : 'copy-outline'}
+                              size={16}
+                            />
+                            <ThemedText
+                              className="font-bold text-sm uppercase tracking-[0.14em]"
+                              style={{ color: secondaryColor }}
+                            >
+                              {copiedValue === 'runtime-token' ? 'Copied' : 'Copy token'}
+                            </ThemedText>
+                          </Pressable>
+                        </View>
+                      ) : null}
+
+                      <View className="rounded-2xl border p-4" style={{ backgroundColor: accentColor + '10', borderColor: tintColor + '2f' }}>
+                        <View className="mb-3 flex-row items-center justify-between gap-3">
+                          <View>
+                            <ThemedText type="defaultSemiBold" className="text-lg">
+                              Publishable key list
+                            </ThemedText>
+                            <ThemedText className="opacity-75 text-base">
+                              {publishableKeys.length} client key{publishableKeys.length === 1 ? '' : 's'}
+                            </ThemedText>
+                          </View>
+
+                          {loadingPublishableKeys ? <ActivityIndicator color={secondaryColor} /> : null}
+                        </View>
+
+                        {loadingPublishableKeys ? (
+                          <View className="items-center py-6">
+                            <ActivityIndicator color={tintColor} />
+                            <ThemedText className="mt-3 opacity-75">Loading publishable keys...</ThemedText>
+                          </View>
+                        ) : publishableKeys.length === 0 ? (
+                          <View
+                            className="rounded-2xl border border-dashed p-4"
+                            style={{
+                              backgroundColor: accentColor + '0d',
+                              borderColor: tintColor + '33',
+                            }}
+                          >
+                            <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                              No publishable keys yet
+                            </ThemedText>
+                            <ThemedText className="opacity-80 leading-6">
+                              Create a Gateway client key to let a game or app mint a short-lived runtime token.
+                            </ThemedText>
+                          </View>
+                        ) : (
+                          <View className="gap-3">
+                        {publishableKeys.map((key) => {
+                              const isBusy = busyPublishableKeyId === key.keyId;
+                              const isInactive = key.status !== 'active';
+
+                              return (
+                                <View
+                                  key={key.keyId}
+                                  className="rounded-2xl border p-4"
+                                  style={{
+                                    backgroundColor: accentColor + '10',
+                                    borderColor: isInactive ? '#ef444455' : tintColor + '2f',
+                                  }}
+                                >
+                                  <View className="mb-3 flex-row items-start justify-between gap-3">
+                                    <View className="flex-1">
+                                      <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                                        {key.label}
+                                      </ThemedText>
+                                      <ThemedText className="font-mono text-sm leading-6" style={{ color: secondaryColor }}>
+                                        {key.maskedKey}
+                                      </ThemedText>
+                                    </View>
+
+                                    <View
+                                      className="rounded-full px-3 py-1"
+                                      style={{ backgroundColor: tintColor + '22' }}
+                                    >
+                                      <ThemedText className="text-xs font-bold uppercase tracking-[0.14em]">
+                                        {key.status}
+                                      </ThemedText>
+                                    </View>
+                                  </View>
+
+                                  <View className="mb-3 gap-1">
+                                    <ThemedText className="opacity-75 text-sm">
+                                      Created: {formatTimestamp(key.createdAt)}
+                                    </ThemedText>
+                                    <ThemedText className="opacity-75 text-sm">
+                                      Last used: {formatTimestamp(key.lastUsedAt)}
+                                    </ThemedText>
+                                    {key.revokedAt ? (
+                                      <ThemedText className="opacity-75 text-sm">
+                                        Revoked: {formatTimestamp(key.revokedAt)}
+                                      </ThemedText>
+                                    ) : null}
+                                  </View>
+
+                                  <View className="gap-2 md:flex-row md:flex-wrap">
+                                    <Pressable
+                                      disabled={isBusy || isInactive}
+                                      onPress={() => handleRotatePublishableKey(key)}
+                                      style={({ pressed }) => ({
+                                        alignItems: 'center',
+                                        backgroundColor: isInactive ? accentColor + '16' : tintColor,
+                                        borderRadius: 12,
+                                        justifyContent: 'center',
+                                        opacity: pressed || isBusy || isInactive ? 0.72 : 1,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 10,
+                                      })}
+                                    >
+                                      {isBusy ? (
+                                        <ActivityIndicator color="#fff" />
+                                      ) : (
+                                        <ThemedText inverse className="font-bold text-xs uppercase tracking-[0.12em]">
+                                          Rotate
+                                        </ThemedText>
+                                      )}
+                                    </Pressable>
+
+                                    <Pressable
+                                      disabled={isBusy || isInactive}
+                                      onPress={() => handleRevokePublishableKey(key)}
+                                      style={({ pressed }) => ({
+                                        alignItems: 'center',
+                                        backgroundColor: backgroundColor,
+                                        borderColor: '#ef444466',
+                                        borderRadius: 12,
+                                        borderWidth: 1,
+                                        justifyContent: 'center',
+                                        opacity: pressed || isBusy || isInactive ? 0.72 : 1,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 10,
+                                      })}
+                                    >
+                                      <ThemedText
+                                        className="font-bold text-xs uppercase tracking-[0.12em]"
+                                        style={{ color: '#f87171' }}
+                                      >
+                                        Revoke
+                                      </ThemedText>
+                                    </Pressable>
+
+                                    <Pressable
+                                      disabled={isBusy}
+                                      onPress={() => handleCopy(key.keyId, key.keyId)}
+                                      style={({ pressed }) => ({
+                                        alignItems: 'center',
+                                        backgroundColor: backgroundColor,
+                                        borderColor: tintColor + '40',
+                                        borderRadius: 12,
+                                        borderWidth: 1,
+                                        justifyContent: 'center',
+                                        opacity: pressed || isBusy ? 0.72 : 1,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 10,
+                                      })}
+                                    >
+                                      <ThemedText
+                                        className="font-bold text-xs uppercase tracking-[0.12em]"
+                                        style={{ color: secondaryColor }}
+                                      >
+                                        Copy id
+                                      </ThemedText>
+                                    </Pressable>
+                                  </View>
+                                </View>
+                              );
+                            })}
+                          </View>
+                        )}
+                      </View>
+
+                      <View className="rounded-2xl border p-4" style={{ backgroundColor: backgroundColor, borderColor: accentColor + '35' }}>
+                        <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+                          Mint a runtime token
+                        </ThemedText>
+                        <ThemedText className="opacity-80 leading-6 mb-3">
+                          Use the publishable Gateway client key to mint a short-lived runtime token. That token is what clients send to public runtime routes.
+                        </ThemedText>
+
+                        <View className="gap-3">
+                          <TextInput
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            onChangeText={setRuntimePublishableKey}
+                            placeholder="publishable Gateway client key"
+                            placeholderTextColor={textColor + '70'}
+                            style={{
+                              backgroundColor: accentColor + '12',
+                              borderColor: tintColor + '30',
+                              borderRadius: 16,
+                              borderWidth: 1,
+                              color: textColor,
+                              fontSize: 16,
+                              paddingHorizontal: 14,
+                              paddingVertical: 14,
+                            }}
+                            value={runtimePublishableKey}
+                          />
+
+                          <Pressable
+                            disabled={mintingRuntimeSession}
+                            onPress={handleMintRuntimeSession}
+                            style={({ pressed }) => ({
+                              alignItems: 'center',
+                              backgroundColor: tintColor,
+                              borderRadius: 16,
+                              justifyContent: 'center',
+                              opacity: pressed || mintingRuntimeSession ? 0.72 : 1,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                            })}
+                          >
+                            {mintingRuntimeSession ? (
+                              <ActivityIndicator color="#fff" />
+                            ) : (
+                              <ThemedText inverse className="font-bold text-base">
+                                Mint runtime token
+                              </ThemedText>
+                            )}
+                          </Pressable>
+
+                          {runtimeSessionResult ? (
+                            <View className="rounded-2xl border p-4" style={{ backgroundColor: tintColor + '12', borderColor: tintColor + '3f' }}>
+                              <ThemedText className="opacity-80 leading-6">
+                                Runtime session returned a short-lived token for project {runtimeSessionResult.projectId ?? selectedProject.projectSlug}.
+                              </ThemedText>
+                              <ThemedText selectable className="font-mono text-sm leading-6 mt-2" style={{ color: secondaryColor }}>
+                                {runtimeSessionResult.token}
+                              </ThemedText>
+                              <ThemedText className="opacity-75 text-sm mt-2">
+                                Expires: {formatTimestamp(runtimeSessionResult.expiresAt)}
+                              </ThemedText>
+                            </View>
+                          ) : null}
+                        </View>
+                      </View>
+                    </View>
+                  ) : (
+                    <View
+                      className="rounded-2xl border border-dashed p-4"
+                      style={{
+                        backgroundColor: accentColor + '0d',
+                        borderColor: tintColor + '33',
+                      }}
+                    >
+                      <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
+                        No Gateway project selected
+                      </ThemedText>
+                      <ThemedText className="opacity-80 leading-6">
+                        Select or create a Gateway project to manage publishable client keys and mint runtime tokens.
+                      </ThemedText>
+                    </View>
+                  )}
+                </View>
+
+                <View className="rounded-2xl border p-4" style={{ backgroundColor: backgroundColor, borderColor: accentColor + '35' }}>
+                  <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+                    Runtime examples
+                  </ThemedText>
+                  <ThemedText className="opacity-80 leading-6 mb-3">
+                    Public clients should target the Gateway runtime base and send a bearer runtime token, not a raw Quantum API key.
+                  </ThemedText>
+
+                  <View className="rounded-2xl border p-3" style={{ backgroundColor: accentColor + '10', borderColor: tintColor + '2f' }}>
+                    <ScrollView horizontal>
+                      <ThemedText selectable className="font-mono text-sm leading-6" style={{ color: secondaryColor }}>
+{`const response = await fetch('${QUANTUM_GATEWAY_BASE_URL}/gates/run', {
+  method: 'POST',
+  headers: {
+    Authorization: \`Bearer \${runtimeToken}\`,
+    'X-Project-Id': '<gateway-project-slug>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    gate_type: 'rotation',
+    rotation_angle_rad: Math.PI / 2,
+  }),
+});`}
+                      </ThemedText>
+                    </ScrollView>
+                  </View>
+
+                  <View className="mt-3 rounded-2xl border p-3" style={{ backgroundColor: accentColor + '10', borderColor: tintColor + '2f' }}>
+                    <ThemedText selectable className="font-mono text-sm leading-6" style={{ color: secondaryColor }}>
+{`POST ${QUANTUM_GATEWAY_BASE_URL}/runtime-sessions
+X-Gateway-Publishable-Key: <publishable_gateway_client_key>`}
+                    </ThemedText>
+                  </View>
+
+                  <ThemedText className="mt-3 opacity-75 text-sm">
+                    Local/dev fallback paths stay explicit in this repo. The shipped runtime story is Gateway-managed and project-scoped.
                   </ThemedText>
                 </View>
 
-                <Pressable
-                  accessibilityLabel="Close"
-                  accessibilityRole="button"
-                  onPress={() => setShowIdenterestInfo(false)}
-                  style={({ pressed }) => ({
-                    opacity: pressed ? 0.75 : 1,
-                    padding: 4,
-                  })}
-                >
-                  <Ionicons color={secondaryColor} name="close" size={20} />
-                </Pressable>
-              </View>
-
-              <ThemedText className="opacity-90 text-base leading-6">
-                Identerest is your shared account identity for Quantum API and Quantum Gateway.
-                Sign in once and manage projects here without creating a second account.
-              </ThemedText>
-              <ThemedText className="mt-2 opacity-80 text-base leading-6">
-                The same Identerest account also works across Creatisphere and Higher.
-              </ThemedText>
-
-              <View className="mt-6 w-full items-center">
-                <View className="w-full max-w-[560px]" style={{ height: 308, position: 'relative' }}>
-                  <View className="absolute left-0 right-0 top-0 items-center">
-                    <CompanyButton
-                      accessibilityLabel="Open Identerest"
-                      fontFamily="Emblema One"
-                      href="https://identerest.com"
-                      imageSource={IDENTEREST_LOGO}
-                      name="Identerest"
-                      primaryColor={BRAND_COLORS.identerest.primary}
-                      secondaryColor={BRAND_COLORS.identerest.secondary}
-                    />
+                {loadingCredentials || credentialsMessage ? (
+                  <View
+                    className="rounded-2xl border px-4 py-3"
+                    style={{
+                      backgroundColor: accentColor + '10',
+                      borderColor: tintColor + '2f',
+                    }}
+                  >
+                    <ThemedText className="opacity-80 leading-6">
+                      {loadingCredentials ? 'Loading Quantum API keys and IBM profiles...' : credentialsMessage}
+                    </ThemedText>
                   </View>
-
-                  <View className="absolute bottom-0 left-0 right-0 flex-row justify-between">
-                    <CompanyButton
-                      accessibilityLabel="Open Creatisphere"
-                      fontFamily="Cinzel Decorative-Bold"
-                      href="https://creatisphere.app"
-                      imageSource={CREATISPHERE_LOGO}
-                      name="Creatisphere"
-                      primaryColor={BRAND_COLORS.creatisphere.primary}
-                      secondaryColor={BRAND_COLORS.creatisphere.secondary}
-                    />
-
-                    <CompanyButton
-                      accessibilityLabel="Open Higher"
-                      fontFamily="Playfair Display-Bold"
-                      href="https://higher.app"
-                      imageSource={HIGHER_LOGO}
-                      name="Higher"
-                      primaryColor={BRAND_COLORS.higher.primary}
-                      secondaryColor={BRAND_COLORS.higher.secondary}
-                    />
-                  </View>
-                </View>
+                ) : null}
               </View>
-            </ScrollView>
+            )}
+          </View>
+        )}
+      </View>
+      <Modal visible={Boolean(copiedValue)} transparent animationType="fade">
+        <View
+          style={{
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.35)',
+            flex: 1,
+            justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <View
+            className="rounded-2xl border p-4"
+            style={{ backgroundColor: backgroundColor, borderColor: tintColor + '40', width: '100%', maxWidth: 420 }}
+          >
+            <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
+              Copied
+            </ThemedText>
+            <ThemedText className="opacity-80 leading-6">
+              The value is on your clipboard. Paste it where you need it, then keep the raw secret out of source control.
+            </ThemedText>
+            <Pressable
+              onPress={() => setCopiedValue(null)}
+              style={({ pressed }) => ({
+                alignSelf: 'flex-end',
+                backgroundColor: tintColor,
+                borderRadius: 12,
+                marginTop: 16,
+                opacity: pressed ? 0.72 : 1,
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              })}
+            >
+              <ThemedText inverse className="font-bold text-sm uppercase tracking-[0.14em]">
+                Close
+              </ThemedText>
+            </Pressable>
           </View>
         </View>
       </Modal>

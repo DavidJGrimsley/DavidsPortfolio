@@ -338,7 +338,7 @@ export default function QuantumAPIPage() {
           </View>
 
           <ThemedText className="opacity-85 mb-4 leading-6">
-            General-purpose quantum computing services for games and applications. Simulator-backed runtime works out of the box, and BYO IBM credentials unlock backend discovery, transpilation, and async hardware jobs through the same Quantum API account.
+            General-purpose quantum computing services for games and applications. Simulator-backed runtime works out of the box, and BYO IBM credentials unlock backend discovery, transpilation, and async hardware jobs through the same Quantum API records.
           </ThemedText>
 
           {/* Features Section */}
@@ -812,8 +812,8 @@ export default function QuantumAPIPage() {
                   4. Authentication and Key Management
                 </ThemedText>
                 <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
-                  Phase 3.75 uses Identerest Account auth for key management on this page. Sign in with an email magic link or GitHub, then create, rotate, and revoke Quantum API keys from the dashboard above.{"\n\n"}
-                  IBM credentials are optional. Without them, simulator-backed features still work. With BYO IBM credentials, the same account can use IBM backend discovery, transpilation, and async hardware jobs.{"\n\n"}
+                  Phase 3.75 uses Identerest account auth for key management on this page. Sign in with an email magic link or GitHub, then create, rotate, and revoke Quantum API keys from the dashboard above.{"\n\n"}
+                  IBM credentials are optional. Without them, simulator-backed features still work. With BYO IBM credentials, the same signed-in account can use IBM backend discovery, transpilation, and async hardware jobs.{"\n\n"}
                   Public routes include <ThemedText className="font-mono">/v1/health</ThemedText> and{' '}
                   <ThemedText className="font-mono">/v1/portfolio.json</ThemedText>. Most runtime endpoints require an API key in{' '}
                   <ThemedText className="font-mono">X-API-Key</ThemedText>.{"\n\n"}
@@ -1055,5 +1055,4 @@ print(f"Superposition: {result['superposition_strength']}")`}
       </PublicFacingDetailWrapper>
   );
 }
-
 

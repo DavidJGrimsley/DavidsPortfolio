@@ -29,36 +29,36 @@ export type QuantumGatewayQuickAction = {
 
 export const quantumGatewayHighlights: QuantumGatewayHighlight[] = [
   {
-    id: 'single-account',
-    title: 'Single account identity',
+    id: 'identerest-account',
+    title: 'Identerest account sign in',
     description:
-      'Users sign in once with Identerest. The same account owner_user_id is used across Quantum API, Gateway, Creatisphere, and Higher.',
+      'Users sign in once with an Identerest account. The same session can manage Gateway projects, Quantum API keys, and IBM credential profiles.',
     icon: 'person-circle-outline',
     status: 'Connected to Identerest',
   },
   {
-    id: 'api-keys',
-    title: 'Quantum API key mapping',
+    id: 'gateway-projects',
+    title: 'Gateway project routing',
     description:
-      'Choose the default Quantum API key each gateway project should use. The key records still live in Quantum API tables.',
+      'Choose the default Quantum API key, IBM profile, origins, and limits for each Gateway project.',
     icon: 'key-outline',
-    status: 'Backed by identerest.quantum-api.api-keys',
+    status: 'Backed by Gateway management API',
   },
   {
-    id: 'ibm-profiles',
-    title: 'IBM profile selection',
+    id: 'publishable-keys',
+    title: 'Publishable Gateway client keys',
     description:
-      'Select existing IBM credential profiles per project so hardware backends can be used without exposing tokens to clients.',
+      'Create, rotate, and revoke publishable Gateway client keys that mint short-lived runtime tokens.',
     icon: 'hardware-chip-outline',
-    status: 'Backed by identerest.quantum-api.ibm-credential-profiles',
+    status: 'Visible once on create or rotate',
   },
   {
-    id: 'usage',
-    title: 'Project-level gateway controls',
+    id: 'runtime-token',
+    title: 'Runtime token flow',
     description:
-      'Gateway stores project settings and default credential pointers while execution history remains managed by Quantum API workflows.',
+      'Public clients exchange a publishable Gateway client key for a short-lived runtime token before calling Gateway runtime routes.',
     icon: 'analytics-outline',
-    status: 'Project table under identerest.quantum-gateway',
+    status: 'Bearer auth for runtime calls',
   },
 ];
 
@@ -71,8 +71,8 @@ export const quantumGatewaySettingsSections: QuantumGatewaySettingsSection[] = [
       {
         id: 'slug',
         label: 'Project slug',
-        value: 'pokemon-prod',
-        hint: 'Unique per owner account',
+        value: 'echoes-of-light',
+        hint: 'Unique per Identerest account',
       },
       {
         id: 'path-prefix',
@@ -112,17 +112,17 @@ export const quantumGatewaySettingsSections: QuantumGatewaySettingsSection[] = [
   {
     id: 'credentials',
     title: 'Credential bindings',
-    description: 'Attach existing API keys and IBM credential profiles without duplicating credential storage.',
+    description: 'Attach existing Quantum API keys and IBM credential profiles without duplicating secret storage.',
     rows: [
       {
         id: 'primary-api-key',
-        label: 'Primary Quantum API key',
-        value: 'Set per project',
+        label: 'Default Quantum API key',
+        value: 'Select per Gateway project',
       },
       {
         id: 'ibm-default',
         label: 'Default IBM profile',
-        value: 'Set per project',
+        value: 'Select per Gateway project',
       },
       {
         id: 'audit',
@@ -155,8 +155,8 @@ export const quantumGatewayQuickActions: QuantumGatewayQuickAction[] = [
 ];
 
 export const quantumGatewayIntegrationNotes = [
-  'Identerest is the account authority. Users keep one identity across all your products.',
-  'Quantum API remains the source of truth for API keys and IBM credential profiles.',
-  'Quantum Gateway stores project settings with default key/profile references.',
-  'Portfolio UI can read from identerest-backed APIs without direct coupling to gateway runtime internals.',
+  'Identerest account auth is the owner identity for Gateway project management.',
+  'Quantum API remains the source of truth for Quantum API keys and IBM credential profiles.',
+  'Gateway projects store only references to default credentials and runtime limits.',
+  'Public runtime calls use publishable Gateway client keys plus short-lived runtime tokens.',
 ];

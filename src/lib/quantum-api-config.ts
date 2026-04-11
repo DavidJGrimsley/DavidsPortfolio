@@ -1,4 +1,18 @@
 const DEFAULT_QUANTUM_API_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
+const DEFAULT_QUANTUM_API_BASE_URL_PRODUCTION =
+  'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+const DEFAULT_QUANTUM_API_BASE_URL =
+  process.env.NODE_ENV === 'production'
+    ? DEFAULT_QUANTUM_API_BASE_URL_PRODUCTION
+    : DEFAULT_QUANTUM_API_BASE_URL_LOCAL;
+const LOCAL_WEB_QUANTUM_PROXY_BASE_URL = '/public-facing/api/quantum/v1';
+const DEFAULT_QUANTUM_GATEWAY_BASE_URL_PRODUCTION =
+  'https://davidjgrimsley.com/public-facing/api/quantum-gateway/v1';
+const DEFAULT_QUANTUM_GATEWAY_BASE_URL =
+  process.env.NODE_ENV === 'production'
+    ? DEFAULT_QUANTUM_GATEWAY_BASE_URL_PRODUCTION
+    : '/public-facing/api/quantum-gateway/v1';
+const LOCAL_WEB_QUANTUM_GATEWAY_PROXY_BASE_URL = '/public-facing/api/quantum-gateway/v1';
 
 export const QUANTUM_AUTH_PATH = '/public-facing/api/quantum';
 export type QuantumEndpointAuth = 'public' | 'api_key' | 'bearer_jwt';
@@ -7,23 +21,45 @@ function trimTrailingSlash(url: string) {
   return url.replace(/\/+$/, '');
 }
 
-function resolveQuantumApiBaseUrl() {
-  const envBaseUrl = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL?.trim();
+const envBaseUrl = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL?.trim();
+const browserLocation =
+  typeof window !== 'undefined' && window.location ? window.location : null;
+const isLocalWebRuntime =
+  !!browserLocation &&
+  (browserLocation.hostname === 'localhost' ||
+    browserLocation.hostname === '127.0.0.1' ||
+    browserLocation.hostname === '::1') &&
+  browserLocation.port === '3000';
 
-  if (envBaseUrl && envBaseUrl.length > 0) {
-    return trimTrailingSlash(envBaseUrl);
+function shouldUseLocalWebProxyUrl(candidateUrl?: string) {
+  if (!isLocalWebRuntime) return false;
+  if (!candidateUrl || candidateUrl.length === 0) return true;
+  if (!/^https?:\/\//i.test(candidateUrl)) return false;
+
+  try {
+    const hostname = new URL(candidateUrl).hostname.toLowerCase();
+    return hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname !== '::1';
+  } catch {
+    return false;
   }
-
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'Missing EXPO_PUBLIC_QUANTUM_API_BASE_URL in production runtime. Set an explicit mounted Quantum API base URL.'
-    );
-  }
-
-  return DEFAULT_QUANTUM_API_BASE_URL_LOCAL;
 }
 
-export const QUANTUM_API_BASE_URL = resolveQuantumApiBaseUrl();
+const resolvedBaseUrl = shouldUseLocalWebProxyUrl(envBaseUrl)
+  ? LOCAL_WEB_QUANTUM_PROXY_BASE_URL
+  : envBaseUrl && envBaseUrl.length > 0
+    ? envBaseUrl
+    : DEFAULT_QUANTUM_API_BASE_URL;
+
+const gatewayEnvBaseUrl = process.env.EXPO_PUBLIC_QUANTUM_GATEWAY_BASE_URL?.trim();
+const resolvedGatewayBaseUrl = shouldUseLocalWebProxyUrl(gatewayEnvBaseUrl)
+  ? LOCAL_WEB_QUANTUM_GATEWAY_PROXY_BASE_URL
+  : gatewayEnvBaseUrl && gatewayEnvBaseUrl.length > 0
+    ? gatewayEnvBaseUrl
+    : DEFAULT_QUANTUM_GATEWAY_BASE_URL;
+
+export const QUANTUM_API_BASE_URL = trimTrailingSlash(
+  resolvedBaseUrl
+);
 
 export const QUANTUM_PORTFOLIO_URL = `${QUANTUM_API_BASE_URL}/portfolio.json`;
 
@@ -31,10 +67,15 @@ export const QUANTUM_DOCS_URL = QUANTUM_API_BASE_URL.endsWith('/v1')
   ? `${QUANTUM_API_BASE_URL.slice(0, -3)}/docs`
   : `${QUANTUM_API_BASE_URL}/docs`;
 
+export const QUANTUM_GATEWAY_BASE_URL = trimTrailingSlash(resolvedGatewayBaseUrl);
+
+export const QUANTUM_GATEWAY_DOCS_URL = QUANTUM_GATEWAY_BASE_URL.endsWith('/v1')
+  ? `${QUANTUM_GATEWAY_BASE_URL.slice(0, -3)}/docs`
+  : `${QUANTUM_GATEWAY_BASE_URL}/docs`;
+
 export function resolveQuantumEndpointBaseUrl(
   _auth: QuantumEndpointAuth,
   _isWebRuntime = typeof window !== 'undefined'
 ) {
-  // Client calls should always use the configured public base URL.
   return QUANTUM_API_BASE_URL;
 }

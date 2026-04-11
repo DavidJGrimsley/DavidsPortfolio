@@ -146,6 +146,15 @@ app.use('/public-facing/api/quantum/v1', async (req, res, next) => {
   await proxyToQuantumOrigin(req, res, targetUrl);
 });
 
+app.use('/public-facing/api/quantum-gateway/v1', async (req, res, next) => {
+  if (!isLocalhostRequest(req)) {
+    return next();
+  }
+
+  const targetUrl = `${QUANTUM_REMOTE_ORIGIN}${req.originalUrl}`;
+  await proxyToQuantumOrigin(req, res, targetUrl);
+});
+
 app.use('/api/quantum-backend', async (req, res, next) => {
   if (!isLocalhostRequest(req)) {
     return next();

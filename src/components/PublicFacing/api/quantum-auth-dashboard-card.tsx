@@ -15,7 +15,6 @@ import type { Session } from '@supabase/supabase-js';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
 import Svg, { Line } from 'react-native-svg';
-import { OverlayTooltip } from '@/components/UI/OverlayTooltip';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { CompanyButton } from './CompanyButton';
@@ -168,6 +167,7 @@ export function QuantumAuthDashboardCard({
   const [ibmForm, setIbmForm] = useState<IbmProfileFormState>(createEmptyIbmProfileForm);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [showIdenterestInfo, setShowIdenterestInfo] = useState(false);
+  const [showIbmInfoModal, setShowIbmInfoModal] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supabaseClient = useMemo(() => {
@@ -711,7 +711,7 @@ export function QuantumAuthDashboardCard({
         borderColor: tintColor + '33',
       }}
     >
-      <View className="mb-4 flex-row flex-wrap items-start justify-between gap-3">
+      <View className="mb-4 flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <ThemedText type="subtitle" className="mb-1 text-2xl md:text-3xl">
             Api Keys
@@ -764,7 +764,7 @@ export function QuantumAuthDashboardCard({
             Identerest auth is not configured yet
           </ThemedText>
           <ThemedText selectable className="opacity-85 text-base leading-6">
-            {getSupabaseConfigError()} Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to enable Identerest Account sign in on this page.
+            {getSupabaseConfigError()} Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to enable Identerest account sign in on this page.
           </ThemedText>
         </View>
       ) : bootstrapping ? (
@@ -816,7 +816,7 @@ export function QuantumAuthDashboardCard({
               }}
             >
               <ThemedText type="defaultSemiBold" className="mb-2 text-lg">
-                Keys are managed by your Identerest Account
+                Keys are managed by your Identerest account
               </ThemedText>
               <ThemedText className="mb-4 opacity-80 text-base leading-6">
                 Sign-in or Create an account today! Use a passwordless email magic link or continue with GitHub.
@@ -916,10 +916,10 @@ export function QuantumAuthDashboardCard({
                   borderColor: accentColor + '35',
                 }}
               >
-                <View className="mb-4 flex-row flex-wrap items-start justify-between gap-3">
+                <View className="mb-4 flex-row items-start justify-between gap-3">
                   <View className="flex-1">
                     <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
-                      Signed in via Identerest Account
+                      Signed in via Identerest account
                     </ThemedText>
                     <ThemedText selectable className="opacity-80 text-base leading-6">
                       {session.user.email ?? 'Authenticated Quantum user'}
@@ -1094,7 +1094,7 @@ export function QuantumAuthDashboardCard({
                   borderColor: accentColor + '35',
                 }}
               >
-                <View className="mb-4 flex-row flex-wrap items-center justify-between gap-3">
+                <View className="mb-4 flex-row items-center justify-between gap-3">
                   <View>
                     <ThemedText type="defaultSemiBold" className="text-lg">
                       API Keys
@@ -1104,7 +1104,7 @@ export function QuantumAuthDashboardCard({
                     </ThemedText>
                   </View>
 
-                  <View className="ml-auto flex-row flex-wrap items-center justify-end gap-2">
+                  <View className="flex-row items-center gap-2">
                     <Pressable
                       disabled={deletingRevokedKeys || loadingKeys || revokedKeysCount <= 0}
                       onPress={handleDeleteAllRevokedKeys}
@@ -1128,7 +1128,7 @@ export function QuantumAuthDashboardCard({
                       {deletingRevokedKeys ? (
                         <ActivityIndicator color="#f87171" />
                       ) : (
-                        <ThemedText className="text-xs font-bold uppercase tracking-[0.08em]" style={{ color: '#f87171' }}>
+                        <ThemedText className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: '#f87171' }}>
                           Delete Revoked
                         </ThemedText>
                       )}
@@ -1340,19 +1340,18 @@ export function QuantumAuthDashboardCard({
                     </ThemedText>
                   </Pressable>
 
-                  <OverlayTooltip
-                    content="IBM credentials are optional. Simulator-backed Quantum API features still work without them. Add a profile only when you want IBM backend discovery, transpilation, and async hardware jobs. Tokens are write-only and only masked metadata is shown after save."
-                    maxWidth={360}
-                    side="top"
-                    triggerAccessibilityLabel="IBM credentials help"
-                    triggerStyle={{
+                  <Pressable
+                    accessibilityLabel="IBM credentials help"
+                    onPress={() => setShowIbmInfoModal(true)}
+                    style={({ pressed }) => ({
                       alignItems: 'center',
                       justifyContent: 'center',
+                      opacity: pressed ? 0.72 : 1,
                       padding: 4,
-                    }}
+                    })}
                   >
                     <Ionicons color={secondaryColor} name="information-circle-outline" size={20} />
-                  </OverlayTooltip>
+                  </Pressable>
                 </View>
 
                 {showIbmCredentials ? (
@@ -1360,7 +1359,7 @@ export function QuantumAuthDashboardCard({
                     <ThemedText className="opacity-80 text-base leading-6">
                       IBM credentials are optional. Without them, simulator-backed Quantum API
                       features still work. Add a profile to enable IBM backend discovery,
-                      transpilation, and async hardware jobs through the same Quantum API account.
+                      transpilation, and async hardware jobs through the same Quantum API records.
                     </ThemedText>
 
                     {ibmMessage ? (
@@ -1848,7 +1847,7 @@ export function QuantumAuthDashboardCard({
               </View>
 
               <ThemedText className="opacity-90 text-base leading-6">
-                You are creating or signing into your Identerest Account. This shared account works
+                You are creating or signing into your Identerest account. This shared account works
                 across the ecosystem, including this Quantum API dashboard, Creatisphere, and Higher.
               </ThemedText>
               <ThemedText className="mt-2 opacity-80 text-base leading-6">
@@ -1914,6 +1913,66 @@ export function QuantumAuthDashboardCard({
         </View>
       </Modal>
 
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setShowIbmInfoModal(false)}
+        transparent
+        visible={showIbmInfoModal}
+      >
+        <View className="flex-1 items-center justify-center bg-black/60 px-4">
+          <Pressable
+            accessibilityLabel="Close IBM credentials info modal"
+            accessibilityRole="button"
+            className="absolute inset-0"
+            onPress={() => setShowIbmInfoModal(false)}
+          />
+
+          <View
+            className="z-10 w-full max-w-[680px] rounded-3xl border p-6 md:p-7"
+            style={{
+              backgroundColor,
+              borderColor: tintColor + '45',
+              maxHeight: 760,
+            }}
+          >
+            <ScrollView contentContainerStyle={{ paddingBottom: 4 }} showsVerticalScrollIndicator>
+              <View className="mb-3 flex-row items-start justify-between gap-3">
+                <View className="flex-1 flex-row items-center gap-2.5">
+                  <ThemedText type="defaultSemiBold" className="text-lg md:text-xl">
+                    About IBM Credentials
+                  </ThemedText>
+                </View>
+
+                <Pressable
+                  accessibilityLabel="Close IBM credentials info"
+                  accessibilityRole="button"
+                  onPress={() => setShowIbmInfoModal(false)}
+                  style={({ pressed }) => ({
+                    opacity: pressed ? 0.75 : 1,
+                    padding: 4,
+                  })}
+                >
+                  <Ionicons color={secondaryColor} name="close" size={20} />
+                </Pressable>
+              </View>
+
+              <ThemedText className="opacity-90 text-base leading-6">
+                IBM credentials are optional. You can keep using simulator-backed Quantum API features
+                without adding IBM credentials.
+              </ThemedText>
+
+              <ThemedText className="mt-2 opacity-90 text-base leading-6">
+                If you add your own IBM profile, this same signed-in account can use IBM backend
+                discovery, transpilation, and async hardware jobs.
+              </ThemedText>
+
+              <ThemedText className="mt-2 opacity-80 text-base leading-6">
+                Your IBM token is write-only. After save, only masked token metadata is shown.
+              </ThemedText>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
