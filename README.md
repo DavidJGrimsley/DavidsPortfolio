@@ -44,8 +44,8 @@ QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofstadter.108-175-12-95.plesk.page
 ```
 
-`EXPO_PUBLIC_*` variables are build-time for Expo web output. After changing them, rebuild and redeploy.
-On Plesk, set these variables in the Node.js environment before post-deploy runs.
+`EXPO_PUBLIC_*` variables are baked into the Expo web build, while `QUANTUM_BACKEND_API_KEY` is read by the Node server at runtime.
+On Plesk, set both the build-time and runtime variables in the Node.js environment before post-deploy runs.
 The deploy hook fails fast when required variables are missing.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
@@ -72,7 +72,7 @@ npm run build:web:deploy
 
 - Branch model: `feature/* -> test -> main`.
 - GitHub Actions workflow: `.github/workflows/ci.yml`.
-- Main PR source guard workflow: `.github/workflows/main-pr-source-guard.yml`.
+- Main PR source guard workflow: `.github/workflows/require-main-pr-source.yml`.
 - Deploy marker files generated during deploy build:
   - `/__djsportfolio_build.txt`
   - `/__djsportfolio_build.json`
@@ -83,22 +83,23 @@ npm run build:web:deploy
 ### Required GitHub Actions Secrets
 
 - `PLESK_STAGING_WEBHOOK_URL`
-- `PLESK_STAGING_SITE_ORIGIN`
 - `PLESK_PRODUCTION_WEBHOOK_URL`
-- `PLESK_PRODUCTION_SITE_ORIGIN`
 
-### Deployment Verification Contract
+### Deploy Behavior
 
-The CI deploy jobs verify live deployment by polling:
+On PRs and pushes, CI works like this:
 
-- `${PLESK_STAGING_SITE_ORIGIN}/__djsportfolio_build.txt`
-- `${PLESK_PRODUCTION_SITE_ORIGIN}/__djsportfolio_build.txt`
+1. `Quality` runs lint, typecheck, tests, Expo Doctor, and `build:web:deploy`.
+2. Pushes to `test` run `Deploy Staging`, which validates `PLESK_STAGING_WEBHOOK_URL` and fires the staging Plesk webhook.
+3. Pushes to `main` run `Deploy Production`, which validates `PLESK_PRODUCTION_WEBHOOK_URL` and fires the production Plesk webhook.
+4. PRs into `main` also run `Require Main PR Source`, which only allows `test` or `hotfix/*`.
 
-If the deployment serves static files under `dist/client`, the verifier also checks:
+Build marker files are still generated and served for manual diagnostics, but they are no longer required for mergeable CI.
 
-- `${SITE_ORIGIN}/dist/client/__djsportfolio_build.txt`
+### Recommended Rulesets
 
-The endpoint must return the exact deployed commit SHA.
+- `test`: require pull request, require `Quality`, require up-to-date branch, block force pushes, restrict deletions
+- `main`: require pull request, require `Quality` and `Require Main PR Source`, require up-to-date branch, block force pushes, restrict deletions
 
 ## Notes
 
