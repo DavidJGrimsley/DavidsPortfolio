@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsAPICard } from '~/src/components/PublicFacing/api/WhatIsAPICard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
-import { useFetchPortfolio } from '@/hooks/useFetchPortfolio';
-import { QUANTUM_PORTFOLIO_URL } from '@/lib/quantum-api-config';
+import { createQuantumPublicClient } from '@/lib/quantum-sdk-client';
 import apisData from '@json/apis.json';
 
 type QuantumPortfolio = {
@@ -49,10 +48,27 @@ type ApiCardItem = {
 
 export default function APIIndexPage() {
   const router = useRouter();
+  const [portfolioQuantum, setPortfolioQuantum] = useState<QuantumPortfolio | null>(null);
+  const sdkPublicClient = useMemo(() => createQuantumPublicClient(), []);
 
-  const { data: portfolioQuantum } = useFetchPortfolio<QuantumPortfolio>(QUANTUM_PORTFOLIO_URL, {
-    retryOn304: true,
-  });
+  useEffect(() => {
+    let isMounted = true;
+
+    sdkPublicClient
+      .portfolio({ auth: 'none' })
+      .then((data) => {
+        if (!isMounted) return;
+        setPortfolioQuantum(data as QuantumPortfolio);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setPortfolioQuantum(null);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sdkPublicClient]);
 
   const handleAPIPress = (apiId: string) => {
     router.push(`/public-facing/api/${apiId}` as any);

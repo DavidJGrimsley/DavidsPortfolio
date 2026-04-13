@@ -64,17 +64,12 @@ describe('quantum api config', () => {
     expect(withBlankEnv.QUANTUM_API_BASE_URL).toBe('http://127.0.0.1:8000/v1');
   });
 
-  it('falls back to hosted quantum path for production builds when env is missing', () => {
+  it('fails fast in production builds when env base URL is missing', () => {
     mutableEnv.NODE_ENV = 'production';
     delete mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL;
 
-    const config = loadConfig();
-
-    expect(config.QUANTUM_API_BASE_URL).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
-    );
-    expect(config.QUANTUM_PORTFOLIO_URL).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum/v1/portfolio.json'
+    expect(() => loadConfig()).toThrow(
+      'Missing EXPO_PUBLIC_QUANTUM_API_BASE_URL in production runtime. Set an explicit mounted Quantum API base URL.'
     );
   });
 
@@ -87,28 +82,31 @@ describe('quantum api config', () => {
     expect(config.QUANTUM_PORTFOLIO_URL).toBe('https://example.com/api/quantum/portfolio.json');
   });
 
-  it('uses local web proxy url on localhost:3000 when env is missing or blank', () => {
-    mutableEnv.NODE_ENV = 'test';
-    setWindowLocation('localhost', '3000');
-    delete mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL;
-
-    const withoutEnv = loadConfig();
-
-    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = '   ';
-    jest.resetModules();
-    const withBlankEnv = loadConfig();
-
-    expect(withoutEnv.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
-    expect(withoutEnv.QUANTUM_PORTFOLIO_URL).toBe('/public-facing/api/quantum/v1/portfolio.json');
-    expect(withBlankEnv.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
-  });
-
-  it('uses local web proxy url on localhost:3000 when env points at remote https origin', () => {
+  it('does not rewrite env override to same-origin on localhost web runtime', () => {
     setWindowLocation('localhost', '3000');
     mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = 'https://example.com/public-facing/api/quantum/v1';
 
     const config = loadConfig();
 
-    expect(config.QUANTUM_API_BASE_URL).toBe('/public-facing/api/quantum/v1');
+    expect(config.QUANTUM_API_BASE_URL).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
+  });
+
+  it('resolves api-key and public endpoints to the configured base url', () => {
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://example.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
+    expect(config.resolveQuantumEndpointBaseUrl('public', true)).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
+    expect(config.resolveQuantumEndpointBaseUrl('api_key', false)).toBe(
+      'https://example.com/public-facing/api/quantum/v1'
+    );
   });
 });

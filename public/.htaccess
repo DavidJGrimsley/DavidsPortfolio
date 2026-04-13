@@ -6,4 +6,4 @@ AddType application/manifest+json .webmanifest
 # Simple SPA routing fallback
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+RewriteRule . / [L]

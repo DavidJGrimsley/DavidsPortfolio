@@ -1,0 +1,31 @@
+name: Main PR Source Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  require_main_pr_source:
+    name: Require Main PR Source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Validate PR source branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            test|hotfix/*)
+              echo "Accepted PR source branch: $HEAD_REF"
+              ;;
+            *)
+              echo "PRs into main must come from test or hotfix/*." >&2
+              echo "Received source branch: $HEAD_REF" >&2
+              exit 1
+              ;;
+          esac
