@@ -45,8 +45,29 @@ QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofst
 ```
 
 `EXPO_PUBLIC_*` variables are baked into the Expo web build, while `QUANTUM_BACKEND_API_KEY` is read by the Node server at runtime.
-On Plesk, set both the build-time and runtime variables in the Node.js environment before post-deploy runs.
-The deploy hook fails fast when required variables are missing.
+The running Node app still reads runtime values from `process.env`, but Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local env file for the build step too.
+
+### Plesk Env Files
+
+For each Plesk deployment root, create a server-local `.env.plesk` file next to `server.js` with the values for that specific environment. Example staging file:
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=...
+EXPO_PUBLIC_SUPABASE_ANON_KEY=...
+EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum/v1
+QUANTUM_BACKEND_API_KEY=qapi_...
+QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.page
+```
+
+`scripts/plesk-post-deploy.sh` now loads env in this order:
+
+1. `PLESK_ENV_FILE` if you explicitly set it
+2. `.env.plesk`
+3. `.env`
+
+The deploy script fails fast if the required values are still missing after that.
+
+For now, keep the runtime values in the Plesk Node.js environment too. This change guarantees the build script sees the env file; it does not change how the running Node app receives `process.env`.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
@@ -94,7 +115,9 @@ On PRs and pushes, CI works like this:
 3. Pushes to `main` run `Deploy Production`, which validates `PLESK_PRODUCTION_WEBHOOK_URL` and fires the production Plesk webhook.
 4. PRs into `main` also run `Require Main PR Source`, which only allows `test` or `hotfix/*`.
 
-Build marker files are still generated and served for manual diagnostics, but they are no longer required for mergeable CI.
+Important: the webhook only confirms that Plesk received the deploy trigger. It does not confirm that the Git pull, Additional Deployment Actions, build, or restart finished successfully. Plesk Support told us to treat `/var/log/plesk/panel.log` as the authoritative deploy log for completion/failure details.
+
+Build marker files are still generated and served for manual diagnostics once the site is live, but they are no longer used as a blocking CI signal.
 
 ### Recommended Rulesets
 
@@ -107,3 +130,4 @@ Build marker files are still generated and served for manual diagnostics, but th
 - IBM profile CRUD uses Quantum API bearer-authenticated endpoints.
 - Hardware jobs use API-key-authenticated Quantum API runtime endpoints.
 - Client endpoint demos use `EXPO_PUBLIC_QUANTUM_API_BASE_URL` directly.
+- Keep `.env.plesk` out of git. It is a server-local deployment file, not an application artifact.
