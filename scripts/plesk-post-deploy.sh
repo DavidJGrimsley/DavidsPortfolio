@@ -5,6 +5,33 @@ set -eu
 (set -o pipefail) >/dev/null 2>&1 && set -o pipefail
 
 missing=0
+loaded_env_file=''
+
+load_env_file() {
+	env_file="$1"
+
+	if [ ! -f "$env_file" ]; then
+		return 1
+	fi
+
+	echo "Loading environment from $env_file"
+	set -a
+	. "$env_file"
+	set +a
+	loaded_env_file="$env_file"
+	return 0
+}
+
+if [ -n "${PLESK_ENV_FILE-}" ]; then
+	if ! load_env_file "$PLESK_ENV_FILE"; then
+		echo "Configured PLESK_ENV_FILE was not found: $PLESK_ENV_FILE"
+		exit 1
+	fi
+elif ! load_env_file ".env.plesk"; then
+	if ! load_env_file ".env"; then
+		echo 'No .env.plesk or .env file found; relying on inherited environment only.'
+	fi
+fi
 
 if [ -z "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}" ] && [ -n "${EXPO_PUBLIC_SUPABASE_KEY-}" ]; then
 	EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_KEY}"
@@ -39,11 +66,16 @@ require_env_var QUANTUM_BACKEND_API_KEY
 
 if [ "$missing" -ne 0 ]; then
 	echo 'Aborting deploy build due to missing required environment variables.'
-	echo 'Set the required variables in Plesk Node.js environment settings, then redeploy.'
+	echo 'Create or update .env.plesk (or point PLESK_ENV_FILE at the correct file), then redeploy.'
 	exit 1
 fi
 
 echo 'Build environment summary:'
+if [ -n "$loaded_env_file" ]; then
+	echo "  loaded_env_file=$loaded_env_file"
+else
+	echo '  loaded_env_file=(none, inherited environment only)'
+fi
 echo "  EXPO_PUBLIC_QUANTUM_API_BASE_URL=${EXPO_PUBLIC_QUANTUM_API_BASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_ANON_KEY=$(mask_prefix "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}")"

@@ -38,6 +38,8 @@ yarn-error.*
 # local env files
 .env*.local
 .env
+.env.plesk
+.env.plesk.*
 .env.backup
 api-server.env
 .plesk-build-seq
