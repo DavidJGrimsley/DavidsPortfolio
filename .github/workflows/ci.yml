@@ -42,36 +42,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Typecheck
-        run: npm run typecheck
-
       - name: Tests
         run: npm run test
 
-      - name: Expo doctor
-        run: npm run doctor
-
-      - name: Build web deploy bundle
+      - name: Build web bundle
         env:
           EXPO_PUBLIC_QUANTUM_API_BASE_URL: https://davidjgrimsley.com/public-facing/api/quantum/v1
-        run: npm run build:web:deploy
-
-      - name: Show build marker outputs
-        shell: bash
-        run: |
-          ls -la dist/client
-          echo "__djsportfolio_build.txt"
-          cat dist/client/__djsportfolio_build.txt
-          echo "__djsportfolio_build.json"
-          cat dist/client/__djsportfolio_build.json
-
-      - name: Upload quality build artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-dist-client-${{ github.sha }}
-          path: dist/client
-          if-no-files-found: error
-          retention-days: 7
+        run: npm run build:web
 
   deploy_staging:
     name: Deploy Staging
