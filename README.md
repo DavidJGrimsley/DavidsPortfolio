@@ -14,8 +14,8 @@ Expo Router portfolio app for web/mobile with public API docs, project showcases
   - list/create/edit/delete profile
   - verify profile
   - set default profile
-- Quantum animation supports simulator mode and IBM hardware mode through SDK-backed runtime calls routed via `/api/quantum-backend`.
-- Runtime API keys remain server-side only (`QUANTUM_BACKEND_API_KEY`), not client-exposed.
+- Quantum animation supports simulator mode and IBM hardware mode through Quantum API runtime endpoints.
+- Simulator usage remains available without IBM credentials.
 
 ## Tech Stack
 
@@ -40,17 +40,8 @@ npm install
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
-QUANTUM_BACKEND_API_KEY=qapi_...
-QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofstadter.108-175-12-95.plesk.page
+EXPO_PUBLIC_QUANTUM_API_KEY=...
 ```
-
-`EXPO_PUBLIC_*` variables are baked into the Expo web build, while `QUANTUM_BACKEND_API_KEY` is read by the Node server at runtime.
-On Plesk, set both the build-time and runtime variables in the Node.js environment before post-deploy runs.
-The deploy hook fails fast when required variables are missing.
-
-Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
-`QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
-For non-web runtimes that need runtime proxy calls, set `EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL` to an absolute proxy URL (for example `https://davidjgrimsley.com/api/quantum-backend`).
 
 3. Start the app:
 
@@ -62,48 +53,12 @@ npm run web
 
 ```bash
 npm run lint
-npm run typecheck
+npx tsc --noEmit
 npm test -- --runInBand
-npm run doctor
-npm run build:web:deploy
 ```
-
-## CI + Deploy Flow
-
-- Branch model: `feature/* -> test -> main`.
-- GitHub Actions workflow: `.github/workflows/ci.yml`.
-- Main PR source guard workflow: `.github/workflows/require-main-pr-source.yml`.
-- Deploy marker files generated during deploy build:
-  - `/__djsportfolio_build.txt`
-  - `/__djsportfolio_build.json`
-- Browser console logs build metadata on load using `/__djsportfolio_build.json`.
-- Plesk post-deploy script for Git deployments: `scripts/plesk-post-deploy.sh`.
-- Quality job uploads the generated `dist/client` directory as a GitHub Actions artifact (`quality-dist-client-<sha>`), including build marker files.
-
-### Required GitHub Actions Secrets
-
-- `PLESK_STAGING_WEBHOOK_URL`
-- `PLESK_PRODUCTION_WEBHOOK_URL`
-
-### Deploy Behavior
-
-On PRs and pushes, CI works like this:
-
-1. `Quality` runs lint, typecheck, tests, Expo Doctor, and `build:web:deploy`.
-2. Pushes to `test` run `Deploy Staging`, which validates `PLESK_STAGING_WEBHOOK_URL` and fires the staging Plesk webhook.
-3. Pushes to `main` run `Deploy Production`, which validates `PLESK_PRODUCTION_WEBHOOK_URL` and fires the production Plesk webhook.
-4. PRs into `main` also run `Require Main PR Source`, which only allows `test` or `hotfix/*`.
-
-Build marker files are still generated and served for manual diagnostics, but they are no longer required for mergeable CI.
-
-### Recommended Rulesets
-
-- `test`: require pull request, require `Quality`, require up-to-date branch, block force pushes, restrict deletions
-- `main`: require pull request, require `Quality` and `Require Main PR Source`, require up-to-date branch, block force pushes, restrict deletions
 
 ## Notes
 
 - IBM secrets are not written directly from frontend to Supabase.
 - IBM profile CRUD uses Quantum API bearer-authenticated endpoints.
 - Hardware jobs use API-key-authenticated Quantum API runtime endpoints.
-- Client endpoint demos use `EXPO_PUBLIC_QUANTUM_API_BASE_URL` directly.

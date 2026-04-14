@@ -56,7 +56,7 @@ export function SoftwareCard({ item, stats, ctaLabel, ctaHint, onPress }: Softwa
       <TagList tags={item.tags} />
 
       {/* Call to Action */}
-      <View className="mt-4 pt-4 border-t border-white-or-black/25 flex-col items-start gap-1 md:flex-row md:items-center md:justify-between">
+      <View className="mt-4 pt-4 border-t border-white-or-black/25 flex-row justify-between items-center">
         <ThemedText className="text-base text-tint font-bold">
           {ctaLabel ?? 'View Documentation →'}
         </ThemedText>

@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - test
-      - main
   workflow_dispatch:
 
 permissions:
@@ -43,36 +42,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Typecheck
-        run: npm run typecheck
-
       - name: Tests
         run: npm run test
 
-      - name: Expo doctor
-        run: npm run doctor
-
-      - name: Build web deploy bundle
+      - name: Build web bundle
         env:
           EXPO_PUBLIC_QUANTUM_API_BASE_URL: https://davidjgrimsley.com/public-facing/api/quantum/v1
-        run: npm run build:web:deploy
-
-      - name: Show build marker outputs
-        shell: bash
-        run: |
-          ls -la dist/client
-          echo "__djsportfolio_build.txt"
-          cat dist/client/__djsportfolio_build.txt
-          echo "__djsportfolio_build.json"
-          cat dist/client/__djsportfolio_build.json
-
-      - name: Upload quality build artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-dist-client-${{ github.sha }}
-          path: dist/client
-          if-no-files-found: error
-          retention-days: 7
+        run: npm run build:web
 
   deploy_staging:
     name: Deploy Staging
@@ -96,27 +72,3 @@ jobs:
         shell: bash
         run: |
           curl --fail --silent --show-error --request POST "${PLESK_STAGING_WEBHOOK_URL}"
-
-  deploy_production:
-    name: Deploy Production
-    runs-on: ubuntu-latest
-    needs: quality
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    timeout-minutes: 5
-    env:
-      PLESK_PRODUCTION_WEBHOOK_URL: ${{ secrets.PLESK_PRODUCTION_WEBHOOK_URL }}
-
-    steps:
-      - name: Validate production deploy secrets
-        shell: bash
-        run: |
-          if [ -z "${PLESK_PRODUCTION_WEBHOOK_URL}" ]; then
-            echo "Missing secret: PLESK_PRODUCTION_WEBHOOK_URL"
-            exit 1
-          fi
-
-      - name: Trigger production deploy webhook
-        shell: bash
-        run: |
-          curl --fail --silent --show-error --request POST "${PLESK_PRODUCTION_WEBHOOK_URL}"
-

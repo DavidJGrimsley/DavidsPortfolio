@@ -13,4 +13,4 @@
 /learn/  /Learn/  301
 
 # Handle all other routes with trailing slash issues
-/*  /  200
+/*  /index.html  200

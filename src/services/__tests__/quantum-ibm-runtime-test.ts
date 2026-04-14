@@ -2,39 +2,20 @@ import {
   getIbmCircuitJobResult,
   getIbmCircuitJobStatus,
   listIbmBackends,
-  runQuantumGate,
   submitIbmCircuitJob,
 } from '../quantum-ibm-runtime';
 
 type MockResponse = {
   ok: boolean;
   status: number;
-  headers: Headers;
   text: () => Promise<string>;
-  json: () => Promise<unknown>;
 };
 
 function createMockResponse(body: string, init?: Partial<Pick<MockResponse, 'ok' | 'status'>>) {
-  const parseBody = () => {
-    if (!body) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(body) as unknown;
-    } catch {
-      return body;
-    }
-  };
-
   return {
     ok: init?.ok ?? true,
     status: init?.status ?? 200,
-    headers: new Headers({
-      'content-type': 'application/json',
-    }),
     text: jest.fn().mockResolvedValue(body),
-    json: jest.fn().mockResolvedValue(parseBody()),
   } as MockResponse;
 }
 
@@ -159,63 +140,6 @@ describe('quantum ibm runtime service', () => {
         shots: 512,
         counts: { '0': 255, '1': 257 },
       },
-    });
-  });
-
-  it('routes api-key protected runtime calls through the proxy path', async () => {
-    fetchMock.mockResolvedValue(
-      createMockResponse(
-        JSON.stringify({
-          gate_type: 'rotation',
-          measurement: 1,
-          superposition_strength: 0.875,
-          success: true,
-          backend: 'Qiskit Aer simulator',
-        })
-      )
-    );
-
-    await expect(
-      runQuantumGate('https://example.com/public-facing/api/quantum/v1', apiKey, {
-        gateType: 'rotation',
-        rotationAngleRad: Math.PI / 2,
-      })
-    ).resolves.toMatchObject({
-      gateType: 'rotation',
-      measurement: 1,
-      superpositionStrength: 0.875,
-    });
-
-    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const calledHeaders = new Headers(calledInit.headers);
-
-    expect(calledUrl).toBe('https://example.com/api/quantum-backend/v1/gates/run');
-    expect(calledInit.method).toBe('POST');
-    expect(calledHeaders.get('Accept')).toBe('application/json');
-    expect(calledHeaders.get('X-API-Key')).toBe(apiKey);
-  });
-
-  it('surfaces invalid key errors from runtime calls', async () => {
-    fetchMock.mockResolvedValue(
-      createMockResponse(
-        JSON.stringify({
-          error: 'invalid_api_key',
-          message: 'Quantum API key rejected (401). Create or rotate an active key and retry.',
-        }),
-        {
-          ok: false,
-          status: 401,
-        }
-      )
-    );
-
-    await expect(
-      runQuantumGate(baseUrl, apiKey, {
-        gateType: 'bit_flip',
-      })
-    ).rejects.toMatchObject({
-      name: 'QuantumApiError',
-      status: 401,
     });
   });
 });
