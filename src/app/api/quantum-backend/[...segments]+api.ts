@@ -1,7 +1,10 @@
-const DEFAULT_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
+const DEFAULT_UPSTREAM_BASE_URL =
+  'https://davidjgrimsley.com/public-facing/api/quantum/v1';
 const PROXY_ROUTE_PREFIX = '/api/quantum-backend';
 const ROUTE_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
 const DEFAULT_ALLOWED_ORIGINS = [
+  'https://davidjgrimsley.com',
+  'https://www.davidjgrimsley.com',
   'http://localhost:8081',
   'http://127.0.0.1:8081',
   'http://localhost:3000',
@@ -18,18 +21,8 @@ type Method =
   | 'OPTIONS';
 
 function normalizeUpstreamBaseUrl() {
-  const raw = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL?.trim();
-  const base =
-    raw && raw.length > 0
-      ? raw
-      : process.env.NODE_ENV === 'production'
-        ? null
-        : DEFAULT_UPSTREAM_BASE_URL_LOCAL;
-
-  if (!base) {
-    return null;
-  }
-
+  const raw = process.env.QUANTUM_PROXY_UPSTREAM_BASE_URL?.trim();
+  const base = raw && raw.length > 0 ? raw : DEFAULT_UPSTREAM_BASE_URL;
   const trimmed = base.replace(/\/+$/, '');
   return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
 }
@@ -133,23 +126,8 @@ function appendVary(headers: Headers, value: string) {
   }
 }
 
-function getRequestOrigin(request: Request) {
-  try {
-    return new URL(request.url).origin;
-  } catch {
-    return null;
-  }
-}
-
-function isOriginAllowed(
-  origin: string | null,
-  allowedOrigins: readonly string[],
-  requestOrigin: string | null
-) {
+function isOriginAllowed(origin: string | null, allowedOrigins: readonly string[]) {
   if (!origin) {
-    return true;
-  }
-  if (requestOrigin && origin === requestOrigin) {
     return true;
   }
   if (allowedOrigins.includes('*')) {
@@ -168,8 +146,7 @@ function mergeCors(
   merged.set('Access-Control-Allow-Methods', ROUTE_METHODS);
   merged.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
   const origin = request.headers.get('origin');
-  const requestOrigin = getRequestOrigin(request);
-  if (origin && isOriginAllowed(origin, allowedOrigins, requestOrigin)) {
+  if (origin && isOriginAllowed(origin, allowedOrigins)) {
     merged.set('Access-Control-Allow-Origin', origin);
     appendVary(merged, 'Origin');
   }
@@ -178,7 +155,7 @@ function mergeCors(
 
 async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request) {
   const allowedOrigins = getAllowedOrigins();
-  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',
@@ -200,17 +177,6 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
   }
 
   const upstreamBaseUrl = normalizeUpstreamBaseUrl();
-  if (!upstreamBaseUrl) {
-    return Response.json(
-      {
-        error: 'proxy_not_configured',
-        message:
-          'EXPO_PUBLIC_QUANTUM_API_BASE_URL is missing for production runtime and no development fallback is available.',
-      },
-      { status: 500, headers: mergeCors(request, allowedOrigins) }
-    );
-  }
-
   const url = new URL(request.url);
   const operationPath = normalizeOperationPath(url.pathname);
 
@@ -262,7 +228,7 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
 
 export function OPTIONS(request: Request) {
   const allowedOrigins = getAllowedOrigins();
-  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',

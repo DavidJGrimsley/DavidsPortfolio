@@ -76,51 +76,6 @@ function RootLayoutClient() {
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (typeof window === 'undefined') return;
-    if ((window as any).__DJS_BUILD_LOGGED__) return;
-
-    const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-    if (process.env.NODE_ENV !== 'production' && isLocalHost) {
-      (window as any).__DJS_BUILD_LOGGED__ = true;
-      return;
-    }
-
-    (async () => {
-      const metadataPaths = ['/__djsportfolio_build.json', '/dist/client/__djsportfolio_build.json'];
-      let lastErrorMessage = 'metadata not found';
-
-      for (const metadataPath of metadataPaths) {
-        const buildMetadataUrl = `${metadataPath}?ts=${Date.now()}`;
-
-        try {
-          const response = await fetch(buildMetadataUrl, { cache: 'no-store' });
-          if (!response.ok) {
-            throw new Error(`${metadataPath} HTTP ${response.status}`);
-          }
-
-          const info = await response.json();
-          const buildNumber = info?.buildNumber ?? 'unknown';
-          const shortSha = info?.shortSha ?? 'unknown';
-          const branch = info?.branch ?? 'unknown';
-          const builtAt = info?.builtAt ?? 'unknown';
-
-          console.info(
-            `[DJsPortfolio] Build #${String(buildNumber)} | ${String(shortSha)} | ${String(branch)} | ${String(builtAt)} | ${metadataPath}`
-          );
-          return;
-        } catch (error) {
-          lastErrorMessage = error instanceof Error ? error.message : String(error);
-        }
-      }
-
-      console.warn(`[DJsPortfolio] Build metadata unavailable: ${lastErrorMessage}`);
-    })().finally(() => {
-      (window as any).__DJS_BUILD_LOGGED__ = true;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker

@@ -13,26 +13,17 @@
     "web": "expo start --web",
     "build": "npm run build:web",
     "build:web": "expo export -p web && node scripts/generate-sitemap.mjs",
-    "build:web:deploy": "npm run build:web && node scripts/write-build-marker.mjs",
     "sitemap": "node scripts/generate-sitemap.mjs",
     "icons:copy": "node scripts/copy-icons.mjs",
     "test": "jest",
     "test:watch": "jest --watchAll",
     "test:ci": "jest --ci",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit",
-    "doctor": "npx expo-doctor",
     "server": "node server.js",
     "server:dev": "nodemon server.js"
   },
   "jest": {
-    "preset": "jest-expo",
-    "moduleNameMapper": {
-      "^@mr\\.dj2u/quantum-api$": "<rootDir>/node_modules/@mr.dj2u/quantum-api/dist/index.js"
-    },
-    "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@mr\\.dj2u/quantum-api))"
-    ]
+    "preset": "jest-expo"
   },
   "dependencies": {
     "@expo-google-fonts/cinzel-decorative": "^0.4.1",
@@ -47,7 +38,6 @@
     "@expo/html-elements": "^0.13.8",
     "@expo/vector-icons": "^15.0.3",
     "@lottiefiles/dotlottie-react": "^0.13.5",
-    "@mr.dj2u/quantum-api": "^0.1.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@react-native-picker/picker": "2.11.1",
