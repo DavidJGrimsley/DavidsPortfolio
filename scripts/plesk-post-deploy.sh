@@ -9,14 +9,24 @@ loaded_env_file=''
 
 load_env_file() {
 	env_file="$1"
+	source_path="$env_file"
 
 	if [ ! -f "$env_file" ]; then
 		return 1
 	fi
 
+	case "$env_file" in
+		/*|./*|../*|*/*)
+			source_path="$env_file"
+			;;
+		*)
+			source_path="./$env_file"
+			;;
+	esac
+
 	echo "Loading environment from $env_file"
 	set -a
-	. "$env_file"
+	. "$source_path"
 	set +a
 	loaded_env_file="$env_file"
 	return 0
