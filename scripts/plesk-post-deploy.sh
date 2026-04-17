@@ -22,6 +22,18 @@ set -a
 . "./.env.plesk"
 set +a
 
+DEPLOY_COMMIT_SHA="${DEPLOY_COMMIT_SHA-}"
+if [ -z "$DEPLOY_COMMIT_SHA" ]; then
+	DEPLOY_COMMIT_SHA="$(git rev-parse HEAD 2>/dev/null || true)"
+fi
+
+DEPLOY_BRANCH="${DEPLOY_BRANCH-}"
+if [ -z "$DEPLOY_BRANCH" ]; then
+	DEPLOY_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+fi
+
+export DEPLOY_COMMIT_SHA DEPLOY_BRANCH
+
 if [ -z "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}" ] && [ -n "${EXPO_PUBLIC_SUPABASE_KEY-}" ]; then
 	EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_KEY}"
 	export EXPO_PUBLIC_SUPABASE_ANON_KEY
@@ -61,6 +73,8 @@ fi
 
 echo 'Build environment summary:'
 echo '  loaded_env_file=.env.plesk'
+echo "  DEPLOY_BRANCH=${DEPLOY_BRANCH:-unknown}"
+echo "  DEPLOY_COMMIT_SHA=$(mask_prefix "${DEPLOY_COMMIT_SHA-}")"
 echo "  EXPO_PUBLIC_QUANTUM_API_BASE_URL=${EXPO_PUBLIC_QUANTUM_API_BASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_ANON_KEY=$(mask_prefix "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}")"
