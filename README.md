@@ -39,12 +39,14 @@ npm install
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
+EXPO_PUBLIC_SITE_ORIGIN=https://davidjgrimsley.com
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofstadter.108-175-12-95.plesk.page
 ```
 
 `EXPO_PUBLIC_*` variables are baked into the Expo web build, while `QUANTUM_BACKEND_API_KEY` is read by the Node server at runtime.
+`EXPO_PUBLIC_SITE_ORIGIN` controls the Supabase auth callback origin for the current environment. Use the exact deployed origin for that environment, for example `https://davidjgrimsley.com` for production or your `*.plesk.page` staging domain on `test`.
 The running Node app still reads runtime values from `process.env`, but Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local env file for the build step too.
 
 ### Plesk Env Files
@@ -54,6 +56,7 @@ For each Plesk deployment root, create a server-local `.env.plesk` file next to 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
+EXPO_PUBLIC_SITE_ORIGIN=https://quizzical-hofstadter.108-175-12-95.plesk.page
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.page
@@ -72,6 +75,20 @@ For now, keep the runtime values in the Plesk Node.js environment too. This chan
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
 For non-web runtimes that need runtime proxy calls, set `EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL` to an absolute proxy URL (for example `https://davidjgrimsley.com/api/quantum-backend`).
+
+### Supabase Auth Callback Setup
+
+Supabase must allow the callback URL for every environment you use. If the requested redirect URL is not allow-listed, Supabase can fall back to its configured Site URL, which often looks like an unexpected `localhost` redirect during staging.
+
+In Supabase Auth settings:
+
+1. Set the Site URL intentionally for the environment you are testing.
+2. Add redirect URLs for each environment you need, for example:
+   - `http://localhost:3000/public-facing/api/quantum`
+   - `https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum`
+   - `https://davidjgrimsley.com/public-facing/api/quantum`
+
+For staging on `test`, set `EXPO_PUBLIC_SITE_ORIGIN` to the temp-domain origin and keep the matching callback URL in Supabase's allow-list.
 
 3. Start the app:
 
