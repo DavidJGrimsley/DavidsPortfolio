@@ -1,9 +1,7 @@
-const DEFAULT_SITE_ORIGIN = 'https://davidjgrimsley.com';
-const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+import { SITE_URL } from '@/constants/seo';
 
-function trimTrailingSlash(value: string): string {
-  return value.replace(/\/+$/, '');
-}
+const DEFAULT_SITE_ORIGIN = SITE_URL;
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
 function parseAbsoluteSiteOrigin(rawOrigin: string): string {
   let parsed: URL;
@@ -24,7 +22,7 @@ function parseAbsoluteSiteOrigin(rawOrigin: string): string {
     );
   }
 
-  return trimTrailingSlash(parsed.origin);
+  return parsed.origin;
 }
 
 function readConfiguredSiteOrigin(): string {
