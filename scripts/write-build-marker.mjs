@@ -41,6 +41,7 @@ const envSha = process.env.DEPLOY_COMMIT_SHA?.trim() || process.env.GITHUB_SHA?.
 const resolvedSha = envSha || gitFromClosestRepo(['rev-parse', 'HEAD']);
 const sha = /^[0-9a-f]{40}$/i.test(resolvedSha) ? resolvedSha : 'unknown';
 const branch =
+  process.env.DEPLOY_BRANCH?.trim() ||
   process.env.GITHUB_REF_NAME?.trim() ||
   gitFromClosestRepo(['rev-parse', '--abbrev-ref', 'HEAD']) ||
   'unknown';
