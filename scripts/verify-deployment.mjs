@@ -207,18 +207,23 @@ async function main() {
       buildPayload && typeof buildPayload.shortSha === 'string'
         ? buildPayload.shortSha.toLowerCase()
         : '';
+    const payloadHasKnownSha =
+      (payloadSha.length > 0 && payloadSha !== 'unknown') ||
+      (payloadShortSha.length > 0 && payloadShortSha !== 'unknown');
 
     const buildMatchesExpected =
       expectedSha.length > 0 &&
       (payloadSha === expectedSha || payloadShortSha === expectedSha.slice(0, 7));
     const buildFreshByTime =
       Number.isFinite(builtAt) && builtAt >= notBeforeTime - clockSkewMs;
-    const buildFresh = expectedSha.length > 0 ? buildMatchesExpected : buildFreshByTime;
+    const verifyingByExpectedSha = expectedSha.length > 0 && payloadHasKnownSha;
+    const buildFresh = verifyingByExpectedSha ? buildMatchesExpected : buildFreshByTime;
     const homeOk = homeResult.response.ok;
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
         `${formatBuildSummary(buildPayload)} ` +
+        `verificationMode=${verifyingByExpectedSha ? 'sha' : 'timestamp'} ` +
         `buildFresh=${buildFresh} ` +
         `buildMatchesExpected=${buildMatchesExpected} ` +
         `homeStatus=${homeResult.response.status}`,
@@ -233,7 +238,7 @@ async function main() {
 
     const buildError =
       buildMetaResult.error ??
-      (expectedSha.length > 0
+      (verifyingByExpectedSha
         ? `build sha ${buildPayload?.sha ?? buildPayload?.shortSha ?? 'unknown'} does not match expected ${expectedSha}`
         : Number.isFinite(builtAt)
           ? `build timestamp ${buildPayload?.builtAt ?? 'unknown'} is older than ${args.notBefore} (allowing ${clockSkewMs}ms skew)`
