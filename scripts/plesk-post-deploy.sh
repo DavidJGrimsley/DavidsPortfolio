@@ -4,44 +4,23 @@ set -eu
 # Enable pipefail only on shells that support it.
 (set -o pipefail) >/dev/null 2>&1 && set -o pipefail
 
+cd "$(dirname "$0")/.."
+
 missing=0
-loaded_env_file=''
 
-load_env_file() {
-	env_file="$1"
-	source_path="$env_file"
-
-	if [ ! -f "$env_file" ]; then
-		return 1
-	fi
-
-	case "$env_file" in
-		/*|./*|../*|*/*)
-			source_path="$env_file"
-			;;
-		*)
-			source_path="./$env_file"
-			;;
-	esac
-
-	echo "Loading environment from $env_file"
-	set -a
-	. "$source_path"
-	set +a
-	loaded_env_file="$env_file"
-	return 0
-}
-
-if [ -n "${PLESK_ENV_FILE-}" ]; then
-	if ! load_env_file "$PLESK_ENV_FILE"; then
-		echo "Configured PLESK_ENV_FILE was not found: $PLESK_ENV_FILE"
-		exit 1
-	fi
-elif ! load_env_file ".env.plesk"; then
-	if ! load_env_file ".env"; then
-		echo 'No .env.plesk or .env file found; relying on inherited environment only.'
-	fi
+if [ ! -f ".env.plesk" ]; then
+	echo "Missing required .env.plesk file in $(pwd)" >&2
+	exit 1
 fi
+
+echo "[plesk-post-deploy] HEAD: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+echo "[plesk-post-deploy] Branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+echo "[plesk-post-deploy] Node: $(node --version 2>/dev/null || echo unknown)"
+echo "[plesk-post-deploy] npm: $(npm --version 2>/dev/null || echo unknown)"
+echo "[plesk-post-deploy] Loading .env.plesk"
+set -a
+. "./.env.plesk"
+set +a
 
 if [ -z "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}" ] && [ -n "${EXPO_PUBLIC_SUPABASE_KEY-}" ]; then
 	EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_KEY}"
@@ -76,25 +55,44 @@ require_env_var QUANTUM_BACKEND_API_KEY
 
 if [ "$missing" -ne 0 ]; then
 	echo 'Aborting deploy build due to missing required environment variables.'
-	echo 'Create or update .env.plesk (or point PLESK_ENV_FILE at the correct file), then redeploy.'
+	echo 'Create or update .env.plesk, then redeploy.'
 	exit 1
 fi
 
 echo 'Build environment summary:'
-if [ -n "$loaded_env_file" ]; then
-	echo "  loaded_env_file=$loaded_env_file"
-else
-	echo '  loaded_env_file=(none, inherited environment only)'
-fi
+echo '  loaded_env_file=.env.plesk'
 echo "  EXPO_PUBLIC_QUANTUM_API_BASE_URL=${EXPO_PUBLIC_QUANTUM_API_BASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_ANON_KEY=$(mask_prefix "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}")"
 echo "  QUANTUM_BACKEND_API_KEY=$(mask_prefix "${QUANTUM_BACKEND_API_KEY-}")"
 
+if [ -d "dist" ]; then
+	echo "[plesk-post-deploy] Existing dist ownership:"
+	ls -ld dist || true
+
+	if [ -w "dist" ]; then
+		echo "[plesk-post-deploy] Removing writable dist"
+		rm -rf dist
+	else
+		stale_dist="dist.stale.$(date +%Y%m%d%H%M%S)"
+		echo "[plesk-post-deploy] dist is not writable; attempting to move it aside to $stale_dist"
+		if mv dist "$stale_dist"; then
+			echo "[plesk-post-deploy] Moved stale dist to $stale_dist"
+		else
+			echo "[plesk-post-deploy] Failed to move non-writable dist. Fix ownership, for example:" >&2
+			echo "[plesk-post-deploy]   sudo chown -R \$(stat -c '%U:%G' .) dist" >&2
+			exit 1
+		fi
+	fi
+fi
+
+echo '[plesk-post-deploy] Installing dependencies'
 npm ci --include=dev
+
+echo '[plesk-post-deploy] Building web output'
 npm run build:web:deploy
 
 mkdir -p ../tmp
 touch ../tmp/restart.txt
 
-echo "Plesk post-deploy actions completed."
+echo "[plesk-post-deploy] Plesk post-deploy actions completed."

@@ -1,12 +1,24 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
 const path = require('path');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
+const dotenv = require('dotenv');
 const express = require('express');
 const compression = require('compression');
 const morgan = require('morgan');
 const { createRequestHandler } = require('expo-server/adapter/express');
+
+const PLESK_ENV_PATH = path.join(process.cwd(), '.env.plesk');
+
+if (fs.existsSync(PLESK_ENV_PATH)) {
+  const dotenvResult = dotenv.config({ path: PLESK_ENV_PATH });
+  if (dotenvResult.error) {
+    console.error(`Failed to load environment from ${PLESK_ENV_PATH}:`, dotenvResult.error);
+    process.exit(1);
+  }
+}
 
 const CLIENT_BUILD_DIR = path.join(process.cwd(), 'dist/client');
 const SERVER_BUILD_DIR = path.join(process.cwd(), 'dist/server');

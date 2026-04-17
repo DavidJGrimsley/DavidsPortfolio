@@ -47,7 +47,7 @@ QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofst
 
 `EXPO_PUBLIC_*` variables are baked into the Expo web build, while `QUANTUM_BACKEND_API_KEY` is read by the Node server at runtime.
 `EXPO_PUBLIC_SITE_ORIGIN` controls the Supabase auth callback origin for the current environment. Use the exact deployed origin for that environment, for example `https://davidjgrimsley.com` for production or your `*.plesk.page` staging domain on `test`.
-The running Node app still reads runtime values from `process.env`, but Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local env file for the build step too.
+Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local `.env.plesk` file in the app root so both the build step and the running Node server can read the same values.
 
 ### Plesk Env Files
 
@@ -62,15 +62,8 @@ QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.page
 ```
 
-`scripts/plesk-post-deploy.sh` now loads env in this order:
-
-1. `PLESK_ENV_FILE` if you explicitly set it
-2. `.env.plesk`
-3. `.env`
-
-The deploy script fails fast if the required values are still missing after that.
-
-For now, keep the runtime values in the Plesk Node.js environment too. This change guarantees the build script sees the env file; it does not change how the running Node app receives `process.env`.
+`scripts/plesk-post-deploy.sh` now requires `.env.plesk` explicitly and fails fast if it is missing or if required values are blank.
+`server.js` also loads `.env.plesk` at runtime when the file is present, so the build and the running app stay on the same environment contract.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
@@ -116,6 +109,7 @@ npm run build:web:deploy
   - `/__djsportfolio_build.json`
 - Browser console logs build metadata on load using `/__djsportfolio_build.json`.
 - Plesk post-deploy script for Git deployments: `scripts/plesk-post-deploy.sh`.
+- Public deploy verification script: `scripts/verify-deployment.mjs`.
 - Quality job uploads the generated `dist/client` directory as a GitHub Actions artifact (`quality-dist-client-<sha>`), including build marker files.
 
 ### Required GitHub Actions Secrets
@@ -128,13 +122,11 @@ npm run build:web:deploy
 On PRs and pushes, CI works like this:
 
 1. `Quality` runs lint, typecheck, tests, Expo Doctor, and `build:web:deploy`.
-2. Pushes to `test` run `Deploy Staging`, which validates `PLESK_STAGING_WEBHOOK_URL` and fires the staging Plesk webhook.
-3. Pushes to `main` run `Deploy Production`, which validates `PLESK_PRODUCTION_WEBHOOK_URL` and fires the production Plesk webhook.
+2. Pushes to `test` run `Deploy Staging`, which validates `PLESK_STAGING_WEBHOOK_URL`, fires the staging Plesk webhook, then verifies a fresh public build marker and healthy home page on the staging domain.
+3. Pushes to `main` run `Deploy Production`, which validates `PLESK_PRODUCTION_WEBHOOK_URL`, fires the production Plesk webhook, then verifies a fresh public build marker and healthy home page on production.
 4. PRs into `main` also run `Require Main PR Source`, which only allows `test` or `hotfix/*`.
 
-Important: the webhook only confirms that Plesk received the deploy trigger. It does not confirm that the Git pull, Additional Deployment Actions, build, or restart finished successfully. Plesk Support told us to treat `/var/log/plesk/panel.log` as the authoritative deploy log for completion/failure details.
-
-Build marker files are still generated and served for manual diagnostics once the site is live, but they are no longer used as a blocking CI signal.
+Important: the webhook only confirms that Plesk received the deploy trigger. It does not confirm that the Git pull, Additional Deployment Actions, build, or restart finished successfully. Plesk Support told us to treat `/var/log/plesk/panel.log` as the authoritative server log, and CI now uses the public build marker as an external verification signal after the webhook fires.
 
 ### Recommended Rulesets
 

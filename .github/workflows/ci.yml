@@ -16,6 +16,8 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  STAGING_SITE_URL: https://quizzical-hofstadter.108-175-12-95.plesk.page
+  PRODUCTION_SITE_URL: https://davidjgrimsley.com
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -36,6 +38,9 @@ jobs:
         with:
           node-version: 23
           cache: npm
+
+      - name: Setup npm
+        run: npm install --global npm@10.9.8
 
       - name: Install dependencies
         run: npm ci
@@ -79,13 +84,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     if: github.event_name == 'push' && github.ref == 'refs/heads/test'
-    timeout-minutes: 5
-    env:
-      PLESK_STAGING_WEBHOOK_URL: ${{ secrets.PLESK_STAGING_WEBHOOK_URL }}
+    timeout-minutes: 10
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 23
+        uses: actions/setup-node@v6
+        with:
+          node-version: 23
+
+      - name: Capture deploy start time
+        run: |
+          echo "DEPLOY_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
       - name: Validate staging deploy secrets
-        shell: bash
+        env:
+          PLESK_STAGING_WEBHOOK_URL: ${{ secrets.PLESK_STAGING_WEBHOOK_URL }}
         run: |
           if [ -z "${PLESK_STAGING_WEBHOOK_URL}" ]; then
             echo "Missing secret: PLESK_STAGING_WEBHOOK_URL"
@@ -93,22 +109,46 @@ jobs:
           fi
 
       - name: Trigger staging deploy webhook
-        shell: bash
+        env:
+          PLESK_STAGING_WEBHOOK_URL: ${{ secrets.PLESK_STAGING_WEBHOOK_URL }}
         run: |
           curl --fail --silent --show-error --request POST "${PLESK_STAGING_WEBHOOK_URL}"
+
+      - name: Verify staging deployment
+        env:
+          SITE_URL: ${{ env.STAGING_SITE_URL }}
+        run: |
+          node ./scripts/verify-deployment.mjs \
+            --label "staging" \
+            --site-url "$SITE_URL" \
+            --not-before "$DEPLOY_STARTED_AT" \
+            --expected-sha "$GITHUB_SHA" \
+            --interval-ms 10000 \
+            --timeout-ms 360000
 
   deploy_production:
     name: Deploy Production
     runs-on: ubuntu-latest
     needs: quality
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    timeout-minutes: 5
-    env:
-      PLESK_PRODUCTION_WEBHOOK_URL: ${{ secrets.PLESK_PRODUCTION_WEBHOOK_URL }}
+    timeout-minutes: 10
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 23
+        uses: actions/setup-node@v6
+        with:
+          node-version: 23
+
+      - name: Capture deploy start time
+        run: |
+          echo "DEPLOY_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
       - name: Validate production deploy secrets
-        shell: bash
+        env:
+          PLESK_PRODUCTION_WEBHOOK_URL: ${{ secrets.PLESK_PRODUCTION_WEBHOOK_URL }}
         run: |
           if [ -z "${PLESK_PRODUCTION_WEBHOOK_URL}" ]; then
             echo "Missing secret: PLESK_PRODUCTION_WEBHOOK_URL"
@@ -116,7 +156,20 @@ jobs:
           fi
 
       - name: Trigger production deploy webhook
-        shell: bash
+        env:
+          PLESK_PRODUCTION_WEBHOOK_URL: ${{ secrets.PLESK_PRODUCTION_WEBHOOK_URL }}
         run: |
           curl --fail --silent --show-error --request POST "${PLESK_PRODUCTION_WEBHOOK_URL}"
+
+      - name: Verify production deployment
+        env:
+          SITE_URL: ${{ env.PRODUCTION_SITE_URL }}
+        run: |
+          node ./scripts/verify-deployment.mjs \
+            --label "production" \
+            --site-url "$SITE_URL" \
+            --not-before "$DEPLOY_STARTED_AT" \
+            --expected-sha "$GITHUB_SHA" \
+            --interval-ms 10000 \
+            --timeout-ms 360000
 
