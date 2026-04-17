@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { SITE_URL } from '@/constants/seo';
 import { QUANTUM_AUTH_PATH } from '@/lib/quantum-api-config';
+import { resolveBrowserSiteOrigin } from '@/lib/site-origin';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
 const SUPABASE_ANON_KEY =
@@ -56,11 +56,7 @@ export function getSupabaseConfigError() {
 }
 
 export function getQuantumAuthRedirectUrl() {
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return `${window.location.origin}${QUANTUM_AUTH_PATH}`;
-  }
-
-  return `${SITE_URL}${QUANTUM_AUTH_PATH}`;
+  return new URL(QUANTUM_AUTH_PATH, resolveBrowserSiteOrigin()).toString();
 }
 
 export function getSupabaseBrowserClient() {
