@@ -55,7 +55,7 @@ require_env_var QUANTUM_BACKEND_API_KEY
 
 if [ "$missing" -ne 0 ]; then
 	echo 'Aborting deploy build due to missing required environment variables.'
-	echo 'Create or update .env.plesk (or point PLESK_ENV_FILE at the correct file), then redeploy.'
+	echo 'Create or update .env.plesk, then redeploy.'
 	exit 1
 fi
 

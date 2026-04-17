@@ -4,6 +4,7 @@ function parseArgs(argv) {
     timeoutMs: 8 * 60_000,
     label: 'deployment',
     notBefore: '',
+    expectedSha: '',
     siteUrl: '',
   };
 
@@ -22,6 +23,10 @@ function parseArgs(argv) {
         break;
       case '--label':
         args.label = nextValue ?? '';
+        index += 1;
+        break;
+      case '--expected-sha':
+        args.expectedSha = nextValue ?? '';
         index += 1;
         break;
       case '--interval-ms':
@@ -66,29 +71,59 @@ function resolveUrl(siteUrl, pathname) {
   return new URL(pathname, siteUrl).toString();
 }
 
-async function fetchText(url) {
-  const response = await fetch(url, {
-    headers: {
-      'cache-control': 'no-cache',
-      pragma: 'no-cache',
-    },
-  });
+function createTimeoutSignal(timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort(new Error(`Request timed out after ${timeoutMs}ms`));
+  }, timeoutMs);
 
-  const body = await response.text();
   return {
-    body,
-    ok: response.ok,
-    status: response.status,
-    statusText: response.statusText,
+    signal: controller.signal,
+    dispose() {
+      clearTimeout(timeoutId);
+    },
   };
 }
 
-async function fetchBuildMeta(siteUrl) {
+async function fetchText(url, timeoutMs) {
+  const { signal, dispose } = createTimeoutSignal(timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'cache-control': 'no-cache',
+        pragma: 'no-cache',
+      },
+      signal,
+    });
+
+    const body = await response.text();
+    return {
+      body,
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+    };
+  } finally {
+    dispose();
+  }
+}
+
+async function fetchBuildMeta(siteUrl, timeoutMs) {
   const candidatePaths = ['/__djsportfolio_build.json', '/dist/client/__djsportfolio_build.json'];
+  let lastError = 'build metadata was not reachable from any known marker path';
 
   for (const pathname of candidatePaths) {
     const buildMetaUrl = resolveUrl(siteUrl, pathname);
-    const response = await fetchText(buildMetaUrl);
+    let response;
+
+    try {
+      response = await fetchText(buildMetaUrl, timeoutMs);
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+      continue;
+    }
+
     if (!response.ok) {
       continue;
     }
@@ -101,24 +136,21 @@ async function fetchBuildMeta(siteUrl) {
         url: buildMetaUrl,
       };
     } catch (error) {
-      return {
-        error: error instanceof Error ? error.message : String(error),
-        response,
-        url: buildMetaUrl,
-      };
+      lastError = error instanceof Error ? error.message : String(error);
+      continue;
     }
   }
 
   return {
-    error: 'build metadata was not reachable from any known marker path',
+    error: lastError,
     response: null,
     url: candidatePaths.map((pathname) => resolveUrl(siteUrl, pathname)).join(', '),
   };
 }
 
-async function fetchHome(siteUrl) {
+async function fetchHome(siteUrl, timeoutMs) {
   const homeUrl = resolveUrl(siteUrl, '/');
-  const response = await fetchText(homeUrl);
+  const response = await fetchText(homeUrl, timeoutMs);
   return {
     response,
     url: homeUrl,
@@ -148,16 +180,20 @@ async function main() {
     throw new Error(`Invalid --not-before timestamp: ${args.notBefore}`);
   }
 
+  const expectedSha = args.expectedSha.trim().toLowerCase();
   const deadline = Date.now() + args.timeoutMs;
   let attempt = 0;
   let lastFailure = 'deployment has not been verified yet';
+  const clockSkewMs = 2 * 60_000;
 
   while (Date.now() <= deadline) {
     attempt += 1;
+    const remainingMs = deadline - Date.now();
+    const requestTimeoutMs = Math.max(1_000, Math.min(30_000, remainingMs));
 
     const [buildMetaResult, homeResult] = await Promise.all([
-      fetchBuildMeta(args.siteUrl),
-      fetchHome(args.siteUrl),
+      fetchBuildMeta(args.siteUrl, requestTimeoutMs),
+      fetchHome(args.siteUrl, requestTimeoutMs),
     ]);
 
     const buildPayload = buildMetaResult.payload ?? null;
@@ -165,14 +201,26 @@ async function main() {
       buildPayload && typeof buildPayload.builtAt === 'string'
         ? Date.parse(buildPayload.builtAt)
         : Number.NaN;
+    const payloadSha =
+      buildPayload && typeof buildPayload.sha === 'string' ? buildPayload.sha.toLowerCase() : '';
+    const payloadShortSha =
+      buildPayload && typeof buildPayload.shortSha === 'string'
+        ? buildPayload.shortSha.toLowerCase()
+        : '';
 
-    const buildFresh = Number.isFinite(builtAt) && builtAt >= notBeforeTime;
+    const buildMatchesExpected =
+      expectedSha.length > 0 &&
+      (payloadSha === expectedSha || payloadShortSha === expectedSha.slice(0, 7));
+    const buildFreshByTime =
+      Number.isFinite(builtAt) && builtAt >= notBeforeTime - clockSkewMs;
+    const buildFresh = expectedSha.length > 0 ? buildMatchesExpected : buildFreshByTime;
     const homeOk = homeResult.response.ok;
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
         `${formatBuildSummary(buildPayload)} ` +
         `buildFresh=${buildFresh} ` +
+        `buildMatchesExpected=${buildMatchesExpected} ` +
         `homeStatus=${homeResult.response.status}`,
     );
 
@@ -185,9 +233,11 @@ async function main() {
 
     const buildError =
       buildMetaResult.error ??
-      (Number.isFinite(builtAt)
-        ? `build timestamp ${buildPayload?.builtAt ?? 'unknown'} is older than ${args.notBefore}`
-        : `build timestamp is missing or invalid in ${buildMetaResult.url}`);
+      (expectedSha.length > 0
+        ? `build sha ${buildPayload?.sha ?? buildPayload?.shortSha ?? 'unknown'} does not match expected ${expectedSha}`
+        : Number.isFinite(builtAt)
+          ? `build timestamp ${buildPayload?.builtAt ?? 'unknown'} is older than ${args.notBefore} (allowing ${clockSkewMs}ms skew)`
+          : `build timestamp is missing or invalid in ${buildMetaResult.url}`);
     const homeError = homeOk
       ? 'home page is healthy'
       : `home returned ${homeResult.response.status} ${homeResult.response.statusText}`;

@@ -97,7 +97,7 @@ jobs:
 
       - name: Capture deploy start time
         run: |
-          echo "DEPLOY_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> "$GITHUB_ENV"
+          echo "DEPLOY_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
 
       - name: Validate staging deploy secrets
         env:
@@ -122,6 +122,7 @@ jobs:
             --label "staging" \
             --site-url "$SITE_URL" \
             --not-before "$DEPLOY_STARTED_AT" \
+            --expected-sha "$GITHUB_SHA" \
             --interval-ms 10000 \
             --timeout-ms 360000
 
@@ -143,7 +144,7 @@ jobs:
 
       - name: Capture deploy start time
         run: |
-          echo "DEPLOY_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> "$GITHUB_ENV"
+          echo "DEPLOY_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
 
       - name: Validate production deploy secrets
         env:
@@ -168,6 +169,7 @@ jobs:
             --label "production" \
             --site-url "$SITE_URL" \
             --not-before "$DEPLOY_STARTED_AT" \
+            --expected-sha "$GITHUB_SHA" \
             --interval-ms 10000 \
             --timeout-ms 360000
 
