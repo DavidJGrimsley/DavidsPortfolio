@@ -5,7 +5,10 @@ const repoRoot = path.resolve(process.cwd());
 const publicDir = path.join(repoRoot, 'public');
 const distDir = path.join(repoRoot, 'dist');
 
-const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL || 'https://davidjgrimsley.com';
+const SITE_URL =
+  process.env.EXPO_PUBLIC_SITE_ORIGIN?.trim() ||
+  process.env.EXPO_PUBLIC_SITE_URL?.trim() ||
+  'https://davidjgrimsley.com';
 
 function joinUrl(base, pathname) {
   const trimmedBase = base.replace(/\/$/, '');
