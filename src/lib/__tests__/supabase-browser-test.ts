@@ -51,6 +51,17 @@ describe('supabase browser auth redirect', () => {
     );
   });
 
+  it('ignores a loopback env origin when the browser is on a hosted domain', () => {
+    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'http://localhost:3000';
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
+
+    const supabaseBrowser = loadSupabaseBrowser();
+
+    expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum',
+    );
+  });
+
   it('keeps localhost during local web testing', () => {
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'https://davidjgrimsley.com';
     setWindowOrigin('http://localhost:3000');

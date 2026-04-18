@@ -75,3 +75,4 @@ ios/
 
 # Copilot MD files
 copilotInstructions/
+.claude/

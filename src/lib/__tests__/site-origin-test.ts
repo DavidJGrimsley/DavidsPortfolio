@@ -60,6 +60,17 @@ describe('site origin', () => {
     );
   });
 
+  it('prefers the hosted runtime origin when a loopback env leaks into a hosted build', () => {
+    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'http://localhost:3000';
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
+
+    const siteOrigin = loadSiteOrigin();
+
+    expect(siteOrigin.resolveBrowserSiteOrigin()).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+    );
+  });
+
   it('prefers the current loopback origin for local web testing', () => {
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'https://davidjgrimsley.com';
     setWindowOrigin('http://localhost:3000');

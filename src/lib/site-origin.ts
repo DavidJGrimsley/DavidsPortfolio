@@ -78,6 +78,10 @@ export function resolveBrowserSiteOrigin(): string {
   }
 
   const configuredOrigin = readConfiguredSiteOrigin();
+  if (configuredOrigin && isLoopbackOrigin(configuredOrigin) && runtimeOrigin) {
+    return runtimeOrigin;
+  }
+
   if (configuredOrigin) {
     return configuredOrigin;
   }
