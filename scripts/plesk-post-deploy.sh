@@ -62,6 +62,7 @@ mask_prefix() {
 
 require_env_var EXPO_PUBLIC_SUPABASE_URL
 require_env_var EXPO_PUBLIC_SUPABASE_ANON_KEY
+require_env_var EXPO_PUBLIC_SITE_ORIGIN
 require_env_var EXPO_PUBLIC_QUANTUM_API_BASE_URL
 require_env_var QUANTUM_BACKEND_API_KEY
 
@@ -75,6 +76,7 @@ echo 'Build environment summary:'
 echo '  loaded_env_file=.env.plesk'
 echo "  DEPLOY_BRANCH=${DEPLOY_BRANCH:-unknown}"
 echo "  DEPLOY_COMMIT_SHA=$(mask_prefix "${DEPLOY_COMMIT_SHA-}")"
+echo "  EXPO_PUBLIC_SITE_ORIGIN=${EXPO_PUBLIC_SITE_ORIGIN-}"
 echo "  EXPO_PUBLIC_QUANTUM_API_BASE_URL=${EXPO_PUBLIC_QUANTUM_API_BASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_ANON_KEY=$(mask_prefix "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}")"
