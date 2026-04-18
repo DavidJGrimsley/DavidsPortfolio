@@ -1,5 +1,8 @@
 export const SITE_NAME = 'David Grimsley';
-export const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL ?? 'https://davidjgrimsley.com';
+export const SITE_URL =
+  process.env.EXPO_PUBLIC_SITE_ORIGIN?.trim() ||
+  process.env.EXPO_PUBLIC_SITE_URL?.trim() ||
+  'https://davidjgrimsley.com';
 
 export const AUTHOR_NAME = 'David Grimsley';
 
