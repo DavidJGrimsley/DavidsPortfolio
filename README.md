@@ -70,6 +70,7 @@ QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.p
 
 `scripts/plesk-post-deploy.sh` picks `.env.test` on the `test` branch and `.env.production` on `main`, then fails fast if required values are blank.
 `server.js` uses the same env-loader at runtime, so the build and the running app stay on the same environment contract. Hosted `.env.test` and `.env.production` files are rejected if `EXPO_PUBLIC_SITE_ORIGIN` points to localhost.
+Existing Plesk deployments that still have `.env.plesk` will continue to use it as a legacy fallback, but rename that server-local file to `.env.test` or `.env.production` so the environment is obvious.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
@@ -145,4 +146,4 @@ Important: the webhook only confirms that Plesk received the deploy trigger. It 
 - IBM profile CRUD uses Quantum API bearer-authenticated endpoints.
 - Hardware jobs use API-key-authenticated Quantum API runtime endpoints.
 - Client endpoint demos use `EXPO_PUBLIC_QUANTUM_API_BASE_URL` directly.
-- Keep `.env`, `.env.test`, and `.env.production` out of git. They are server-local deployment files, not application artifacts.
+- Keep `.env`, `.env.test`, `.env.production`, and legacy `.env.plesk` files out of git. They are server-local deployment files, not application artifacts.
