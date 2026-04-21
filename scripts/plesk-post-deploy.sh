@@ -20,37 +20,47 @@ fi
 
 case "$DEPLOY_BRANCH" in
 	test)
-		env_candidates=".env.test .env.plesk"
+		if [ -f ".env.test" ]; then
+			env_candidates=".env.test"
+		else
+			env_candidates=".env .env.plesk"
+		fi
 		;;
 	main)
-		env_candidates=".env.production .env.plesk"
+		if [ -f ".env.production" ]; then
+			env_candidates=".env.production"
+		else
+			env_candidates=".env .env.plesk"
+		fi
 		;;
 	*)
-		env_candidates=".env .env.test .env.production .env.plesk"
+		env_candidates=".env"
 		;;
 esac
 
-env_file=""
+env_files=""
 for candidate in $env_candidates; do
 	if [ -f "$candidate" ]; then
-		env_file="$candidate"
-		break
+		env_files="${env_files:+$env_files }$candidate"
 	fi
 done
 
-if [ -z "$env_file" ]; then
+if [ -z "$env_files" ]; then
 	echo "Missing env file in $(pwd). Checked: $env_candidates" >&2
 	echo "Use .env for local, .env.test for the Plesk temp domain, and .env.production for production." >&2
 	exit 1
 fi
 
+env_file="${env_files##* }"
 if [ "$env_file" = ".env.plesk" ]; then
 	echo "[plesk-post-deploy] Loading legacy .env.plesk fallback. Prefer .env.test for staging and .env.production for production."
 else
-	echo "[plesk-post-deploy] Loading $env_file"
+	echo "[plesk-post-deploy] Loading $env_files"
 fi
 set -a
-. "./$env_file"
+for env_source in $env_files; do
+	. "./$env_source"
+done
 set +a
 
 DEPLOY_COMMIT_SHA="${DEPLOY_COMMIT_SHA-}"

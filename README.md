@@ -70,7 +70,7 @@ QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.p
 
 `scripts/plesk-post-deploy.sh` picks `.env.test` on the `test` branch and `.env.production` on `main`, then fails fast if required values are blank.
 `server.js` uses the same env-loader at runtime, so the build and the running app stay on the same environment contract. Hosted `.env.test` and `.env.production` files are rejected if `EXPO_PUBLIC_SITE_ORIGIN` points to localhost.
-Existing Plesk deployments that still have `.env.plesk` will continue to use it as a legacy fallback, but rename that server-local file to `.env.test` or `.env.production` so the environment is obvious.
+Existing Plesk deployments that still have `.env.plesk` will continue to use it as a legacy fallback. In that fallback mode, `.env` is loaded first and `.env.plesk` is loaded on top to match the old server behavior. Rename the server-local file to `.env.test` or `.env.production` so the environment is obvious.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
