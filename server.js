@@ -10,22 +10,31 @@ const compression = require('compression');
 const morgan = require('morgan');
 const { createRequestHandler } = require('expo-server/adapter/express');
 
+const LOCAL_ENV_PATH = path.join(process.cwd(), '.env');
 const PLESK_ENV_PATH = path.join(process.cwd(), '.env.plesk');
 
-if (fs.existsSync(PLESK_ENV_PATH)) {
-  const dotenvResult = dotenv.config({ path: PLESK_ENV_PATH });
+function loadEnvironmentFile(envPath, options = {}) {
+  if (!fs.existsSync(envPath)) {
+    return;
+  }
+
+  const dotenvResult = dotenv.config({ path: envPath, ...options });
   if (dotenvResult.error) {
-    console.error(`Failed to load environment from ${PLESK_ENV_PATH}:`, dotenvResult.error);
+    console.error(`Failed to load environment from ${envPath}:`, dotenvResult.error);
     process.exit(1);
   }
 }
+
+loadEnvironmentFile(LOCAL_ENV_PATH);
+loadEnvironmentFile(PLESK_ENV_PATH, { override: true });
 
 const CLIENT_BUILD_DIR = path.join(process.cwd(), 'dist/client');
 const SERVER_BUILD_DIR = path.join(process.cwd(), 'dist/server');
 
 const app = express();
 const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
-const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
+const DEFAULT_QUANTUM_UPSTREAM_BASE_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+const DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS = ['/keys', '/ibm/profiles'];
 
 function normalizeQuantumUpstreamBaseUrl() {
   const raw = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL
@@ -37,14 +46,21 @@ function normalizeQuantumUpstreamBaseUrl() {
     return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
   }
 
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
-
-  return DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL;
+  return DEFAULT_QUANTUM_UPSTREAM_BASE_URL;
 }
 
 const QUANTUM_UPSTREAM_BASE_URL = normalizeQuantumUpstreamBaseUrl();
+const QUANTUM_UPSTREAM_HOST = (() => {
+  if (!QUANTUM_UPSTREAM_BASE_URL) {
+    return '';
+  }
+
+  try {
+    return new URL(QUANTUM_UPSTREAM_BASE_URL).host.toLowerCase();
+  } catch {
+    return '';
+  }
+})();
 
 app.use(compression());
 app.disable('x-powered-by');
@@ -72,7 +88,107 @@ function isLocalhostRequest(req) {
   return isLoopbackAddress(remoteAddress);
 }
 
-async function proxyToQuantumOrigin(req, res, targetUrl) {
+function normalizeRequestHost(rawHost) {
+  const firstHost = String(rawHost || '').split(',')[0].trim().toLowerCase();
+  if (!firstHost) {
+    return '';
+  }
+
+  try {
+    return new URL(`http://${firstHost}`).host.toLowerCase();
+  } catch {
+    return firstHost;
+  }
+}
+
+function getRequestHost(req) {
+  return normalizeRequestHost(req.headers['x-forwarded-host'] || req.headers.host);
+}
+
+function getHostnameFromHost(host) {
+  try {
+    return new URL(`http://${host}`).hostname.toLowerCase();
+  } catch {
+    return String(host || '').toLowerCase();
+  }
+}
+
+function isProductionQuantumHost(host) {
+  const hostname = getHostnameFromHost(host);
+  return hostname === 'davidjgrimsley.com' || hostname === 'www.davidjgrimsley.com';
+}
+
+function shouldProxyPublicQuantumRequest(req) {
+  if (!ENABLE_LOCAL_QUANTUM_PROXY) {
+    return false;
+  }
+
+  const requestHost = getRequestHost(req);
+  if (isProductionQuantumHost(requestHost)) {
+    return false;
+  }
+
+  if (!requestHost || !QUANTUM_UPSTREAM_HOST) {
+    return isLocalhostRequest(req);
+  }
+
+  return requestHost !== QUANTUM_UPSTREAM_HOST;
+}
+
+function getHeaderValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).join(', ');
+  }
+
+  return String(value);
+}
+
+function getFirstHeaderValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (Array.isArray(value)) {
+    return value.find(Boolean) || '';
+  }
+
+  return String(value);
+}
+
+function buildQuantumProxyHeaders(req, options = {}) {
+  const headers = new Headers();
+  const accept = getHeaderValue(req.headers.accept);
+  const contentType = getFirstHeaderValue(req.headers['content-type']);
+  const authorization = getFirstHeaderValue(req.headers.authorization);
+  const apiKey = options.apiKey ?? getFirstHeaderValue(req.headers['x-api-key']);
+  const requestId = getFirstHeaderValue(req.headers['x-request-id']);
+
+  headers.set('Accept', accept || 'application/json');
+
+  if (contentType) {
+    headers.set('Content-Type', contentType);
+  }
+
+  if (authorization) {
+    headers.set('Authorization', authorization);
+  }
+
+  if (apiKey) {
+    headers.set('X-API-Key', apiKey);
+  }
+
+  if (requestId) {
+    headers.set('X-Request-ID', requestId);
+  }
+
+  return headers;
+}
+
+async function proxyToQuantumOrigin(req, res, targetUrl, options = {}) {
   const abortController = new AbortController();
   const abortUpstream = () => {
     abortController.abort();
@@ -82,17 +198,7 @@ async function proxyToQuantumOrigin(req, res, targetUrl) {
   res.on('close', abortUpstream);
 
   try {
-    const headers = new Headers();
-    Object.entries(req.headers).forEach(([key, value]) => {
-      if (!value) return;
-      const lower = key.toLowerCase();
-      if (lower === 'host' || lower === 'connection' || lower === 'content-length') return;
-      if (Array.isArray(value)) {
-        value.forEach((item) => headers.append(key, item));
-      } else {
-        headers.set(key, String(value));
-      }
-    });
+    const headers = buildQuantumProxyHeaders(req, options);
 
     const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
     const response = await fetch(targetUrl, {
@@ -139,8 +245,14 @@ async function proxyToQuantumOrigin(req, res, targetUrl) {
   }
 }
 
+function isDisallowedQuantumBackendProxyPath(pathname) {
+  return DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 app.use('/public-facing/api/quantum/v1', async (req, res, next) => {
-  if (!isLocalhostRequest(req)) {
+  if (!shouldProxyPublicQuantumRequest(req)) {
     return next();
   }
 
@@ -167,6 +279,15 @@ app.use('/api/quantum-backend', async (req, res, next) => {
     return next();
   }
 
+  const backendApiKey = process.env.QUANTUM_BACKEND_API_KEY?.trim();
+  if (!backendApiKey) {
+    res.status(500).json({
+      error: 'proxy_not_configured',
+      message: 'QUANTUM_BACKEND_API_KEY is missing on the server.',
+    });
+    return;
+  }
+
   const requestUrl = new URL(req.originalUrl, 'http://localhost');
   const suffix = requestUrl.pathname.slice('/api/quantum-backend'.length);
   let normalizedSuffix = suffix.startsWith('/') ? suffix : `/${suffix}`;
@@ -176,8 +297,18 @@ app.use('/api/quantum-backend', async (req, res, next) => {
       normalizedSuffix = `/${normalizedSuffix}`;
     }
   }
+
+  if (isDisallowedQuantumBackendProxyPath(normalizedSuffix)) {
+    res.status(403).json({
+      error: 'proxy_path_disallowed',
+      message:
+        'This route is intentionally blocked on quantum-backend. Call the upstream endpoint directly with user JWT.',
+    });
+    return;
+  }
+
   const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${requestUrl.search}`;
-  await proxyToQuantumOrigin(req, res, targetUrl);
+  await proxyToQuantumOrigin(req, res, targetUrl, { apiKey: backendApiKey });
 });
 
 // Serve static files from client build

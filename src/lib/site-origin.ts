@@ -1,7 +1,6 @@
 import { SITE_URL } from '@/constants/seo';
 
 const DEFAULT_SITE_ORIGIN = SITE_URL;
-const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
 function parseAbsoluteSiteOrigin(rawOrigin: string): string {
   let parsed: URL;
@@ -45,18 +44,6 @@ function readRuntimeWindowOrigin(): string {
   return '';
 }
 
-function isLoopbackOrigin(origin: string): boolean {
-  if (!origin) {
-    return false;
-  }
-
-  try {
-    return LOOPBACK_HOSTNAMES.has(new URL(origin).hostname);
-  } catch {
-    return false;
-  }
-}
-
 export function resolveSiteOrigin(): string {
   const configuredOrigin = readConfiguredSiteOrigin();
   if (configuredOrigin) {
@@ -72,22 +59,19 @@ export function resolveSiteOrigin(): string {
 }
 
 export function resolveBrowserSiteOrigin(): string {
+  // In a browser, the runtime origin is the source of truth for "where the
+  // user is right now". Auth providers should redirect back to that origin,
+  // regardless of any build-time EXPO_PUBLIC_SITE_ORIGIN. The configured
+  // origin is only a fallback for SSR / non-browser callers where `window`
+  // is unavailable.
   const runtimeOrigin = readRuntimeWindowOrigin();
-  if (isLoopbackOrigin(runtimeOrigin)) {
+  if (runtimeOrigin) {
     return runtimeOrigin;
   }
 
   const configuredOrigin = readConfiguredSiteOrigin();
-  if (configuredOrigin && isLoopbackOrigin(configuredOrigin) && runtimeOrigin) {
-    return runtimeOrigin;
-  }
-
   if (configuredOrigin) {
     return configuredOrigin;
-  }
-
-  if (runtimeOrigin) {
-    return runtimeOrigin;
   }
 
   return DEFAULT_SITE_ORIGIN;
