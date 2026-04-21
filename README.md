@@ -34,36 +34,42 @@ Expo Router portfolio app for web/mobile with public API docs, project showcases
 npm install
 ```
 
-2. Create local env file (`.env`) with at least:
+2. Create a local env file (`.env`) with at least:
 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
-EXPO_PUBLIC_SITE_ORIGIN=https://davidjgrimsley.com
+EXPO_PUBLIC_SITE_ORIGIN=http://localhost:3000
 EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
-QUANTUM_PROXY_ALLOWED_ORIGINS=https://davidjgrimsley.com,https://quizzical-hofstadter.108-175-12-95.plesk.page
+QUANTUM_PROXY_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-`EXPO_PUBLIC_*` variables are baked into the Expo web build, while `QUANTUM_BACKEND_API_KEY` is read by the Node server at runtime.
-`EXPO_PUBLIC_SITE_ORIGIN` controls the Supabase auth callback origin for the current environment. Use the exact deployed origin for that environment, for example `https://davidjgrimsley.com` for production or your `*.plesk.page` staging domain on `test`.
-Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local `.env.plesk` file in the app root so both the build step and the running Node server can read the same values.
+`EXPO_PUBLIC_*` variables are baked into the Expo web build and are also served by `server.js` at runtime through `/__djsportfolio_runtime_config__`, while `QUANTUM_BACKEND_API_KEY` stays server-side.
+`EXPO_PUBLIC_SITE_ORIGIN` controls the Supabase auth callback origin for the current environment. Use the exact origin for each file: localhost in `.env`, the Plesk temp domain in `.env.test`, and `https://davidjgrimsley.com` in `.env.production`.
+Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local `.env.test` or `.env.production` file in the app root so both the build step and the running Node server read the same values.
 
 ### Plesk Env Files
 
-For each Plesk deployment root, create a server-local `.env.plesk` file next to `server.js` with the values for that specific environment. Example staging file:
+Use this file layout:
+
+- `.env` for local development
+- `.env.test` for the Plesk temp/staging domain
+- `.env.production` for the production domain
+
+For each Plesk deployment root, create the matching server-local file next to `server.js`. Example `.env.test` file:
 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_SITE_ORIGIN=https://quizzical-hofstadter.108-175-12-95.plesk.page
-EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum/v1
+EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.page
 ```
 
-`scripts/plesk-post-deploy.sh` now requires `.env.plesk` explicitly and fails fast if it is missing or if required values are blank.
-`server.js` also loads `.env.plesk` at runtime when the file is present, so the build and the running app stay on the same environment contract.
+`scripts/plesk-post-deploy.sh` picks `.env.test` on the `test` branch and `.env.production` on `main`, then fails fast if required values are blank.
+`server.js` uses the same env-loader at runtime, so the build and the running app stay on the same environment contract. Hosted `.env.test` and `.env.production` files are rejected if `EXPO_PUBLIC_SITE_ORIGIN` points to localhost.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
@@ -139,4 +145,4 @@ Important: the webhook only confirms that Plesk received the deploy trigger. It 
 - IBM profile CRUD uses Quantum API bearer-authenticated endpoints.
 - Hardware jobs use API-key-authenticated Quantum API runtime endpoints.
 - Client endpoint demos use `EXPO_PUBLIC_QUANTUM_API_BASE_URL` directly.
-- Keep `.env.plesk` out of git. It is a server-local deployment file, not an application artifact.
+- Keep `.env`, `.env.test`, and `.env.production` out of git. They are server-local deployment files, not application artifacts.

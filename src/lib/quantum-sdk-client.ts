@@ -1,5 +1,6 @@
 import { QuantumApiClient } from '@mr.dj2u/quantum-api';
 import { QUANTUM_API_BASE_URL } from '@/lib/quantum-api-config';
+import { readTrimmedPublicRuntimeConfigValue } from '@/lib/runtime-config';
 
 const RUNTIME_PROXY_PATH = '/api/quantum-backend';
 const LOCALHOST_NAMES = new Set(['localhost', '127.0.0.1']);
@@ -22,7 +23,9 @@ function trimTrailingSlash(value: string) {
 }
 
 function resolveRuntimeProxyOverride(isWebRuntime: boolean) {
-  const rawOverride = process.env.EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL?.trim();
+  const rawOverride = readTrimmedPublicRuntimeConfigValue(
+    'EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL'
+  );
   if (!rawOverride) {
     return null;
   }

@@ -1,3 +1,5 @@
+import { readTrimmedPublicRuntimeConfigValue } from '@/lib/runtime-config';
+
 const DEFAULT_QUANTUM_API_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const PUBLIC_QUANTUM_API_BASE_PATH = '/public-facing/api/quantum/v1';
 
@@ -9,7 +11,7 @@ function trimTrailingSlash(url: string) {
 }
 
 function resolveQuantumApiBaseUrl() {
-  const envBaseUrl = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL?.trim();
+  const envBaseUrl = readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_QUANTUM_API_BASE_URL');
 
   if (envBaseUrl && envBaseUrl.length > 0) {
     return trimTrailingSlash(envBaseUrl);

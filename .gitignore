@@ -38,6 +38,9 @@ yarn-error.*
 # local env files
 .env*.local
 .env
+.env.*
+!.env.example
+!.env*.example
 .env.plesk
 .env.plesk.*
 .env.backup

@@ -4,37 +4,111 @@ const fs = require('fs');
 const path = require('path');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
-const dotenv = require('dotenv');
 const express = require('express');
 const compression = require('compression');
 const morgan = require('morgan');
 const { createRequestHandler } = require('expo-server/adapter/express');
+const { loadFirstEnvFile } = require('./scripts/env-loader.cjs');
 
-const LOCAL_ENV_PATH = path.join(process.cwd(), '.env');
-const PLESK_ENV_PATH = path.join(process.cwd(), '.env.plesk');
+const loadedEnv = loadFirstEnvFile({ cwd: __dirname, prefix: '[startup]' });
 
-function loadEnvironmentFile(envPath, options = {}) {
-  if (!fs.existsSync(envPath)) {
-    return;
-  }
-
-  const dotenvResult = dotenv.config({ path: envPath, ...options });
-  if (dotenvResult.error) {
-    console.error(`Failed to load environment from ${envPath}:`, dotenvResult.error);
-    process.exit(1);
-  }
-}
-
-loadEnvironmentFile(LOCAL_ENV_PATH);
-loadEnvironmentFile(PLESK_ENV_PATH, { override: true });
-
-const CLIENT_BUILD_DIR = path.join(process.cwd(), 'dist/client');
-const SERVER_BUILD_DIR = path.join(process.cwd(), 'dist/server');
+const CLIENT_BUILD_DIR = path.join(__dirname, 'dist/client');
+const SERVER_BUILD_DIR = path.join(__dirname, 'dist/server');
 
 const app = express();
+const PUBLIC_RUNTIME_ENV_KEYS = [
+  'EXPO_PUBLIC_PUBLIC_FACING_DEBUG',
+  'EXPO_PUBLIC_QUANTUM_API_BASE_URL',
+  'EXPO_PUBLIC_QUANTUM_API_KEY',
+  'EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL',
+  'EXPO_PUBLIC_SITE_ORIGIN',
+  'EXPO_PUBLIC_SITE_URL',
+  'EXPO_PUBLIC_SUPABASE_ANON_KEY',
+  'EXPO_PUBLIC_SUPABASE_KEY',
+  'EXPO_PUBLIC_SUPABASE_URL',
+];
+const HOSTED_ENV_FILES = new Set(['.env.test', '.env.production']);
+const HOSTED_RUNTIME_REQUIRED_ENV_KEYS = [
+  'EXPO_PUBLIC_SITE_ORIGIN',
+  'EXPO_PUBLIC_SUPABASE_URL',
+  'EXPO_PUBLIC_SUPABASE_ANON_KEY',
+  'EXPO_PUBLIC_QUANTUM_API_BASE_URL',
+  'QUANTUM_BACKEND_API_KEY',
+];
+const HOSTED_RUNTIME_DEPRECATED_ENV_KEYS = ['QUANTUM_UPSTREAM_URL'];
 const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
 const DEFAULT_QUANTUM_UPSTREAM_BASE_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/v1';
 const DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS = ['/keys', '/ibm/profiles'];
+
+function buildPublicRuntimeConfig() {
+  return PUBLIC_RUNTIME_ENV_KEYS.reduce((config, key) => {
+    if (typeof process.env[key] === 'string') {
+      config[key] = process.env[key];
+    }
+
+    return config;
+  }, {});
+}
+
+function parseSiteOriginOrThrow(rawSiteOrigin) {
+  let parsed;
+  try {
+    parsed = new URL(rawSiteOrigin);
+  } catch {
+    throw new Error('[startup] EXPO_PUBLIC_SITE_ORIGIN must be a valid absolute URL.');
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error('[startup] EXPO_PUBLIC_SITE_ORIGIN must use http:// or https://.');
+  }
+
+  const hasNonRootPath = parsed.pathname !== '/' && parsed.pathname !== '';
+  if (hasNonRootPath || parsed.search || parsed.hash) {
+    throw new Error(
+      '[startup] EXPO_PUBLIC_SITE_ORIGIN must be an origin without path, query, or hash (for example: "https://example.com").'
+    );
+  }
+
+  return parsed;
+}
+
+function isLoopbackHostname(hostname) {
+  const normalized = String(hostname || '').toLowerCase();
+  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1' || normalized === '[::1]';
+}
+
+function assertHostedRuntimeEnvHealth() {
+  if (!HOSTED_ENV_FILES.has(loadedEnv.sourceFile)) {
+    return;
+  }
+
+  const missingKeys = HOSTED_RUNTIME_REQUIRED_ENV_KEYS.filter(
+    (key) => !String(process.env[key] || '').trim()
+  );
+  if (missingKeys.length > 0) {
+    throw new Error(
+      `[startup] ${loadedEnv.sourceFile} requires environment variables: ${missingKeys.join(', ')}`
+    );
+  }
+
+  const deprecatedKeys = HOSTED_RUNTIME_DEPRECATED_ENV_KEYS.filter((key) =>
+    Boolean(String(process.env[key] || '').trim())
+  );
+  if (deprecatedKeys.length > 0) {
+    throw new Error(
+      `[startup] Hosted env no longer supports deprecated environment variables: ${deprecatedKeys.join(', ')}`
+    );
+  }
+
+  const parsedSiteOrigin = parseSiteOriginOrThrow(process.env.EXPO_PUBLIC_SITE_ORIGIN.trim());
+  if (isLoopbackHostname(parsedSiteOrigin.hostname)) {
+    throw new Error(
+      `[startup] ${loadedEnv.sourceFile} must not use a loopback EXPO_PUBLIC_SITE_ORIGIN.`
+    );
+  }
+
+  console.log(`[startup] Hosted env ${loadedEnv.sourceFile} passed strict checks.`);
+}
 
 function normalizeQuantumUpstreamBaseUrl() {
   const raw = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL
@@ -65,6 +139,7 @@ const QUANTUM_UPSTREAM_HOST = (() => {
 app.use(compression());
 app.disable('x-powered-by');
 app.use(morgan('tiny'));
+assertHostedRuntimeEnvHealth();
 
 function normalizeRemoteAddress(address) {
   const normalized = String(address || '').toLowerCase();
@@ -253,11 +328,24 @@ function isDisallowedQuantumBackendProxyPath(pathname) {
 
 app.use('/public-facing/api/quantum/v1', async (req, res, next) => {
   if (!shouldProxyPublicQuantumRequest(req)) {
+    if (!isProductionQuantumHost(getRequestHost(req))) {
+      res.status(502).json({
+        error: 'quantum_public_proxy_not_enabled',
+        message:
+          'The public Quantum API proxy did not run for this host. Check ENABLE_LOCAL_QUANTUM_PROXY and EXPO_PUBLIC_QUANTUM_API_BASE_URL.',
+      });
+      return;
+    }
+
     return next();
   }
 
   if (!QUANTUM_UPSTREAM_BASE_URL) {
-    return next();
+    res.status(500).json({
+      error: 'quantum_public_proxy_not_configured',
+      message: 'EXPO_PUBLIC_QUANTUM_API_BASE_URL is missing on the server.',
+    });
+    return;
   }
 
   const requestUrl = new URL(req.originalUrl, 'http://localhost');
@@ -309,6 +397,14 @@ app.use('/api/quantum-backend', async (req, res, next) => {
 
   const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${requestUrl.search}`;
   await proxyToQuantumOrigin(req, res, targetUrl, { apiKey: backendApiKey });
+});
+
+app.get('/__djsportfolio_runtime_config__', (_req, res) => {
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.send(
+    `window.__DJS_RUNTIME_CONFIG__ = Object.freeze(${JSON.stringify(buildPublicRuntimeConfig())});\n`
+  );
 });
 
 // Serve static files from client build
