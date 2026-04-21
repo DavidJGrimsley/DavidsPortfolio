@@ -20,13 +20,13 @@ fi
 
 case "$DEPLOY_BRANCH" in
 	test)
-		env_candidates=".env.test"
+		env_candidates=".env.test .env.plesk"
 		;;
 	main)
-		env_candidates=".env.production"
+		env_candidates=".env.production .env.plesk"
 		;;
 	*)
-		env_candidates=".env .env.test .env.production"
+		env_candidates=".env .env.test .env.production .env.plesk"
 		;;
 esac
 
@@ -44,7 +44,11 @@ if [ -z "$env_file" ]; then
 	exit 1
 fi
 
-echo "[plesk-post-deploy] Loading $env_file"
+if [ "$env_file" = ".env.plesk" ]; then
+	echo "[plesk-post-deploy] Loading legacy .env.plesk fallback. Prefer .env.test for staging and .env.production for production."
+else
+	echo "[plesk-post-deploy] Loading $env_file"
+fi
 set -a
 . "./$env_file"
 set +a

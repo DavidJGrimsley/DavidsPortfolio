@@ -27,7 +27,7 @@ const PUBLIC_RUNTIME_ENV_KEYS = [
   'EXPO_PUBLIC_SUPABASE_KEY',
   'EXPO_PUBLIC_SUPABASE_URL',
 ];
-const HOSTED_ENV_FILES = new Set(['.env.test', '.env.production']);
+const HOSTED_ENV_FILES = new Set(['.env.test', '.env.production', '.env.plesk']);
 const HOSTED_RUNTIME_REQUIRED_ENV_KEYS = [
   'EXPO_PUBLIC_SITE_ORIGIN',
   'EXPO_PUBLIC_SUPABASE_URL',
@@ -95,9 +95,15 @@ function assertHostedRuntimeEnvHealth() {
     Boolean(String(process.env[key] || '').trim())
   );
   if (deprecatedKeys.length > 0) {
-    throw new Error(
-      `[startup] Hosted env no longer supports deprecated environment variables: ${deprecatedKeys.join(', ')}`
-    );
+    if (loadedEnv.sourceFile === '.env.plesk') {
+      console.warn(
+        `[startup] Ignoring deprecated legacy .env.plesk variables: ${deprecatedKeys.join(', ')}`
+      );
+    } else {
+      throw new Error(
+        `[startup] Hosted env no longer supports deprecated environment variables: ${deprecatedKeys.join(', ')}`
+      );
+    }
   }
 
   const parsedSiteOrigin = parseSiteOriginOrThrow(process.env.EXPO_PUBLIC_SITE_ORIGIN.trim());

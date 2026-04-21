@@ -6,7 +6,13 @@ const dotenv = require('dotenv');
 const LOCAL_ENV_FILE = '.env';
 const TEST_ENV_FILE = '.env.test';
 const PRODUCTION_ENV_FILE = '.env.production';
-const DEFAULT_ENV_FILE_CANDIDATES = [LOCAL_ENV_FILE, TEST_ENV_FILE, PRODUCTION_ENV_FILE];
+const LEGACY_PLESK_ENV_FILE = '.env.plesk';
+const DEFAULT_ENV_FILE_CANDIDATES = [
+  LOCAL_ENV_FILE,
+  TEST_ENV_FILE,
+  PRODUCTION_ENV_FILE,
+  LEGACY_PLESK_ENV_FILE,
+];
 
 function readGitBranch(cwd) {
   try {
@@ -69,18 +75,18 @@ function resolveEnvFileCandidates(options = {}) {
   const environmentName = normalizeEnvironmentName(options.environment) || inferEnvironmentName(cwd);
 
   if (environmentName === 'test') {
-    return [TEST_ENV_FILE];
+    return [TEST_ENV_FILE, LEGACY_PLESK_ENV_FILE];
   }
 
   if (environmentName === 'production') {
-    return [PRODUCTION_ENV_FILE];
+    return [PRODUCTION_ENV_FILE, LEGACY_PLESK_ENV_FILE];
   }
 
   if (environmentName === 'local') {
-    return [LOCAL_ENV_FILE, TEST_ENV_FILE, PRODUCTION_ENV_FILE];
+    return DEFAULT_ENV_FILE_CANDIDATES;
   }
 
-  return [LOCAL_ENV_FILE, TEST_ENV_FILE, PRODUCTION_ENV_FILE];
+  return DEFAULT_ENV_FILE_CANDIDATES;
 }
 
 function findFirstEnvFile(options = {}) {
