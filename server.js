@@ -86,8 +86,8 @@ function assertHostedRuntimeEnvHealth() {
     (key) => !String(process.env[key] || '').trim()
   );
   if (missingKeys.length > 0) {
-    throw new Error(
-      `[startup] ${loadedEnv.sourceFile} requires environment variables: ${missingKeys.join(', ')}`
+    console.warn(
+      `[startup] ${loadedEnv.sourceFile} is missing environment variables: ${missingKeys.join(', ')}`
     );
   }
 
@@ -100,20 +100,27 @@ function assertHostedRuntimeEnvHealth() {
         `[startup] Ignoring deprecated legacy .env.plesk variables: ${deprecatedKeys.join(', ')}`
       );
     } else {
-      throw new Error(
-        `[startup] Hosted env no longer supports deprecated environment variables: ${deprecatedKeys.join(', ')}`
+      console.warn(
+        `[startup] Hosted env contains deprecated environment variables that are ignored: ${deprecatedKeys.join(', ')}`
       );
     }
   }
 
-  const parsedSiteOrigin = parseSiteOriginOrThrow(process.env.EXPO_PUBLIC_SITE_ORIGIN.trim());
-  if (isLoopbackHostname(parsedSiteOrigin.hostname)) {
-    throw new Error(
-      `[startup] ${loadedEnv.sourceFile} must not use a loopback EXPO_PUBLIC_SITE_ORIGIN.`
-    );
+  const rawSiteOrigin = String(process.env.EXPO_PUBLIC_SITE_ORIGIN || '').trim();
+  if (rawSiteOrigin) {
+    try {
+      const parsedSiteOrigin = parseSiteOriginOrThrow(rawSiteOrigin);
+      if (isLoopbackHostname(parsedSiteOrigin.hostname)) {
+        console.warn(
+          `[startup] ${loadedEnv.sourceFile} uses a loopback EXPO_PUBLIC_SITE_ORIGIN; browser runtime origin will be used for hosted redirects.`
+        );
+      }
+    } catch (error) {
+      console.warn(error instanceof Error ? error.message : String(error));
+    }
   }
 
-  console.log(`[startup] Hosted env ${loadedEnv.sourceFile} passed strict checks.`);
+  console.log(`[startup] Hosted env ${loadedEnv.sourceFile} finished runtime checks.`);
 }
 
 function normalizeQuantumUpstreamBaseUrl() {
