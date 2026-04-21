@@ -27,11 +27,15 @@ describe('site origin', () => {
     return jest.requireActual('../site-origin') as typeof import('../site-origin');
   }
 
-  function setWindowOrigin(origin: string) {
+  function setWindowOrigin(
+    origin: string,
+    runtimeConfig?: Record<string, string>,
+  ) {
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
       writable: true,
       value: {
+        __DJS_RUNTIME_CONFIG__: runtimeConfig,
         location: {
           origin,
         },
@@ -49,11 +53,19 @@ describe('site origin', () => {
     );
   });
 
-  it('prefers the runtime browser origin over configured origin on any non-loopback host', () => {
-    // Auth-redirect semantics: users should return to the origin they came
-    // from. The build-time EXPO_PUBLIC_SITE_ORIGIN is only a fallback when
-    // there is no window (SSR).
+  it('prefers the configured hosted origin over arbitrary non-loopback browser origins', () => {
+    // Hosted deployments now get their public config from server.js at runtime,
+    // so EXPO_PUBLIC_SITE_ORIGIN is the deployment contract for OAuth redirects.
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'https://davidjgrimsley.com';
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
+
+    const siteOrigin = loadSiteOrigin();
+
+    expect(siteOrigin.resolveBrowserSiteOrigin()).toBe('https://davidjgrimsley.com');
+  });
+
+  it('prefers the hosted runtime origin when a loopback env leaks into a hosted build', () => {
+    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'http://localhost:3000';
     setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
 
     const siteOrigin = loadSiteOrigin();
@@ -63,12 +75,17 @@ describe('site origin', () => {
     );
   });
 
-  it('prefers the hosted runtime origin when a loopback env leaks into a hosted build', () => {
+  it('prefers server runtime config on hosted browser origins', () => {
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'http://localhost:3000';
-    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page', {
+      EXPO_PUBLIC_SITE_ORIGIN: 'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+    });
 
     const siteOrigin = loadSiteOrigin();
 
+    expect(siteOrigin.resolveSiteOrigin()).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+    );
     expect(siteOrigin.resolveBrowserSiteOrigin()).toBe(
       'https://quizzical-hofstadter.108-175-12-95.plesk.page',
     );

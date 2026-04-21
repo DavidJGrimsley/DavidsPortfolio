@@ -157,6 +157,46 @@ async function fetchHome(siteUrl, timeoutMs) {
   };
 }
 
+async function fetchQuantumHealth(siteUrl, timeoutMs) {
+  const healthUrl = resolveUrl(siteUrl, '/public-facing/api/quantum/v1/health');
+  let response;
+
+  try {
+    response = await fetchText(healthUrl, timeoutMs);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+      payload: null,
+      response: null,
+      url: healthUrl,
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      error: `Quantum health returned ${response.status} ${response.statusText}`,
+      payload: null,
+      response,
+      url: healthUrl,
+    };
+  }
+
+  try {
+    return {
+      payload: JSON.parse(response.body),
+      response,
+      url: healthUrl,
+    };
+  } catch (error) {
+    return {
+      error: `Quantum health did not return JSON: ${error instanceof Error ? error.message : String(error)}`,
+      payload: null,
+      response,
+      url: healthUrl,
+    };
+  }
+}
+
 function formatBuildSummary(payload) {
   if (!payload || typeof payload !== 'object') {
     return 'unavailable';
@@ -191,9 +231,10 @@ async function main() {
     const remainingMs = deadline - Date.now();
     const requestTimeoutMs = Math.max(1_000, Math.min(30_000, remainingMs));
 
-    const [buildMetaResult, homeResult] = await Promise.all([
+    const [buildMetaResult, homeResult, quantumHealthResult] = await Promise.all([
       fetchBuildMeta(args.siteUrl, requestTimeoutMs),
       fetchHome(args.siteUrl, requestTimeoutMs),
+      fetchQuantumHealth(args.siteUrl, requestTimeoutMs),
     ]);
 
     const buildPayload = buildMetaResult.payload ?? null;
@@ -219,6 +260,13 @@ async function main() {
     const verifyingByExpectedSha = expectedSha.length > 0 && payloadHasKnownSha;
     const buildFresh = verifyingByExpectedSha ? buildMatchesExpected : buildFreshByTime;
     const homeOk = homeResult.response.ok;
+    const quantumHealthPayload = quantumHealthResult.payload;
+    const quantumHealthOk =
+      quantumHealthResult.response?.ok === true &&
+      quantumHealthPayload &&
+      typeof quantumHealthPayload === 'object' &&
+      quantumHealthPayload.status === 'healthy' &&
+      quantumHealthPayload.service === 'Quantum API';
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
@@ -226,12 +274,14 @@ async function main() {
         `verificationMode=${verifyingByExpectedSha ? 'sha' : 'timestamp'} ` +
         `buildFresh=${buildFresh} ` +
         `buildMatchesExpected=${buildMatchesExpected} ` +
-        `homeStatus=${homeResult.response.status}`,
+        `homeStatus=${homeResult.response.status} ` +
+        `quantumHealthStatus=${quantumHealthResult.response?.status ?? 'unreachable'} ` +
+        `quantumHealthOk=${quantumHealthOk}`,
     );
 
-    if (buildFresh && homeOk) {
+    if (buildFresh && homeOk && quantumHealthOk) {
       console.log(
-        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build and healthy home page response.`,
+        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and healthy Quantum API response.`,
       );
       return;
     }
@@ -246,7 +296,11 @@ async function main() {
     const homeError = homeOk
       ? 'home page is healthy'
       : `home returned ${homeResult.response.status} ${homeResult.response.statusText}`;
-    lastFailure = `${buildError}; ${homeError}`;
+    const quantumError = quantumHealthOk
+      ? 'Quantum health is healthy'
+      : (quantumHealthResult.error ??
+        `Quantum health returned unexpected payload from ${quantumHealthResult.url}`);
+    lastFailure = `${buildError}; ${homeError}; ${quantumError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;

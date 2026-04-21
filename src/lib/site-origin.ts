@@ -1,6 +1,8 @@
 import { SITE_URL } from '@/constants/seo';
+import { readTrimmedPublicRuntimeConfigValue } from '@/lib/runtime-config';
 
 const DEFAULT_SITE_ORIGIN = SITE_URL;
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
 function parseAbsoluteSiteOrigin(rawOrigin: string): string {
   let parsed: URL;
@@ -25,8 +27,13 @@ function parseAbsoluteSiteOrigin(rawOrigin: string): string {
 }
 
 function readConfiguredSiteOrigin(): string {
-  const configuredOrigin = process.env.EXPO_PUBLIC_SITE_ORIGIN?.trim() ?? '';
-  return configuredOrigin ? parseAbsoluteSiteOrigin(configuredOrigin) : '';
+  const configuredOrigin = readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SITE_ORIGIN');
+  if (configuredOrigin) {
+    return parseAbsoluteSiteOrigin(configuredOrigin);
+  }
+
+  const configuredSiteUrl = readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SITE_URL');
+  return configuredSiteUrl ? parseAbsoluteSiteOrigin(configuredSiteUrl) : '';
 }
 
 function readRuntimeWindowOrigin(): string {
@@ -44,6 +51,18 @@ function readRuntimeWindowOrigin(): string {
   return '';
 }
 
+function isLoopbackOrigin(origin: string): boolean {
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    return LOOPBACK_HOSTNAMES.has(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function resolveSiteOrigin(): string {
   const configuredOrigin = readConfiguredSiteOrigin();
   if (configuredOrigin) {
@@ -59,19 +78,22 @@ export function resolveSiteOrigin(): string {
 }
 
 export function resolveBrowserSiteOrigin(): string {
-  // In a browser, the runtime origin is the source of truth for "where the
-  // user is right now". Auth providers should redirect back to that origin,
-  // regardless of any build-time EXPO_PUBLIC_SITE_ORIGIN. The configured
-  // origin is only a fallback for SSR / non-browser callers where `window`
-  // is unavailable.
   const runtimeOrigin = readRuntimeWindowOrigin();
-  if (runtimeOrigin) {
+  if (isLoopbackOrigin(runtimeOrigin)) {
     return runtimeOrigin;
   }
 
   const configuredOrigin = readConfiguredSiteOrigin();
+  if (isLoopbackOrigin(configuredOrigin) && runtimeOrigin) {
+    return runtimeOrigin;
+  }
+
   if (configuredOrigin) {
     return configuredOrigin;
+  }
+
+  if (runtimeOrigin) {
+    return runtimeOrigin;
   }
 
   return DEFAULT_SITE_ORIGIN;

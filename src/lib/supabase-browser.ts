@@ -1,14 +1,9 @@
 import { Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { QUANTUM_AUTH_PATH } from '@/lib/quantum-api-config';
+import { readTrimmedPublicRuntimeConfigValue } from '@/lib/runtime-config';
 import { resolveBrowserSiteOrigin } from '@/lib/site-origin';
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
-const SUPABASE_ANON_KEY =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ??
-  process.env.EXPO_PUBLIC_SUPABASE_KEY?.trim();
-const HAS_LEGACY_SUPABASE_KEY = Boolean(process.env.EXPO_PUBLIC_SUPABASE_KEY?.trim());
-const HAS_ANON_SUPABASE_KEY = Boolean(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim());
 const isWeb = Platform.OS === 'web';
 
 type StorageLike = {
@@ -32,23 +27,48 @@ const memoryStorage = (): StorageLike => {
 };
 
 let supabaseClient: SupabaseClient | null = null;
+let supabaseClientConfigKey = '';
+
+function getSupabaseUrl() {
+  return readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_URL');
+}
+
+function getSupabaseAnonKey() {
+  return (
+    readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_ANON_KEY') ||
+    readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_KEY')
+  );
+}
+
+function getSupabaseConfig() {
+  const url = getSupabaseUrl();
+  const anonKey = getSupabaseAnonKey();
+  return {
+    anonKey,
+    hasAnonKey: Boolean(readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_ANON_KEY')),
+    hasLegacyKey: Boolean(readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_KEY')),
+    url,
+  };
+}
 
 export function isSupabaseConfigured() {
-  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+  const { url, anonKey } = getSupabaseConfig();
+  return Boolean(url && anonKey);
 }
 
 export function getSupabaseConfigError() {
   if (isSupabaseConfigured()) return null;
+  const { url, anonKey, hasAnonKey, hasLegacyKey } = getSupabaseConfig();
   const missing: string[] = [];
-  if (!SUPABASE_URL) missing.push('EXPO_PUBLIC_SUPABASE_URL');
-  if (!SUPABASE_ANON_KEY) missing.push('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+  if (!url) missing.push('EXPO_PUBLIC_SUPABASE_URL');
+  if (!anonKey) missing.push('EXPO_PUBLIC_SUPABASE_ANON_KEY');
 
   const baseError =
     missing.length > 0
       ? `Missing ${missing.join(' and ')}.`
       : 'Supabase configuration is incomplete.';
 
-  if (!HAS_ANON_SUPABASE_KEY && HAS_LEGACY_SUPABASE_KEY) {
+  if (!hasAnonKey && hasLegacyKey) {
     return `${baseError} Found legacy EXPO_PUBLIC_SUPABASE_KEY. Rename it to EXPO_PUBLIC_SUPABASE_ANON_KEY.`;
   }
 
@@ -60,15 +80,17 @@ export function getQuantumAuthRedirectUrl() {
 }
 
 export function getSupabaseBrowserClient() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  const { url, anonKey } = getSupabaseConfig();
+  if (!url || !anonKey) {
     throw new Error(getSupabaseConfigError() ?? 'Supabase is not configured.');
   }
 
-  if (supabaseClient) {
+  const configKey = `${url}\n${anonKey}`;
+  if (supabaseClient && supabaseClientConfigKey === configKey) {
     return supabaseClient;
   }
 
-  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  supabaseClient = createClient(url, anonKey, {
     auth: {
       autoRefreshToken: isWeb,
       detectSessionInUrl: isWeb,
@@ -77,6 +99,7 @@ export function getSupabaseBrowserClient() {
       storage: isWeb ? undefined : memoryStorage(),
     },
   });
+  supabaseClientConfigKey = configKey;
 
   return supabaseClient;
 }

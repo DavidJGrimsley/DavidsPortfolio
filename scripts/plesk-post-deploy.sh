@@ -8,28 +8,50 @@ cd "$(dirname "$0")/.."
 
 missing=0
 
-if [ ! -f ".env.plesk" ]; then
-	echo "Missing required .env.plesk file in $(pwd)" >&2
-	exit 1
-fi
-
 echo "[plesk-post-deploy] HEAD: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 echo "[plesk-post-deploy] Branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 echo "[plesk-post-deploy] Node: $(node --version 2>/dev/null || echo unknown)"
 echo "[plesk-post-deploy] npm: $(npm --version 2>/dev/null || echo unknown)"
-echo "[plesk-post-deploy] Loading .env.plesk"
+
+DEPLOY_BRANCH="${DEPLOY_BRANCH-}"
+if [ -z "$DEPLOY_BRANCH" ]; then
+	DEPLOY_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+fi
+
+case "$DEPLOY_BRANCH" in
+	test)
+		env_candidates=".env.test"
+		;;
+	main)
+		env_candidates=".env.production"
+		;;
+	*)
+		env_candidates=".env .env.test .env.production"
+		;;
+esac
+
+env_file=""
+for candidate in $env_candidates; do
+	if [ -f "$candidate" ]; then
+		env_file="$candidate"
+		break
+	fi
+done
+
+if [ -z "$env_file" ]; then
+	echo "Missing env file in $(pwd). Checked: $env_candidates" >&2
+	echo "Use .env for local, .env.test for the Plesk temp domain, and .env.production for production." >&2
+	exit 1
+fi
+
+echo "[plesk-post-deploy] Loading $env_file"
 set -a
-. "./.env.plesk"
+. "./$env_file"
 set +a
 
 DEPLOY_COMMIT_SHA="${DEPLOY_COMMIT_SHA-}"
 if [ -z "$DEPLOY_COMMIT_SHA" ]; then
 	DEPLOY_COMMIT_SHA="$(git rev-parse HEAD 2>/dev/null || true)"
-fi
-
-DEPLOY_BRANCH="${DEPLOY_BRANCH-}"
-if [ -z "$DEPLOY_BRANCH" ]; then
-	DEPLOY_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
 fi
 
 export DEPLOY_COMMIT_SHA DEPLOY_BRANCH
@@ -68,12 +90,12 @@ require_env_var QUANTUM_BACKEND_API_KEY
 
 if [ "$missing" -ne 0 ]; then
 	echo 'Aborting deploy build due to missing required environment variables.'
-	echo 'Create or update .env.plesk, then redeploy.'
+	echo "Create or update $env_file, then redeploy."
 	exit 1
 fi
 
 echo 'Build environment summary:'
-echo '  loaded_env_file=.env.plesk'
+echo "  loaded_env_file=$env_file"
 echo "  DEPLOY_BRANCH=${DEPLOY_BRANCH:-unknown}"
 echo "  DEPLOY_COMMIT_SHA=$(mask_prefix "${DEPLOY_COMMIT_SHA-}")"
 echo "  EXPO_PUBLIC_SITE_ORIGIN=${EXPO_PUBLIC_SITE_ORIGIN-}"

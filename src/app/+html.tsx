@@ -30,6 +30,7 @@ export default function Root({ children }: PropsWithChildren) {
         
         {/* Theme Color */}
         <meta name="theme-color" content="#E9DDEE" />
+        <script src="/__djsportfolio_runtime_config__" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(() => {\n  try {\n    const meta = document.querySelector('meta[name="theme-color"]');\n    if (!meta) return;\n    const mq = window.matchMedia('(prefers-color-scheme: dark)');\n    const set = () => meta.setAttribute('content', mq.matches ? '#20182D' : '#E9DDEE');\n    set();\n    if (mq.addEventListener) mq.addEventListener('change', set);\n    else mq.addListener(set);\n  } catch {}\n})();`,

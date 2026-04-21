@@ -27,11 +27,15 @@ describe('supabase browser auth redirect', () => {
     return jest.requireActual('../supabase-browser') as typeof import('../supabase-browser');
   }
 
-  function setWindowOrigin(origin: string) {
+  function setWindowOrigin(
+    origin: string,
+    runtimeConfig?: Record<string, string>,
+  ) {
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
       writable: true,
       value: {
+        __DJS_RUNTIME_CONFIG__: runtimeConfig,
         location: {
           origin,
         },
@@ -39,10 +43,9 @@ describe('supabase browser auth redirect', () => {
     });
   }
 
-  it('returns users to the runtime browser origin regardless of configured origin', () => {
-    // Even when EXPO_PUBLIC_SITE_ORIGIN points elsewhere, the auth redirect
-    // must match the origin the user is actually browsing, or Supabase
-    // bounces them to the wrong domain after login.
+  it('uses the configured hosted origin for OAuth redirects', () => {
+    // Hosted deployments serve EXPO_PUBLIC_SITE_ORIGIN through server.js runtime
+    // config, so OAuth redirects use the environment-specific origin contract.
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN =
       'https://quizzical-hofstadter.108-175-12-95.plesk.page';
     setWindowOrigin('https://davidjgrimsley.com');
@@ -50,13 +53,26 @@ describe('supabase browser auth redirect', () => {
     const supabaseBrowser = loadSupabaseBrowser();
 
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum',
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum',
     );
   });
 
   it('ignores a loopback env origin when the browser is on a hosted domain', () => {
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'http://localhost:3000';
     setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
+
+    const supabaseBrowser = loadSupabaseBrowser();
+
+    expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum',
+    );
+  });
+
+  it('uses server runtime config for hosted GitHub OAuth redirects', () => {
+    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'http://localhost:3000';
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page', {
+      EXPO_PUBLIC_SITE_ORIGIN: 'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+    });
 
     const supabaseBrowser = loadSupabaseBrowser();
 
