@@ -34,14 +34,16 @@ describe('quantum api config', () => {
     return jest.requireActual('../quantum-api-config') as typeof import('../quantum-api-config');
   }
 
-  function setWindowLocation(hostname: string, port: string) {
+  function setWindowLocation(origin: string) {
+    const parsed = new URL(origin);
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
       writable: true,
       value: {
         location: {
-          hostname,
-          port,
+          origin: parsed.origin,
+          hostname: parsed.hostname,
+          port: parsed.port,
         },
       },
     });
@@ -82,8 +84,8 @@ describe('quantum api config', () => {
     expect(config.QUANTUM_PORTFOLIO_URL).toBe('https://example.com/api/quantum/portfolio.json');
   });
 
-  it('does not rewrite env override to same-origin on localhost web runtime', () => {
-    setWindowLocation('localhost', '3000');
+  it('keeps the configured base constant stable on localhost web runtime', () => {
+    setWindowLocation('http://localhost:3000');
     mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = 'https://example.com/public-facing/api/quantum/v1';
 
     const config = loadConfig();
@@ -93,20 +95,60 @@ describe('quantum api config', () => {
     );
   });
 
-  it('resolves api-key and public endpoints to the configured base url', () => {
+  it('uses the same public-facing path on localhost:3000', () => {
+    setWindowLocation('http://localhost:3000');
     mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
-      'https://example.com/public-facing/api/quantum/v1';
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
 
     const config = loadConfig();
 
-    expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe(
-      'https://example.com/public-facing/api/quantum/v1'
-    );
-    expect(config.resolveQuantumEndpointBaseUrl('public', true)).toBe(
-      'https://example.com/public-facing/api/quantum/v1'
+    expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
+      'http://localhost:3000/public-facing/api/quantum/v1'
     );
     expect(config.resolveQuantumEndpointBaseUrl('api_key', false)).toBe(
-      'https://example.com/public-facing/api/quantum/v1'
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
+    );
+    expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe(
+      'http://localhost:3000/public-facing/api/quantum/v1'
+    );
+  });
+
+  it('uses the same public-facing path on Plesk staging hosts', () => {
+    setWindowLocation('https://quizzical-hofstadter.108-175-12-95.plesk.page');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum/v1'
+    );
+  });
+
+  it('keeps the configured URL on localhost:8081 because the backend allows that origin', () => {
+    setWindowLocation('http://localhost:8081');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
+    );
+  });
+
+  it('keeps the configured URL on production and non-web runtimes', () => {
+    setWindowLocation('https://davidjgrimsley.com');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
+    );
+    expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, false)).toBe(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
     );
   });
 });

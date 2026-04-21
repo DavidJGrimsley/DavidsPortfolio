@@ -12,6 +12,7 @@ import {
   QUANTUM_API_BASE_URL,
   QUANTUM_DOCS_URL,
   QUANTUM_PORTFOLIO_URL,
+  resolveQuantumBrowserApiBaseUrl,
   resolveQuantumEndpointBaseUrl,
 } from '@/lib/quantum-api-config';
 import { createQuantumPublicClient } from '@/lib/quantum-sdk-client';
@@ -249,11 +250,12 @@ export default function QuantumAPIPage() {
   }, []);
 
   const apiName = portfolioDetail?.api?.name ?? apisData.apis[0].name;
-  const apiBaseUrl = portfolioDetail?.api?.baseUrl ?? QUANTUM_API_BASE_URL;
+  const isWebRuntime = Platform.OS === 'web';
+  const configuredApiBaseUrl = portfolioDetail?.api?.baseUrl ?? QUANTUM_API_BASE_URL;
+  const apiBaseUrl = resolveQuantumBrowserApiBaseUrl(configuredApiBaseUrl, isWebRuntime);
   const apiDocsUrl = portfolioDetail?.api?.docsUrl ?? QUANTUM_DOCS_URL;
   const apiVersion = portfolioDetail?.api?.version ?? apisData.apis[0].version;
   const apiStatusRaw = (portfolioDetail?.api?.status ?? apisData.apis[0].status ?? '').toLowerCase();
-  const isWebRuntime = Platform.OS === 'web';
   const publicEndpointExecutionBaseUrl = resolveQuantumEndpointBaseUrl('public', isWebRuntime);
   const keyedEndpointExecutionBaseUrl = resolveQuantumEndpointBaseUrl('api_key', isWebRuntime);
   const isLive =

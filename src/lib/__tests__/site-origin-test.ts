@@ -49,9 +49,12 @@ describe('site origin', () => {
     );
   });
 
-  it('keeps the configured site origin for non-local browser origins', () => {
-    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'https://quizzical-hofstadter.108-175-12-95.plesk.page';
-    setWindowOrigin('https://davidjgrimsley.com');
+  it('prefers the runtime browser origin over configured origin on any non-loopback host', () => {
+    // Auth-redirect semantics: users should return to the origin they came
+    // from. The build-time EXPO_PUBLIC_SITE_ORIGIN is only a fallback when
+    // there is no window (SSR).
+    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'https://davidjgrimsley.com';
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
 
     const siteOrigin = loadSiteOrigin();
 
