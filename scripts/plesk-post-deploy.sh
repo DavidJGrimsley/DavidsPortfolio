@@ -48,11 +48,13 @@ done
 if [ -z "$env_files" ]; then
 	echo "Missing env file in $(pwd). Checked: $env_candidates" >&2
 	echo "Use .env for local, .env.test for the Plesk temp domain, and .env.production for production." >&2
-	exit 1
 fi
 
 env_file="${env_files##* }"
-if [ "$env_file" = ".env.plesk" ]; then
+if [ -z "$env_file" ]; then
+	env_file="(none)"
+	echo "[plesk-post-deploy] Continuing without a server-local env file."
+elif [ "$env_file" = ".env.plesk" ]; then
 	echo "[plesk-post-deploy] Loading legacy .env.plesk fallback. Prefer .env.test for staging and .env.production for production."
 else
 	echo "[plesk-post-deploy] Loading $env_files"
@@ -74,6 +76,27 @@ if [ -z "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}" ] && [ -n "${EXPO_PUBLIC_SUPABASE_KE
 	EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_KEY}"
 	export EXPO_PUBLIC_SUPABASE_ANON_KEY
 	echo 'Mapped EXPO_PUBLIC_SUPABASE_KEY -> EXPO_PUBLIC_SUPABASE_ANON_KEY'
+fi
+
+if [ -z "${EXPO_PUBLIC_SITE_ORIGIN-}" ]; then
+	case "$DEPLOY_BRANCH" in
+		test)
+			EXPO_PUBLIC_SITE_ORIGIN="https://quizzical-hofstadter.108-175-12-95.plesk.page"
+			export EXPO_PUBLIC_SITE_ORIGIN
+			echo "Defaulted EXPO_PUBLIC_SITE_ORIGIN for test deploy to $EXPO_PUBLIC_SITE_ORIGIN"
+			;;
+		main)
+			EXPO_PUBLIC_SITE_ORIGIN="https://davidjgrimsley.com"
+			export EXPO_PUBLIC_SITE_ORIGIN
+			echo "Defaulted EXPO_PUBLIC_SITE_ORIGIN for production deploy to $EXPO_PUBLIC_SITE_ORIGIN"
+			;;
+	esac
+fi
+
+if [ -z "${EXPO_PUBLIC_QUANTUM_API_BASE_URL-}" ]; then
+	EXPO_PUBLIC_QUANTUM_API_BASE_URL="https://davidjgrimsley.com/public-facing/api/quantum/v1"
+	export EXPO_PUBLIC_QUANTUM_API_BASE_URL
+	echo "Defaulted EXPO_PUBLIC_QUANTUM_API_BASE_URL to $EXPO_PUBLIC_QUANTUM_API_BASE_URL"
 fi
 
 require_env_var() {
@@ -103,13 +126,11 @@ require_env_var EXPO_PUBLIC_QUANTUM_API_BASE_URL
 require_env_var QUANTUM_BACKEND_API_KEY
 
 if [ "$missing" -ne 0 ]; then
-	echo 'Aborting deploy build due to missing required environment variables.'
-	echo "Create or update $env_file, then redeploy."
-	exit 1
+	echo 'Continuing deploy build despite missing environment variables. Create or update the server-local env file before testing auth/runtime features.'
 fi
 
 echo 'Build environment summary:'
-echo "  loaded_env_file=$env_file"
+echo "  loaded_env_files=${env_files:-none}"
 echo "  DEPLOY_BRANCH=${DEPLOY_BRANCH:-unknown}"
 echo "  DEPLOY_COMMIT_SHA=$(mask_prefix "${DEPLOY_COMMIT_SHA-}")"
 echo "  EXPO_PUBLIC_SITE_ORIGIN=${EXPO_PUBLIC_SITE_ORIGIN-}"
@@ -118,18 +139,21 @@ echo "  EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL-}"
 echo "  EXPO_PUBLIC_SUPABASE_ANON_KEY=$(mask_prefix "${EXPO_PUBLIC_SUPABASE_ANON_KEY-}")"
 echo "  QUANTUM_BACKEND_API_KEY=$(mask_prefix "${QUANTUM_BACKEND_API_KEY-}")"
 
+previous_dist=""
 if [ -d "dist" ]; then
 	echo "[plesk-post-deploy] Existing dist ownership:"
 	ls -ld dist || true
 
 	if [ -w "dist" ]; then
-		echo "[plesk-post-deploy] Removing writable dist"
-		rm -rf dist
+		previous_dist="dist.previous.$(date +%Y%m%d%H%M%S)"
+		echo "[plesk-post-deploy] Moving existing writable dist aside to $previous_dist"
+		mv dist "$previous_dist"
 	else
 		stale_dist="dist.stale.$(date +%Y%m%d%H%M%S)"
 		echo "[plesk-post-deploy] dist is not writable; attempting to move it aside to $stale_dist"
 		if mv dist "$stale_dist"; then
 			echo "[plesk-post-deploy] Moved stale dist to $stale_dist"
+			previous_dist="$stale_dist"
 		else
 			echo "[plesk-post-deploy] Failed to move non-writable dist. Fix ownership, for example:" >&2
 			echo "[plesk-post-deploy]   sudo chown -R \$(stat -c '%U:%G' .) dist" >&2
@@ -139,10 +163,30 @@ if [ -d "dist" ]; then
 fi
 
 echo '[plesk-post-deploy] Installing dependencies'
-npm ci --include=dev
+if ! npm ci --include=dev; then
+	echo '[plesk-post-deploy] npm ci failed.' >&2
+	if [ -n "$previous_dist" ] && [ -d "$previous_dist" ]; then
+		rm -rf dist
+		mv "$previous_dist" dist
+		echo "[plesk-post-deploy] Restored previous dist from $previous_dist"
+	fi
+	exit 1
+fi
 
 echo '[plesk-post-deploy] Building web output'
-npm run build:web:deploy
+if ! npm run build:web:deploy; then
+	echo '[plesk-post-deploy] build failed.' >&2
+	if [ -n "$previous_dist" ] && [ -d "$previous_dist" ]; then
+		rm -rf dist
+		mv "$previous_dist" dist
+		echo "[plesk-post-deploy] Restored previous dist from $previous_dist"
+	fi
+	exit 1
+fi
+
+if [ -n "$previous_dist" ] && [ -d "$previous_dist" ]; then
+	rm -rf "$previous_dist"
+fi
 
 mkdir -p ../tmp
 touch ../tmp/restart.txt
