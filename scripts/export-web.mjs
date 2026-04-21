@@ -25,9 +25,9 @@ function runExpoExport(resolvedEnv) {
   });
 }
 
-const { envFromFile, sourceFile, candidates } = readFirstEnvFile({ cwd: repoRoot });
-if (sourceFile) {
-  console.log(`[export-web] Loaded ${sourceFile}`);
+const { envFromFile, sourceFiles = [], candidates } = readFirstEnvFile({ cwd: repoRoot });
+if (sourceFiles.length > 0) {
+  console.log(`[export-web] Loaded ${sourceFiles.join(', ')}`);
 } else {
   console.log(`[export-web] No env file found (checked ${candidates.join(', ')}).`);
 }

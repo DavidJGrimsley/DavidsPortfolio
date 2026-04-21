@@ -14,6 +14,11 @@ const DEFAULT_ENV_FILE_CANDIDATES = [
   LEGACY_PLESK_ENV_FILE,
 ];
 
+function hasEnvFile(cwd, fileName) {
+  const filePath = path.resolve(cwd, fileName);
+  return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+}
+
 function readGitBranch(cwd) {
   try {
     return execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
@@ -75,41 +80,69 @@ function resolveEnvFileCandidates(options = {}) {
   const environmentName = normalizeEnvironmentName(options.environment) || inferEnvironmentName(cwd);
 
   if (environmentName === 'test') {
-    return [TEST_ENV_FILE, LEGACY_PLESK_ENV_FILE];
+    return hasEnvFile(cwd, TEST_ENV_FILE)
+      ? [TEST_ENV_FILE]
+      : [LOCAL_ENV_FILE, LEGACY_PLESK_ENV_FILE];
   }
 
   if (environmentName === 'production') {
-    return [PRODUCTION_ENV_FILE, LEGACY_PLESK_ENV_FILE];
+    return hasEnvFile(cwd, PRODUCTION_ENV_FILE)
+      ? [PRODUCTION_ENV_FILE]
+      : [LOCAL_ENV_FILE, LEGACY_PLESK_ENV_FILE];
   }
 
   if (environmentName === 'local') {
-    return DEFAULT_ENV_FILE_CANDIDATES;
+    return [LOCAL_ENV_FILE];
   }
 
-  return DEFAULT_ENV_FILE_CANDIDATES;
+  return [LOCAL_ENV_FILE];
 }
 
 function findFirstEnvFile(options = {}) {
+  const found = findEnvFiles(options);
+  return {
+    candidates: found.candidates,
+    sourceFile: found.sourceFiles[0] || null,
+    sourcePath: found.sourcePaths[0] || null,
+  };
+}
+
+function findEnvFiles(options = {}) {
   const cwd = options.cwd || process.cwd();
   const candidates = resolveEnvFileCandidates(options);
+  const sourceFiles = [];
+  const sourcePaths = [];
 
   for (const fileName of candidates) {
     const filePath = path.resolve(cwd, fileName);
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      return { candidates, sourceFile: fileName, sourcePath: filePath };
+      sourceFiles.push(fileName);
+      sourcePaths.push(filePath);
     }
   }
 
-  return { candidates, sourceFile: null, sourcePath: null };
+  return {
+    candidates,
+    sourceFile: sourceFiles[sourceFiles.length - 1] || null,
+    sourceFiles,
+    sourcePath: sourcePaths[sourcePaths.length - 1] || null,
+    sourcePaths,
+  };
 }
 
 function readFirstEnvFile(options = {}) {
-  const found = findFirstEnvFile(options);
-  if (!found.sourcePath) {
+  const found = findEnvFiles(options);
+  if (found.sourcePaths.length === 0) {
     return { ...found, envFromFile: {} };
   }
 
-  const envFromFile = dotenv.parse(fs.readFileSync(found.sourcePath, 'utf8'));
+  const envFromFile = found.sourcePaths.reduce((merged, sourcePath) => {
+    return {
+      ...merged,
+      ...dotenv.parse(fs.readFileSync(sourcePath, 'utf8')),
+    };
+  }, {});
+
   return { ...found, envFromFile };
 }
 
@@ -120,29 +153,41 @@ function loadFirstEnvFile(options = {}) {
     logger = console.log,
     silent = false,
   } = options;
-  const found = findFirstEnvFile(options);
+  const found = findEnvFiles(options);
 
-  if (!found.sourcePath) {
+  if (found.sourcePaths.length === 0) {
     if (!silent && typeof logger === 'function') {
       logger(`${prefix} No env file found (checked ${found.candidates.join(', ')}).`);
     }
     return { ...found, envFromFile: {} };
   }
 
-  const result = dotenv.config({ path: found.sourcePath, override, quiet: true });
-  if (result.error) {
-    throw result.error;
-  }
+  const parsedFiles = found.sourcePaths.map((sourcePath, index) => {
+    const result = dotenv.config({
+      path: sourcePath,
+      override: index > 0 ? true : override,
+      quiet: true,
+    });
+    if (result.error) {
+      throw result.error;
+    }
+
+    return result.parsed || {};
+  });
 
   if (!silent && typeof logger === 'function') {
-    logger(`${prefix} Loaded ${found.sourceFile}`);
+    logger(`${prefix} Loaded ${found.sourceFiles.join(', ')}`);
   }
 
-  return { ...found, envFromFile: result.parsed || {} };
+  return {
+    ...found,
+    envFromFile: Object.assign({}, ...parsedFiles),
+  };
 }
 
 module.exports = {
   DEFAULT_ENV_FILE_CANDIDATES,
+  findEnvFiles,
   findFirstEnvFile,
   inferEnvironmentName,
   loadFirstEnvFile,
