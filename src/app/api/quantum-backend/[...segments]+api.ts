@@ -1,3 +1,5 @@
+import { loadServerRuntimeEnv } from '@/server/runtime-env';
+
 const DEFAULT_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const PROXY_ROUTE_PREFIX = '/api/quantum-backend';
 const ROUTE_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
@@ -177,6 +179,8 @@ function mergeCors(
 }
 
 async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request) {
+  loadServerRuntimeEnv(request);
+
   const allowedOrigins = getAllowedOrigins();
   if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
@@ -261,6 +265,8 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
 }
 
 export function OPTIONS(request: Request) {
+  loadServerRuntimeEnv(request);
+
   const allowedOrigins = getAllowedOrigins();
   if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
