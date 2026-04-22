@@ -197,6 +197,61 @@ async function fetchQuantumHealth(siteUrl, timeoutMs) {
   }
 }
 
+async function fetchQuantumHardwareGuard(siteUrl, timeoutMs) {
+  const guardUrl = resolveUrl(siteUrl, '/api/quantum-backend/v1/jobs/circuits');
+  const { signal, dispose } = createTimeoutSignal(timeoutMs);
+  let response;
+  let body;
+
+  try {
+    response = await fetch(guardUrl, {
+      method: 'POST',
+      headers: {
+        'cache-control': 'no-cache',
+        'content-type': 'application/json',
+        pragma: 'no-cache',
+      },
+      body: JSON.stringify({ backend_name: 'ibm_brisbane' }),
+      signal,
+    });
+    body = await response.text();
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+      payload: null,
+      response: null,
+      url: guardUrl,
+    };
+  } finally {
+    dispose();
+  }
+
+  try {
+    return {
+      payload: JSON.parse(body),
+      response: {
+        body,
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+      },
+      url: guardUrl,
+    };
+  } catch (error) {
+    return {
+      error: `Quantum hardware guard did not return JSON: ${error instanceof Error ? error.message : String(error)}`,
+      payload: null,
+      response: {
+        body,
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+      },
+      url: guardUrl,
+    };
+  }
+}
+
 function formatBuildSummary(payload) {
   if (!payload || typeof payload !== 'object') {
     return 'unavailable';
@@ -231,11 +286,13 @@ async function main() {
     const remainingMs = deadline - Date.now();
     const requestTimeoutMs = Math.max(1_000, Math.min(30_000, remainingMs));
 
-    const [buildMetaResult, homeResult, quantumHealthResult] = await Promise.all([
-      fetchBuildMeta(args.siteUrl, requestTimeoutMs),
-      fetchHome(args.siteUrl, requestTimeoutMs),
-      fetchQuantumHealth(args.siteUrl, requestTimeoutMs),
-    ]);
+    const [buildMetaResult, homeResult, quantumHealthResult, quantumHardwareGuardResult] =
+      await Promise.all([
+        fetchBuildMeta(args.siteUrl, requestTimeoutMs),
+        fetchHome(args.siteUrl, requestTimeoutMs),
+        fetchQuantumHealth(args.siteUrl, requestTimeoutMs),
+        fetchQuantumHardwareGuard(args.siteUrl, requestTimeoutMs),
+      ]);
 
     const buildPayload = buildMetaResult.payload ?? null;
     const builtAt =
@@ -267,6 +324,12 @@ async function main() {
       typeof quantumHealthPayload === 'object' &&
       quantumHealthPayload.status === 'healthy' &&
       quantumHealthPayload.service === 'Quantum API';
+    const quantumHardwareGuardPayload = quantumHardwareGuardResult.payload;
+    const quantumHardwareGuardOk =
+      quantumHardwareGuardResult.response?.status === 401 &&
+      quantumHardwareGuardPayload &&
+      typeof quantumHardwareGuardPayload === 'object' &&
+      quantumHardwareGuardPayload.error === 'user_api_key_required';
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
@@ -276,23 +339,26 @@ async function main() {
         `buildMatchesExpected=${buildMatchesExpected} ` +
         `homeStatus=${homeResult.response.status} ` +
         `quantumHealthStatus=${quantumHealthResult.response?.status ?? 'unreachable'} ` +
-        `quantumHealthOk=${quantumHealthOk}`,
+        `quantumHealthOk=${quantumHealthOk} ` +
+        `quantumHardwareGuardStatus=${quantumHardwareGuardResult.response?.status ?? 'unreachable'} ` +
+        `quantumHardwareGuardOk=${quantumHardwareGuardOk}`,
     );
 
-    if (buildFresh && homeOk && quantumHealthOk) {
+    if (buildFresh && homeOk && quantumHealthOk && quantumHardwareGuardOk) {
       console.log(
-        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and healthy Quantum API response.`,
+        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, healthy Quantum API response, and hardened Quantum hardware proxy guard.`,
       );
       return;
     }
 
-    const buildError =
-      buildMetaResult.error ??
-      (verifyingByExpectedSha
-        ? `build sha ${buildPayload?.sha ?? buildPayload?.shortSha ?? 'unknown'} does not match expected ${expectedSha}`
-        : Number.isFinite(builtAt)
-          ? `build timestamp ${buildPayload?.builtAt ?? 'unknown'} is older than ${args.notBefore} (allowing ${clockSkewMs}ms skew)`
-          : `build timestamp is missing or invalid in ${buildMetaResult.url}`);
+    const buildError = buildFresh
+      ? 'build marker is fresh'
+      : (buildMetaResult.error ??
+        (verifyingByExpectedSha
+          ? `build sha ${buildPayload?.sha ?? buildPayload?.shortSha ?? 'unknown'} does not match expected ${expectedSha}`
+          : Number.isFinite(builtAt)
+            ? `build timestamp ${buildPayload?.builtAt ?? 'unknown'} is older than ${args.notBefore} (allowing ${clockSkewMs}ms skew)`
+            : `build timestamp is missing or invalid in ${buildMetaResult.url}`));
     const homeError = homeOk
       ? 'home page is healthy'
       : `home returned ${homeResult.response.status} ${homeResult.response.statusText}`;
@@ -300,7 +366,11 @@ async function main() {
       ? 'Quantum health is healthy'
       : (quantumHealthResult.error ??
         `Quantum health returned unexpected payload from ${quantumHealthResult.url}`);
-    lastFailure = `${buildError}; ${homeError}; ${quantumError}`;
+    const quantumHardwareGuardError = quantumHardwareGuardOk
+      ? 'Quantum hardware proxy guard is healthy'
+      : (quantumHardwareGuardResult.error ??
+        `Quantum hardware proxy guard returned ${quantumHardwareGuardResult.response?.status ?? 'unreachable'} ${quantumHardwareGuardResult.response?.statusText ?? ''} from ${quantumHardwareGuardResult.url}`);
+    lastFailure = `${buildError}; ${homeError}; ${quantumError}; ${quantumHardwareGuardError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;
