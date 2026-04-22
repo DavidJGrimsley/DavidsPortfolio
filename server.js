@@ -339,6 +339,36 @@ function isDisallowedQuantumBackendProxyPath(pathname) {
   );
 }
 
+function isTruthyQueryValue(value) {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes';
+}
+
+function isIbmHardwareBackendsProxyPath(pathname, searchParams) {
+  if (pathname !== '/list_backends') {
+    return false;
+  }
+
+  const provider = String(searchParams.get('provider') || '').trim().toLowerCase();
+  if (provider !== 'ibm') {
+    return false;
+  }
+
+  return !isTruthyQueryValue(searchParams.get('simulator_only'));
+}
+
+function isIbmHardwareBackendProxyPath(pathname, searchParams) {
+  return (
+    pathname === '/jobs/circuits' ||
+    pathname.startsWith('/jobs/') ||
+    isIbmHardwareBackendsProxyPath(pathname, searchParams)
+  );
+}
+
 app.use('/public-facing/api/quantum/v1', async (req, res, next) => {
   if (!shouldProxyPublicQuantumRequest(req)) {
     if (!isProductionQuantumHost(getRequestHost(req))) {
@@ -380,15 +410,6 @@ app.use('/api/quantum-backend', async (req, res, next) => {
     return next();
   }
 
-  const backendApiKey = process.env.QUANTUM_BACKEND_API_KEY?.trim();
-  if (!backendApiKey) {
-    res.status(500).json({
-      error: 'proxy_not_configured',
-      message: 'QUANTUM_BACKEND_API_KEY is missing on the server.',
-    });
-    return;
-  }
-
   const requestUrl = new URL(req.originalUrl, 'http://localhost');
   const suffix = requestUrl.pathname.slice('/api/quantum-backend'.length);
   let normalizedSuffix = suffix.startsWith('/') ? suffix : `/${suffix}`;
@@ -408,8 +429,29 @@ app.use('/api/quantum-backend', async (req, res, next) => {
     return;
   }
 
+  const requiresUserApiKey = isIbmHardwareBackendProxyPath(normalizedSuffix, requestUrl.searchParams);
+  const userApiKey = getFirstHeaderValue(req.headers['x-api-key']).trim();
+  const backendApiKey = process.env.QUANTUM_BACKEND_API_KEY?.trim() ?? '';
+  const apiKey = requiresUserApiKey ? userApiKey : backendApiKey;
+
+  if (requiresUserApiKey && !apiKey) {
+    res.status(401).json({
+      error: 'user_api_key_required',
+      message: 'IBM hardware routes require your own Quantum API key in X-API-Key.',
+    });
+    return;
+  }
+
+  if (!requiresUserApiKey && !apiKey) {
+    res.status(500).json({
+      error: 'proxy_not_configured',
+      message: 'QUANTUM_BACKEND_API_KEY is missing on the server.',
+    });
+    return;
+  }
+
   const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${requestUrl.search}`;
-  await proxyToQuantumOrigin(req, res, targetUrl, { apiKey: backendApiKey });
+  await proxyToQuantumOrigin(req, res, targetUrl, { apiKey });
 });
 
 app.get('/__djsportfolio_runtime_config__', (_req, res) => {
@@ -431,5 +473,5 @@ app.all('/{*all}', createRequestHandler({
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  console.log(`DJsPortfolio server listening on http://localhost:${port}`);
 });

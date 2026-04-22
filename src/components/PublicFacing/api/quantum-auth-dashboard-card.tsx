@@ -706,6 +706,7 @@ export function QuantumAuthDashboardCard({
   return (
     <View
       className="mb-7.5 rounded-3xl border p-4 md:p-5"
+      nativeID="quantum-auth-dashboard"
       style={{
         backgroundColor: accentColor + '18',
         borderColor: tintColor + '33',
