@@ -188,7 +188,13 @@ if [ -n "$previous_dist" ] && [ -d "$previous_dist" ]; then
 	rm -rf "$previous_dist"
 fi
 
+mkdir -p tmp
+touch tmp/restart.txt
+echo "[plesk-post-deploy] Touched Passenger restart marker: $(pwd)/tmp/restart.txt"
+
+parent_dir="$(dirname "$(pwd)")"
 mkdir -p ../tmp
 touch ../tmp/restart.txt
+echo "[plesk-post-deploy] Touched legacy parent restart marker: $parent_dir/tmp/restart.txt"
 
 echo "[plesk-post-deploy] Plesk post-deploy actions completed."
