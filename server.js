@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
 const path = require('path');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
@@ -37,7 +36,7 @@ const HOSTED_RUNTIME_REQUIRED_ENV_KEYS = [
 ];
 const HOSTED_RUNTIME_DEPRECATED_ENV_KEYS = ['QUANTUM_UPSTREAM_URL'];
 const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
-const DEFAULT_QUANTUM_UPSTREAM_BASE_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS = ['/keys', '/ibm/profiles'];
 
 function buildPublicRuntimeConfig() {
@@ -133,7 +132,7 @@ function normalizeQuantumUpstreamBaseUrl() {
     return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
   }
 
-  return DEFAULT_QUANTUM_UPSTREAM_BASE_URL;
+  return process.env.NODE_ENV === 'production' ? null : DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL;
 }
 
 const QUANTUM_UPSTREAM_BASE_URL = normalizeQuantumUpstreamBaseUrl();
