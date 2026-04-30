@@ -118,8 +118,9 @@ export function loadServerRuntimeEnv(request?: Request) {
   }
 
   const envFiles = findEnvFiles(cwd, environment);
+  const shouldOverrideInitialEnvFile = loadedKey !== null;
   envFiles.forEach(({ filePath }, index) => {
-    applyEnvFile(filePath, index > 0);
+    applyEnvFile(filePath, shouldOverrideInitialEnvFile || index > 0);
   });
 
   loadedKey = key;

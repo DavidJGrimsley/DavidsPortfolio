@@ -33,6 +33,7 @@ const QUANTUM_AUTH_DASHBOARD_ANCHOR = 'quantum-auth-dashboard';
 
 type HardwareJobEvidence = {
   backendName: string;
+  ibmProfile: string;
   jobId: string;
   remoteJobId: string;
   status: string;
@@ -321,6 +322,7 @@ export function HelloWave() {
       let remoteJobId = submitted.remoteJobId;
       setHardwareEvidence({
         backendName,
+        ibmProfile,
         jobId: submitted.jobId,
         remoteJobId,
         status,
@@ -343,6 +345,7 @@ export function HelloWave() {
         setJobStatusText(`IBM job ${submitted.jobId} is ${status} (remote: ${remoteJobId}).`);
         setHardwareEvidence({
           backendName,
+          ibmProfile,
           jobId: submitted.jobId,
           remoteJobId,
           status,
@@ -380,6 +383,7 @@ export function HelloWave() {
       const measured: 0 | 1 = sampled.trim().endsWith('1') ? 1 : 0;
       const evidence: HardwareJobEvidence = {
         backendName,
+        ibmProfile,
         jobId: submitted.jobId,
         remoteJobId,
         status: 'succeeded',
@@ -944,7 +948,7 @@ export function HelloWave() {
               <ThemedText style={{ fontSize: 12, opacity: 0.85 }}>
                 Last IBM hardware run: backend {hardwareEvidence.backendName}, local job{' '}
                 {hardwareEvidence.jobId}, remote job {hardwareEvidence.remoteJobId}, status{' '}
-                {hardwareEvidence.status}, using IBM profile {selectedIbmProfileName || 'N/A'}.
+                {hardwareEvidence.status}, using IBM profile {hardwareEvidence.ibmProfile || 'N/A'}.
               </ThemedText>
             ) : null}
           </View>

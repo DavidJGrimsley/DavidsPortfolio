@@ -40,7 +40,7 @@ npm install
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_SITE_ORIGIN=http://localhost:3000
-EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
+EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://YOUR_QUANTUM_API_HOST/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=http://localhost:3000
 ```
@@ -63,17 +63,17 @@ For each Plesk deployment root, create the matching server-local file next to `s
 EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 EXPO_PUBLIC_SITE_ORIGIN=https://quizzical-hofstadter.108-175-12-95.plesk.page
-EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1
+EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://YOUR_QUANTUM_API_HOST/v1
 QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.page
 ```
 
-`scripts/plesk-post-deploy.sh` picks `.env.test` on the `test` branch and `.env.production` on `main`, then fails fast if required values are blank.
-`server.js` uses the same env-loader at runtime, so the build and the running app stay on the same environment contract. Hosted `.env.test` and `.env.production` files are rejected if `EXPO_PUBLIC_SITE_ORIGIN` points to localhost.
+`scripts/plesk-post-deploy.sh` picks `.env.test` on the `test` branch and `.env.production` on `main`, then warns if required values are blank instead of aborting immediately.
+`server.js` uses the same env-loader at runtime, so the build and the running app stay on the same environment contract. If a hosted `.env.test` or `.env.production` file still points `EXPO_PUBLIC_SITE_ORIGIN` at localhost, the loader warns so you can correct the deployment configuration; it is not automatically rejected.
 Existing Plesk deployments that still have `.env.plesk` will continue to use it as a legacy fallback. In that fallback mode, `.env` is loaded first and `.env.plesk` is loaded on top to match the old server behavior. Rename the server-local file to `.env.test` or `.env.production` so the environment is obvious.
 
-Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
-`QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers; same-origin browser requests are allowed automatically.
+Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production to the upstream Quantum API service, not this portfolio app's `/public-facing/api/quantum/v1` proxy route on the same host. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
+`QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers to the Quantum proxy routes; same-origin browser requests are allowed automatically.
 For non-web runtimes that need runtime proxy calls, set `EXPO_PUBLIC_QUANTUM_RUNTIME_PROXY_BASE_URL` to an absolute proxy URL (for example `https://davidjgrimsley.com/api/quantum-backend`).
 
 ### Supabase Auth Callback Setup
