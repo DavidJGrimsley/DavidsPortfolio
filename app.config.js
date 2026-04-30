@@ -30,7 +30,16 @@ function withExpoRouterOrigin(plugins, origin) {
   });
 }
 
+function ensurePlugin(plugins, pluginName) {
+  const normalizedPlugins = plugins || [];
+  const hasPlugin = normalizedPlugins.some((plugin) =>
+    Array.isArray(plugin) ? plugin[0] === pluginName : plugin === pluginName
+  );
+
+  return hasPlugin ? normalizedPlugins : [...normalizedPlugins, pluginName];
+}
+
 module.exports = ({ config }) => ({
   ...config,
-  plugins: withExpoRouterOrigin(config.plugins, resolveSiteOrigin()),
+  plugins: ensurePlugin(withExpoRouterOrigin(config.plugins, resolveSiteOrigin()), 'expo-web-browser'),
 });

@@ -93,12 +93,6 @@ if [ -z "${EXPO_PUBLIC_SITE_ORIGIN-}" ]; then
 	esac
 fi
 
-if [ -z "${EXPO_PUBLIC_QUANTUM_API_BASE_URL-}" ]; then
-	EXPO_PUBLIC_QUANTUM_API_BASE_URL="https://davidjgrimsley.com/public-facing/api/quantum/v1"
-	export EXPO_PUBLIC_QUANTUM_API_BASE_URL
-	echo "Defaulted EXPO_PUBLIC_QUANTUM_API_BASE_URL to $EXPO_PUBLIC_QUANTUM_API_BASE_URL"
-fi
-
 require_env_var() {
 	var_name="$1"
 	eval "var_value=\${$var_name-}"
