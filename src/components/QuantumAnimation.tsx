@@ -1,23 +1,39 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import type { Session } from '@supabase/supabase-js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, TextInput, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import LottieView from 'lottie-react-native';
 
 import { ExternalLink } from '@/components/UI/ExternalLink';
 import { ThemedText } from '@/components/UI/ThemedText';
-import { QUANTUM_API_BASE_URL } from '@/lib/quantum-api-config';
+import {
+  QUANTUM_API_BASE_URL,
+  resolveQuantumEndpointBaseUrl,
+} from '@/lib/quantum-api-config';
+import {
+  getSupabaseBrowserClient,
+  isSupabaseConfigured,
+} from '@/lib/supabase-browser';
+import {
+  listIbmProfiles,
+  type IbmProfileRecord,
+} from '@/services/quantum-key-management';
 import {
   getIbmCircuitJobResult,
   getIbmCircuitJobStatus,
   listIbmBackends,
+  runQuantumGate,
   submitIbmCircuitJob,
   type IbmBackendRecord,
 } from '@/services/quantum-ibm-runtime';
 
 type ExecutionMode = 'simulator' | 'ibm_hardware';
 
+const QUANTUM_AUTH_DASHBOARD_ANCHOR = 'quantum-auth-dashboard';
+
 type HardwareJobEvidence = {
   backendName: string;
+  ibmProfile: string;
   jobId: string;
   remoteJobId: string;
   status: string;
@@ -55,21 +71,23 @@ function getRandomAngle() {
   return angles[Math.floor(Math.random() * angles.length)] ?? Math.PI / 4;
 }
 
-const QUANTUM_PROXY_BASE_PATH = '/api/quantum-backend';
-
 export function HelloWave() {
   const isWeb = Platform.OS === 'web';
   const publicQuantumBaseUrl = QUANTUM_API_BASE_URL;
-  const quantumBaseUrl = isWeb ? QUANTUM_PROXY_BASE_PATH : QUANTUM_API_BASE_URL;
-  const quantumEndpoint = `${quantumBaseUrl}/gates/run`;
-  const hasApiKey = isWeb;
-  const quantumApiHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  const runtimeApiKey = '';
+  const quantumBaseUrl = resolveQuantumEndpointBaseUrl('api_key', isWeb);
+  const bearerQuantumBaseUrl = resolveQuantumEndpointBaseUrl('bearer_jwt', isWeb);
+  const supabaseClient = useMemo(() => {
+    if (!isSupabaseConfigured()) {
+      return null;
+    }
+
+    return getSupabaseBrowserClient();
+  }, []);
 
   const restartRef = useRef<LottieView>(null);
   const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const simulatorAbortRef = useRef<AbortController | null>(null);
+  const runTokenRef = useRef(0);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
@@ -77,6 +95,13 @@ export function HelloWave() {
   const [robotMessage, setRobotMessage] = useState('Initializing quantum circuit...');
 
   const [executionMode, setExecutionMode] = useState<ExecutionMode>('simulator');
+  const [authReady, setAuthReady] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [ibmProfiles, setIbmProfiles] = useState<IbmProfileRecord[]>([]);
+  const [selectedIbmProfileName, setSelectedIbmProfileName] = useState('');
+  const [loadingIbmProfiles, setLoadingIbmProfiles] = useState(false);
+  const [ibmProfilesError, setIbmProfilesError] = useState<string | null>(null);
+  const [hardwareApiKey, setHardwareApiKey] = useState('');
   const [ibmBackends, setIbmBackends] = useState<IbmBackendRecord[]>([]);
   const [selectedIbmBackend, setSelectedIbmBackend] = useState('');
   const [loadingIbmBackends, setLoadingIbmBackends] = useState(false);
@@ -92,13 +117,83 @@ export function HelloWave() {
   const [lottieSpeed, setLottieSpeed] = useState(1);
   const [lottieLevel, setLottieLevel] = useState<'low' | 'medium' | 'high'>('medium');
 
+  const accessToken = session?.access_token ?? null;
+  const trimmedHardwareApiKey = hardwareApiKey.trim();
+  const canUseIbmHardware = Boolean(
+    accessToken && trimmedHardwareApiKey && selectedIbmProfileName.trim()
+  );
+
+  const scrollToQuantumDashboard = useCallback(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document
+      .getElementById(QUANTUM_AUTH_DASHBOARD_ANCHOR)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  const refreshVerifiedIbmProfiles = useCallback(async () => {
+    if (!accessToken) {
+      setIbmProfiles([]);
+      setSelectedIbmProfileName('');
+      return [] as IbmProfileRecord[];
+    }
+
+    setLoadingIbmProfiles(true);
+    setIbmProfilesError(null);
+
+    try {
+      const records = await listIbmProfiles(bearerQuantumBaseUrl, accessToken);
+      const verifiedProfiles = records.filter(
+        (profile) => profile.verificationStatus === 'verified'
+      );
+      const defaultProfile = verifiedProfiles.find((profile) => profile.isDefault);
+
+      setIbmProfiles(verifiedProfiles);
+      setSelectedIbmProfileName((current) => {
+        if (verifiedProfiles.some((profile) => profile.profileName === current)) {
+          return current;
+        }
+
+        return defaultProfile?.profileName ?? verifiedProfiles[0]?.profileName ?? '';
+      });
+
+      return verifiedProfiles;
+    } catch (error) {
+      setIbmProfiles([]);
+      setSelectedIbmProfileName('');
+      setIbmProfilesError(
+        error instanceof Error ? error.message : 'Unable to load your IBM profiles.'
+      );
+      return [] as IbmProfileRecord[];
+    } finally {
+      setLoadingIbmProfiles(false);
+    }
+  }, [accessToken, bearerQuantumBaseUrl]);
+
   const loadIbmHardwareBackends = useCallback(async () => {
-    if (!hasApiKey) {
+    const apiKey = trimmedHardwareApiKey;
+    const ibmProfile = selectedIbmProfileName.trim();
+
+    if (!accessToken) {
       setIbmBackends([]);
       setSelectedIbmBackend('');
-      setIbmBackendsError(
-        'IBM hardware mode is available through the secure web proxy route.'
-      );
+      setIbmBackendsError('Sign in before loading IBM hardware backends.');
+      return [] as IbmBackendRecord[];
+    }
+
+    if (!ibmProfile) {
+      setIbmBackends([]);
+      setSelectedIbmBackend('');
+      setIbmBackendsError('Choose a verified IBM profile before loading hardware backends.');
+      return [] as IbmBackendRecord[];
+    }
+
+    if (!apiKey) {
+      setIbmBackends([]);
+      setSelectedIbmBackend('');
+      setIbmBackendsError('Paste your Quantum API key secret before loading hardware backends.');
       return [] as IbmBackendRecord[];
     }
 
@@ -106,7 +201,8 @@ export function HelloWave() {
     setIbmBackendsError(null);
 
     try {
-      const backends = await listIbmBackends(quantumBaseUrl, runtimeApiKey, {
+      const backends = await listIbmBackends(quantumBaseUrl, apiKey, {
+        ibmProfile,
         minQubits: 1,
       });
 
@@ -117,7 +213,7 @@ export function HelloWave() {
       }
       if (sorted.length === 0) {
         setIbmBackendsError(
-          'No IBM hardware backends were returned for this API key/default profile. Simulator mode still works.'
+          'No IBM hardware backends were returned for this API key and IBM profile. Simulator mode still works.'
         );
       }
       return sorted;
@@ -129,51 +225,46 @@ export function HelloWave() {
     } finally {
       setLoadingIbmBackends(false);
     }
-  }, [hasApiKey, quantumBaseUrl, runtimeApiKey, selectedIbmBackend]);
+  }, [
+    accessToken,
+    quantumBaseUrl,
+    selectedIbmBackend,
+    selectedIbmProfileName,
+    trimmedHardwareApiKey,
+  ]);
 
   const runSimulator = useCallback(
     async (angle: number): Promise<QuantumRunResult> => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 10_000);
+      simulatorAbortRef.current?.abort();
+      const abortController = new AbortController();
+      simulatorAbortRef.current = abortController;
 
-      let response: Response;
-      try {
-        response = await fetch(quantumEndpoint, {
-          method: 'POST',
-          headers: quantumApiHeaders,
-          body: JSON.stringify({
-            gate_type: 'rotation',
-            rotation_angle_rad: angle,
-          }),
-          signal: controller.signal,
-        });
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Simulator request timed out. Please try again.');
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          abortController.abort();
+          reject(new Error('Simulator request timed out. Please try again.'));
+        }, 10_000);
+      });
+
+      const payload = await Promise.race([
+        runQuantumGate(quantumBaseUrl, '', {
+          gateType: 'rotation',
+          rotationAngleRad: angle,
+        }, {
+          signal: abortController.signal,
+        }),
+        timeoutPromise,
+      ]).finally(() => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
-        throw error;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error(
-            'Quantum backend authentication failed (401). Rotate the server-side key and retry.'
-          );
+        if (simulatorAbortRef.current === abortController) {
+          simulatorAbortRef.current = null;
         }
-        throw new Error(`Simulator call failed with HTTP ${response.status}.`);
-      }
+      });
 
-      const payload = (await response.json()) as {
-        superposition_strength?: number;
-        measurement?: number;
-        backend?: string;
-      };
-
-      const strength = Math.max(0, Math.min(1, Number(payload.superposition_strength ?? 0.5)));
+      const strength = Math.max(0, Math.min(1, Number(payload.superpositionStrength ?? 0.5)));
       const measured = payload.measurement === 1 ? 1 : 0;
 
       return {
@@ -184,11 +275,26 @@ export function HelloWave() {
         measurement: measured,
       };
     },
-    [quantumApiHeaders, quantumEndpoint]
+    [quantumBaseUrl]
   );
 
   const runIbmHardware = useCallback(
     async (angle: number): Promise<QuantumRunResult> => {
+      const apiKey = trimmedHardwareApiKey;
+      const ibmProfile = selectedIbmProfileName.trim();
+
+      if (!accessToken) {
+        throw new Error('Sign in before running IBM hardware jobs.');
+      }
+
+      if (!ibmProfile) {
+        throw new Error('Choose a verified IBM profile before running IBM hardware jobs.');
+      }
+
+      if (!apiKey) {
+        throw new Error('Paste your Quantum API key secret before running IBM hardware jobs.');
+      }
+
       let backendName = selectedIbmBackend;
       if (!backendName) {
         const loaded = ibmBackends.length > 0 ? ibmBackends : await loadIbmHardwareBackends();
@@ -200,10 +306,11 @@ export function HelloWave() {
         );
       }
 
-      setJobStatusText(`Submitting IBM hardware job to ${backendName}...`);
+      setJobStatusText(`Submitting IBM hardware job to ${backendName} with profile ${ibmProfile}...`);
 
-      const submitted = await submitIbmCircuitJob(quantumBaseUrl, runtimeApiKey, {
+      const submitted = await submitIbmCircuitJob(quantumBaseUrl, apiKey, {
         backendName,
+        ibmProfile,
         shots: 512,
         circuit: {
           numQubits: 1,
@@ -215,6 +322,7 @@ export function HelloWave() {
       let remoteJobId = submitted.remoteJobId;
       setHardwareEvidence({
         backendName,
+        ibmProfile,
         jobId: submitted.jobId,
         remoteJobId,
         status,
@@ -231,12 +339,13 @@ export function HelloWave() {
         }
 
         await wait(2000);
-        const next = await getIbmCircuitJobStatus(quantumBaseUrl, runtimeApiKey, submitted.jobId);
+        const next = await getIbmCircuitJobStatus(quantumBaseUrl, apiKey, submitted.jobId);
         status = next.status;
         remoteJobId = next.remoteJobId;
         setJobStatusText(`IBM job ${submitted.jobId} is ${status} (remote: ${remoteJobId}).`);
         setHardwareEvidence({
           backendName,
+          ibmProfile,
           jobId: submitted.jobId,
           remoteJobId,
           status,
@@ -251,7 +360,7 @@ export function HelloWave() {
         }
       }
 
-      const result = await getIbmCircuitJobResult(quantumBaseUrl, runtimeApiKey, submitted.jobId);
+      const result = await getIbmCircuitJobResult(quantumBaseUrl, apiKey, submitted.jobId);
       const entries = Object.entries(result.result.counts);
       const total = entries.reduce((sum, [, count]) => sum + count, 0);
       const oneCount = entries.reduce(
@@ -274,6 +383,7 @@ export function HelloWave() {
       const measured: 0 | 1 = sampled.trim().endsWith('1') ? 1 : 0;
       const evidence: HardwareJobEvidence = {
         backendName,
+        ibmProfile,
         jobId: submitted.jobId,
         remoteJobId,
         status: 'succeeded',
@@ -281,7 +391,7 @@ export function HelloWave() {
 
       setHardwareEvidence(evidence);
       setJobStatusText(
-        `IBM hardware job completed. Local job ${submitted.jobId}, remote job ${remoteJobId}.`
+        `IBM hardware job completed with profile ${ibmProfile}. Local job ${submitted.jobId}, remote job ${remoteJobId}.`
       );
 
       return {
@@ -293,10 +403,24 @@ export function HelloWave() {
         hardwareEvidence: evidence,
       };
     },
-    [ibmBackends, loadIbmHardwareBackends, quantumBaseUrl, runtimeApiKey, selectedIbmBackend]
+    [
+      accessToken,
+      ibmBackends,
+      loadIbmHardwareBackends,
+      quantumBaseUrl,
+      selectedIbmBackend,
+      selectedIbmProfileName,
+      trimmedHardwareApiKey,
+    ]
   );
 
   const runQuantumAnimation = useCallback(async () => {
+    const runToken = runTokenRef.current + 1;
+    runTokenRef.current = runToken;
+
+    simulatorAbortRef.current?.abort();
+    simulatorAbortRef.current = null;
+
     if (completionTimerRef.current) {
       clearTimeout(completionTimerRef.current);
       completionTimerRef.current = null;
@@ -309,25 +433,13 @@ export function HelloWave() {
     setRobotMessage('Running quantum workflow...');
     setHardwareEvidence(null);
 
-    if (!hasApiKey) {
-      setRobotMessage('Secure backend proxy unavailable in this runtime. Running fallback animation.');
-      setBackendLabel('Local fallback');
-      setGateAngle(0);
-      setSuperpositionStrength(0);
-      setMeasurement(0);
-      setLottieLoop(false);
-      setLottieSpeed(1);
-      setLottieLevel('low');
-      await wait(1200);
-      setIsLoading(false);
-      setIsComplete(true);
-      return;
-    }
-
     try {
       const angle = getRandomAngle();
       const result =
         executionMode === 'simulator' ? await runSimulator(angle) : await runIbmHardware(angle);
+      if (runToken !== runTokenRef.current) {
+        return;
+      }
 
       setBackendLabel(result.backendLabel);
       setGateAngle(result.gateAngle);
@@ -351,12 +463,19 @@ export function HelloWave() {
           : 'IBM hardware run complete. Restart to submit another hardware job.'
       );
 
-      const finishDelayMs = result.measurement === 1 ? 10_000 : Math.max(1500, Math.floor(4000 / speed));
+      const finishDelayMs =
+        result.measurement === 1 ? 10_000 : Math.max(1500, Math.floor(4000 / speed));
       completionTimerRef.current = setTimeout(() => {
+        if (runToken !== runTokenRef.current) {
+          return;
+        }
         setIsComplete(true);
         completionTimerRef.current = null;
       }, finishDelayMs);
     } catch (error) {
+      if (runToken !== runTokenRef.current) {
+        return;
+      }
       setRobotMessage(error instanceof Error ? error.message : 'Quantum run failed.');
       setBackendLabel('Fallback');
       setGateAngle(0);
@@ -371,9 +490,11 @@ export function HelloWave() {
         completionTimerRef.current = null;
       }
     } finally {
-      setIsLoading(false);
+      if (runToken === runTokenRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [executionMode, hasApiKey, runIbmHardware, runSimulator]);
+  }, [executionMode, runIbmHardware, runSimulator]);
 
   useEffect(() => {
     void runQuantumAnimation();
@@ -381,15 +502,68 @@ export function HelloWave() {
   }, []);
 
   useEffect(() => {
-    if (executionMode === 'ibm_hardware' && ibmBackends.length === 0) {
-      void loadIbmHardwareBackends();
+    let isActive = true;
+
+    if (!supabaseClient) {
+      setAuthReady(true);
+      return;
     }
-  }, [executionMode, ibmBackends.length, loadIbmHardwareBackends]);
+
+    const bootstrapSession = async () => {
+      const { data } = await supabaseClient.auth.getSession();
+      if (!isActive) return;
+
+      setSession(data.session);
+      setAuthReady(true);
+    };
+
+    bootstrapSession();
+
+    const {
+      data: { subscription },
+    } = supabaseClient.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isActive) return;
+
+      setSession(nextSession);
+      if (!nextSession) {
+        setHardwareApiKey('');
+        setIbmProfiles([]);
+        setSelectedIbmProfileName('');
+        setIbmBackends([]);
+        setSelectedIbmBackend('');
+      }
+    });
+
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
+  }, [supabaseClient]);
+
+  useEffect(() => {
+    if (executionMode !== 'ibm_hardware') {
+      return;
+    }
+
+    if (!accessToken) {
+      setIbmProfiles([]);
+      setSelectedIbmProfileName('');
+      setIbmBackends([]);
+      setSelectedIbmBackend('');
+      return;
+    }
+
+    void refreshVerifiedIbmProfiles();
+  }, [accessToken, executionMode, refreshVerifiedIbmProfiles]);
 
   useEffect(
     () => () => {
+      runTokenRef.current += 1;
+      simulatorAbortRef.current?.abort();
+      simulatorAbortRef.current = null;
       if (completionTimerRef.current) {
         clearTimeout(completionTimerRef.current);
+        completionTimerRef.current = null;
       }
     },
     []
@@ -405,6 +579,10 @@ export function HelloWave() {
     setIsRestartPlaying(false);
     void runQuantumAnimation();
   };
+
+  const isRunNowDisabled =
+    isLoading || isRestartPlaying || (executionMode === 'ibm_hardware' && !canUseIbmHardware);
+  const hasVerifiedIbmProfiles = ibmProfiles.length > 0;
 
   return (
     <View
@@ -474,14 +652,14 @@ export function HelloWave() {
           </Pressable>
 
           <Pressable
-            disabled={isLoading || isRestartPlaying}
+            disabled={isRunNowDisabled}
             onPress={() => {
               void runQuantumAnimation();
             }}
             style={({ pressed }) => ({
               backgroundColor: '#0f766e',
               borderRadius: 10,
-              opacity: pressed || isLoading || isRestartPlaying ? 0.7 : 1,
+              opacity: pressed || isRunNowDisabled ? 0.7 : 1,
               paddingHorizontal: 12,
               paddingVertical: 8,
             })}
@@ -503,8 +681,192 @@ export function HelloWave() {
           <ThemedText style={{ fontSize: 12, opacity: 0.85 }}>
             Simulator mode is always available and does not require IBM credentials.
           </ThemedText>
+        ) : !authReady ? (
+          <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
+            <ActivityIndicator color="#11181C" />
+            <ThemedText style={{ fontSize: 12, opacity: 0.85 }}>
+              Checking your Identerest session...
+            </ThemedText>
+          </View>
+        ) : !accessToken ? (
+          <View
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.5)',
+              borderColor: 'rgba(17, 24, 28, 0.16)',
+              borderRadius: 12,
+              borderWidth: 1,
+              gap: 10,
+              padding: 12,
+            }}
+          >
+            <ThemedText style={{ fontSize: 13, fontWeight: 'bold' }}>
+              Sign in to use IBM Hardware
+            </ThemedText>
+            <ThemedText style={{ fontSize: 12, opacity: 0.85 }}>
+              IBM Hardware runs require your Identerest account, a Quantum API key secret from
+              that account, and saved IBM credentials. Simulator mode stays public.
+            </ThemedText>
+            <Pressable
+              onPress={scrollToQuantumDashboard}
+              style={({ pressed }) => ({
+                alignSelf: 'flex-start',
+                backgroundColor: '#11181C',
+                borderRadius: 10,
+                opacity: pressed ? 0.78 : 1,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+              })}
+            >
+              <ThemedText
+                style={{
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Sign in / manage credentials
+              </ThemedText>
+            </Pressable>
+          </View>
         ) : (
           <View style={{ gap: 8 }}>
+            <ThemedText style={{ fontSize: 12, opacity: 0.85 }}>
+              IBM Hardware uses your own Quantum API key and a verified IBM profile saved to your
+              Identerest account. Key secrets are shown once when created, so paste the secret
+              here for this run.
+            </ThemedText>
+
+            <TextInput
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={setHardwareApiKey}
+              placeholder="Paste Quantum API key secret"
+              placeholderTextColor="#11181C99"
+              secureTextEntry
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderColor: 'rgba(17, 24, 28, 0.2)',
+                borderRadius: 12,
+                borderWidth: 1,
+                color: '#11181C',
+                fontSize: 14,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+              }}
+              value={hardwareApiKey}
+            />
+
+            <ThemedText style={{ fontSize: 12, fontWeight: 'bold' }}>
+              Verified IBM profile
+            </ThemedText>
+            <View
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderColor: 'rgba(17, 24, 28, 0.2)',
+                borderRadius: 16,
+                borderWidth: 1,
+                overflow: 'hidden',
+              }}
+            >
+              <Picker
+                enabled={hasVerifiedIbmProfiles}
+                onValueChange={(value) => {
+                  setSelectedIbmProfileName(String(value || ''));
+                  setIbmBackends([]);
+                  setSelectedIbmBackend('');
+                }}
+                selectedValue={selectedIbmProfileName}
+                style={{
+                  backgroundColor: '#ffffff',
+                  borderRadius: 16,
+                  color: '#11181C',
+                  height: 52,
+                }}
+                dropdownIconColor="#11181C"
+              >
+                <Picker.Item
+                  color="#11181C"
+                  label={
+                    loadingIbmProfiles
+                      ? 'Loading verified IBM profiles...'
+                      : hasVerifiedIbmProfiles
+                        ? 'Select verified IBM profile'
+                        : 'No verified IBM profiles'
+                  }
+                  value=""
+                />
+                {ibmProfiles.map((profile) => (
+                  <Picker.Item
+                    color="#11181C"
+                    key={profile.profileId}
+                    label={`${profile.profileName}${profile.isDefault ? ' (default)' : ''}`}
+                    value={profile.profileName}
+                  />
+                ))}
+              </Picker>
+            </View>
+
+            <View style={{ alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pressable
+                disabled={loadingIbmProfiles}
+                onPress={() => {
+                  void refreshVerifiedIbmProfiles();
+                }}
+                style={({ pressed }) => ({
+                  backgroundColor: '#11181C',
+                  borderRadius: 10,
+                  opacity: pressed || loadingIbmProfiles ? 0.7 : 1,
+                  paddingHorizontal: 10,
+                  paddingVertical: 8,
+                })}
+              >
+                <ThemedText
+                  style={{
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Refresh Profiles
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                onPress={scrollToQuantumDashboard}
+                style={({ pressed }) => ({
+                  backgroundColor: '#d4d4d8',
+                  borderRadius: 10,
+                  opacity: pressed ? 0.78 : 1,
+                  paddingHorizontal: 10,
+                  paddingVertical: 8,
+                })}
+              >
+                <ThemedText
+                  style={{
+                    color: '#11181C',
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Manage Key / IBM Credentials
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            {ibmProfilesError ? (
+              <ThemedText style={{ color: '#991b1b', fontSize: 12 }}>{ibmProfilesError}</ThemedText>
+            ) : null}
+
+            {!loadingIbmProfiles && !hasVerifiedIbmProfiles ? (
+              <ThemedText style={{ color: '#991b1b', fontSize: 12 }}>
+                No verified IBM profiles yet. Add IBM credentials in the dashboard, verify the
+                profile, then refresh here.
+              </ThemedText>
+            ) : null}
+
             <ThemedText style={{ fontSize: 12, fontWeight: 'bold' }}>IBM hardware backend</ThemedText>
             <View
               style={{
@@ -516,6 +878,7 @@ export function HelloWave() {
               }}
             >
               <Picker
+                enabled={canUseIbmHardware && ibmBackends.length > 0}
                 onValueChange={(value) => setSelectedIbmBackend(String(value || ''))}
                 selectedValue={selectedIbmBackend}
                 style={{
@@ -544,14 +907,14 @@ export function HelloWave() {
 
             <View style={{ alignItems: 'center', flexDirection: 'row', gap: 8 }}>
               <Pressable
-                disabled={loadingIbmBackends}
+                disabled={loadingIbmBackends || !canUseIbmHardware}
                 onPress={() => {
                   void loadIbmHardwareBackends();
                 }}
                 style={({ pressed }) => ({
                   backgroundColor: '#11181C',
                   borderRadius: 10,
-                  opacity: pressed || loadingIbmBackends ? 0.7 : 1,
+                  opacity: pressed || loadingIbmBackends || !canUseIbmHardware ? 0.7 : 1,
                   paddingHorizontal: 10,
                   paddingVertical: 8,
                 })}
@@ -585,7 +948,7 @@ export function HelloWave() {
               <ThemedText style={{ fontSize: 12, opacity: 0.85 }}>
                 Last IBM hardware run: backend {hardwareEvidence.backendName}, local job{' '}
                 {hardwareEvidence.jobId}, remote job {hardwareEvidence.remoteJobId}, status{' '}
-                {hardwareEvidence.status}, using default IBM profile.
+                {hardwareEvidence.status}, using IBM profile {hardwareEvidence.ibmProfile || 'N/A'}.
               </ThemedText>
             ) : null}
           </View>
@@ -711,8 +1074,8 @@ export function HelloWave() {
         }}
       >
         <ThemedText style={{ fontSize: 12, fontStyle: 'italic', opacity: 0.8 }}>
-          This demo defaults to simulator mode. Switch to IBM Hardware, load a backend, and run
-          again to submit a real IBM job through this same Quantum API backend. Hardware runs
+          This demo defaults to simulator mode. IBM Hardware requires sign-in, your own Quantum API
+          key secret, and a verified IBM profile saved to your Identerest account. Hardware runs
           display backend plus local and remote job IDs so you can verify IBM execution. Base URL:{' '}
           <ExternalLink
             href={publicQuantumBaseUrl}

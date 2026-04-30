@@ -706,12 +706,13 @@ export function QuantumAuthDashboardCard({
   return (
     <View
       className="mb-7.5 rounded-3xl border p-4 md:p-5"
+      nativeID="quantum-auth-dashboard"
       style={{
         backgroundColor: accentColor + '18',
         borderColor: tintColor + '33',
       }}
     >
-      <View className="mb-4 flex-row items-start justify-between gap-3">
+      <View className="mb-4 flex-row flex-wrap items-start justify-between gap-3">
         <View className="flex-1">
           <ThemedText type="subtitle" className="mb-1 text-2xl md:text-3xl">
             Api Keys
@@ -916,7 +917,7 @@ export function QuantumAuthDashboardCard({
                   borderColor: accentColor + '35',
                 }}
               >
-                <View className="mb-4 flex-row items-start justify-between gap-3">
+                <View className="mb-4 flex-row flex-wrap items-start justify-between gap-3">
                   <View className="flex-1">
                     <ThemedText type="defaultSemiBold" className="mb-1 text-lg">
                       Signed in via Identerest Account
@@ -1094,7 +1095,7 @@ export function QuantumAuthDashboardCard({
                   borderColor: accentColor + '35',
                 }}
               >
-                <View className="mb-4 flex-row items-center justify-between gap-3">
+                <View className="mb-4 flex-row flex-wrap items-center justify-between gap-3">
                   <View>
                     <ThemedText type="defaultSemiBold" className="text-lg">
                       API Keys
@@ -1104,7 +1105,7 @@ export function QuantumAuthDashboardCard({
                     </ThemedText>
                   </View>
 
-                  <View className="flex-row items-center gap-2">
+                  <View className="ml-auto flex-row flex-wrap items-center justify-end gap-2">
                     <Pressable
                       disabled={deletingRevokedKeys || loadingKeys || revokedKeysCount <= 0}
                       onPress={handleDeleteAllRevokedKeys}
@@ -1128,7 +1129,7 @@ export function QuantumAuthDashboardCard({
                       {deletingRevokedKeys ? (
                         <ActivityIndicator color="#f87171" />
                       ) : (
-                        <ThemedText className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: '#f87171' }}>
+                        <ThemedText className="text-xs font-bold uppercase tracking-[0.08em]" style={{ color: '#f87171' }}>
                           Delete Revoked
                         </ThemedText>
                       )}

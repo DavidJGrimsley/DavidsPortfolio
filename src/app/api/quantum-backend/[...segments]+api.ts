@@ -1,10 +1,9 @@
-const DEFAULT_UPSTREAM_BASE_URL =
-  'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+import { loadServerRuntimeEnv } from '@/server/runtime-env';
+
+const DEFAULT_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const PROXY_ROUTE_PREFIX = '/api/quantum-backend';
 const ROUTE_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
 const DEFAULT_ALLOWED_ORIGINS = [
-  'https://davidjgrimsley.com',
-  'https://www.davidjgrimsley.com',
   'http://localhost:8081',
   'http://127.0.0.1:8081',
   'http://localhost:3000',
@@ -21,8 +20,18 @@ type Method =
   | 'OPTIONS';
 
 function normalizeUpstreamBaseUrl() {
-  const raw = process.env.QUANTUM_PROXY_UPSTREAM_BASE_URL?.trim();
-  const base = raw && raw.length > 0 ? raw : DEFAULT_UPSTREAM_BASE_URL;
+  const raw = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL?.trim();
+  const base =
+    raw && raw.length > 0
+      ? raw
+      : process.env.NODE_ENV === 'production'
+        ? null
+        : DEFAULT_UPSTREAM_BASE_URL_LOCAL;
+
+  if (!base) {
+    return null;
+  }
+
   const trimmed = base.replace(/\/+$/, '');
   return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
 }
@@ -58,6 +67,40 @@ function normalizeOperationPath(pathname: string) {
 function isDisallowedPath(path: string) {
   return DISALLOWED_PREFIXES.some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+  );
+}
+
+function getTrimmedHeader(request: Request, name: string) {
+  return request.headers.get(name)?.trim() ?? '';
+}
+
+function isTruthyQueryValue(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes';
+}
+
+function isIbmHardwareBackendsRequest(path: string, searchParams: URLSearchParams) {
+  if (path !== '/v1/list_backends') {
+    return false;
+  }
+
+  const provider = searchParams.get('provider')?.trim().toLowerCase();
+  if (provider !== 'ibm') {
+    return false;
+  }
+
+  return !isTruthyQueryValue(searchParams.get('simulator_only'));
+}
+
+function isIbmHardwareProxyPath(path: string, searchParams: URLSearchParams) {
+  return (
+    path === '/v1/jobs/circuits' ||
+    path.startsWith('/v1/jobs/') ||
+    isIbmHardwareBackendsRequest(path, searchParams)
   );
 }
 
@@ -126,8 +169,23 @@ function appendVary(headers: Headers, value: string) {
   }
 }
 
-function isOriginAllowed(origin: string | null, allowedOrigins: readonly string[]) {
+function getRequestOrigin(request: Request) {
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isOriginAllowed(
+  origin: string | null,
+  allowedOrigins: readonly string[],
+  requestOrigin: string | null
+) {
   if (!origin) {
+    return true;
+  }
+  if (requestOrigin && origin === requestOrigin) {
     return true;
   }
   if (allowedOrigins.includes('*')) {
@@ -144,9 +202,10 @@ function mergeCors(
 ) {
   const merged = new Headers(headers);
   merged.set('Access-Control-Allow-Methods', ROUTE_METHODS);
-  merged.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
+  merged.set('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, X-Request-ID');
   const origin = request.headers.get('origin');
-  if (origin && isOriginAllowed(origin, allowedOrigins)) {
+  const requestOrigin = getRequestOrigin(request);
+  if (origin && isOriginAllowed(origin, allowedOrigins, requestOrigin)) {
     merged.set('Access-Control-Allow-Origin', origin);
     appendVary(merged, 'Origin');
   }
@@ -154,8 +213,10 @@ function mergeCors(
 }
 
 async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request) {
+  loadServerRuntimeEnv(request);
+
   const allowedOrigins = getAllowedOrigins();
-  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',
@@ -165,20 +226,21 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
     );
   }
 
-  const apiKey = process.env.QUANTUM_BACKEND_API_KEY?.trim();
-  if (!apiKey) {
+  const upstreamBaseUrl = normalizeUpstreamBaseUrl();
+  if (!upstreamBaseUrl) {
     return Response.json(
       {
         error: 'proxy_not_configured',
-        message: 'QUANTUM_BACKEND_API_KEY is missing on the server.',
+        message:
+          'EXPO_PUBLIC_QUANTUM_API_BASE_URL is missing for production runtime and no development fallback is available.',
       },
       { status: 500, headers: mergeCors(request, allowedOrigins) }
     );
   }
 
-  const upstreamBaseUrl = normalizeUpstreamBaseUrl();
   const url = new URL(request.url);
   const operationPath = normalizeOperationPath(url.pathname);
+  const requiresUserApiKey = isIbmHardwareProxyPath(operationPath, url.searchParams);
 
   if (isDisallowedPath(operationPath)) {
     return Response.json(
@@ -188,6 +250,30 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
           'This route is intentionally blocked on quantum-backend. Call the upstream endpoint directly with user JWT.',
       },
       { status: 403, headers: mergeCors(request, allowedOrigins) }
+    );
+  }
+
+  const userApiKey = getTrimmedHeader(request, 'x-api-key');
+  const serverApiKey = process.env.QUANTUM_BACKEND_API_KEY?.trim() ?? '';
+  const apiKey = requiresUserApiKey ? userApiKey : serverApiKey;
+
+  if (requiresUserApiKey && !apiKey) {
+    return Response.json(
+      {
+        error: 'user_api_key_required',
+        message: 'IBM hardware routes require your own Quantum API key in X-API-Key.',
+      },
+      { status: 401, headers: mergeCors(request, allowedOrigins) }
+    );
+  }
+
+  if (!requiresUserApiKey && !apiKey) {
+    return Response.json(
+      {
+        error: 'proxy_not_configured',
+        message: 'QUANTUM_BACKEND_API_KEY is missing on the server.',
+      },
+      { status: 500, headers: mergeCors(request, allowedOrigins) }
     );
   }
 
@@ -227,8 +313,10 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
 }
 
 export function OPTIONS(request: Request) {
+  loadServerRuntimeEnv(request);
+
   const allowedOrigins = getAllowedOrigins();
-  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins)) {
+  if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',
