@@ -49,7 +49,7 @@ function normalizeEnvironmentName(value) {
     return 'local';
   }
 
-  return normalized;
+  return '';
 }
 
 function inferEnvironmentName(cwd) {
@@ -69,6 +69,14 @@ function inferEnvironmentName(cwd) {
     process.env.GITHUB_REF_NAME ||
     readGitBranch(cwd);
   return normalizeEnvironmentName(branch);
+}
+
+function getSingleHostedEnvFile(cwd) {
+  const hostedFiles = [TEST_ENV_FILE, PRODUCTION_ENV_FILE].filter((fileName) =>
+    hasEnvFile(cwd, fileName)
+  );
+
+  return hostedFiles.length === 1 ? hostedFiles[0] : '';
 }
 
 function resolveEnvFileCandidates(options = {}) {
@@ -93,6 +101,11 @@ function resolveEnvFileCandidates(options = {}) {
 
   if (environmentName === 'local') {
     return [LOCAL_ENV_FILE];
+  }
+
+  const singleHostedEnvFile = getSingleHostedEnvFile(cwd);
+  if (singleHostedEnvFile) {
+    return [singleHostedEnvFile];
   }
 
   return [LOCAL_ENV_FILE];
