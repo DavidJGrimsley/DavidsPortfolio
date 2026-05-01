@@ -71,6 +71,47 @@ jobs:
           echo "__djsportfolio_build.json"
           cat dist/client/__djsportfolio_build.json
 
+      - name: Smoke test production server startup
+        shell: bash
+        env:
+          PORT: 4173
+          EXPO_PUBLIC_SITE_ORIGIN: http://127.0.0.1:4173
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key
+          EXPO_PUBLIC_QUANTUM_API_BASE_URL: https://davidjgrimsley.com/public-facing/api/quantum/v1
+          QUANTUM_BACKEND_API_KEY: ci-backend-key
+        run: |
+          node server.js > server-smoke.log 2>&1 &
+          server_pid=$!
+
+          cleanup() {
+            status=$?
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+            if [ "$status" -ne 0 ]; then
+              cat server-smoke.log
+            fi
+          }
+          trap cleanup EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "http://127.0.0.1:${PORT}/__djsportfolio_runtime_config__" >/tmp/djsportfolio-runtime.js; then
+              curl --fail --silent --show-error "http://127.0.0.1:${PORT}/__djsportfolio_build.json" >/tmp/djsportfolio-build.json
+              curl --fail --silent --show-error "http://127.0.0.1:${PORT}/" >/tmp/djsportfolio-home.html
+              exit 0
+            fi
+
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo "server.js exited before it became ready"
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          echo "server.js did not become ready"
+          exit 1
+
       - name: Upload quality build artifact
         uses: actions/upload-artifact@v7
         with:

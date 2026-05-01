@@ -79,12 +79,23 @@ function findEnvFiles(cwd: string, environment: RuntimeEnvironment) {
       : environment === 'production'
         ? '.env.production'
         : '.env';
+  const preferredPath = path.resolve(cwd, preferred);
+  const hasPreferred = fs.existsSync(preferredPath);
+  const singleHostedEnvFile = ['.env.test', '.env.production'].filter((fileName) => {
+    try {
+      return fs.statSync(path.resolve(cwd, fileName)).isFile();
+    } catch {
+      return false;
+    }
+  });
   const candidates =
     environment === 'local'
       ? [preferred]
-      : fs.existsSync(path.resolve(cwd, preferred))
+      : hasPreferred
         ? [preferred]
-        : ['.env', '.env.plesk'];
+        : singleHostedEnvFile.length === 1
+          ? singleHostedEnvFile
+          : ['.env', '.env.plesk'];
 
   return candidates
     .map((fileName) => ({

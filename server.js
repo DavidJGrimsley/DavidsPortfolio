@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const path = require('path');
+const fs = require('node:fs');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
 const express = require('express');
@@ -13,6 +14,8 @@ const loadedEnv = loadFirstEnvFile({ cwd: __dirname, prefix: '[startup]' });
 
 const CLIENT_BUILD_DIR = path.join(__dirname, 'dist/client');
 const SERVER_BUILD_DIR = path.join(__dirname, 'dist/server');
+const ROUTES_MANIFEST_PATH = path.join(SERVER_BUILD_DIR, '_expo/routes.json');
+const BUILD_METADATA_PATH = path.join(CLIENT_BUILD_DIR, '__djsportfolio_build.json');
 
 const app = express();
 const PUBLIC_RUNTIME_ENV_KEYS = [
@@ -152,6 +155,20 @@ app.use(compression());
 app.disable('x-powered-by');
 app.use(morgan('tiny'));
 assertHostedRuntimeEnvHealth();
+
+function assertBuildArtifact(filePath, description) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(
+      `${description} not found at ${filePath}. ` +
+        'Run "npm run build:web:deploy" first. dist artifacts are generated at deploy time.'
+    );
+  }
+}
+
+assertBuildArtifact(CLIENT_BUILD_DIR, 'Client build directory');
+assertBuildArtifact(SERVER_BUILD_DIR, 'Server build directory');
+assertBuildArtifact(ROUTES_MANIFEST_PATH, 'Generated Expo routes manifest');
+assertBuildArtifact(BUILD_METADATA_PATH, 'Build metadata');
 
 function normalizeRemoteAddress(address) {
   const normalized = String(address || '').toLowerCase();
@@ -459,6 +476,12 @@ app.get('/__djsportfolio_runtime_config__', (_req, res) => {
   res.send(
     `window.__DJS_RUNTIME_CONFIG__ = Object.freeze(${JSON.stringify(buildPublicRuntimeConfig())});\n`
   );
+});
+
+app.get('/__djsportfolio_build.json', (_req, res) => {
+  res.type('application/json');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(BUILD_METADATA_PATH);
 });
 
 // Serve static files from client build
