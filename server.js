@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const path = require('path');
+const fs = require('node:fs');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
 const express = require('express');
