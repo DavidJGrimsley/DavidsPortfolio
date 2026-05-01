@@ -47,7 +47,7 @@ QUANTUM_PROXY_ALLOWED_ORIGINS=http://localhost:3000
 
 `EXPO_PUBLIC_*` variables are baked into the Expo web build and are also served by `server.js` at runtime through `/__djsportfolio_runtime_config__`, while `QUANTUM_BACKEND_API_KEY` stays server-side.
 `EXPO_PUBLIC_SITE_ORIGIN` controls the Supabase auth callback origin for the current environment. Use the exact origin for each file: localhost in `.env`, the Plesk temp domain in `.env.test`, and `https://davidjgrimsley.com` in `.env.production`.
-Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local `.env.test` or `.env.production` file in the app root so both the build step and the running Node server read the same values.
+Plesk Support warned that Additional Deployment Actions do not always inherit the Node.js environment automatically. For Plesk Git deploys, keep a server-local `.env.test` or `.env.production` file in the app root (`httpdocs`, next to `server.js`) so both the build step and the running Node server read the same values.
 
 ### Plesk Env Files
 
@@ -57,7 +57,7 @@ Use this file layout:
 - `.env.test` for the Plesk temp/staging domain
 - `.env.production` for the production domain
 
-For each Plesk deployment root, create the matching server-local file next to `server.js`. Example `.env.test` file:
+For each Plesk deployment root, create the matching server-local file in `httpdocs`, next to `server.js`, `package.json`, and `scripts/`. Example `.env.test` file:
 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=...
@@ -68,9 +68,15 @@ QUANTUM_BACKEND_API_KEY=qapi_...
 QUANTUM_PROXY_ALLOWED_ORIGINS=https://quizzical-hofstadter.108-175-12-95.plesk.page
 ```
 
-`scripts/plesk-post-deploy.sh` picks `.env.test` on the `test` branch and `.env.production` on `main`, then warns if required values are blank instead of aborting immediately.
-`server.js` uses the same env-loader at runtime, so the build and the running app stay on the same environment contract. If a hosted `.env.test` or `.env.production` file still points `EXPO_PUBLIC_SITE_ORIGIN` at localhost, the loader warns so you can correct the deployment configuration; it is not automatically rejected.
-Existing Plesk deployments that still have `.env.plesk` will continue to use it as a legacy fallback. In that fallback mode, `.env` is loaded first and `.env.plesk` is loaded on top to match the old server behavior. Rename the server-local file to `.env.test` or `.env.production` so the environment is obvious.
+Run the Plesk Additional Deployment Action from that same app root:
+
+```bash
+sh ./scripts/plesk-post-deploy.sh
+```
+
+`scripts/plesk-post-deploy.sh` picks `.env.test` when `DEPLOY_ENV=test` or `DEPLOY_BRANCH=test`, and `.env.production` when `DEPLOY_ENV=production` or `DEPLOY_BRANCH=main`. If Plesk reports `Branch: unknown`, the script is allowed to continue only when exactly one hosted env file exists in `httpdocs`; otherwise it fails with instructions before installing dependencies, moving `dist`, or building.
+`server.js` uses the same env-loader at runtime, so the build and the running app stay on the same environment contract. If a hosted `.env.test` or `.env.production` file still points `EXPO_PUBLIC_SITE_ORIGIN` at localhost, the loader warns so you can correct the deployment configuration.
+Do not rely on `.env` or `.env.plesk` for hosted Plesk deploys. Rename the server-local file to `.env.test` or `.env.production` so the environment is obvious.
 
 Production note: `EXPO_PUBLIC_QUANTUM_API_BASE_URL` must be explicitly set in production to the upstream Quantum API service, not this portfolio app's `/public-facing/api/quantum/v1` proxy route on the same host. Development keeps a safe local fallback (`http://127.0.0.1:8000/v1`).
 `QUANTUM_PROXY_ALLOWED_ORIGINS` is optional for cross-origin callers to the Quantum proxy routes; same-origin browser requests are allowed automatically.
@@ -114,6 +120,7 @@ npm run build:web:deploy
 - Deploy marker files generated during deploy build:
   - `/__djsportfolio_build.txt`
   - `/__djsportfolio_build.json`
+- `server.js` also serves `/__djsportfolio_build.json` directly from `dist/client` with no-cache headers.
 - Browser console logs build metadata on load using `/__djsportfolio_build.json`.
 - Plesk post-deploy script for Git deployments: `scripts/plesk-post-deploy.sh`.
 - Public deploy verification script: `scripts/verify-deployment.mjs`.
