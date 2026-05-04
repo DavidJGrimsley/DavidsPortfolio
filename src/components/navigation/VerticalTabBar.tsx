@@ -15,6 +15,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { Nav } from '@expo/html-elements';
 import { useSegments, useRouter, Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -795,7 +796,7 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
 
       {/* Main tab bar pill */}
       {shouldShowPill && (
-        <View style={[styles.pill, webPillStyle as any]}>
+        <Nav accessibilityLabel="Primary navigation" style={[styles.pill, webPillStyle as any]}>
           {tabs.map((tab, index) => {
             if (isTabGroup(tab)) {
               return (
@@ -843,7 +844,7 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
               </React.Fragment>
             );
           })}
-        </View>
+        </Nav>
       )}
     </>
   );

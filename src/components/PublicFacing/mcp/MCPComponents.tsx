@@ -32,8 +32,8 @@ export const MCPResourceCard: React.FC<MCPResourceCardProps> = ({
       style={{
         backgroundColor: accentColor,
         borderRadius: 10,
-        padding: 16,
-        marginBottom: 12,
+        padding: 18,
+        marginBottom: 16,
         borderLeftWidth: 3,
         borderLeftColor: tintColor,
       }}
@@ -46,6 +46,7 @@ export const MCPResourceCard: React.FC<MCPResourceCardProps> = ({
             fontWeight: '600',
             color: textColor,
             flex: 1,
+            lineHeight: RFPercentage(3),
           }}
         >
           {title}
@@ -55,19 +56,11 @@ export const MCPResourceCard: React.FC<MCPResourceCardProps> = ({
         style={{
           fontSize: RFPercentage(1.8),
           opacity: 0.7,
-          marginBottom: 6,
+          marginBottom: 0,
+          lineHeight: RFPercentage(2.5),
         }}
       >
         {description}
-      </ThemedText>
-      <ThemedText
-        style={{
-          fontSize: RFPercentage(1.5),
-          opacity: 0.5,
-          fontStyle: 'italic',
-        }}
-      >
-        {fileName}
       </ThemedText>
     </Pressable>
   );
@@ -88,90 +81,44 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({
   description,
   schema
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
+  const displayTitle = title || name;
 
   return (
     <View
       style={{
         backgroundColor: accentColor,
         borderRadius: 10,
-        padding: 16,
-        marginBottom: 12,
+        padding: 18,
+        marginBottom: 16,
         borderLeftWidth: 3,
         borderLeftColor: tintColor,
       }}
     >
-      <Pressable onPress={() => setIsExpanded(!isExpanded)}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-              <Ionicons name="construct" size={18} color={tintColor} style={{ marginRight: 8 }} />
-              <ThemedText
-                style={{
-                  fontSize: RFPercentage(2),
-                  fontWeight: '600',
-                  fontFamily: 'monospace',
-                  color: tintColor,
-                }}
-              >
-                {name}
-              </ThemedText>
-            </View>
-            <ThemedText
-              style={{
-                fontSize: RFPercentage(1.9),
-                fontWeight: '500',
-                marginBottom: 6,
-              }}
-            >
-              {title}
-            </ThemedText>
-            <ThemedText
-              style={{
-                fontSize: RFPercentage(1.7),
-                opacity: 0.7,
-              }}
-            >
-              {description}
-            </ThemedText>
-          </View>
-          <Ionicons
-            name={isExpanded ? 'chevron-up' : 'chevron-down'}
-            size={24}
-            color={textColor}
-            style={{ opacity: 0.5, marginLeft: 8 }}
-          />
-        </View>
-      </Pressable>
-      
-      {isExpanded && schema && (
-        <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: tintColor + '30' }}>
-          <ThemedText
-            style={{
-              fontSize: RFPercentage(1.6),
-              fontWeight: '600',
-              marginBottom: 8,
-              opacity: 0.8,
-            }}
-          >
-            Input Schema:
-          </ThemedText>
-          <View style={{ backgroundColor: '#1e1e1e', borderRadius: 6, padding: 12 }}>
-            <ThemedText
-              style={{
-                fontSize: RFPercentage(1.5),
-                fontFamily: 'monospace',
-                color: '#d4d4d4',
-              }}
-            >
-              {JSON.stringify(schema, null, 2)}
-            </ThemedText>
-          </View>
-        </View>
-      )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+        <Ionicons name="construct" size={18} color={tintColor} style={{ marginRight: 8 }} />
+        <ThemedText
+          style={{
+            fontSize: RFPercentage(2),
+            fontWeight: '600',
+            color: textColor,
+            lineHeight: RFPercentage(2.7),
+          }}
+        >
+          {displayTitle}
+        </ThemedText>
+      </View>
+      <ThemedText
+        style={{
+          fontSize: RFPercentage(1.7),
+          opacity: 0.7,
+          lineHeight: RFPercentage(2.4),
+        }}
+      >
+        {description}
+      </ThemedText>
     </View>
   );
 };
@@ -216,26 +163,18 @@ export const MCPPromptCard: React.FC<MCPPromptCardProps> = ({
                 style={{
                   fontSize: RFPercentage(2),
                   fontWeight: '600',
-                  fontFamily: 'monospace',
                   color: '#10b981',
+                  lineHeight: RFPercentage(2.8),
                 }}
               >
-                {name}
+                {title || name}
               </ThemedText>
             </View>
             <ThemedText
               style={{
-                fontSize: RFPercentage(1.9),
-                fontWeight: '500',
-                marginBottom: 6,
-              }}
-            >
-              {title}
-            </ThemedText>
-            <ThemedText
-              style={{
                 fontSize: RFPercentage(1.7),
                 opacity: 0.7,
+                lineHeight: RFPercentage(2.4),
               }}
             >
               {description}
@@ -258,6 +197,7 @@ export const MCPPromptCard: React.FC<MCPPromptCardProps> = ({
               fontWeight: '600',
               marginBottom: 8,
               opacity: 0.8,
+              lineHeight: RFPercentage(2.2),
             }}
           >
             Arguments:
@@ -270,6 +210,7 @@ export const MCPPromptCard: React.FC<MCPPromptCardProps> = ({
                   fontSize: RFPercentage(1.6),
                   fontFamily: 'monospace',
                   opacity: 0.7,
+                  lineHeight: RFPercentage(2.2),
                 }}
               >
                 {arg}
@@ -366,18 +307,18 @@ export const MCPCollapsibleSection: React.FC<MCPCollapsibleSectionProps> = ({
   const textColor = useThemeColor({}, 'text');
 
   return (
-    <View style={{ marginBottom: 20, alignItems: 'center' }}>
+    <View style={{ marginBottom: 24, alignItems: 'stretch', width: '100%' }}>
       <Pressable
         onPress={() => setIsExpanded(!isExpanded)}
         style={{
           backgroundColor: accentColor,
-          borderRadius: 10,
-          padding: 16,
+          borderRadius: 16,
+          paddingVertical: 18,
+          paddingHorizontal: 20,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          // width: '100%',
-          minWidth: 500,
+          width: '100%',
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -400,7 +341,7 @@ export const MCPCollapsibleSection: React.FC<MCPCollapsibleSectionProps> = ({
       </Pressable>
       
       {isExpanded && (
-        <View style={{ marginTop: 12, paddingHorizontal: 4, width: '100%' }}>
+        <View style={{ marginTop: 16, paddingHorizontal: 4, width: '100%' }}>
           {children}
         </View>
       )}

@@ -1,7 +1,8 @@
 import { loadServerRuntimeEnv } from '@/server/runtime-env';
 
+const QUANTUM_ROUTE_ID = 'quantum';
+const QUANTUM_LEGACY_IDS = new Set([QUANTUM_ROUTE_ID, 'quantum-echo-api']);
 const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
-const PUBLIC_QUANTUM_ROUTE_PREFIX = '/public-facing/api/quantum/v1';
 const ROUTE_METHODS = 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS';
 const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:8081',
@@ -11,8 +12,25 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ] as const;
 
 type ProxyMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+type RouteContext = {
+  id: string;
+  segments?: string | string[];
+};
 
-function normalizeQuantumUpstreamBaseUrl(request: Request) {
+function normalizeRouteId(id: string) {
+  const normalized = id.trim().toLowerCase();
+  return QUANTUM_LEGACY_IDS.has(normalized) ? QUANTUM_ROUTE_ID : normalized;
+}
+
+function isSupportedPublicApi(id: string) {
+  return normalizeRouteId(id) === QUANTUM_ROUTE_ID;
+}
+
+function getPublicProxyBasePath(id: string) {
+  return `/api/public/${normalizeRouteId(id)}/v1`;
+}
+
+function normalizeQuantumUpstreamBaseUrl(request: Request, routeId: string) {
   loadServerRuntimeEnv(request);
 
   const raw = process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL?.trim();
@@ -33,11 +51,15 @@ function normalizeQuantumUpstreamBaseUrl(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const upstreamUrl = new URL(normalized);
+    const publicProxyBasePath = getPublicProxyBasePath(routeId);
+    const legacyPublicBasePath = `/public-facing/api/${routeId}/v1`;
 
     if (
       requestUrl.host.toLowerCase() === upstreamUrl.host.toLowerCase() &&
-      (upstreamUrl.pathname === PUBLIC_QUANTUM_ROUTE_PREFIX ||
-        upstreamUrl.pathname.startsWith(`${PUBLIC_QUANTUM_ROUTE_PREFIX}/`))
+      (upstreamUrl.pathname === publicProxyBasePath ||
+        upstreamUrl.pathname.startsWith(`${publicProxyBasePath}/`) ||
+        upstreamUrl.pathname === legacyPublicBasePath ||
+        upstreamUrl.pathname.startsWith(`${legacyPublicBasePath}/`))
     ) {
       return null;
     }
@@ -110,7 +132,10 @@ function mergeCors(
   const origin = request.headers.get('origin');
 
   merged.set('Access-Control-Allow-Methods', ROUTE_METHODS);
-  merged.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
+  merged.set(
+    'Access-Control-Allow-Headers',
+    'Authorization, Content-Type, X-API-Key, X-Request-ID'
+  );
 
   if (origin && isOriginAllowed(origin, allowedOrigins, getRequestOrigin(request))) {
     merged.set('Access-Control-Allow-Origin', origin);
@@ -120,25 +145,46 @@ function mergeCors(
   return merged;
 }
 
-function buildUpstreamUrl(request: Request, upstreamBaseUrl: string) {
-  const requestUrl = new URL(request.url);
-  const suffix = requestUrl.pathname.startsWith(PUBLIC_QUANTUM_ROUTE_PREFIX)
-    ? requestUrl.pathname.slice(PUBLIC_QUANTUM_ROUTE_PREFIX.length)
-    : requestUrl.pathname;
+function normalizeRouteSuffix(segments?: string | string[]) {
+  const rawSegments = Array.isArray(segments)
+    ? segments
+    : typeof segments === 'string'
+      ? segments.split('/')
+      : [];
+  const parts = rawSegments.map((segment) => segment.trim()).filter(Boolean);
+  if (parts[0] === 'v1') {
+    parts.shift();
+  }
 
+  return parts.length > 0 ? `/${parts.map(encodeURIComponent).join('/')}` : '';
+}
+
+function buildUpstreamUrl(request: Request, upstreamBaseUrl: string, context: RouteContext) {
+  const requestUrl = new URL(request.url);
+  const suffix = normalizeRouteSuffix(context.segments);
   return `${upstreamBaseUrl}${suffix}${requestUrl.search}`;
 }
 
 function pickForwardHeaders(request: Request) {
   const headers = new Headers();
   const accept = request.headers.get('accept');
+  const authorization = request.headers.get('authorization');
   const contentType = request.headers.get('content-type');
+  const apiKey = request.headers.get('x-api-key');
   const requestId = request.headers.get('x-request-id');
 
   headers.set('Accept', accept ?? 'application/json');
 
+  if (authorization) {
+    headers.set('Authorization', authorization);
+  }
+
   if (contentType) {
     headers.set('Content-Type', contentType);
+  }
+
+  if (apiKey) {
+    headers.set('X-API-Key', apiKey);
   }
 
   if (requestId) {
@@ -157,23 +203,39 @@ async function readRequestBody(method: ProxyMethod, request: Request) {
   return body.byteLength > 0 ? body : undefined;
 }
 
-async function handleQuantumPublicProxy(method: ProxyMethod, request: Request) {
+async function handlePublicApiProxy(
+  method: ProxyMethod,
+  request: Request,
+  context: RouteContext
+) {
+  const routeId = normalizeRouteId(context.id);
   const allowedOrigins = getAllowedOrigins();
+
+  if (!isSupportedPublicApi(routeId)) {
+    return Response.json(
+      {
+        error: 'public_api_proxy_not_found',
+        message: `No public API proxy is registered for "${context.id}".`,
+      },
+      { status: 404, headers: mergeCors(request, allowedOrigins) }
+    );
+  }
+
   if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',
-        message: 'Origin is not allowed to use the public Quantum API proxy.',
+        message: 'Origin is not allowed to use this public API proxy.',
       },
       { status: 403, headers: mergeCors(request, allowedOrigins) }
     );
   }
 
-  const upstreamBaseUrl = normalizeQuantumUpstreamBaseUrl(request);
+  const upstreamBaseUrl = normalizeQuantumUpstreamBaseUrl(request, routeId);
   if (!upstreamBaseUrl) {
     return Response.json(
       {
-        error: 'quantum_public_proxy_not_configured',
+        error: 'public_api_proxy_not_configured',
         message:
           'EXPO_PUBLIC_QUANTUM_API_BASE_URL must point to the upstream Quantum API service, not this public proxy route.',
       },
@@ -181,7 +243,7 @@ async function handleQuantumPublicProxy(method: ProxyMethod, request: Request) {
     );
   }
 
-  const upstreamUrl = buildUpstreamUrl(request, upstreamBaseUrl);
+  const upstreamUrl = buildUpstreamUrl(request, upstreamBaseUrl, context);
 
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
@@ -199,23 +261,33 @@ async function handleQuantumPublicProxy(method: ProxyMethod, request: Request) {
   } catch (error) {
     return Response.json(
       {
-        error: 'quantum_public_proxy_failed',
-        message: error instanceof Error ? error.message : 'Unknown Quantum proxy failure',
+        error: 'public_api_proxy_failed',
+        message: error instanceof Error ? error.message : 'Unknown public API proxy failure',
       },
       { status: 502, headers: mergeCors(request, allowedOrigins) }
     );
   }
 }
 
-export function OPTIONS(request: Request) {
+export function OPTIONS(request: Request, context: RouteContext) {
   loadServerRuntimeEnv(request);
   const allowedOrigins = getAllowedOrigins();
+
+  if (!isSupportedPublicApi(context.id)) {
+    return Response.json(
+      {
+        error: 'public_api_proxy_not_found',
+        message: `No public API proxy is registered for "${context.id}".`,
+      },
+      { status: 404, headers: mergeCors(request, allowedOrigins) }
+    );
+  }
 
   if (!isOriginAllowed(request.headers.get('origin'), allowedOrigins, getRequestOrigin(request))) {
     return Response.json(
       {
         error: 'proxy_origin_disallowed',
-        message: 'Origin is not allowed to use the public Quantum API proxy.',
+        message: 'Origin is not allowed to use this public API proxy.',
       },
       { status: 403, headers: mergeCors(request, allowedOrigins) }
     );
@@ -224,26 +296,26 @@ export function OPTIONS(request: Request) {
   return new Response(null, { status: 204, headers: mergeCors(request, allowedOrigins) });
 }
 
-export function GET(request: Request) {
-  return handleQuantumPublicProxy('GET', request);
+export function GET(request: Request, context: RouteContext) {
+  return handlePublicApiProxy('GET', request, context);
 }
 
-export function HEAD(request: Request) {
-  return handleQuantumPublicProxy('HEAD', request);
+export function HEAD(request: Request, context: RouteContext) {
+  return handlePublicApiProxy('HEAD', request, context);
 }
 
-export function POST(request: Request) {
-  return handleQuantumPublicProxy('POST', request);
+export function POST(request: Request, context: RouteContext) {
+  return handlePublicApiProxy('POST', request, context);
 }
 
-export function PUT(request: Request) {
-  return handleQuantumPublicProxy('PUT', request);
+export function PUT(request: Request, context: RouteContext) {
+  return handlePublicApiProxy('PUT', request, context);
 }
 
-export function PATCH(request: Request) {
-  return handleQuantumPublicProxy('PATCH', request);
+export function PATCH(request: Request, context: RouteContext) {
+  return handlePublicApiProxy('PATCH', request, context);
 }
 
-export function DELETE(request: Request) {
-  return handleQuantumPublicProxy('DELETE', request);
+export function DELETE(request: Request, context: RouteContext) {
+  return handlePublicApiProxy('DELETE', request, context);
 }

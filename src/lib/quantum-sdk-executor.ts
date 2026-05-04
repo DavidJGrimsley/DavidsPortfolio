@@ -1,4 +1,5 @@
 import { QuantumApiError as SdkQuantumApiError } from '@mr.dj2u/quantum-api';
+import type { BackendProvider, ListBackendsOptions } from '@mr.dj2u/quantum-api';
 import {
   createQuantumBearerClient,
   createQuantumPublicClient,
@@ -74,10 +75,16 @@ function normalizeOperationPath(path: string, baseUrl: string) {
   let candidate = path.trim();
 
   if (/^https?:\/\//i.test(candidate)) {
-    candidate = new URL(candidate).pathname;
+    const parsed = new URL(candidate);
+    candidate = `${parsed.pathname}${parsed.search}`;
   }
 
-  const prefixes: string[] = ['/public-facing/api/quantum/v1', '/public-facing/api/quantum'];
+  const prefixes: string[] = [
+    '/api/public/quantum/v1',
+    '/api/public/quantum',
+    '/public-facing/api/quantum/v1',
+    '/public-facing/api/quantum',
+  ];
 
   try {
     const parsedBase = new URL(baseUrl);
@@ -115,6 +122,38 @@ function normalizeOperationPath(path: string, baseUrl: string) {
   return candidate.startsWith('/') ? candidate : `/${candidate}`;
 }
 
+function splitOperationPath(path: string) {
+  const queryStart = path.indexOf('?');
+  if (queryStart === -1) {
+    return {
+      pathname: path,
+      searchParams: new URLSearchParams(),
+    };
+  }
+
+  return {
+    pathname: path.slice(0, queryStart) || '/',
+    searchParams: new URLSearchParams(path.slice(queryStart + 1)),
+  };
+}
+
+function readListBackendsOptions(searchParams: URLSearchParams): ListBackendsOptions {
+  const providerValue = searchParams.get('provider')?.trim().toLowerCase();
+  const simulatorOnly = searchParams.get('simulator_only')?.trim();
+  const minQubits = searchParams.get('min_qubits')?.trim();
+  const ibmProfile = searchParams.get('ibm_profile')?.trim();
+  const parsedMinQubits = minQubits ? Number(minQubits) : NaN;
+  const provider: BackendProvider =
+    providerValue === 'ibm' || providerValue === 'aer' ? providerValue : 'aer';
+
+  return {
+    provider,
+    simulator_only: simulatorOnly ? simulatorOnly.toLowerCase() === 'true' : true,
+    ...(Number.isFinite(parsedMinQubits) ? { min_qubits: parsedMinQubits } : {}),
+    ...(ibmProfile ? { ibm_profile: ibmProfile } : {}),
+  };
+}
+
 function parseStatusText(status: number, code: string | undefined) {
   return code ? code.replace(/_/g, ' ') : `HTTP ${status}`;
 }
@@ -133,9 +172,10 @@ export async function executeQuantumSdkEndpoint(
 ): Promise<QuantumSdkEndpointExecutionResult> {
   const method = input.method.toUpperCase() as QuantumSdkEndpointExecutionInput['method'];
   const normalizedPath = normalizeOperationPath(input.path, input.baseUrl);
+  const { pathname, searchParams } = splitOperationPath(normalizedPath);
 
-  if (normalizedPath.includes('{') || normalizedPath.includes('}')) {
-    throw new Error(`Cannot execute templated route ${normalizedPath}. Provide a concrete resource identifier first.`);
+  if (pathname.includes('{') || pathname.includes('}')) {
+    throw new Error(`Cannot execute templated route ${pathname}. Provide a concrete resource identifier first.`);
   }
 
   const publicClient = createQuantumPublicClient(input.baseUrl);
@@ -144,40 +184,40 @@ export async function executeQuantumSdkEndpoint(
   try {
     let data: unknown;
 
-    if (method === 'GET' && normalizedPath === '/health') {
+    if (method === 'GET' && pathname === '/health') {
       data = await publicClient.health({ auth: 'none' });
-    } else if (method === 'GET' && normalizedPath === '/portfolio.json') {
+    } else if (method === 'GET' && pathname === '/portfolio.json') {
       data = await publicClient.portfolio({ auth: 'none' });
-    } else if (method === 'GET' && normalizedPath === '/echo-types') {
+    } else if (method === 'GET' && pathname === '/echo-types') {
       data = await runtimeClient.echoTypes({ auth: 'none' });
-    } else if (method === 'GET' && normalizedPath === '/list_backends') {
-      data = await runtimeClient.listBackends(undefined, { auth: 'none' });
-    } else if (method === 'GET' && normalizedPath === '/keys') {
+    } else if (method === 'GET' && pathname === '/list_backends') {
+      data = await runtimeClient.listBackends(readListBackendsOptions(searchParams), { auth: 'none' });
+    } else if (method === 'GET' && pathname === '/keys') {
       data = await requireBearerClient(input.baseUrl, input.bearerToken).listKeys({ auth: 'bearer' });
-    } else if (method === 'GET' && normalizedPath === '/ibm/profiles') {
+    } else if (method === 'GET' && pathname === '/ibm/profiles') {
       data = await requireBearerClient(input.baseUrl, input.bearerToken).listIbmProfiles({ auth: 'bearer' });
     } else {
-      const getJobStatusMatch = method === 'GET' ? normalizedPath.match(/^\/jobs\/([^/]+)$/) : null;
+      const getJobStatusMatch = method === 'GET' ? pathname.match(/^\/jobs\/([^/]+)$/) : null;
       if (getJobStatusMatch) {
         data = await runtimeClient.getCircuitJob(decodeURIComponent(getJobStatusMatch[1] ?? ''), {
           auth: 'none',
         });
       } else {
-        const getJobResultMatch = method === 'GET' ? normalizedPath.match(/^\/jobs\/([^/]+)\/result$/) : null;
+        const getJobResultMatch = method === 'GET' ? pathname.match(/^\/jobs\/([^/]+)\/result$/) : null;
         if (getJobResultMatch) {
           data = await runtimeClient.getCircuitJobResult(decodeURIComponent(getJobResultMatch[1] ?? ''), {
             auth: 'none',
           });
-        } else if (method === 'POST' && normalizedPath === '/keys') {
+        } else if (method === 'POST' && pathname === '/keys') {
           data = await requireBearerClient(input.baseUrl, input.bearerToken).createKey((input.body ?? {}) as any, {
             auth: 'bearer',
           });
-        } else if (method === 'POST' && normalizedPath === '/ibm/profiles') {
+        } else if (method === 'POST' && pathname === '/ibm/profiles') {
           data = await requireBearerClient(input.baseUrl, input.bearerToken).createIbmProfile((input.body ?? {}) as any, {
             auth: 'bearer',
           });
         } else {
-          const postKeyActionMatch = method === 'POST' ? normalizedPath.match(/^\/keys\/([^/]+)\/(revoke|rotate)$/) : null;
+          const postKeyActionMatch = method === 'POST' ? pathname.match(/^\/keys\/([^/]+)\/(revoke|rotate)$/) : null;
           if (postKeyActionMatch) {
             const keyId = decodeURIComponent(postKeyActionMatch[1] ?? '');
             data = postKeyActionMatch[2] === 'revoke'
@@ -185,7 +225,7 @@ export async function executeQuantumSdkEndpoint(
               : await requireBearerClient(input.baseUrl, input.bearerToken).rotateKey(keyId, { auth: 'bearer' });
           } else {
             const verifyProfileMatch = method === 'POST'
-              ? normalizedPath.match(/^\/ibm\/profiles\/([^/]+)\/verify$/)
+              ? pathname.match(/^\/ibm\/profiles\/([^/]+)\/verify$/)
               : null;
             if (verifyProfileMatch) {
               data = await requireBearerClient(input.baseUrl, input.bearerToken).verifyIbmProfile(
@@ -193,13 +233,13 @@ export async function executeQuantumSdkEndpoint(
                 { auth: 'bearer' }
               );
             } else {
-              const cancelJobMatch = method === 'POST' ? normalizedPath.match(/^\/jobs\/([^/]+)\/cancel$/) : null;
+              const cancelJobMatch = method === 'POST' ? pathname.match(/^\/jobs\/([^/]+)\/cancel$/) : null;
               if (cancelJobMatch) {
                 data = await runtimeClient.cancelCircuitJob(decodeURIComponent(cancelJobMatch[1] ?? ''), {
                   auth: 'none',
                 });
               } else if (method === 'PATCH') {
-                const patchProfileMatch = normalizedPath.match(/^\/ibm\/profiles\/([^/]+)$/);
+                const patchProfileMatch = pathname.match(/^\/ibm\/profiles\/([^/]+)$/);
                 if (patchProfileMatch) {
                   data = await requireBearerClient(input.baseUrl, input.bearerToken).updateIbmProfile(
                     decodeURIComponent(patchProfileMatch[1] ?? ''),
@@ -207,16 +247,16 @@ export async function executeQuantumSdkEndpoint(
                     { auth: 'bearer' }
                   );
                 } else {
-                  throw new Error(`Unsupported Quantum endpoint ${method} ${normalizedPath}`);
+                  throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
                 }
               } else if (method === 'DELETE') {
-                if (normalizedPath === '/keys/revoked') {
+                if (pathname === '/keys/revoked') {
                   data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteRevokedKeys({
                     auth: 'bearer',
                   });
                 } else {
-                  const deleteKeyMatch = normalizedPath.match(/^\/keys\/([^/]+)$/);
-                  const deleteProfileMatch = normalizedPath.match(/^\/ibm\/profiles\/([^/]+)$/);
+                  const deleteKeyMatch = pathname.match(/^\/keys\/([^/]+)$/);
+                  const deleteProfileMatch = pathname.match(/^\/ibm\/profiles\/([^/]+)$/);
                   if (deleteKeyMatch) {
                     data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteKey(
                       decodeURIComponent(deleteKeyMatch[1] ?? ''),
@@ -228,17 +268,17 @@ export async function executeQuantumSdkEndpoint(
                       { auth: 'bearer' }
                     );
                   } else {
-                    throw new Error(`Unsupported Quantum endpoint ${method} ${normalizedPath}`);
+                    throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
                   }
                 }
               } else if (method === 'POST') {
-                const runtimeHandler = RUNTIME_POST_HANDLERS[normalizedPath];
+                const runtimeHandler = RUNTIME_POST_HANDLERS[pathname];
                 if (!runtimeHandler) {
-                  throw new Error(`Unsupported Quantum endpoint ${method} ${normalizedPath}`);
+                  throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
                 }
                 data = await runtimeHandler(runtimeClient, input.body);
               } else {
-                throw new Error(`Unsupported Quantum endpoint ${method} ${normalizedPath}`);
+                throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
               }
             }
           }

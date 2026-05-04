@@ -106,6 +106,23 @@ describe('quantum-backend API proxy', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('defaults backend discovery to the AER simulator path for portfolio live tests', async () => {
+    const response = await GET(
+      new Request('http://localhost:3000/api/quantum-backend/v1/list_backends', {
+        method: 'GET',
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(calledInit.headers);
+
+    expect(calledUrl).toBe(
+      'https://example.com/public-facing/api/quantum/v1/list_backends?provider=aer&simulator_only=true'
+    );
+    expect(headers.get('X-API-Key')).toBe('server-demo-key');
+  });
+
   it('keeps bearer-only key and IBM profile routes blocked', async () => {
     const keysResponse = await GET(
       new Request('http://localhost:3000/api/quantum-backend/v1/keys', {
