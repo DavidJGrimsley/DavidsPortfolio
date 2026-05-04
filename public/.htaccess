@@ -3,13 +3,13 @@ RewriteEngine On
 # Ensure proper content-type for PWA manifest
 AddType application/manifest+json .webmanifest
 
-# Let Passenger/Node handle API and runtime config routes. Rewriting these
-# to "/" makes browsers receive the React HTML shell instead of JSON.
-RewriteCond %{REQUEST_URI} ^/(api|__djsportfolio_runtime_config__)(/|$) [NC,OR]
-RewriteCond %{REQUEST_URI} ^/public-facing/api/quantum/v1(/|$) [NC]
+# Existing files and directories can be served directly by Apache/nginx.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Simple SPA routing fallback
+# Let Passenger/Node handle SSR pages, API routes, runtime config routes, and
+# not-found responses. Rewriting these to "/" strips Expo Router SSR content.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . / [L]
+RewriteRule ^ - [L]
