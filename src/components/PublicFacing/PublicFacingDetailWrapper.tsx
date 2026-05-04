@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, ScrollViewProps, View } from 'react-native';
+import { ScrollView, ScrollViewProps } from 'react-native';
+import { Article, Main } from '@expo/html-elements';
 import { BackgroundGradient } from '@/components/Gradients';
 import { SeoHead, type SeoHeadProps } from '@/components/SEO/SeoHead';
 
@@ -28,9 +29,11 @@ export function PublicFacingDetailWrapper({
 				contentContainerClassName={mergedContentClassName}
 			>
 				<BackgroundGradient />
-				<View className={`flex-1 w-full max-w-[90%] self-center bg-transparent px-5 py-7.5 pb-15 ${contentClassName ?? ''}`.trim()}>
-					{children}
-				</View>
+				<Main className={`flex-1 w-full max-w-[90%] self-center bg-transparent px-5 py-7.5 pb-15 ${contentClassName ?? ''}`.trim()}>
+					<Article className="flex-1 w-full">
+						{children}
+					</Article>
+				</Main>
 			</ScrollView>
 		</>
 	);

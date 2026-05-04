@@ -1,10 +1,6 @@
 import { Stack } from "expo-router";
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function APIStackLayout() {
-  const colorScheme = useColorScheme();
-  const textColor = colorScheme === 'light' ? '#11181C' : '#FEFEFE';
-  
   return (
     <Stack>
       <Stack.Screen 
@@ -14,12 +10,9 @@ export default function APIStackLayout() {
         }}
       />
       <Stack.Screen 
-        name="quantum" 
+        name="[id]"
         options={{
-          headerTitle: "Quantum API Documentation",
           headerShown: false,
-          headerShadowVisible: false,
-          headerTintColor: textColor,
         }}
       />
     </Stack>

@@ -22,10 +22,15 @@ export type SeoHeadProps = {
   canonicalUrl?: string;
   keywords?: string[];
   image?: string;
+  imageAlt?: string;
   type?: 'website' | 'article';
   noIndex?: boolean;
   structuredData?: SeoStructuredData;
 };
+
+function serializeJsonLd(payload: Record<string, unknown>) {
+  return JSON.stringify(payload).replace(/</g, '\\u003c');
+}
 
 function normalizeTitle(title: string): string {
   const trimmed = title.trim();
@@ -41,6 +46,7 @@ export function SeoHead({
   canonicalUrl,
   keywords,
   image,
+  imageAlt,
   type = 'website',
   noIndex = false,
   structuredData,
@@ -58,6 +64,18 @@ export function SeoHead({
       : SITE_URL;
 
   const resolvedImage = toAbsoluteUrl(image ?? DEFAULT_OG_IMAGE_PATH);
+  const resolvedImageAlt = imageAlt ?? `${resolvedTitle} preview image`;
+  const structuredDataPayload = Array.isArray(structuredData)
+    ? {
+        '@context': 'https://schema.org',
+        '@graph': structuredData,
+      }
+    : structuredData
+      ? {
+          '@context': 'https://schema.org',
+          ...structuredData,
+        }
+      : null;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -73,7 +91,22 @@ export function SeoHead({
 
       <meta name="description" content={resolvedDescription} />
       <meta name="author" content={AUTHOR_NAME} />
-      <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
+      <meta
+        name="robots"
+        content={
+          noIndex
+            ? 'noindex, nofollow'
+            : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+        }
+      />
+      <meta
+        name="googlebot"
+        content={
+          noIndex
+            ? 'noindex, nofollow'
+            : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+        }
+      />
 
       {resolvedKeywords.length > 0 ? (
         <meta name="keywords" content={resolvedKeywords.join(', ')} />
@@ -82,25 +115,28 @@ export function SeoHead({
       <link rel="canonical" href={resolvedCanonical} />
 
       {/* Open Graph */}
+      <meta property="og:locale" content="en_US" />
       <meta property="og:type" content={type} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:url" content={resolvedCanonical} />
       <meta property="og:title" content={resolvedTitle} />
       <meta property="og:description" content={resolvedDescription} />
       {resolvedImage ? <meta property="og:image" content={resolvedImage} /> : null}
+      {resolvedImage ? <meta property="og:image:alt" content={resolvedImageAlt} /> : null}
 
       {/* Twitter */}
       <meta name="twitter:card" content={resolvedImage ? 'summary_large_image' : 'summary'} />
       <meta name="twitter:title" content={resolvedTitle} />
       <meta name="twitter:description" content={resolvedDescription} />
       {resolvedImage ? <meta name="twitter:image" content={resolvedImage} /> : null}
+      {resolvedImage ? <meta name="twitter:image:alt" content={resolvedImageAlt} /> : null}
       <meta name="twitter:url" content={resolvedCanonical} />
 
-      {structuredData ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
+      {structuredDataPayload ? (
+        React.createElement('script', {
+          type: 'application/ld+json',
+          innerHTML: serializeJsonLd(structuredDataPayload),
+        } as React.ScriptHTMLAttributes<HTMLScriptElement> & { innerHTML: string })
       ) : null}
     </Head>
   );

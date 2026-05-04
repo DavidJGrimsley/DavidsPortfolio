@@ -19,6 +19,7 @@
  */
 import React, { useEffect, useMemo } from 'react'
 import { Platform, View, useWindowDimensions } from 'react-native'
+import { Main } from '@expo/html-elements'
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -185,32 +186,34 @@ export const TabContainer = ({
             width: '100%',
           }}
         >
-          {titleA || titleB ? (
-            <TitleOfPage
-              titleA={titleA}
-              titleB={titleB}
-              startDelayMs={titleDelayMs}
-              scrollY={scrollY}
-            >
-              {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
-              {children}
-              {showFooter ? (
-                <View className="mt-[8%] pb-[6%] w-full">
-                  <Foot />
-                </View>
-              ) : null}
-            </TitleOfPage>
-          ) : (
-            <>
-              {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
-              {children}
-              {showFooter ? (
-                <View className="mt-[8%] pb-[6%] w-full">
-                  <Foot />
-                </View>
-              ) : null}
-            </>
-          )}
+          <Main className="w-full">
+            {titleA || titleB ? (
+              <TitleOfPage
+                titleA={titleA}
+                titleB={titleB}
+                startDelayMs={titleDelayMs}
+                scrollY={scrollY}
+              >
+                {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
+                {children}
+                {showFooter ? (
+                  <View className="mt-[8%] pb-[6%] w-full">
+                    <Foot />
+                  </View>
+                ) : null}
+              </TitleOfPage>
+            ) : (
+              <>
+                {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
+                {children}
+                {showFooter ? (
+                  <View className="mt-[8%] pb-[6%] w-full">
+                    <Foot />
+                  </View>
+                ) : null}
+              </>
+            )}
+          </Main>
         </Animated.ScrollView>
       </View>
 

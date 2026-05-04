@@ -95,7 +95,7 @@ describe('quantum api config', () => {
     );
   });
 
-  it('uses the same public-facing path on localhost:3000', () => {
+  it('uses the dynamic public API proxy path on localhost:3000', () => {
     setWindowLocation('http://localhost:3000');
     mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
       'https://davidjgrimsley.com/public-facing/api/quantum/v1';
@@ -103,17 +103,17 @@ describe('quantum api config', () => {
     const config = loadConfig();
 
     expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
-      'http://localhost:3000/public-facing/api/quantum/v1'
+      'http://localhost:3000/api/public/quantum/v1'
     );
     expect(config.resolveQuantumEndpointBaseUrl('api_key', false)).toBe(
       'https://davidjgrimsley.com/public-facing/api/quantum/v1'
     );
     expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe(
-      'http://localhost:3000/public-facing/api/quantum/v1'
+      'http://localhost:3000/api/public/quantum/v1'
     );
   });
 
-  it('uses the same public-facing path on Plesk staging hosts', () => {
+  it('uses the dynamic public API proxy path on Plesk staging hosts', () => {
     setWindowLocation('https://quizzical-hofstadter.108-175-12-95.plesk.page');
     mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
       'https://davidjgrimsley.com/public-facing/api/quantum/v1';
@@ -121,7 +121,7 @@ describe('quantum api config', () => {
     const config = loadConfig();
 
     expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
-      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum/v1'
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/api/public/quantum/v1'
     );
   });
 

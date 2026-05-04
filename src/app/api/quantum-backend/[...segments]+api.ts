@@ -46,6 +46,14 @@ function normalizeOperationPath(pathname: string) {
     : `/${routePath}`;
 
   if (
+    withLeadingSlash === '/api/public/quantum/v1' ||
+    withLeadingSlash.startsWith('/api/public/quantum/v1/')
+  ) {
+    const suffix = withLeadingSlash.slice('/api/public/quantum/v1'.length);
+    return suffix.length > 0 ? `/v1${suffix}` : '/v1';
+  }
+
+  if (
     withLeadingSlash === '/public-facing/api/quantum/v1' ||
     withLeadingSlash.startsWith('/public-facing/api/quantum/v1/')
   ) {
@@ -120,6 +128,26 @@ function buildUpstreamUrl(baseUrl: string, operationPath: string, search: string
   }
 
   return `${baseUrl}${normalizedPath}${search}`;
+}
+
+function buildSafeSearch(operationPath: string, searchParams: URLSearchParams) {
+  const query = new URLSearchParams(searchParams);
+
+  if (operationPath === '/v1/list_backends') {
+    const provider = query.get('provider')?.trim().toLowerCase();
+    const simulatorOnly = query.get('simulator_only');
+
+    if (!provider) {
+      query.set('provider', 'aer');
+    }
+
+    if (!simulatorOnly && query.get('provider') !== 'ibm') {
+      query.set('simulator_only', 'true');
+    }
+  }
+
+  const serialized = query.toString();
+  return serialized ? `?${serialized}` : '';
 }
 
 function pickForwardHeaders(request: Request, apiKey: string) {
@@ -277,7 +305,11 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
     );
   }
 
-  const upstreamUrl = buildUpstreamUrl(upstreamBaseUrl, operationPath, url.search);
+  const upstreamUrl = buildUpstreamUrl(
+    upstreamBaseUrl,
+    operationPath,
+    buildSafeSearch(operationPath, url.searchParams)
+  );
   const headers = pickForwardHeaders(request, apiKey);
 
   let body: ArrayBuffer | undefined;
