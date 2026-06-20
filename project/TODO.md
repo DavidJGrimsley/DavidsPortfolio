@@ -49,7 +49,6 @@ Goal: close obvious repo hygiene gaps before major integration work.
 - [ ] Expand test coverage beyond current minimal baseline
 - [ ] Resolve known lint gaps in SEO/public-facing components
 
-
 ## Phase 3.5 / 3.75 (Quantum-API Todo phase) - Portfolio Integration for Real API Key Management
 
 Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Postgres + Redis), without implementing backend changes in this repo yet.
@@ -82,7 +81,6 @@ Goal: integrate portfolio UI with real key lifecycle backend (Supabase Auth + Po
   - [x] `API_KEY_HASH_SECRET`
 - [x] Preserve Redis requirement for rate limiting + key metadata cache
 - [x] Swap frontend integration from local SDK path to published npm package `@mr.dj2u/quantum-api` and validate compatibility
-
 
 ### Consistency and Maintainability
 
@@ -173,13 +171,16 @@ Goal: keep simulator usage seamless while enabling optional IBM profile manageme
 - [ ] Backend auth/key policy review for `/v1/gates/run` 401 debugging in live env (external blocker)
 - [x] Add deeper component tests for IBM dashboard interactions
 
-
 ## Later Enhancements (Post-3.5)
 
 - [ ] Add per-user plan tiers/policies without changing lifecycle endpoint contracts
 - [ ] Add richer dashboard analytics (usage, quota consumption, recent key events)
 - [ ] Add long-term content governance checks to reduce stale claims on public-facing pages
 
-
 ## [API] page (deferred until after sdk55 branch merge)
+
 - [ ] remove extra content from this page from being hardcoded to be more like the content.ts strategy I've used in landing pages such as in time2pay. https://github.com/DavidJGrimsley/time2pay/blob/main/src/app/index.tsx
+- [ ] Add scroll wheel cause the page is so long
+- [ ] Make endpoints section collapsible
+- [ ] Make the API key dashboard collapsible.
+- [ ] Make all collapsibles animate open and close (make a parent collapsible component and subclasses of that or something)

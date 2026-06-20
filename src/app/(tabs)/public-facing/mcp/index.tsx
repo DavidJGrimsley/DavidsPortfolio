@@ -5,8 +5,8 @@ import Head from 'expo-router/head';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import { WhatIsMCPCard } from '~/src/components/PublicFacing/mcp/WhatIsMCPCard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
+import { LoadingComponent } from '@/components/UI/LoadingComponent';
 import type { RegistryResponse, MCPPortfolio } from '~/src/types/registry';
-import LottieView from 'lottie-react-native';
 
 // =============================================================================
 // TYPES
@@ -120,22 +120,10 @@ export async function loader(
   };
 }
 
-// =============================================================================
-// LOADING COMPONENT
-// =============================================================================
-function CosmosLoading({ label }: { label?: string }) {
+function MCPListLoadingState({ label }: { label: string }) {
   return (
-    <View className="w-full items-center justify-center min-h-100">
-      <View className="w-[80%] aspect-square">
-        <LottieView
-          source={require('../../../../../assets/lottie/Cosmos.json')}
-          autoPlay
-          loop
-          enableMergePathsAndroidForKitKatAndAbove
-          resizeMode="contain"
-        />
-      </View>
-      {label ? <Text className="text-gray-400 mt-4">{label}</Text> : null}
+    <View className="min-h-100 justify-center">
+      <LoadingComponent label={label} />
     </View>
   );
 }
@@ -298,9 +286,9 @@ export default function MCPListPage() {
         ) : null}
 
         {!canRenderList ? (
-          <CosmosLoading label="Loading MCP Servers..." />
+          <MCPListLoadingState label="Loading MCP Servers..." />
         ) : (
-          <Suspense fallback={<CosmosLoading label="Loading MCP Servers..." />}>
+          <Suspense fallback={<MCPListLoadingState label="Loading MCP Servers..." />}>
             <MCPList />
           </Suspense>
         )}

@@ -1,10 +1,11 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text } from 'react-native';
 import { useRouter, useLoaderData } from 'expo-router';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsAPICard } from '~/src/components/PublicFacing/api/WhatIsAPICard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
+import { LoadingComponent } from '@/components/UI/LoadingComponent';
 import { SITE_URL, joinUrl } from '@/constants/seo';
 import type { RegistryResponse, APIPortfolio } from '~/src/types/registry';
 import apisData from '@json/apis.json';
@@ -219,9 +220,8 @@ export function ErrorBoundary({ error }: { error: Error }) {
 // =============================================================================
 function LoadingFallback() {
   return (
-    <View className="flex-1 items-center justify-center p-8 bg-gray-900">
-      <ActivityIndicator size="large" color="#3b82f6" />
-      <Text className="text-gray-400 mt-4">Loading APIs...</Text>
+    <View className="flex-1 items-center justify-center p-6">
+      <LoadingComponent label="Loading APIs..." />
     </View>
   );
 }
