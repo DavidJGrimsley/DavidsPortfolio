@@ -8,11 +8,6 @@
     "icon": "./public/images/icon.png",
     "scheme": "portfolio",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./public/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -43,7 +38,17 @@
         }
       ],
       "expo-font",
-      "expo-image"
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./public/images/splash.png",
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
