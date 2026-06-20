@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'expo-router/head';
 import { useFocusEffect } from 'expo-router';
+import { Platform } from 'react-native';
 
 import {
   AUTHOR_NAME,
@@ -30,6 +31,20 @@ export type SeoHeadProps = {
 
 function serializeJsonLd(payload: Record<string, unknown>) {
   return JSON.stringify(payload).replace(/</g, '\\u003c');
+}
+
+function createStructuredDataPayload(structuredData?: SeoStructuredData) {
+  return Array.isArray(structuredData)
+    ? {
+        '@context': 'https://schema.org',
+        '@graph': structuredData,
+      }
+    : structuredData
+      ? {
+          '@context': 'https://schema.org',
+          ...structuredData,
+        }
+      : null;
 }
 
 function normalizeTitle(title: string): string {
@@ -65,17 +80,7 @@ export function SeoHead({
 
   const resolvedImage = toAbsoluteUrl(image ?? DEFAULT_OG_IMAGE_PATH);
   const resolvedImageAlt = imageAlt ?? `${resolvedTitle} preview image`;
-  const structuredDataPayload = Array.isArray(structuredData)
-    ? {
-        '@context': 'https://schema.org',
-        '@graph': structuredData,
-      }
-    : structuredData
-      ? {
-          '@context': 'https://schema.org',
-          ...structuredData,
-        }
-      : null;
+  const structuredDataPayload = createStructuredDataPayload(structuredData);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -135,9 +140,30 @@ export function SeoHead({
       {structuredDataPayload ? (
         React.createElement('script', {
           type: 'application/ld+json',
-          innerHTML: serializeJsonLd(structuredDataPayload),
-        } as React.ScriptHTMLAttributes<HTMLScriptElement> & { innerHTML: string })
+          dangerouslySetInnerHTML: {
+            __html: serializeJsonLd(structuredDataPayload),
+          },
+        } as React.ScriptHTMLAttributes<HTMLScriptElement>)
       ) : null}
     </Head>
   );
+}
+
+export function StructuredDataScript({
+  structuredData,
+}: {
+  structuredData?: SeoStructuredData;
+}) {
+  const structuredDataPayload = createStructuredDataPayload(structuredData);
+
+  if (Platform.OS !== 'web' || !structuredDataPayload) {
+    return null;
+  }
+
+  return React.createElement('script', {
+    type: 'application/ld+json',
+    dangerouslySetInnerHTML: {
+      __html: serializeJsonLd(structuredDataPayload),
+    },
+  } as React.ScriptHTMLAttributes<HTMLScriptElement>);
 }
