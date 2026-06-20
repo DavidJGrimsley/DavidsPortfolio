@@ -5,7 +5,6 @@ import type { ComponentType } from 'react';
 
 const styles = StyleSheet.create({
   fill: {
-    ...StyleSheet.absoluteFillObject,
     zIndex: 0,
   },
 });
@@ -20,6 +19,7 @@ export const BackgroundGradient = () => {
       <View
         pointerEvents="none"
         style={[
+          StyleSheet.absoluteFill,
           styles.fill,
           {
             backgroundImage: `linear-gradient(${whiteOrBlackColor}, ${secondaryColor}, ${backgroundColor})`,
@@ -33,7 +33,7 @@ export const BackgroundGradient = () => {
     <LinearGradient
       pointerEvents="none"
       colors={[whiteOrBlackColor, secondaryColor, backgroundColor]}
-      style={styles.fill}
+      style={[StyleSheet.absoluteFill, styles.fill]}
     />
   );
 };
@@ -54,6 +54,7 @@ export const HomeScreenGradient = () => {
       <View
         pointerEvents="none"
         style={[
+          StyleSheet.absoluteFill,
           styles.fill,
           {
             // Small circle at top-left.
@@ -72,7 +73,7 @@ export const HomeScreenGradient = () => {
   return (
     <NativeRadialGradient
       pointerEvents="none"
-      style={styles.fill}
+      style={[StyleSheet.absoluteFill, styles.fill]}
       // Match the web CSS radial-gradient sequence exactly.
       colors={[
         tintColor,
@@ -105,6 +106,7 @@ export const MidLevelScreenGradient = () => {
       <View
         pointerEvents="none"
         style={[
+          StyleSheet.absoluteFill,
           styles.fill,
           {
             // Small circle at top-left.
@@ -123,7 +125,7 @@ export const MidLevelScreenGradient = () => {
   return (
     <NativeRadialGradient
       pointerEvents="none"
-      style={styles.fill}
+      style={[StyleSheet.absoluteFill, styles.fill]}
       // Match the web CSS radial-gradient sequence exactly.
       colors={[
         backgroundColor,
