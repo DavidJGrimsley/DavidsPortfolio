@@ -20,6 +20,7 @@ import StartupLoading from '@/components/StartupLoading';
 import '~/global.css';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
+const ROOT_BACKGROUND_COLOR = '#20182D';
 
 // Web client: apply theme ASAP (before first render) to reduce light→dark snapping.
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -40,29 +41,30 @@ function AppStack() {
 }
 
 function LoadingOverlay() {
-  const [showAnimation, setShowAnimation] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowAnimation(true), 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <View
       // Use fixed positioning on web so it covers the viewport even if the root
       // container hasn't measured yet.
-      style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999 }}
+      style={{
+        backgroundColor: ROOT_BACKGROUND_COLOR,
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        zIndex: 9999,
+      }}
     >
-      <StartupLoading message="Loading…" showAnimation={showAnimation} showMessage={showAnimation} />
+      <StartupLoading message="Getting things ready for you..." />
     </View>
   );
 }
 
 function RootLayoutWebSSR() {
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-themed" style={{ backgroundColor: ROOT_BACKGROUND_COLOR }}>
       {/* Render the real app for SEO, but keep it visually hidden to prevent FOUT. */}
-      <View className="flex-1" style={{ opacity: 0 }}>
+      <View className="flex-1 bg-themed" style={{ backgroundColor: ROOT_BACKGROUND_COLOR, opacity: 0 }}>
         <AppStack />
       </View>
       <LoadingOverlay />
@@ -196,8 +198,11 @@ function RootLayoutClient() {
   if (Platform.OS === 'web') {
     // Web: always render the real content (SEO/hydration), but cover it until ready.
     return (
-      <View className="flex-1">
-        <View className="flex-1" style={{ opacity: appIsReady ? 1 : 0 }}>
+      <View className="flex-1 bg-themed" style={{ backgroundColor: ROOT_BACKGROUND_COLOR }}>
+        <View
+          className="flex-1 bg-themed"
+          style={{ backgroundColor: ROOT_BACKGROUND_COLOR, opacity: appIsReady ? 1 : 0 }}
+        >
           <AppStack />
         </View>
         {!appIsReady ? <LoadingOverlay /> : null}
