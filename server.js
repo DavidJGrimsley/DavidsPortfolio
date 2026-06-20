@@ -16,6 +16,7 @@ const CLIENT_BUILD_DIR = path.join(__dirname, 'dist/client');
 const SERVER_BUILD_DIR = path.join(__dirname, 'dist/server');
 const ROUTES_MANIFEST_PATH = path.join(SERVER_BUILD_DIR, '_expo/routes.json');
 const BUILD_METADATA_PATH = path.join(CLIENT_BUILD_DIR, '__djsportfolio_build.json');
+const SERVICE_WORKER_PATH = path.join(CLIENT_BUILD_DIR, 'sw.js');
 
 const app = express();
 const PUBLIC_RUNTIME_ENV_KEYS = [
@@ -414,6 +415,12 @@ app.get('/__djsportfolio_build.json', (_req, res) => {
   res.type('application/json');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(BUILD_METADATA_PATH);
+});
+
+app.get('/sw.js', (_req, res) => {
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(SERVICE_WORKER_PATH);
 });
 
 // Serve static files from client build

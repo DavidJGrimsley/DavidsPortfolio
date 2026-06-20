@@ -126,7 +126,21 @@ function RootLayoutClient() {
     if (!('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker
-      .register('/sw.js')
+      .getRegistrations()
+      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+      .then(() => {
+        if (!('caches' in window)) return undefined;
+
+        return window.caches
+          .keys()
+          .then((keys) =>
+            Promise.all(
+              keys
+                .filter((key) => key.startsWith('djsportfolio-'))
+                .map((key) => window.caches.delete(key))
+            )
+          );
+      })
       .catch(() => {
         // no-op
       });
