@@ -18,6 +18,7 @@ import { LoadingComponent } from "@/components/UI/LoadingComponent";
 import { ThemedText } from "@/components/UI/ThemedText";
 import { ExternalLink } from "@/components/UI/ExternalLink";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { SeoHead, StructuredDataScript } from "@/components/SEO/SeoHead";
 import { EndpointCard } from "~/src/components/PublicFacing/api/APIComponents";
 import { ApiAuthDashboardCard } from "~/src/components/PublicFacing/api/quantum-auth-dashboard-card";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
@@ -33,6 +34,7 @@ import type {
   PortfolioEndpoint,
   RegistryServer,
 } from "@/types/registry";
+import apisData from "@json/apis.json";
 
 type LoaderRequest = {
   url?: string;
@@ -59,19 +61,29 @@ type DetailData = {
 };
 
 type EndpointMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+type ApiFallbackItem = APIPortfolio["api"] & {
+  endpoints?: number;
+};
+
+const FALLBACK_API_ITEMS = (apisData.apis ?? []) as ApiFallbackItem[];
 
 function createFallbackApi(id: string): APIPortfolio {
+  const fallbackItem = FALLBACK_API_ITEMS.find((api) => api.id === id);
+
   return {
     api: {
       id,
-      name: "Public API",
-      version: "-",
+      name: fallbackItem?.name ?? "Public API",
+      version: fallbackItem?.version ?? "-",
       description:
+        fallbackItem?.description ??
         "Live portfolio metadata is unavailable. This page will hydrate from the registry API when the server responds.",
-      baseUrl: "",
-      docsUrl: "",
-      status: "offline",
-      tags: [],
+      baseUrl: fallbackItem?.baseUrl ?? "",
+      docsUrl: fallbackItem?.docsUrl ?? "",
+      status: fallbackItem?.status ?? "offline",
+      tags: fallbackItem?.tags ?? [],
+      featured: fallbackItem?.featured,
+      healthUrl: fallbackItem?.healthUrl,
     },
     endpoints: [],
   };
@@ -269,6 +281,56 @@ function buildApiDetailStructuredData({
       ],
     },
   ];
+}
+
+function buildApiDetailSeo({
+  api,
+  routePath,
+  endpoints,
+}: {
+  api: APIPortfolio["api"];
+  routePath: string;
+  endpoints: PortfolioEndpoint[];
+}) {
+  return {
+    title: `${api.name} API | David Grimsley`,
+    description:
+      api.description ??
+      `${api.name} is a public API hosted by David Grimsley. View endpoints, docs, examples, and usage notes.`,
+    path: routePath,
+    keywords: [
+      api.name,
+      "public API",
+      "REST API",
+      "developer tools",
+      ...(api.tags ?? []),
+    ],
+    type: "website" as const,
+    structuredData: buildApiDetailStructuredData({
+      api,
+      endpoints,
+      routePath,
+    }),
+  };
+}
+
+function APIDetailSeoFallback() {
+  const pathname = usePathname();
+  const slug = pathname?.split("/").filter(Boolean).pop() ?? "api";
+  const fallback = createFallbackDetail(slug);
+  const routePath = `/public-facing/api/${fallback.params.id}`;
+  const seo = buildApiDetailSeo({
+    api: fallback.portfolio.api,
+    endpoints: fallback.portfolio.endpoints ?? [],
+    routePath,
+  });
+
+  return (
+    <>
+      <SeoHead {...seo} />
+      <StructuredDataScript structuredData={seo.structuredData} />
+    </>
+  );
 }
 
 export async function loader(
@@ -594,31 +656,16 @@ function APIDetailContent() {
     api.liveTestExecutor === "quantum-sdk" ? executeQuantumEndpoint : undefined;
   const routeId = api.id || registryEntry.id || detail.params.id;
   const routePath = `/public-facing/api/${routeId}`;
-  const structuredData = buildApiDetailStructuredData({
+  const seo = buildApiDetailSeo({
     api,
     endpoints,
     routePath,
   });
-  const seoTitle = `${api.name} API | David Grimsley`;
-  const seoDescription =
-    api.description ??
-    `${api.name} is a public API hosted by David Grimsley. View endpoints, docs, examples, and usage notes.`;
 
   return (
     <PublicFacingDetailWrapper
       seo={{
-        title: seoTitle,
-        description: seoDescription,
-        path: routePath,
-        keywords: [
-          api.name,
-          "public API",
-          "REST API",
-          "developer tools",
-          ...(api.tags ?? []),
-        ],
-        type: "website",
-        structuredData,
+        ...seo,
       }}
     >
       {source !== "live" && liveError ? (
@@ -776,8 +823,11 @@ function APIDetailContent() {
 
 export default function APIDetailPage() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <APIDetailContent />
-    </Suspense>
+    <>
+      <APIDetailSeoFallback />
+      <Suspense fallback={<LoadingFallback />}>
+        <APIDetailContent />
+      </Suspense>
+    </>
   );
 }

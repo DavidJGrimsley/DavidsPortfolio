@@ -6,6 +6,7 @@ import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsAPICard } from '~/src/components/PublicFacing/api/WhatIsAPICard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
 import { LoadingComponent } from '@/components/UI/LoadingComponent';
+import { SeoHead, StructuredDataScript } from '@/components/SEO/SeoHead';
 import { SITE_URL, joinUrl } from '@/constants/seo';
 import type { RegistryResponse, APIPortfolio } from '~/src/types/registry';
 import apisData from '@json/apis.json';
@@ -109,6 +110,26 @@ function buildApiIndexStructuredData(apis: ApiCardItem[]) {
       ],
     },
   ];
+}
+
+function buildApiIndexSeo(apis: ApiCardItem[]) {
+  return {
+    title: 'Public APIs',
+    description:
+      'Explore public APIs built and hosted by David Grimsley. Learn what an API is, how to call endpoints, and view documentation, uptime, and rate limits.',
+    path: '/public-facing/api',
+    keywords: [
+      'public API',
+      'API portfolio',
+      'what is an API',
+      'REST API',
+      'backend development',
+      'NGINX',
+      'developer tools',
+    ],
+    type: 'website' as const,
+    structuredData: buildApiIndexStructuredData(apis),
+  };
 }
 
 // =============================================================================
@@ -324,7 +345,7 @@ function APIListContent() {
   }, [fromCache]);
 
   const displayApis = (liveApis && liveApis.length > 0 ? liveApis : apis) || [];
-  const structuredData = buildApiIndexStructuredData(displayApis);
+  const seo = buildApiIndexSeo(displayApis);
 
   return (
     <PublicFacingIndexWrapper
@@ -332,21 +353,7 @@ function APIListContent() {
       leadBody="The internet's interconnectivity depends on APIs. It's collaboration in action. I enjoy the resources available via existing APIs for developers to use, and this is my contribution to that process. PokeAPI (Pokémon), SWAPI (Star Wars), and OpenAI are just a few of the tools that I call."
       leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
       seo={{
-        title: 'Public APIs',
-        description:
-          'Explore public APIs built and hosted by David Grimsley. Learn what an API is, how to call endpoints, and view documentation, uptime, and rate limits.',
-        path: '/public-facing/api',
-        keywords: [
-          'public API',
-          'API portfolio',
-          'what is an API',
-          'REST API',
-          'backend development',
-          'NGINX',
-          'developer tools',
-        ],
-        type: 'website',
-        structuredData,
+        ...seo,
       }}
     >
       {/* Show cache indicator if data is from fallback */}
@@ -384,9 +391,15 @@ function APIListContent() {
 // DEFAULT EXPORT (wrapped in Suspense)
 // =============================================================================
 export default function APIIndexPage() {
+  const fallbackSeo = buildApiIndexSeo(FALLBACK_APIS);
+
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <APIListContent />
-    </Suspense>
+    <>
+      <SeoHead {...fallbackSeo} />
+      <StructuredDataScript structuredData={fallbackSeo.structuredData} />
+      <Suspense fallback={<LoadingFallback />}>
+        <APIListContent />
+      </Suspense>
+    </>
   );
 }
