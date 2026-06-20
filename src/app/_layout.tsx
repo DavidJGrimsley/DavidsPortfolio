@@ -62,9 +62,9 @@ function LoadingOverlay() {
 
 function RootLayoutWebSSR() {
   return (
-    <View className="flex-1 bg-themed" style={{ backgroundColor: ROOT_BACKGROUND_COLOR }}>
+    <View className="flex-1 bg-themed">
       {/* Render the real app for SEO, but keep it visually hidden to prevent FOUT. */}
-      <View className="flex-1 bg-themed" style={{ backgroundColor: ROOT_BACKGROUND_COLOR, opacity: 0 }}>
+      <View className="flex-1 bg-themed" style={{ opacity: 0 }}>
         <AppStack />
       </View>
       <LoadingOverlay />
@@ -167,20 +167,28 @@ function RootLayoutClient() {
     Uniwind.setTheme('system');
 
     if (Platform.OS === 'web') {
-      const timeout = window.setTimeout(() => setAppIsReady(true), 2500);
-      (document as any).fonts
-        ?.ready
+      const fontsReady = (document as any).fonts?.ready;
+      if (!fontsReady) {
+        setAppIsReady(true);
+        return;
+      }
+
+      let cancelled = false;
+
+      fontsReady
         .then(() => {
-          window.clearTimeout(timeout);
-          setAppIsReady(true);
+          if (!cancelled) {
+            setAppIsReady(true);
+          }
         })
         .catch(() => {
-          window.clearTimeout(timeout);
-          setAppIsReady(true);
+          if (!cancelled) {
+            setAppIsReady(true);
+          }
         });
 
       return () => {
-        window.clearTimeout(timeout);
+        cancelled = true;
       };
     }
 
@@ -198,11 +206,8 @@ function RootLayoutClient() {
   if (Platform.OS === 'web') {
     // Web: always render the real content (SEO/hydration), but cover it until ready.
     return (
-      <View className="flex-1 bg-themed" style={{ backgroundColor: ROOT_BACKGROUND_COLOR }}>
-        <View
-          className="flex-1 bg-themed"
-          style={{ backgroundColor: ROOT_BACKGROUND_COLOR, opacity: appIsReady ? 1 : 0 }}
-        >
+      <View className="flex-1 bg-themed">
+        <View className="flex-1 bg-themed" style={{ opacity: appIsReady ? 1 : 0 }}>
           <AppStack />
         </View>
         {!appIsReady ? <LoadingOverlay /> : null}

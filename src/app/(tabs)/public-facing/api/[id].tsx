@@ -340,7 +340,11 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 function LoadingFallback() {
-  return <LoadingComponent label="Loading API details..." />;
+  return (
+    <View className="flex-1 items-center justify-center p-6">
+      <LoadingComponent label="Loading API details..." />
+    </View>
+  );
 }
 
 function renderBody(body: PortfolioContentSection["body"]) {

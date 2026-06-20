@@ -219,7 +219,11 @@ export function ErrorBoundary({ error }: { error: Error }) {
 // LOADING FALLBACK
 // =============================================================================
 function LoadingFallback() {
-  return <LoadingComponent label="Loading APIs..." />;
+  return (
+    <View className="flex-1 items-center justify-center p-6">
+      <LoadingComponent label="Loading APIs..." />
+    </View>
+  );
 }
 
 // =============================================================================
