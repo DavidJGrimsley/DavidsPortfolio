@@ -86,7 +86,7 @@ function shouldClearStagingSiteData(req) {
     return false;
   }
 
-  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+  const host = String(req.headers.host || '').split(',')[0].trim().toLowerCase();
   if (!STAGING_HOST_CLEAR_SITE_DATA_MARKERS.every((marker) => host.includes(marker))) {
     return false;
   }
