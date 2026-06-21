@@ -98,6 +98,26 @@ jobs:
             if curl --fail --silent --show-error "http://127.0.0.1:${PORT}/__djsportfolio_runtime_config__" >/tmp/djsportfolio-runtime.js; then
               curl --fail --silent --show-error "http://127.0.0.1:${PORT}/__djsportfolio_build.json" >/tmp/djsportfolio-build.json
               curl --fail --silent --show-error "http://127.0.0.1:${PORT}/" >/tmp/djsportfolio-home.html
+              curl --fail --silent --show-error "http://127.0.0.1:${PORT}/public-facing/api/quantum" >/tmp/djsportfolio-api-quantum.html
+              curl --fail --silent --show-error "http://127.0.0.1:${PORT}/public-facing/mcp" >/tmp/djsportfolio-mcp.html
+              curl --fail --silent --show-error \
+                --header "Host: quizzical-hofstadter.108-175-12-95.plesk.page" \
+                --header "Accept: text/html" \
+                --dump-header /tmp/djsportfolio-staging-host.headers \
+                --output /tmp/djsportfolio-staging-host.html \
+                "http://127.0.0.1:${PORT}/"
+
+              grep -q 'David' /tmp/djsportfolio-home.html
+              grep -q 'Quantum API' /tmp/djsportfolio-api-quantum.html
+              grep -q 'application/ld+json' /tmp/djsportfolio-api-quantum.html
+              grep -q 'MCP' /tmp/djsportfolio-mcp.html
+              grep -q 'Clear-Site-Data: "cache", "storage"' /tmp/djsportfolio-staging-host.headers
+
+              if grep -q 'Failed to load loader data' /tmp/djsportfolio-api-quantum.html /tmp/djsportfolio-mcp.html; then
+                echo "SSR route smoke found loader failure text"
+                exit 1
+              fi
+
               exit 0
             fi
 
@@ -124,7 +144,13 @@ jobs:
     name: Deploy Staging
     runs-on: ubuntu-latest
     needs: quality
-    if: github.event_name == 'push' && github.ref == 'refs/heads/test'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/test') ||
+      (
+        github.event_name == 'pull_request' &&
+        github.base_ref == 'test' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      )
     timeout-minutes: 10
 
     steps:
@@ -139,6 +165,13 @@ jobs:
       - name: Capture deploy start time
         run: |
           echo "DEPLOY_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "EXPECTED_DEPLOY_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+            echo "EXPECTED_DEPLOY_REF=${{ github.head_ref }}" >> "$GITHUB_ENV"
+          else
+            echo "EXPECTED_DEPLOY_SHA=${GITHUB_SHA}" >> "$GITHUB_ENV"
+            echo "EXPECTED_DEPLOY_REF=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          fi
 
       - name: Validate staging deploy secrets
         env:
@@ -153,6 +186,7 @@ jobs:
         env:
           PLESK_STAGING_WEBHOOK_URL: ${{ secrets.PLESK_STAGING_WEBHOOK_URL }}
         run: |
+          echo "Requesting staging deploy for ${EXPECTED_DEPLOY_REF} at ${EXPECTED_DEPLOY_SHA}"
           curl --fail --silent --show-error --request POST "${PLESK_STAGING_WEBHOOK_URL}"
 
       - name: Verify staging deployment
@@ -163,7 +197,7 @@ jobs:
             --label "staging" \
             --site-url "$SITE_URL" \
             --not-before "$DEPLOY_STARTED_AT" \
-            --expected-sha "$GITHUB_SHA" \
+            --expected-sha "$EXPECTED_DEPLOY_SHA" \
             --interval-ms 10000 \
             --timeout-ms 360000
 
