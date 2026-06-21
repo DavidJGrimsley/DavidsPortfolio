@@ -21,6 +21,7 @@ import '~/global.css';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 const ROOT_BACKGROUND_COLOR = '#20182D';
+const WEB_READY_FALLBACK_MS = 3000;
 
 // Web client: apply theme ASAP (before first render) to reduce light→dark snapping.
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -181,28 +182,39 @@ function RootLayoutClient() {
     Uniwind.setTheme('system');
 
     if (Platform.OS === 'web') {
+      let cancelled = false;
+      const readyTimeout = window.setTimeout(() => {
+        if (!cancelled) {
+          setAppIsReady(true);
+        }
+      }, WEB_READY_FALLBACK_MS);
+
       const fontsReady = (document as any).fonts?.ready;
       if (!fontsReady) {
+        window.clearTimeout(readyTimeout);
         setAppIsReady(true);
-        return;
+        return () => {
+          cancelled = true;
+        };
       }
-
-      let cancelled = false;
 
       fontsReady
         .then(() => {
           if (!cancelled) {
+            window.clearTimeout(readyTimeout);
             setAppIsReady(true);
           }
         })
         .catch(() => {
           if (!cancelled) {
+            window.clearTimeout(readyTimeout);
             setAppIsReady(true);
           }
         });
 
       return () => {
         cancelled = true;
+        window.clearTimeout(readyTimeout);
       };
     }
 

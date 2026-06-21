@@ -42,6 +42,7 @@ const HOSTED_RUNTIME_DEPRECATED_ENV_KEYS = ['QUANTUM_UPSTREAM_URL'];
 const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
 const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS = ['/keys', '/ibm/profiles'];
+const STAGING_HOST_CLEAR_SITE_DATA_MARKERS = ['quizzical-hofstadter.', '.plesk.page'];
 
 function buildPublicRuntimeConfig() {
   return PUBLIC_RUNTIME_ENV_KEYS.reduce((config, key) => {
@@ -78,6 +79,20 @@ function parseSiteOriginOrThrow(rawSiteOrigin) {
 function isLoopbackHostname(hostname) {
   const normalized = String(hostname || '').toLowerCase();
   return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1' || normalized === '[::1]';
+}
+
+function shouldClearStagingSiteData(req) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return false;
+  }
+
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+  if (!STAGING_HOST_CLEAR_SITE_DATA_MARKERS.every((marker) => host.includes(marker))) {
+    return false;
+  }
+
+  const accept = String(req.headers.accept || '');
+  return accept.includes('text/html');
 }
 
 function assertHostedRuntimeEnvHealth() {
@@ -144,6 +159,15 @@ app.use(compression());
 app.disable('x-powered-by');
 app.use(morgan('tiny'));
 assertHostedRuntimeEnvHealth();
+
+app.use((req, res, next) => {
+  if (shouldClearStagingSiteData(req)) {
+    res.setHeader('Clear-Site-Data', '"cache", "storage"');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+
+  next();
+});
 
 function assertBuildArtifact(filePath, description) {
   if (!fs.existsSync(filePath)) {
