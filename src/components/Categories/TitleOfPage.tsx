@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -32,13 +32,14 @@ export function TitleOfPage({
     const textColor = useThemeColor({}, 'text');
     const secondaryColor = useThemeColor({}, 'secondary');
     const reduceMotion = useReducedMotion();
+    const skipEntranceAnimation = Platform.OS === 'web' || reduceMotion;
 
-    const enter = useSharedValue(0);
-    const colorShift = useSharedValue(0);
-    const contentEnter = useSharedValue(0);
+    const enter = useSharedValue(skipEntranceAnimation ? 1 : 0);
+    const colorShift = useSharedValue(skipEntranceAnimation ? 1 : 0);
+    const contentEnter = useSharedValue(skipEntranceAnimation ? 1 : 0);
 
     useEffect(() => {
-        if (reduceMotion) {
+        if (skipEntranceAnimation) {
             enter.value = 1;
             contentEnter.value = 1;
             colorShift.value = 1;
@@ -52,7 +53,7 @@ export function TitleOfPage({
         contentEnter.value = withDelay(baseDelay + 1100, withTiming(1, { duration: 850 }));
         // 3) Second word shifts to secondary after content starts
         colorShift.value = withDelay(baseDelay + 1750, withTiming(1, { duration: 950 }));
-    }, [enter, contentEnter, colorShift, reduceMotion, startDelayMs]);
+    }, [enter, contentEnter, colorShift, skipEntranceAnimation, startDelayMs]);
 
     const containerStyle = useAnimatedStyle(() => {
         return {

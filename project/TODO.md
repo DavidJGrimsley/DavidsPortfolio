@@ -184,3 +184,7 @@ Goal: keep simulator usage seamless while enabling optional IBM profile manageme
 - [ ] Make endpoints section collapsible
 - [ ] Make the API key dashboard collapsible.
 - [ ] Make all collapsibles animate open and close (make a parent collapsible component and subclasses of that or something)
+
+
+## Expo Go page
+- [ ] 

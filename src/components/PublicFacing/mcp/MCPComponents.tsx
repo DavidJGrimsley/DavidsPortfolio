@@ -3,7 +3,7 @@ import { View, Pressable, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { RFPercentage } from 'react-native-responsive-fontsize';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@/components/UI/HydratedIonicon';
 
 // Props for a single MCP Resource Card
 export interface MCPResourceCardProps {

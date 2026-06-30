@@ -13,7 +13,7 @@ import {
   usePathname,
   type ErrorBoundaryProps,
 } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import Ionicons from "@/components/UI/HydratedIonicon";
 import { LoadingComponent } from "@/components/UI/LoadingComponent";
 import { ThemedText } from "@/components/UI/ThemedText";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -33,49 +33,16 @@ import {
   MCPHeroSection,
   MCPWhatIsSection,
 } from "~/src/components/PublicFacing/mcp/MCPPageSections";
+import {
+  DEFAULT_MCP_ID,
+  getMcpFallbackPortfolio,
+  getMcpFallbackRegistryEntry,
+} from "@/data/mcpFallbackPortfolios";
 import type {
   MCPPortfolio,
   RegistryServer,
   MCPEndpointMeta,
 } from "@/types/registry";
-
-// Fallback data for static export
-const FALLBACK_MCP: MCPPortfolio = {
-  mcp: {
-    id: "mrdj-app-mcp",
-    name: "mrdj-app-mcp",
-    version: "1.0.0",
-    icon: "🧠",
-    description:
-      "MCP server exposing React Native, Expo Router, and full-stack development guides.",
-    repoUrl: "https://github.com/DavidJGrimsley/mrdj-app-mcp",
-    docsUrl: "https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp",
-    status: "active",
-    featured: true,
-    tags: ["MCP", "React Native", "Expo", "guides"],
-    transport: "stdio",
-  },
-  tools: [
-    {
-      name: "list-guides",
-      description: "Return the available copilot guides as resource links",
-    },
-  ],
-  resources: [
-    {
-      uri: "guides://architecture",
-      name: "Architecture",
-      description: "Stack, structure, and conventions.",
-    },
-  ],
-  prompts: [
-    {
-      name: "architecture-help",
-      description: "Answer architecture or database design questions",
-      arguments: [{ name: "question", required: true }],
-    },
-  ],
-};
 
 type LoaderRequest = {
   url?: string;
@@ -110,19 +77,35 @@ function getRequestOrigin(request?: LoaderRequest) {
   }
 }
 
+function getRouteId(params: Record<string, string | string[]>): string {
+  const idParam = params.id;
+  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+  return id || DEFAULT_MCP_ID;
+}
+
+function createFallbackDetail(id = DEFAULT_MCP_ID): DetailData {
+  return {
+    portfolio: getMcpFallbackPortfolio(id),
+    registryEntry: getMcpFallbackRegistryEntry(id),
+    loadedAt: new Date().toISOString(),
+    source: "fallback",
+    params: { id },
+    method: "fallback",
+  };
+}
+
 // Server-side data loader
 export async function loader(
   request: LoaderRequest | undefined,
   params: Record<string, string | string[]>,
 ) {
   const origin = getRequestOrigin(request);
-  const idParam = params.id;
-  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+  const id = getRouteId(params);
 
   if (origin) {
     try {
       const response = await fetch(
-        `${origin}/api/portfolio/${encodeURIComponent(id ?? "")}`,
+        `${origin}/api/portfolio/${encodeURIComponent(id)}`,
       );
 
       if (!response.ok) {
@@ -150,7 +133,7 @@ export async function loader(
         registryEntry: result.data.registryEntry,
         loadedAt: result.fetchedAt,
         source: result.source,
-        params: { id: id ?? "" },
+        params: { id },
         method: "data-loader" as const,
       };
     } catch (error) {
@@ -160,19 +143,7 @@ export async function loader(
   }
 
   // Static export fallback
-  return {
-    portfolio: FALLBACK_MCP,
-    registryEntry: {
-      id: id ?? "mrdj-app-mcp",
-      type: "mcp" as const,
-      portfolioUrl:
-        "https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp/portfolio.json",
-    },
-    loadedAt: new Date().toISOString(),
-    source: "fallback" as const,
-    params: { id: id ?? "" },
-    method: "data-loader" as const,
-  };
+  return createFallbackDetail(id);
 }
 
 // Error boundary for loader failures
@@ -222,56 +193,8 @@ function LoadingFallback() {
 // Main content component using loader data
 function MCPDetailContent() {
   const pathname = usePathname();
-  const slug = pathname?.split("/").filter(Boolean).pop();
-
-  // Inject fallback data for this route
-  if (typeof window !== "undefined") {
-    const store = ((
-      globalThis as unknown as {
-        __EXPO_ROUTER_LOADER_DATA__?: Record<string, any>;
-      }
-    ).__EXPO_ROUTER_LOADER_DATA__ ||= {});
-    const keys = new Set<string>();
-    if (pathname) {
-      keys.add(pathname);
-      if (slug) {
-        keys.add(`/${slug}`);
-        keys.add(`/public-facing/mcp/${slug}`);
-        keys.add(`/public-facing/mcp/${slug}/index`);
-      }
-    }
-    keys.add("/public-facing/mcp/[id]");
-    keys.add("/[id]");
-    keys.forEach((key) => {
-      if (!store[key]) {
-        store[key] = {
-          portfolio: FALLBACK_MCP,
-          registryEntry: {
-            id: "mrdj-app-mcp",
-            type: "mcp",
-            portfolioUrl:
-              "https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp/portfolio.json",
-          },
-          source: "fallback",
-          loadedAt: new Date().toISOString(),
-        };
-      }
-    });
-  }
-
-  const fallbackDetail: DetailData = {
-    portfolio: FALLBACK_MCP,
-    registryEntry: {
-      id: slug ?? "mrdj-app-mcp",
-      type: "mcp" as const,
-      portfolioUrl:
-        "https://davidjgrimsley.com/public-facing/mcp/mrdj-app-mcp/portfolio.json",
-    },
-    loadedAt: new Date().toISOString(),
-    source: "fallback" as const,
-    params: { id: slug ?? "mrdj-app-mcp" },
-    method: "fallback" as const,
-  };
+  const slug = pathname?.split("/").filter(Boolean).pop() ?? DEFAULT_MCP_ID;
+  const fallbackDetail = React.useMemo(() => createFallbackDetail(slug), [slug]);
 
   const data = (useLoaderData<typeof loader>() as DetailData) ?? fallbackDetail;
   const [liveDetail, setLiveDetail] = useState<DetailData | null>(null);
@@ -340,7 +263,7 @@ function MCPDetailContent() {
   const mcpInfo =
     portfolio?.mcp ??
     (portfolio as { server?: MCPPortfolio["mcp"] })?.server ??
-    FALLBACK_MCP.mcp;
+    getMcpFallbackPortfolio(slug).mcp;
   const tools = portfolio.tools ?? [];
   const resources = portfolio.resources ?? [];
   const prompts = portfolio.prompts ?? [];
@@ -353,9 +276,22 @@ function MCPDetailContent() {
 
   const mcpId = mcpInfo.id;
   const mcpBaseUrl = `https://davidjgrimsley.com/public-facing/mcp/${mcpId}`;
-  const mcpEndpointUrl = `${mcpBaseUrl}/mcp`;
+  const mcpEndpointUrl =
+    endpoints.find((endpoint) => endpoint.id === "mcp-endpoint")?.url ??
+    `${mcpBaseUrl}/mcp`;
   const githubRepoUrl =
-    mcpInfo.repoUrl ?? "https://github.com/DavidJGrimsley/mrdj-app-mcp";
+    mcpInfo.repoUrl ?? "https://github.com/DavidJGrimsley";
+  const endpointLabel =
+    mcpInfo.transport === "streamable-http"
+      ? "Live MCP Endpoint (Streamable HTTP):"
+      : "Live MCP Endpoint (SSE):";
+  const clientTransport =
+    mcpInfo.transport === "streamable-http" ? "streamable-http" : "sse";
+  const transportLabel =
+    mcpInfo.transport === "streamable-http"
+      ? "Streamable HTTP"
+      : "Server-Sent Events (SSE)";
+  const iconName = mcpId.includes("pokemon") ? "paw" : "git-network";
 
   const handleCopyEndpoint = () => {
     Clipboard.setString(mcpEndpointUrl);
@@ -373,36 +309,6 @@ function MCPDetailContent() {
   const seoDescription =
     mcpInfo.description ??
     `${mcpInfo.name} is an MCP server by David Grimsley. View tools, resources, prompts, and integration guides.`;
-
-  if (source !== "live" && !liveDetail && liveError) {
-    return (
-      <PublicFacingDetailWrapper
-        seo={{
-          title: seoTitle,
-          description: seoDescription,
-          path: `/public-facing/mcp/${mcpInfo.id}`,
-          keywords: [
-            mcpInfo.name,
-            "MCP",
-            "Model Context Protocol",
-            "AI tools",
-            ...(mcpInfo.tags ?? []),
-          ],
-          type: "website",
-        }}
-      >
-        <View className="rounded-lg p-5 bg-yellow-900/30 border border-yellow-600/50">
-          <ThemedText type="defaultSemiBold" className="mb-2 text-yellow-400">
-            Live data is unavailable
-          </ThemedText>
-          <ThemedText className="opacity-90">
-            {liveError ??
-              "The server isn’t responding right now. Please try again in a few minutes."}
-          </ThemedText>
-        </View>
-      </PublicFacingDetailWrapper>
-    );
-  }
 
   return (
     <PublicFacingDetailWrapper
@@ -440,40 +346,20 @@ function MCPDetailContent() {
         tintColor={tintColor}
         accentColor={accentColor}
         textColor={textColor}
-        iconName="git-network"
+        iconName={iconName}
+        endpointLabel={endpointLabel}
       />
 
-      <View
-        className="mb-7.5 p-4 rounded-lg flex-row items-center justify-between"
-        style={{
-          backgroundColor: accentColor,
-          borderLeftWidth: 4,
-          borderLeftColor: tintColor,
-        }}
-      >
-        <View className="flex-1 mr-3">
-          <ThemedText type="defaultSemiBold" className="mb-1.5 text-secondary">
-            🌐 Live MCP Endpoint (SSE):
+      {source !== "live" && liveError ? (
+        <View className="rounded-lg p-5 mb-5 bg-yellow-900/30 border border-yellow-600/50">
+          <ThemedText type="defaultSemiBold" className="mb-2 text-yellow-400">
+            Live data is unavailable
           </ThemedText>
-          <ThemedText
-            className="font-mono text-sm"
-            style={{ color: tintColor }}
-          >
-            {mcpEndpointUrl}
+          <ThemedText className="opacity-90">
+            Showing local fallback metadata. {liveError}
           </ThemedText>
         </View>
-        <Pressable
-          onPress={handleCopyEndpoint}
-          className="w-11 h-11 rounded-xl items-center justify-center"
-          style={{ backgroundColor: copied ? "#22c55e" : tintColor + "22" }}
-        >
-          <Ionicons
-            name={copied ? "checkmark" : "copy-outline"}
-            size={20}
-            color={tintColor}
-          />
-        </Pressable>
-      </View>
+      ) : null}
 
       <MCPCollapsibleSection title="Resources" icon="library">
         <GreyView className="mb-4">
@@ -608,7 +494,7 @@ function MCPDetailContent() {
   "mcpServers": {
     "${mcpId}": {
       "url": "${mcpEndpointUrl}",
-      "transport": "sse"
+      "transport": "${clientTransport}"
     }
   }
 }`}
@@ -758,7 +644,7 @@ npm start`}
           </ThemedText>
           <ThemedText className="detail-body opacity-80 mb-2">
             <ThemedText className="font-semibold">Transport:</ThemedText>{" "}
-            Server-Sent Events (SSE)
+            {transportLabel}
           </ThemedText>
           <ThemedText className="detail-body opacity-80 mb-2">
             <ThemedText className="font-semibold">Accessibility:</ThemedText>{" "}

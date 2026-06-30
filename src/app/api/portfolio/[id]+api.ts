@@ -1,4 +1,5 @@
 import type { APIPortfolio, Portfolio, RegistryResponse, RegistryServer } from '@/types/registry';
+import { MCP_FALLBACK_PORTFOLIOS } from '@/data/mcpFallbackPortfolios';
 
 const REGISTRY_URL = 'https://davidjgrimsley.com/secret/registry.json';
 const QUANTUM_ROUTE_ID = 'quantum';
@@ -107,6 +108,7 @@ const FALLBACK_PORTFOLIOS: Record<string, Portfolio> = {
     },
     'https://davidjgrimsley.com'
   ),
+  ...MCP_FALLBACK_PORTFOLIOS,
 };
 
 const corsHeaders = {

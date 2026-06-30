@@ -45,8 +45,10 @@ export function ThemedText({
   className,
   ...rest
 }: ThemedTextProps) {
-  const hasCustomColor = lightColor != null || darkColor != null;
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const tokenName = inverse ? 'whiteOrBlack' : 'text';
+  const color = useThemeColor({ light: lightColor, dark: darkColor }, tokenName);
+  const shouldInlineThemeColor =
+    Platform.OS !== 'web' || lightColor != null || darkColor != null;
 
   const typeClassName =
     type === 'title' ? 'typo-title' :
@@ -68,7 +70,7 @@ export function ThemedText({
 
   const combinedClassName = `${toneClassName} ${typeClassName} ${visualHeadingClassName} ${className || ''}`.trim();
 
-  const baseStyle = hasCustomColor ? [{ color }, style] : style;
+  const baseStyle = shouldInlineThemeColor ? [{ color }, style] : style;
 
   const webStyle = Array.isArray(baseStyle)
     ? Object.assign({}, ...baseStyle.filter(Boolean))

@@ -438,7 +438,7 @@ app.get('/__djsportfolio_runtime_config__', (_req, res) => {
 app.get('/__djsportfolio_build.json', (_req, res) => {
   res.type('application/json');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.sendFile(BUILD_METADATA_PATH);
+  res.send(fs.readFileSync(BUILD_METADATA_PATH, 'utf8'));
 });
 
 app.get('/sw.js', (_req, res) => {

@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Uniwind } from 'uniwind';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { CinzelDecorative_700Bold } from '@expo-google-fonts/cinzel-decorative';
 import { EmblemaOne_400Regular } from '@expo-google-fonts/emblema-one';
@@ -23,6 +23,14 @@ const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_I
 const ROOT_BACKGROUND_COLOR = '#20182D';
 const WEB_READY_FALLBACK_MS = 3000;
 
+const styles = StyleSheet.create({
+  webViewport: {
+    height: '100vh' as any,
+    minHeight: '100vh' as any,
+    width: '100%',
+  },
+});
+
 // Web client: apply theme ASAP (before first render) to reduce light→dark snapping.
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
   try {
@@ -34,7 +42,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
 
 function AppStack() {
   return (
-    <Stack>
+    <Stack screenOptions={{ contentStyle: { backgroundColor: 'transparent' } }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
@@ -63,11 +71,7 @@ function LoadingOverlay() {
 
 function RootLayoutWebSSR() {
   return (
-    <View className="flex-1 bg-themed">
-      {/* Render the real app for SEO, but keep it visually hidden to prevent FOUT. */}
-      <View className="flex-1 bg-themed" style={{ opacity: 0 }}>
-        <AppStack />
-      </View>
+    <View className="flex-1 bg-themed" style={styles.webViewport}>
       <LoadingOverlay />
     </View>
   );
@@ -75,6 +79,47 @@ function RootLayoutWebSSR() {
 
 function RootLayoutClient() {
   const [appIsReady, setAppIsReady] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (typeof window === 'undefined') return;
+
+    const neutralizeNavigationSceneBackground = () => {
+      const isDark =
+        document.documentElement.classList.contains('dark') ||
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      if (!isDark) return;
+
+      document
+        .querySelectorAll<HTMLElement>('div[style*="background-color: rgb(242, 242, 242)"]')
+        .forEach((element) => {
+          const rect = element.getBoundingClientRect();
+          const isFullScreenScene =
+            rect.width >= window.innerWidth * 0.75 &&
+            rect.height >= window.innerHeight * 0.75;
+
+          if (isFullScreenScene) {
+            element.style.backgroundColor = 'transparent';
+          }
+        });
+    };
+
+    neutralizeNavigationSceneBackground();
+    const frame = window.requestAnimationFrame(neutralizeNavigationSceneBackground);
+    const observer = new MutationObserver(neutralizeNavigationSceneBackground);
+    observer.observe(document.getElementById('root') ?? document.body, {
+      attributes: true,
+      attributeFilter: ['style'],
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -230,12 +275,16 @@ function RootLayoutClient() {
   }, [appIsReady]);
 
   if (Platform.OS === 'web') {
-    // Web: always render the real content (SEO/hydration), but cover it until ready.
+    // Web: keep the server and first client render identical, then mount routes
+    // after fonts/theme are ready. This avoids mobile-width Expo Router
+    // navigator hydration mismatches.
     return (
-      <View className="flex-1 bg-themed">
-        <View className="flex-1 bg-themed" style={{ opacity: appIsReady ? 1 : 0 }}>
-          <AppStack />
-        </View>
+      <View className="flex-1 bg-themed" style={styles.webViewport}>
+        {appIsReady ? (
+          <View className="flex-1 bg-themed" style={styles.webViewport}>
+            <AppStack />
+          </View>
+        ) : null}
         {!appIsReady ? <LoadingOverlay /> : null}
       </View>
     );
