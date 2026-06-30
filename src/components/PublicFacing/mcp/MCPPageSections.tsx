@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@/components/UI/HydratedIonicon';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 
 import { ThemedText } from '@/components/UI/ThemedText';

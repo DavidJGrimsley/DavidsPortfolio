@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { Session } from '@supabase/supabase-js';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@/components/UI/HydratedIonicon';
 import { Picker } from '@react-native-picker/picker';
 import Svg, { Line } from 'react-native-svg';
 import { ThemedText } from '@/components/UI/ThemedText';

@@ -42,6 +42,7 @@ const HOSTED_RUNTIME_DEPRECATED_ENV_KEYS = ['QUANTUM_UPSTREAM_URL'];
 const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
 const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS = ['/keys', '/ibm/profiles'];
+const STAGING_HOST_CLEAR_SITE_DATA_MARKERS = ['quizzical-hofstadter.', '.plesk.page'];
 
 function buildPublicRuntimeConfig() {
   return PUBLIC_RUNTIME_ENV_KEYS.reduce((config, key) => {
@@ -51,6 +52,43 @@ function buildPublicRuntimeConfig() {
 
     return config;
   }, {});
+}
+
+function getExpoCssAssets() {
+  try {
+    const routesManifest = JSON.parse(fs.readFileSync(ROUTES_MANIFEST_PATH, 'utf8'));
+    const cssAssets = routesManifest?.assets?.css;
+
+    if (!Array.isArray(cssAssets)) {
+      return [];
+    }
+
+    return cssAssets.filter((asset) => typeof asset === 'string' && asset.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function buildCssBootstrapScript() {
+  const cssAssets = getExpoCssAssets();
+
+  return `(() => {
+  try {
+    const assets = ${JSON.stringify(cssAssets)};
+    for (const href of assets) {
+      const exists = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+        .some((link) => link.getAttribute('href') === href);
+      if (exists) continue;
+
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.setAttribute('data-djsportfolio-css-bootstrap', '');
+      document.head.appendChild(link);
+    }
+  } catch {}
+})();
+`;
 }
 
 function parseSiteOriginOrThrow(rawSiteOrigin) {
@@ -78,6 +116,20 @@ function parseSiteOriginOrThrow(rawSiteOrigin) {
 function isLoopbackHostname(hostname) {
   const normalized = String(hostname || '').toLowerCase();
   return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1' || normalized === '[::1]';
+}
+
+function shouldClearStagingSiteData(req) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return false;
+  }
+
+  const host = String(req.headers.host || '').split(',')[0].trim().toLowerCase();
+  if (!STAGING_HOST_CLEAR_SITE_DATA_MARKERS.every((marker) => host.includes(marker))) {
+    return false;
+  }
+
+  const accept = String(req.headers.accept || '');
+  return accept.includes('text/html');
 }
 
 function assertHostedRuntimeEnvHealth() {
@@ -144,6 +196,15 @@ app.use(compression());
 app.disable('x-powered-by');
 app.use(morgan('tiny'));
 assertHostedRuntimeEnvHealth();
+
+app.use((req, res, next) => {
+  if (shouldClearStagingSiteData(req)) {
+    res.setHeader('Clear-Site-Data', '"cache", "storage"');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+
+  next();
+});
 
 function assertBuildArtifact(filePath, description) {
   if (!fs.existsSync(filePath)) {
@@ -411,10 +472,16 @@ app.get('/__djsportfolio_runtime_config__', (_req, res) => {
   );
 });
 
+app.get('/__djsportfolio_css__', (_req, res) => {
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.send(buildCssBootstrapScript());
+});
+
 app.get('/__djsportfolio_build.json', (_req, res) => {
   res.type('application/json');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.sendFile(BUILD_METADATA_PATH);
+  res.send(fs.readFileSync(BUILD_METADATA_PATH, 'utf8'));
 });
 
 app.get('/sw.js', (_req, res) => {

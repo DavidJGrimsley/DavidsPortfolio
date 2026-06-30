@@ -1,4 +1,4 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@/components/UI/HydratedIonicon';
 import { PropsWithChildren, useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 
