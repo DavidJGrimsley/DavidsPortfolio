@@ -52,14 +52,11 @@ function normalizeQuantumUpstreamBaseUrl(request: Request, routeId: string) {
     const requestUrl = new URL(request.url);
     const upstreamUrl = new URL(normalized);
     const publicProxyBasePath = getPublicProxyBasePath(routeId);
-    const legacyPublicBasePath = `/public-facing/api/${routeId}/v1`;
 
     if (
       requestUrl.host.toLowerCase() === upstreamUrl.host.toLowerCase() &&
       (upstreamUrl.pathname === publicProxyBasePath ||
-        upstreamUrl.pathname.startsWith(`${publicProxyBasePath}/`) ||
-        upstreamUrl.pathname === legacyPublicBasePath ||
-        upstreamUrl.pathname.startsWith(`${legacyPublicBasePath}/`))
+        upstreamUrl.pathname.startsWith(`${publicProxyBasePath}/`))
     ) {
       return null;
     }

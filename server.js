@@ -295,6 +295,165 @@ function buildQuantumProxyHeaders(req, options = {}) {
   return headers;
 }
 
+function getRequestOrigin(req) {
+  const configuredSiteOrigin = String(process.env.EXPO_PUBLIC_SITE_ORIGIN || '').trim();
+  if (configuredSiteOrigin) {
+    try {
+      return parseSiteOriginOrThrow(configuredSiteOrigin).origin;
+    } catch {
+      // Fall through to request-derived origin.
+    }
+  }
+
+  const forwardedProto = getFirstHeaderValue(req.headers['x-forwarded-proto']).split(',')[0].trim();
+  const forwardedHost = getFirstHeaderValue(req.headers['x-forwarded-host']).split(',')[0].trim();
+  const host = forwardedHost || getFirstHeaderValue(req.headers.host).split(',')[0].trim();
+  const protocol = forwardedProto || req.protocol || 'http';
+
+  if (!host) {
+    const fallbackPort = String(process.env.PORT || 3000);
+    return `http://127.0.0.1:${fallbackPort}`;
+  }
+
+  return `${protocol}://${host}`;
+}
+
+async function fetchJsonOrThrow(url) {
+  const response = await fetch(url, {
+    cache: 'no-store',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${url}`);
+  }
+
+  return response.json();
+}
+
+async function fetchRegistry(origin, type) {
+  const response = await fetchJsonOrThrow(`${origin}/api/registry?type=${encodeURIComponent(type)}`);
+  return response?.data || response;
+}
+
+async function fetchPortfolio(origin, id) {
+  return fetchJsonOrThrow(`${origin}/api/portfolio/${encodeURIComponent(id)}`);
+}
+
+async function buildApiIndexLoaderPayload(origin) {
+  const registry = await fetchRegistry(origin, 'api');
+  const apiServers = Array.isArray(registry?.servers) ? registry.servers : [];
+  const apiCards = await Promise.all(
+    apiServers.map(async (server) => {
+      try {
+        const wrapped = await fetchPortfolio(origin, server.id);
+        const portfolio = wrapped?.data?.portfolio ?? wrapped;
+        const api = portfolio?.api;
+        if (!api) {
+          return null;
+        }
+
+        return {
+          id: api.id || server.id,
+          name: api.name,
+          version: api.version,
+          icon: api.icon ?? '',
+          description: api.description ?? '',
+          baseUrl: api.baseUrl,
+          docsUrl: api.docsUrl,
+          healthUrl: api.healthUrl,
+          status: api.status,
+          featured: api.featured,
+          tags: api.tags ?? [],
+          uptime: api.uptime,
+          endpoints: Array.isArray(portfolio?.endpoints) ? portfolio.endpoints.length : 0,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return {
+    apis: apiCards.filter(Boolean),
+    fromCache: false,
+    loadedAt: new Date().toISOString(),
+    method: 'data-loader',
+  };
+}
+
+async function buildApiDetailLoaderPayload(origin, id) {
+  const result = await fetchPortfolio(origin, id);
+  if (!result?.success) {
+    throw new Error(result?.error || `Failed to fetch API portfolio for ${id}`);
+  }
+
+  return {
+    portfolio: result.data.portfolio,
+    registryEntry: result.data.registryEntry,
+    loadedAt: result.fetchedAt,
+    source: result.source,
+    params: { id },
+    method: 'data-loader',
+  };
+}
+
+async function buildMcpIndexLoaderPayload(origin) {
+  const registry = await fetchRegistry(origin, 'mcp');
+  const mcpServers = Array.isArray(registry?.servers) ? registry.servers : [];
+  const mcpCards = await Promise.all(
+    mcpServers.map(async (server) => {
+      try {
+        const wrapped = await fetchPortfolio(origin, server.id);
+        const portfolio = wrapped?.data?.portfolio ?? wrapped;
+        const mcp = portfolio?.mcp ?? portfolio?.server;
+        if (!mcp) {
+          return null;
+        }
+
+        return {
+          id: server.id,
+          name: mcp.name || server.id,
+          version: mcp.version || '1.0.0',
+          icon: mcp.icon ?? '',
+          description: mcp.description ?? '',
+          status: mcp.status || 'active',
+          featured: mcp.featured ?? false,
+          tags: mcp.tags ?? [],
+          resources: Array.isArray(portfolio?.resources) ? portfolio.resources.length : 0,
+          tools: Array.isArray(portfolio?.tools) ? portfolio.tools.length : 0,
+          prompts: Array.isArray(portfolio?.prompts) ? portfolio.prompts.length : 0,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return {
+    servers: mcpCards.filter(Boolean),
+    loadedAt: new Date().toISOString(),
+  };
+}
+
+async function buildMcpDetailLoaderPayload(origin, id) {
+  const result = await fetchPortfolio(origin, id);
+  if (!result?.success) {
+    throw new Error(result?.error || `Failed to fetch MCP portfolio for ${id}`);
+  }
+
+  return {
+    portfolio: result.data.portfolio,
+    registryEntry: result.data.registryEntry,
+    loadedAt: result.fetchedAt,
+    source: result.source,
+    params: { id },
+    method: 'data-loader',
+  };
+}
+
 async function proxyToQuantumOrigin(req, res, targetUrl, options = {}) {
   const abortController = new AbortController();
   const abortUpstream = () => {
@@ -488,6 +647,48 @@ app.get('/sw.js', (_req, res) => {
   res.type('application/javascript');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(SERVICE_WORKER_PATH);
+});
+
+app.get(/^\/_expo\/loaders(?:\/\(tabs\))?\/public-facing\/api(?:\/index)?\/?$/, async (req, res) => {
+  try {
+    const payload = await buildApiIndexLoaderPayload(getRequestOrigin(req));
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.json(payload);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.get(/^\/_expo\/loaders(?:\/\(tabs\))?\/public-facing\/api\/([^/]+)\/?$/, async (req, res) => {
+  try {
+    const id = req.params[0];
+    const payload = await buildApiDetailLoaderPayload(getRequestOrigin(req), id);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.json(payload);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.get(/^\/_expo\/loaders(?:\/\(tabs\))?\/public-facing\/mcp(?:\/index)?\/?$/, async (req, res) => {
+  try {
+    const payload = await buildMcpIndexLoaderPayload(getRequestOrigin(req));
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.json(payload);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.get(/^\/_expo\/loaders(?:\/\(tabs\))?\/public-facing\/mcp\/([^/]+)\/?$/, async (req, res) => {
+  try {
+    const id = req.params[0];
+    const payload = await buildMcpDetailLoaderPayload(getRequestOrigin(req), id);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.json(payload);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
 });
 
 // Serve static files from client build
