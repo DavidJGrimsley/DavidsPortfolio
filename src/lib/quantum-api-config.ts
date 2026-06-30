@@ -1,7 +1,7 @@
 import { readTrimmedPublicRuntimeConfigValue } from '@/lib/runtime-config';
 
 const DEFAULT_QUANTUM_API_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
-const PUBLIC_QUANTUM_API_BASE_PATH = '/public-facing/api/quantum/v1';
+const PUBLIC_QUANTUM_API_BASE_PATH = '/api/public/quantum/v1';
 
 export const QUANTUM_AUTH_PATH = '/public-facing/api/quantum';
 export type QuantumEndpointAuth = 'public' | 'api_key' | 'bearer_jwt';

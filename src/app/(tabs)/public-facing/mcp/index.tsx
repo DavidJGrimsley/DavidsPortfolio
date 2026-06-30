@@ -1,89 +1,205 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
+import React, { Suspense, useEffect, useState } from 'react';
+import { View, Text } from 'react-native';
+import { useRouter, useLoaderData, ErrorBoundaryProps } from 'expo-router';
 import Head from 'expo-router/head';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
-import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsMCPCard } from '~/src/components/PublicFacing/mcp/WhatIsMCPCard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
-import mcpServersData from '@json/mcpServers.json';
+import { LoadingComponent } from '@/components/UI/LoadingComponent';
+import type { RegistryResponse, MCPPortfolio } from '~/src/types/registry';
 
-export default function MCPIndexPage() {
-  const router = useRouter();
+// =============================================================================
+// TYPES
+// =============================================================================
 
-  const [syncedMetaById, setSyncedMetaById] = useState<
-    Record<
-      string,
-      | {
-          version?: string;
-          resources?: number;
-          tools?: number;
-          prompts?: number;
-          isSynced: boolean;
-        }
-      | undefined
-    >
-  >({});
+type MCPCardItem = {
+  id: string;
+  name: string;
+  version: string;
+  icon: string;
+  description: string;
+  status: string;
+  featured?: boolean;
+  tags: string[];
+  resources?: number;
+  tools?: number;
+  prompts?: number;
+};
 
-  const handleMCPPress = (mcpId: string) => {
-    router.push(`/public-facing/mcp/${mcpId}` as any);
+type LoaderData = {
+  servers: MCPCardItem[];
+  error?: string;
+  loadedAt: string;
+};
+
+type LoaderRequest = {
+  url?: string;
+};
+
+function getRequestOrigin(request?: LoaderRequest) {
+  if (!request?.url) return null;
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return null;
+  }
+}
+
+// =============================================================================
+// SSR DATA LOADER
+// =============================================================================
+export async function loader(
+  request: LoaderRequest | undefined,
+  _params: Record<string, string | string[]>
+): Promise<LoaderData> {
+  const origin = getRequestOrigin(request) || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8082');
+  
+  const registryRes = await fetch(`${origin}/api/registry?type=mcp`, {
+    cache: 'no-store',
+  });
+  
+  if (!registryRes.ok) {
+    throw new Error(`Registry fetch failed: ${registryRes.status}`);
+  }
+  
+  const response = await registryRes.json();
+  const registry: RegistryResponse = response.data || response;
+  const mcpServers = registry.servers || [];
+  
+  if (mcpServers.length === 0) {
+    throw new Error('No MCP servers found in registry');
+  }
+  
+  const mcpPromises = mcpServers.map(async (server) => {
+    try {
+      const portfolioRes = await fetch(`${origin}/api/portfolio/${server.id}`, {
+        cache: 'no-store',
+      });
+      if (!portfolioRes.ok) {
+        console.warn(`Portfolio fetch failed for ${server.id}`);
+        return null;
+      }
+      const portfolioResponse = await portfolioRes.json();
+      const portfolio: MCPPortfolio = portfolioResponse?.data?.portfolio ?? portfolioResponse;
+      const mcpInfo = portfolio?.mcp ?? (portfolio as { server?: MCPPortfolio['mcp'] })?.server;
+      
+      if (!portfolio || !mcpInfo) {
+        console.warn(`Invalid portfolio structure for ${server.id}`);
+        return null;
+      }
+      
+      return {
+        id: server.id,
+        name: mcpInfo.name || server.id,
+        version: mcpInfo.version || '1.0.0',
+        icon: mcpInfo.icon ?? '',
+        description: mcpInfo.description ?? '',
+        status: mcpInfo.status || 'active',
+        featured: mcpInfo.featured ?? false,
+        tags: mcpInfo.tags ?? [],
+        resources: portfolio.resources?.length ?? 0,
+        tools: portfolio.tools?.length ?? 0,
+        prompts: portfolio.prompts?.length ?? 0,
+      } as MCPCardItem;
+    } catch (err) {
+      console.warn(`Error fetching portfolio for ${server.id}:`, err);
+      return null;
+    }
+  });
+  
+  const results = await Promise.all(mcpPromises);
+  const servers = results.filter((s): s is MCPCardItem => s !== null);
+  
+  if (servers.length === 0) {
+    throw new Error('No valid MCP servers found');
+  }
+  
+  return {
+    servers,
+    loadedAt: new Date().toISOString(),
   };
+}
 
-  const servers = useMemo(() => mcpServersData.mcpServers ?? [], []);
+function MCPListLoadingState({ label }: { label: string }) {
+  return (
+    <View className="min-h-100 justify-center">
+      <LoadingComponent label={label} />
+    </View>
+  );
+}
+
+// =============================================================================
+// ERROR BOUNDARY
+// =============================================================================
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center p-8 bg-gray-900">
+      <Text className="text-2xl font-bold text-red-400 mb-4">
+        Failed to load MCP Servers
+      </Text>
+      <Text className="text-gray-400 text-center">
+        {error.message}
+      </Text>
+      <Text className='text-gray-800 text-2xl' onPress={retry}>Try again</Text>
+    </View>
+  );
+}
+
+// =============================================================================
+// SEO CONSTANTS
+// =============================================================================
+const seoTitle = 'MCP Servers | Model Context Protocol | David Grimsley Portfolio';
+const seoDescription = 
+  'Explore MCP (Model Context Protocol) servers by David Grimsley. Open-source implementations exposing development guides, architecture patterns, and structured resources for AI-powered code assistance. MCP servers for React Native, Expo Router, full-stack development, and more.';
+const seoKeywords = 
+  'MCP, Model Context Protocol, MCP server, AI tools, Pokemon MCP, developer resources, React Native MCP, Expo Router MCP, AI code assistance, structured knowledge, open-source MCP, developer documentation, software engineering, David Grimsley, mrdj-app-mcp, AI assistant integration';
+const seoImage = 'https://davidjgrimsley.com/images/icon.png';
+const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp';
+// =============================================================================
+// PAGE COMPONENT - SSR DATA LOADER
+// =============================================================================
+export default function MCPListPage() {
+  const [canRenderList, setCanRenderList] = useState(true);
+  const [preloadError, setPreloadError] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
+    if (typeof window === 'undefined') return;
 
-    const syncServerMeta = async (serverId: string) => {
-      const portfolioUrl = `https://davidjgrimsley.com/public-facing/mcp/${serverId}/portfolio.json`;
-      try {
-        const response = await fetch(portfolioUrl, { method: 'GET' });
+    const store = (globalThis as unknown as { __EXPO_ROUTER_LOADER_DATA__?: Record<string, LoaderData> })
+      .__EXPO_ROUTER_LOADER_DATA__;
 
-        const finalResponse =
-          response.status === 304
-            ? await fetch(`${portfolioUrl}?_=${Date.now()}`, {
-                method: 'GET',
-                cache: 'no-store' as any,
-              })
-            : response;
+    if (store?.['/index']) return;
 
-        if (!finalResponse.ok) throw new Error(`HTTP ${finalResponse.status}`);
-        const data = await finalResponse.json();
-        if (!isMounted) return;
+    const matchKey = store && Object.keys(store).find(
+      (key) => key === '/public-facing/mcp' || key === '/public-facing/mcp/index'
+    );
 
-        const version = data?.server?.version;
-        const resources = Array.isArray(data?.resources) ? data.resources.length : undefined;
-        const tools = Array.isArray(data?.tools) ? data.tools.length : undefined;
-        const prompts = Array.isArray(data?.prompts) ? data.prompts.length : undefined;
+    if (store && matchKey) {
+      store['/index'] = store[matchKey];
+      return;
+    }
 
-        setSyncedMetaById((prev) => ({
-          ...prev,
-          [serverId]: { version, resources, tools, prompts, isSynced: true },
-        }));
-      } catch {
-        if (!isMounted) return;
-        setSyncedMetaById((prev) => ({
-          ...prev,
-          [serverId]: { isSynced: false },
-        }));
-      }
-    };
-
-    servers.forEach((server) => {
-      if (server?.id) syncServerMeta(server.id);
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [servers]);
-
-  const seoTitle = 'MCP Servers | Model Context Protocol | David Grimsley Portfolio';
-  const seoDescription = 
-    'Explore MCP (Model Context Protocol) servers by David Grimsley. Open-source implementations exposing development guides, architecture patterns, and structured resources for AI-powered code assistance. MCP servers for React Native, Expo Router, full-stack development, and more.';
-  const seoKeywords = 
-    'MCP, Model Context Protocol, MCP server, AI tools, Pokémon MCP, developer resources, React Native MCP, Expo Router MCP, AI code assistance, structured knowledge, open-source MCP, developer documentation, software engineering, David Grimsley, mrdj-app-mcp, AI assistant integration';
-  const seoImage = 'https://davidjgrimsley.com/images/icon.png';
-  const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp';
+    setCanRenderList(false);
+    fetch('/_expo/loaders/public-facing/mcp/index', {
+      headers: { Accept: 'application/json' },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Loader fetch failed: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data: LoaderData) => {
+        const target = (globalThis as unknown as { __EXPO_ROUTER_LOADER_DATA__?: Record<string, LoaderData> })
+          .__EXPO_ROUTER_LOADER_DATA__ ||= {};
+        target['/index'] = data;
+        setCanRenderList(true);
+      })
+      .catch((err) => {
+        setPreloadError(err instanceof Error ? err.message : 'Failed to preload loader data');
+        setCanRenderList(true);
+      });
+  }, []);
 
   return (
     <>
@@ -155,46 +271,50 @@ export default function MCPIndexPage() {
       
       <PublicFacingIndexWrapper
         title="MCP Servers"
-        leadBody="Using advanced models like Claude Sonnet and OpenAI allows me to leverage the speed and effectiveness of agentic coding, while my solid understanding of programming fundamentals, UI/UX principles, and data flow keeps projects actually working and makes architecture design and debugging my strong suit. It’s important to keep the AI agent in check. This is just one use of an MCP. I also made an MCP focused on Pokémon, which includes guides written by me and a full database of Pokémon information."
+        leadBody="Using advanced models like Claude Sonnet and OpenAI allows me to leverage the speed and effectiveness of agentic coding, while my solid understanding of programming fundamentals, UI/UX principles, and data flow keeps projects actually working and makes architecture design and debugging my strong suit. It's important to keep the AI agent in check. This is just one use of an MCP. I also made an MCP focused on Pokemon, which includes guides written by me and a full database of Pokemon information."
         leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
       >
-
+        
         {/* What is MCP? Info Card */}
         <WhatIsMCPCard />
-        {servers.map((server) => {
-          const synced = syncedMetaById[server.id];
-          const version = synced?.version ?? server.version;
-          const resources = synced?.resources;
-          const tools = synced?.tools;
-          const prompts = synced?.prompts;
-          
-          const isOffline = synced?.isSynced === false;
-          const isLive = server.status === 'active' && !isOffline;
-          
-          return (
-            <SoftwareCard
-            key={server.id}
-            item={{
-              ...server,
-              version,
-              status: isLive ? 'active' : 'inactive',
-            }}
-            stats={[
-              { emoji: '📚', label: `${typeof resources === 'number' ? resources : '—'} resources` },
-              { emoji: '🔧', label: `${typeof tools === 'number' ? tools : '—'} tools` },
-              { emoji: '💬', label: `${typeof prompts === 'number' ? prompts : '—'} prompts` },
-            ]}
-            onPress={() => handleMCPPress(server.id)}
-            />
-          );
-        })}
 
-        {/* Coming Soon Card */}
-        <ComingSoonCard
-          title="More MCP Servers Coming Soon"
-          description="Additional MCP servers in development covering API design, testing patterns, deployment workflows, and more development knowledge bases."
-        />
+        {/* Server list from loader data */}
+        {preloadError ? (
+          <View className="bg-red-900/30 border border-red-600/50 rounded-lg p-4 mb-4">
+            <Text className="text-red-400 text-center">{preloadError}</Text>
+          </View>
+        ) : null}
+
+        {!canRenderList ? (
+          <MCPListLoadingState label="Loading MCP Servers..." />
+        ) : (
+          <Suspense fallback={<MCPListLoadingState label="Loading MCP Servers..." />}>
+            <MCPList />
+          </Suspense>
+        )}
       </PublicFacingIndexWrapper>
+    </>
+  );
+}
+
+function MCPList() {
+  const data = useLoaderData<typeof loader>();
+  const router = useRouter();
+
+  return (
+    <>
+      {data.servers.map((server) => (
+        <SoftwareCard
+          key={server.id}
+          item={server}
+          stats={[
+            { emoji: '', label: `${typeof server.resources === 'number' ? server.resources : ''} resources` },
+            { emoji: '', label: `${typeof server.tools === 'number' ? server.tools : ''} tools` },
+            { emoji: '', label: `${typeof server.prompts === 'number' ? server.prompts : ''} prompts` },
+          ]}
+          onPress={() => router.push(`/public-facing/mcp/${server.id}` as any)}
+        />
+      ))}
     </>
   );
 }

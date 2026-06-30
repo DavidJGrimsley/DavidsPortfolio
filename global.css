@@ -2,13 +2,21 @@
 @import 'uniwind';
 
 @layer base {
-  html, body {
+  html, body, #root, #app, #expo-root {
     margin: 0;
     padding: 0;
     min-height: 100%;
     min-height: 100svh;
     background-color: var(--color-background);
     overscroll-behavior: none;
+  }
+
+  /*
+   * React Navigation injects an inline #f2f2f2 scene fill on web. In dark mode
+   * it can sit between the app background and route content, washing the page out.
+   */
+  html.dark [style*="background-color: rgb(242, 242, 242)"] {
+    background-color: transparent !important;
   }
 }
 

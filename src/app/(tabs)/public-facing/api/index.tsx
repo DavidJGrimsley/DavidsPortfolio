@@ -1,34 +1,20 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
+import React, { Suspense, useEffect, useState } from 'react';
+import { View, Text } from 'react-native';
+import { useRouter, useLoaderData } from 'expo-router';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import { ComingSoonCard } from '~/src/components/PublicFacing/ComingSoonCard';
 import { WhatIsAPICard } from '~/src/components/PublicFacing/api/WhatIsAPICard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
-import { createQuantumPublicClient } from '@/lib/quantum-sdk-client';
+import { LoadingComponent } from '@/components/UI/LoadingComponent';
+import { SeoHead, StructuredDataScript } from '@/components/SEO/SeoHead';
+import { SITE_URL, joinUrl } from '@/constants/seo';
+import type { RegistryResponse, APIPortfolio } from '~/src/types/registry';
 import apisData from '@json/apis.json';
 
-type QuantumPortfolio = {
-  api: {
-    id: string;
-    name: string;
-    version: string;
-    icon: string;
-    description: string;
-    baseUrl: string;
-    docsUrl?: string;
-    healthUrl?: string;
-    status: string;
-    featured?: boolean;
-    tags: string[];
-    uptime: string;
-  };
-  endpoints: {
-    method: string;
-    path: string;
-    summary: string;
-    description?: string;
-  }[];
-};
+// =============================================================================
+// FALLBACK DATA (for static export or when registry unavailable)
+// =============================================================================
+const FALLBACK_APIS = (apisData.apis ?? []) as ApiCardItem[];
 
 type ApiCardItem = {
   id: string;
@@ -46,69 +32,342 @@ type ApiCardItem = {
   endpoints?: number;
 };
 
-export default function APIIndexPage() {
-  const router = useRouter();
-  const [portfolioQuantum, setPortfolioQuantum] = useState<QuantumPortfolio | null>(null);
-  const sdkPublicClient = useMemo(() => createQuantumPublicClient(), []);
+type LoaderData = {
+  apis: ApiCardItem[];
+  error?: string;
+  fromCache: boolean;
+  loadedAt: string;
+  method: 'data-loader' | 'fallback';
+};
 
-  useEffect(() => {
-    let isMounted = true;
+type LoaderRequest = {
+  url?: string;
+};
 
-    sdkPublicClient
-      .portfolio({ auth: 'none' })
-      .then((data) => {
-        if (!isMounted) return;
-        setPortfolioQuantum(data as QuantumPortfolio);
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setPortfolioQuantum(null);
-      });
+function getRequestOrigin(request?: LoaderRequest) {
+  if (!request?.url) return null;
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return null;
+  }
+}
 
-    return () => {
-      isMounted = false;
+function buildApiIndexStructuredData(apis: ApiCardItem[]) {
+  const pageUrl = joinUrl(SITE_URL, '/public-facing/api');
+
+  return [
+    {
+      '@type': 'CollectionPage',
+      '@id': `${pageUrl}#webpage`,
+      name: 'Public APIs',
+      description:
+        'Public APIs built and hosted by David Grimsley, with endpoint counts, documentation links, and usage details.',
+      url: pageUrl,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: 'David Grimsley',
+        url: SITE_URL,
+      },
+      author: {
+        '@type': 'Person',
+        name: 'David Grimsley',
+        url: SITE_URL,
+      },
+      mainEntity: {
+        '@id': `${pageUrl}#api-list`,
+      },
+    },
+    {
+      '@type': 'ItemList',
+      '@id': `${pageUrl}#api-list`,
+      name: 'Public API portfolio',
+      numberOfItems: apis.length,
+      itemListElement: apis.map((api, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: joinUrl(SITE_URL, `/public-facing/api/${api.id}`),
+        name: api.name,
+        description: api.description,
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${pageUrl}#breadcrumbs`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: SITE_URL,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Public APIs',
+          item: pageUrl,
+        },
+      ],
+    },
+  ];
+}
+
+function buildApiIndexSeo(apis: ApiCardItem[]) {
+  return {
+    title: 'Public APIs',
+    description:
+      'Explore public APIs built and hosted by David Grimsley. Learn what an API is, how to call endpoints, and view documentation, uptime, and rate limits.',
+    path: '/public-facing/api',
+    keywords: [
+      'public API',
+      'API portfolio',
+      'what is an API',
+      'REST API',
+      'backend development',
+      'NGINX',
+      'developer tools',
+    ],
+    type: 'website' as const,
+    structuredData: buildApiIndexStructuredData(apis),
+  };
+}
+
+// =============================================================================
+// SSR DATA LOADER
+// =============================================================================
+export async function loader(
+  request: LoaderRequest | undefined,
+  _params: Record<string, string | string[]>
+): Promise<LoaderData> {
+  const origin = getRequestOrigin(request) || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8082');
+  
+  try {
+    // Use API route to avoid CORS issues
+    const registryRes = await fetch(`${origin}/api/registry?type=api`, {
+      cache: 'no-store',
+    });
+    if (!registryRes.ok) {
+      throw new Error(`Registry fetch failed: ${registryRes.status}`);
+    }
+    
+    const response = await registryRes.json();
+    const registry: RegistryResponse = response.data || response; // Handle wrapped or direct response
+    
+    // Servers are already filtered by API route
+    const apiServers = registry.servers || [];
+    
+    if (apiServers.length === 0) {
+      console.warn('No API servers found in registry');
+      return {
+        apis: FALLBACK_APIS,
+        fromCache: true,
+        loadedAt: new Date().toISOString(),
+        method: 'fallback',
+      };
+    }
+    
+    // Fetch portfolio data through the local resolver so SSR uses normalized registry metadata.
+    const apiPromises = apiServers.map(async (server) => {
+      try {
+        const portfolioRes = await fetch(`${origin}/api/portfolio/${encodeURIComponent(server.id)}`, {
+          cache: 'no-store',
+        });
+        if (!portfolioRes.ok) {
+          console.warn(`Portfolio fetch failed for ${server.id}`);
+          return null;
+        }
+        const wrapped = await portfolioRes.json();
+        const portfolio: APIPortfolio = wrapped.data?.portfolio ?? wrapped;
+        return {
+          id: portfolio.api.id || server.id,
+          name: portfolio.api.name,
+          version: portfolio.api.version,
+          icon: portfolio.api.icon ?? '',
+          description: portfolio.api.description ?? '',
+          baseUrl: portfolio.api.baseUrl,
+          docsUrl: portfolio.api.docsUrl,
+          healthUrl: portfolio.api.healthUrl,
+          status: portfolio.api.status,
+          featured: portfolio.api.featured,
+          tags: portfolio.api.tags ?? [],
+          uptime: portfolio.api.uptime,
+          endpoints: portfolio.endpoints?.length,
+        } as ApiCardItem;
+      } catch (err) {
+        console.warn(`Error fetching portfolio for ${server.id}:`, err);
+        return null;
+      }
+    });
+    
+    const results = await Promise.all(apiPromises);
+    const apis = results.filter((api): api is ApiCardItem => api !== null);
+    
+    return {
+      apis: apis.length > 0 ? apis : FALLBACK_APIS,
+      fromCache: apis.length === 0,
+      loadedAt: new Date().toISOString(),
+      method: 'data-loader',
     };
-  }, [sdkPublicClient]);
+  } catch (error) {
+    console.error('Loader error:', error);
+    return {
+      apis: FALLBACK_APIS,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      fromCache: true,
+      loadedAt: new Date().toISOString(),
+      method: 'fallback',
+    };
+  }
+}
+
+// =============================================================================
+// ERROR BOUNDARY
+// =============================================================================
+export function ErrorBoundary({ error }: { error: Error }) {
+  return (
+    <View className="flex-1 items-center justify-center p-8 bg-gray-900">
+      <Text className="text-2xl font-bold text-red-400 mb-4">
+        Failed to load APIs
+      </Text>
+      <Text className="text-gray-400 text-center">
+        {error.message}
+      </Text>
+    </View>
+  );
+}
+
+// =============================================================================
+// LOADING FALLBACK
+// =============================================================================
+function LoadingFallback() {
+  return (
+    <View className="flex-1 items-center justify-center p-6">
+      <LoadingComponent label="Loading APIs..." />
+    </View>
+  );
+}
+
+// =============================================================================
+// PAGE CONTENT (uses loader data)
+// =============================================================================
+function APIListContent() {
+  const fallbackData: LoaderData = {
+    apis: FALLBACK_APIS,
+    fromCache: true,
+    loadedAt: new Date().toISOString(),
+    method: 'fallback',
+  };
+
+  const data = useLoaderData<typeof loader>() as LoaderData | undefined;
+  const { apis, fromCache, error } = data ?? fallbackData;
+  const [liveApis, setLiveApis] = useState<ApiCardItem[] | null>(null);
+  const [liveError, setLiveError] = useState<string | undefined>();
+  const router = useRouter();
 
   const handleAPIPress = (apiId: string) => {
     router.push(`/public-facing/api/${apiId}` as any);
   };
 
-  const fallbackApis = useMemo(() => (apisData.apis ?? []) as ApiCardItem[], []);
-  const apis: ApiCardItem[] = portfolioQuantum?.api
-    ? [
-        {
-          ...portfolioQuantum.api,
-          endpoints: Array.isArray(portfolioQuantum.endpoints) ? portfolioQuantum.endpoints.length : undefined,
-        },
-      ]
-    : fallbackApis;
+  useEffect(() => {
+    if (!fromCache) return;
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const fetchLive = async () => {
+      try {
+        const registryRes = await fetch('/api/registry?type=api', {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+
+        if (!registryRes.ok) {
+          throw new Error(`Registry fetch failed: ${registryRes.status}`);
+        }
+
+        const response = await registryRes.json();
+        const registry: RegistryResponse = response.data || response; // Handle wrapped or direct response
+        const apiServers = registry.servers || [];
+
+        if (apiServers.length === 0) {
+          throw new Error('No API servers found in registry');
+        }
+
+        const items = await Promise.all(
+          apiServers.map(async (server) => {
+            const portfolioRes = await fetch(`/api/portfolio/${encodeURIComponent(server.id)}`, {
+              signal: controller.signal,
+              cache: 'no-store',
+            });
+
+            let status = true;
+            if (!portfolioRes.ok) {
+              status = false;
+              throw new Error(`Portfolio fetch failed: ${portfolioRes.status}`);
+            }
+
+            const wrapped = await portfolioRes.json();
+            const portfolio: APIPortfolio = wrapped.data?.portfolio ?? wrapped;
+            return {
+              id: portfolio.api.id || server.id,
+              name: portfolio.api.name,
+              version: portfolio.api.version,
+              icon: portfolio.api.icon ?? '',
+              description: portfolio.api.description ?? '',
+              baseUrl: portfolio.api.baseUrl,
+              docsUrl: portfolio.api.docsUrl,
+              healthUrl: portfolio.api.healthUrl,
+              status: status ? 'active' : 'inactive',
+              featured: portfolio.api.featured,
+              tags: portfolio.api.tags ?? [],
+              uptime: portfolio.api.uptime,
+              endpoints: portfolio.endpoints?.length,
+            } as ApiCardItem;
+          })
+        );
+
+        if (isMounted) {
+          setLiveApis(items);
+          setLiveError(undefined);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setLiveError(err instanceof Error ? err.message : 'Failed to fetch live data');
+        }
+      }
+    };
+
+    fetchLive();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [fromCache]);
+
+  const displayApis = (liveApis && liveApis.length > 0 ? liveApis : apis) || [];
+  const seo = buildApiIndexSeo(displayApis);
 
   return (
     <PublicFacingIndexWrapper
       title="Public APIs"
-      leadBody="The internet’s interconnectivity depends on APIs. It’s collaboration in action. I enjoy the resources available via existing APIs for developers to use, and this is my contribution to that process. PokeAPI (Pokémon), SWAPI (Star Wars), and OpenAI are just a few of the tools that I call."
+      leadBody="The internet's interconnectivity depends on APIs. It's collaboration in action. I enjoy the resources available via existing APIs for developers to use, and this is my contribution to that process. PokeAPI (Pokémon), SWAPI (Star Wars), and OpenAI are just a few of the tools that I call."
       leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
       seo={{
-        title: 'Public APIs',
-        description:
-          'Explore public APIs built and hosted by David Grimsley. Learn what an API is, how to call endpoints, and view documentation, uptime, and rate limits.',
-        path: '/public-facing/api',
-        keywords: [
-          'public API',
-          'API portfolio',
-          'what is an API',
-          'REST API',
-          'backend development',
-          'NGINX',
-          'developer tools',
-        ],
-        type: 'website',
+        ...seo,
       }}
     >
+      {/* Show cache indicator if data is from fallback */}
+      {fromCache && !liveApis && (
+        <View className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-3 mb-4">
+          <Text className="text-yellow-400 text-sm text-center">
+            📡 Showing cached data{(liveError || error) ? ` (${liveError ?? error})` : ''}
+          </Text>
+        </View>
+      )}
 
       <WhatIsAPICard />
-      {apis.map((api) => (
+      
+      {displayApis.map((api) => (
         <SoftwareCard
           key={api.id}
           item={api}
@@ -125,5 +384,22 @@ export default function APIIndexPage() {
         description="Stay tuned for additional public APIs covering authentication, data processing, and more."
       />
     </PublicFacingIndexWrapper>
+  );
+}
+
+// =============================================================================
+// DEFAULT EXPORT (wrapped in Suspense)
+// =============================================================================
+export default function APIIndexPage() {
+  const fallbackSeo = buildApiIndexSeo(FALLBACK_APIS);
+
+  return (
+    <>
+      <SeoHead {...fallbackSeo} />
+      <StructuredDataScript structuredData={fallbackSeo.structuredData} />
+      <Suspense fallback={<LoadingFallback />}>
+        <APIListContent />
+      </Suspense>
+    </>
   );
 }

@@ -157,99 +157,41 @@ async function fetchHome(siteUrl, timeoutMs) {
   };
 }
 
-async function fetchQuantumHealth(siteUrl, timeoutMs) {
-  const healthUrl = resolveUrl(siteUrl, '/public-facing/api/quantum/v1/health');
+async function fetchRequiredPage(siteUrl, pathname, timeoutMs, requirements) {
+  const pageUrl = resolveUrl(siteUrl, pathname);
   let response;
 
   try {
-    response = await fetchText(healthUrl, timeoutMs);
+    response = await fetchText(pageUrl, timeoutMs);
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : String(error),
-      payload: null,
+      missing: requirements.map((requirement) => requirement.label),
+      ok: false,
       response: null,
-      url: healthUrl,
+      url: pageUrl,
     };
   }
 
-  if (!response.ok) {
-    return {
-      error: `Quantum health returned ${response.status} ${response.statusText}`,
-      payload: null,
-      response,
-      url: healthUrl,
-    };
-  }
+  const missing = requirements
+    .filter((requirement) => {
+      if (requirement.mustNotInclude) {
+        return response.body.includes(requirement.text);
+      }
 
-  try {
-    return {
-      payload: JSON.parse(response.body),
-      response,
-      url: healthUrl,
-    };
-  } catch (error) {
-    return {
-      error: `Quantum health did not return JSON: ${error instanceof Error ? error.message : String(error)}`,
-      payload: null,
-      response,
-      url: healthUrl,
-    };
-  }
-}
+      return !response.body.includes(requirement.text);
+    })
+    .map((requirement) => requirement.label);
 
-async function fetchQuantumHardwareGuard(siteUrl, timeoutMs) {
-  const guardUrl = resolveUrl(siteUrl, '/api/quantum-backend/v1/jobs/circuits');
-  const { signal, dispose } = createTimeoutSignal(timeoutMs);
-  let response;
-  let body;
-
-  try {
-    response = await fetch(guardUrl, {
-      method: 'POST',
-      headers: {
-        'cache-control': 'no-cache',
-        'content-type': 'application/json',
-        pragma: 'no-cache',
-      },
-      body: JSON.stringify({ backend_name: 'ibm_brisbane' }),
-      signal,
-    });
-    body = await response.text();
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : String(error),
-      payload: null,
-      response: null,
-      url: guardUrl,
-    };
-  } finally {
-    dispose();
-  }
-
-  try {
-    return {
-      payload: JSON.parse(body),
-      response: {
-        body,
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-      },
-      url: guardUrl,
-    };
-  } catch (error) {
-    return {
-      error: `Quantum hardware guard did not return JSON: ${error instanceof Error ? error.message : String(error)}`,
-      payload: null,
-      response: {
-        body,
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-      },
-      url: guardUrl,
-    };
-  }
+  return {
+    error: response.ok
+      ? undefined
+      : `${pathname} returned ${response.status} ${response.statusText}`,
+    missing,
+    ok: response.ok && missing.length === 0,
+    response,
+    url: pageUrl,
+  };
 }
 
 function formatBuildSummary(payload) {
@@ -286,12 +228,51 @@ async function main() {
     const remainingMs = deadline - Date.now();
     const requestTimeoutMs = Math.max(1_000, Math.min(30_000, remainingMs));
 
-    const [buildMetaResult, homeResult, quantumHealthResult, quantumHardwareGuardResult] =
+    const [
+      buildMetaResult,
+      cssBootstrapResult,
+      homeResult,
+      apiIndexResult,
+      quantumDetailResult,
+      mcpIndexResult,
+    ] =
       await Promise.all([
         fetchBuildMeta(args.siteUrl, requestTimeoutMs),
+        fetchRequiredPage(args.siteUrl, '/__djsportfolio_css__', requestTimeoutMs, [
+          { label: 'generated stylesheet asset', text: '_expo/static/css' },
+        ]),
         fetchHome(args.siteUrl, requestTimeoutMs),
-        fetchQuantumHealth(args.siteUrl, requestTimeoutMs),
-        fetchQuantumHardwareGuard(args.siteUrl, requestTimeoutMs),
+        fetchRequiredPage(args.siteUrl, '/public-facing/api', requestTimeoutMs, [
+          { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
+          { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
+          { label: 'Public API route data', text: 'Quantum API' },
+          {
+            label: 'loader failure text absent',
+            text: 'Failed to load loader data',
+            mustNotInclude: true,
+          },
+        ]),
+        fetchRequiredPage(args.siteUrl, '/public-facing/api/quantum', requestTimeoutMs, [
+          { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
+          { label: 'Quantum API content', text: 'Quantum API' },
+          { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
+          { label: 'Quantum API route id', text: 'quantum' },
+          {
+            label: 'loader failure text absent',
+            text: 'Failed to load loader data',
+            mustNotInclude: true,
+          },
+        ]),
+        fetchRequiredPage(args.siteUrl, '/public-facing/mcp', requestTimeoutMs, [
+          { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
+          { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
+          { label: 'MCP server route data', text: 'mrdj-app-mcp' },
+          {
+            label: 'loader failure text absent',
+            text: 'Failed to load loader data',
+            mustNotInclude: true,
+          },
+        ]),
       ]);
 
     const buildPayload = buildMetaResult.payload ?? null;
@@ -316,20 +297,11 @@ async function main() {
       Number.isFinite(builtAt) && builtAt >= notBeforeTime - clockSkewMs;
     const verifyingByExpectedSha = expectedSha.length > 0 && payloadHasKnownSha;
     const buildFresh = verifyingByExpectedSha ? buildMatchesExpected : buildFreshByTime;
+    const cssBootstrapOk = cssBootstrapResult.ok;
     const homeOk = homeResult.response.ok;
-    const quantumHealthPayload = quantumHealthResult.payload;
-    const quantumHealthOk =
-      quantumHealthResult.response?.ok === true &&
-      quantumHealthPayload &&
-      typeof quantumHealthPayload === 'object' &&
-      quantumHealthPayload.status === 'healthy' &&
-      quantumHealthPayload.service === 'Quantum API';
-    const quantumHardwareGuardPayload = quantumHardwareGuardResult.payload;
-    const quantumHardwareGuardOk =
-      quantumHardwareGuardResult.response?.status === 401 &&
-      quantumHardwareGuardPayload &&
-      typeof quantumHardwareGuardPayload === 'object' &&
-      quantumHardwareGuardPayload.error === 'user_api_key_required';
+    const apiIndexOk = apiIndexResult.ok;
+    const quantumDetailOk = quantumDetailResult.ok;
+    const mcpIndexOk = mcpIndexResult.ok;
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
@@ -337,16 +309,20 @@ async function main() {
         `verificationMode=${verifyingByExpectedSha ? 'sha' : 'timestamp'} ` +
         `buildFresh=${buildFresh} ` +
         `buildMatchesExpected=${buildMatchesExpected} ` +
+        `cssBootstrapStatus=${cssBootstrapResult.response?.status ?? 'unreachable'} ` +
+        `cssBootstrapOk=${cssBootstrapOk} ` +
         `homeStatus=${homeResult.response.status} ` +
-        `quantumHealthStatus=${quantumHealthResult.response?.status ?? 'unreachable'} ` +
-        `quantumHealthOk=${quantumHealthOk} ` +
-        `quantumHardwareGuardStatus=${quantumHardwareGuardResult.response?.status ?? 'unreachable'} ` +
-        `quantumHardwareGuardOk=${quantumHardwareGuardOk}`,
+        `apiIndexStatus=${apiIndexResult.response?.status ?? 'unreachable'} ` +
+        `apiIndexLoaderOk=${apiIndexOk} ` +
+        `quantumDetailStatus=${quantumDetailResult.response?.status ?? 'unreachable'} ` +
+        `quantumDetailLoaderOk=${quantumDetailOk} ` +
+        `mcpIndexStatus=${mcpIndexResult.response?.status ?? 'unreachable'} ` +
+        `mcpIndexLoaderOk=${mcpIndexOk}`,
     );
 
-    if (buildFresh && homeOk && quantumHealthOk && quantumHardwareGuardOk) {
+    if (buildFresh && cssBootstrapOk && homeOk && apiIndexOk && quantumDetailOk && mcpIndexOk) {
       console.log(
-        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, healthy Quantum API response, and hardened Quantum hardware proxy guard.`,
+        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and public API loader data.`,
       );
       return;
     }
@@ -362,15 +338,23 @@ async function main() {
     const homeError = homeOk
       ? 'home page is healthy'
       : `home returned ${homeResult.response.status} ${homeResult.response.statusText}`;
-    const quantumError = quantumHealthOk
-      ? 'Quantum health is healthy'
-      : (quantumHealthResult.error ??
-        `Quantum health returned unexpected payload from ${quantumHealthResult.url}`);
-    const quantumHardwareGuardError = quantumHardwareGuardOk
-      ? 'Quantum hardware proxy guard is healthy'
-      : (quantumHardwareGuardResult.error ??
-        `Quantum hardware proxy guard returned ${quantumHardwareGuardResult.response?.status ?? 'unreachable'} ${quantumHardwareGuardResult.response?.statusText ?? ''} from ${quantumHardwareGuardResult.url}`);
-    lastFailure = `${buildError}; ${homeError}; ${quantumError}; ${quantumHardwareGuardError}`;
+    const cssBootstrapError = cssBootstrapOk
+      ? 'CSS bootstrap is healthy'
+      : (cssBootstrapResult.error ??
+        `CSS bootstrap missing: ${cssBootstrapResult.missing.join(', ')}`);
+    const apiIndexError = apiIndexOk
+      ? 'public API index loader data is healthy'
+      : (apiIndexResult.error ??
+        `public API index loader data missing: ${apiIndexResult.missing.join(', ')}`);
+    const quantumDetailError = quantumDetailOk
+      ? 'Quantum API detail loader data is healthy'
+      : (quantumDetailResult.error ??
+        `Quantum API detail loader data missing: ${quantumDetailResult.missing.join(', ')}`);
+    const mcpIndexError = mcpIndexOk
+      ? 'MCP index loader data is healthy'
+      : (mcpIndexResult.error ??
+        `MCP index loader data missing: ${mcpIndexResult.missing.join(', ')}`);
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${mcpIndexError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;

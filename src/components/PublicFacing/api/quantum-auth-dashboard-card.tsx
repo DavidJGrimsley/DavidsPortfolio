@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { Session } from '@supabase/supabase-js';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@/components/UI/HydratedIonicon';
 import { Picker } from '@react-native-picker/picker';
 import Svg, { Line } from 'react-native-svg';
 import { ThemedText } from '@/components/UI/ThemedText';
@@ -43,8 +43,11 @@ import {
   verifyIbmProfile,
 } from '@/services/quantum-key-management';
 
-type QuantumAuthDashboardCardProps = {
+type ApiAuthDashboardCardProps = {
   baseUrl: string;
+  apiName?: string;
+  dashboardDescription?: string;
+  supportsIbmProfiles?: boolean;
 };
 
 type RawKeyReveal = {
@@ -127,9 +130,12 @@ function confirmAction(message: string): Promise<boolean> {
   });
 }
 
-export function QuantumAuthDashboardCard({
+export function ApiAuthDashboardCard({
   baseUrl,
-}: QuantumAuthDashboardCardProps) {
+  apiName = 'this API',
+  dashboardDescription,
+  supportsIbmProfiles = false,
+}: ApiAuthDashboardCardProps) {
   const isWeb = Platform.OS === 'web';
   const backgroundColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
@@ -169,6 +175,8 @@ export function QuantumAuthDashboardCard({
   const [showIdenterestInfo, setShowIdenterestInfo] = useState(false);
   const [showIbmInfoModal, setShowIbmInfoModal] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const apiAccountLabel = `${apiName} account`;
+  const apiKeyLabel = `${apiName} API key`;
 
   const supabaseClient = useMemo(() => {
     if (!isSupabaseConfigured()) {
@@ -239,7 +247,15 @@ export function QuantumAuthDashboardCard({
       if (!isActive) return;
 
       if (error) {
-        setAuthError(error.message);
+        setAuthError(`${error.message} Sign in again to refresh your API dashboard session.`);
+        setSession(null);
+        try {
+          await supabaseClient.auth.signOut({ scope: 'local' });
+        } catch {
+          // A bad persisted refresh token should not keep the public API page from rendering.
+        }
+        setBootstrapping(false);
+        return;
       }
 
       setSession(data.session);
@@ -279,8 +295,10 @@ export function QuantumAuthDashboardCard({
     }
 
     refreshKeys();
-    refreshIbmProfiles();
-  }, [accessToken, refreshIbmProfiles, refreshKeys]);
+    if (supportsIbmProfiles) {
+      refreshIbmProfiles();
+    }
+  }, [accessToken, refreshIbmProfiles, refreshKeys, supportsIbmProfiles]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -718,7 +736,8 @@ export function QuantumAuthDashboardCard({
             Api Keys
           </ThemedText>
           <ThemedText className="opacity-85 text-base leading-6 md:text-lg">
-            Obtain API keys to use this service. There are rate limits applied to each key. New secrets are shown once, then stored only as masked metadata.
+            {dashboardDescription ??
+              'Obtain API keys to use this service. There are rate limits applied to each key. New secrets are shown once, then stored only as masked metadata.'}
           </ThemedText>
         </View>
 
@@ -923,7 +942,7 @@ export function QuantumAuthDashboardCard({
                       Signed in via Identerest Account
                     </ThemedText>
                     <ThemedText selectable className="opacity-80 text-base leading-6">
-                      {session.user.email ?? 'Authenticated Quantum user'}
+                      {session.user.email ?? `Authenticated ${apiName} user`}
                     </ThemedText>
                   </View>
 
@@ -1168,7 +1187,7 @@ export function QuantumAuthDashboardCard({
                       No keys yet
                     </ThemedText>
                     <ThemedText className="opacity-80 text-base leading-6">
-                      Create your first Quantum API key above. It will appear here in masked form after generation.
+                      Create your first {apiKeyLabel} above. It will appear here in masked form after generation.
                     </ThemedText>
                   </View>
                 ) : (
@@ -1314,13 +1333,14 @@ export function QuantumAuthDashboardCard({
                 )}
               </View>
 
-              <View
-                className="rounded-2xl border p-4"
-                style={{
-                  backgroundColor: backgroundColor,
-                  borderColor: accentColor + '35',
-                }}
-              >
+              {supportsIbmProfiles ? (
+                <View
+                  className="rounded-2xl border p-4"
+                  style={{
+                    backgroundColor: backgroundColor,
+                    borderColor: accentColor + '35',
+                  }}
+                >
                 <View className="mb-3 flex-row items-center justify-between gap-3">
                   <Pressable
                     onPress={() => setShowIbmCredentials((value) => !value)}
@@ -1358,9 +1378,9 @@ export function QuantumAuthDashboardCard({
                 {showIbmCredentials ? (
                   <View className="gap-3">
                     <ThemedText className="opacity-80 text-base leading-6">
-                      IBM credentials are optional. Without them, simulator-backed Quantum API
+                      IBM credentials are optional. Without them, simulator-backed {apiName}
                       features still work. Add a profile to enable IBM backend discovery,
-                      transpilation, and async hardware jobs through the same Quantum API account.
+                      transpilation, and async hardware jobs through the same {apiAccountLabel}.
                     </ThemedText>
 
                     {ibmMessage ? (
@@ -1795,7 +1815,8 @@ export function QuantumAuthDashboardCard({
                     </View>
                   </View>
                 ) : null}
-              </View>
+                </View>
+              ) : null}
             </View>
           )}
         </View>
@@ -1849,7 +1870,7 @@ export function QuantumAuthDashboardCard({
 
               <ThemedText className="opacity-90 text-base leading-6">
                 You are creating or signing into your Identerest Account. This shared account works
-                across the ecosystem, including this Quantum API dashboard, Creatisphere, and Higher.
+                across the ecosystem, including this API dashboard, Creatisphere, and Higher.
               </ThemedText>
               <ThemedText className="mt-2 opacity-80 text-base leading-6">
                 Sign in once, then reuse the same identity anywhere Identerest is supported.
@@ -1918,7 +1939,7 @@ export function QuantumAuthDashboardCard({
         animationType="fade"
         onRequestClose={() => setShowIbmInfoModal(false)}
         transparent
-        visible={showIbmInfoModal}
+        visible={supportsIbmProfiles && showIbmInfoModal}
       >
         <View className="flex-1 items-center justify-center bg-black/60 px-4">
           <Pressable
@@ -1958,12 +1979,12 @@ export function QuantumAuthDashboardCard({
               </View>
 
               <ThemedText className="opacity-90 text-base leading-6">
-                IBM credentials are optional. You can keep using simulator-backed Quantum API features
+                IBM credentials are optional. You can keep using simulator-backed {apiName} features
                 without adding IBM credentials.
               </ThemedText>
 
               <ThemedText className="mt-2 opacity-90 text-base leading-6">
-                If you add your own IBM profile, this same Quantum API account can use IBM backend
+                If you add your own IBM profile, this same {apiAccountLabel} can use IBM backend
                 discovery, transpilation, and async hardware jobs.
               </ThemedText>
 
@@ -1975,5 +1996,16 @@ export function QuantumAuthDashboardCard({
         </View>
       </Modal>
     </View>
+  );
+}
+
+export function QuantumAuthDashboardCard({ baseUrl }: { baseUrl: string }) {
+  return (
+    <ApiAuthDashboardCard
+      apiName="Quantum API"
+      baseUrl={baseUrl}
+      dashboardDescription="Obtain API keys to use Quantum API runtime endpoints. There are rate limits applied to each key. New secrets are shown once, then stored only as masked metadata."
+      supportsIbmProfiles
+    />
   );
 }

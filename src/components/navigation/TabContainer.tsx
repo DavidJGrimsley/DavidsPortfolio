@@ -19,6 +19,7 @@
  */
 import React, { useEffect, useMemo } from 'react'
 import { Platform, View, useWindowDimensions } from 'react-native'
+import { Main } from '@expo/html-elements'
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -73,6 +74,7 @@ export const TabContainer = ({
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const isDesktopWeb = Platform.OS === 'web' && width >= 1024;
+  const skipWebEntranceAnimation = Platform.OS === 'web';
 
   const leftInsetPercent = useMemo(() => {
     if (width >= 1440) return 0.05;
@@ -84,13 +86,27 @@ export const TabContainer = ({
   const leftInset = Math.round(width * leftInsetPercent);
 
   const scrollY = useSharedValue(0);
-  const bgFade = useSharedValue(reduceMotion ? 1 : 0);
+  const bgFade = useSharedValue(reduceMotion || skipWebEntranceAnimation ? 1 : 0);
   const overlayEnter = useSharedValue(reduceMotion ? 1 : 0);
 
   useEffect(() => {
     if (reduceMotion) {
       bgFade.value = 1;
       overlayEnter.value = 1;
+      return;
+    }
+
+    if (skipWebEntranceAnimation) {
+      bgFade.value = 1;
+      if (overlayIcon) {
+        overlayEnter.value = withDelay(
+          Math.max(0, overlayIconDelayMs),
+          withTiming(1, {
+            duration: overlayIconEnterDurationMs,
+            easing: Easing.out(Easing.cubic),
+          })
+        );
+      }
       return;
     }
     bgFade.value = withTiming(1, { duration: 1400 });
@@ -103,7 +119,7 @@ export const TabContainer = ({
         })
       );
     }
-  }, [bgFade, overlayEnter, reduceMotion, overlayIcon, overlayIconDelayMs, overlayIconEnterDurationMs]);
+  }, [bgFade, overlayEnter, reduceMotion, skipWebEntranceAnimation, overlayIcon, overlayIconDelayMs, overlayIconEnterDurationMs]);
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -120,7 +136,7 @@ export const TabContainer = ({
     transform: [{ translateX: (1 - overlayEnter.value) * overlayIconTranslateX }],
   }));
 
-  const titleDelayMs = reduceMotion ? 0 : background ? 1400 : 0;
+  const titleDelayMs = reduceMotion || skipWebEntranceAnimation ? 0 : background ? 1400 : 0;
 
   const resolvedBackground = background ?? <MidLevelScreenGradient />;
 
@@ -185,32 +201,34 @@ export const TabContainer = ({
             width: '100%',
           }}
         >
-          {titleA || titleB ? (
-            <TitleOfPage
-              titleA={titleA}
-              titleB={titleB}
-              startDelayMs={titleDelayMs}
-              scrollY={scrollY}
-            >
-              {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
-              {children}
-              {showFooter ? (
-                <View className="mt-[8%] pb-[6%] w-full">
-                  <Foot />
-                </View>
-              ) : null}
-            </TitleOfPage>
-          ) : (
-            <>
-              {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
-              {children}
-              {showFooter ? (
-                <View className="mt-[8%] pb-[6%] w-full">
-                  <Foot />
-                </View>
-              ) : null}
-            </>
-          )}
+          <Main className="w-full">
+            {titleA || titleB ? (
+              <TitleOfPage
+                titleA={titleA}
+                titleB={titleB}
+                startDelayMs={titleDelayMs}
+                scrollY={scrollY}
+              >
+                {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
+                {children}
+                {showFooter ? (
+                  <View className="mt-[8%] pb-[6%] w-full">
+                    <Foot />
+                  </View>
+                ) : null}
+              </TitleOfPage>
+            ) : (
+              <>
+                {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
+                {children}
+                {showFooter ? (
+                  <View className="mt-[8%] pb-[6%] w-full">
+                    <Foot />
+                  </View>
+                ) : null}
+              </>
+            )}
+          </Main>
         </Animated.ScrollView>
       </View>
 

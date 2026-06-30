@@ -53,11 +53,13 @@ api-server.env
 # IDE
 .vscode/
 .idea/
+*.code-workspace
 
 # Temporary files
 *.tmp
 *.temp
 temp/
+.playwright-mcp/
 
 app-example
 

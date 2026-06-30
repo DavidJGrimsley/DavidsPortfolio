@@ -1,7 +1,15 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { VerticalTabBar } from '@/components/navigation/VerticalTabBar';
+
+const styles = StyleSheet.create({
+  webViewport: {
+    height: '100vh' as any,
+    minHeight: '100vh' as any,
+    width: '100%',
+  },
+});
 
 /**
  * @EXTRACT: Desktop breakpoint for showing vertical tab bar
@@ -17,14 +25,17 @@ const TabLayout = () => {
    * @EXTRACT: This pattern should be documented as the recommended usage
    */
   // if (isDesktopWeb) {
+  const webViewportStyle = Platform.OS === 'web' ? styles.webViewport : null;
+
   return (
-    <View className="flex-1 flex-row w-full">
-      <View style={{ width: '75%', flex: 1 }}>
+    <View className="flex-1 flex-row w-full" style={webViewportStyle}>
+      <View style={[{ width: '75%', flex: 1 }, webViewportStyle]}>
         <Tabs
           screenOptions={{
             // Hide the bottom tab bar on desktop - we use VerticalTabBar instead
             tabBarStyle: { display: 'none' },
             headerShown: false,
+            sceneStyle: { backgroundColor: 'transparent' },
           }}
         >
           <Tabs.Screen

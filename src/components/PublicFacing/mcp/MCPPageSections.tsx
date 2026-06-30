@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@/components/UI/HydratedIonicon';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 
 import { ThemedText } from '@/components/UI/ThemedText';
@@ -37,7 +37,7 @@ export function MCPHeroSection({
   accentColor,
   textColor,
   iconName,
-  endpointLabel = '🌐 Live MCP Endpoint:',
+  endpointLabel = 'Live MCP Endpoint',
 }: MCPHeroSectionProps) {
   return (
     <View style={{ marginBottom: 30 }}>
@@ -113,83 +113,65 @@ export function MCPHeroSection({
         </View>
       </View>
 
-      <View style={{ gap: 12 }}>
-        <View
-          style={{
-            backgroundColor: accentColor,
-            borderRadius: 10,
-            padding: 16,
-            borderLeftWidth: 3,
-            borderLeftColor: '#10b981',
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-            <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7, flex: 1 }}>
-              {endpointLabel}
-            </ThemedText>
-            <View style={{ backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-              <ThemedText style={{ fontSize: RFPercentage(1.2), color: '#fff', fontWeight: 'bold' }}>LIVE</ThemedText>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <ThemedText
-              style={{
-                fontSize: RFPercentage(1.8),
-                fontFamily: 'monospace',
-                color: tintColor,
-                fontWeight: '600',
-                flex: 1,
-              }}
-            >
-              {mcpEndpointUrl}
-            </ThemedText>
-
-            <Pressable
-              onPress={onCopyEndpoint}
-              style={({ pressed }) => ({
-                backgroundColor: copiedEndpoint ? '#10b981' : tintColor + '20',
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 8,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Ionicons
-                name={copiedEndpoint ? 'checkmark' : 'copy-outline'}
-                size={20}
-                color={copiedEndpoint ? '#fff' : tintColor}
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        <View
-          style={{
-            backgroundColor: accentColor,
-            borderRadius: 10,
-            padding: 16,
-            borderLeftWidth: 3,
-            borderLeftColor: tintColor,
-          }}
-        >
-          <ThemedText style={{ fontSize: RFPercentage(1.6), opacity: 0.7, marginBottom: 6 }}>
-            💻 Source Code (GitHub):
+      <View
+        style={{
+          backgroundColor: accentColor,
+          borderLeftWidth: 4,
+          borderLeftColor: tintColor,
+          borderRadius: 10,
+          padding: 16,
+          marginBottom: 16,
+        }}
+      >
+        <ThemedText style={{ fontSize: RFPercentage(1.8), fontWeight: '600', color: textColor, marginBottom: 8 }}>
+          {endpointLabel}
+        </ThemedText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <ThemedText
+            style={{
+              flex: 1,
+              color: tintColor,
+              fontFamily: 'monospace',
+              fontSize: RFPercentage(1.6),
+              lineHeight: RFPercentage(2.3),
+            }}
+          >
+            {mcpEndpointUrl}
           </ThemedText>
-          <ExternalLink href={githubRepoUrl}>
-            <ThemedText
-              style={{
-                fontSize: RFPercentage(1.8),
-                fontFamily: 'monospace',
-                color: tintColor,
-                fontWeight: '600',
-              }}
-            >
-              {githubRepoUrl}
-            </ThemedText>
-          </ExternalLink>
+          <Pressable
+            onPress={onCopyEndpoint}
+            accessibilityRole="button"
+            accessibilityLabel="Copy MCP endpoint"
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: copiedEndpoint ? '#22c55e' : tintColor + '22',
+            }}
+          >
+            <Ionicons name={copiedEndpoint ? 'checkmark' : 'copy-outline'} size={20} color={copiedEndpoint ? '#fff' : tintColor} />
+          </Pressable>
         </View>
       </View>
+
+      <ExternalLink
+        href={githubRepoUrl}
+        style={{
+          borderColor: tintColor,
+          borderWidth: 1,
+          borderRadius: 10,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Ionicons name="logo-github" size={20} color={tintColor} style={{ marginRight: 8 }} />
+        <ThemedText style={{ color: tintColor, fontWeight: '600' }}>View on GitHub</ThemedText>
+      </ExternalLink>
     </View>
   );
 }

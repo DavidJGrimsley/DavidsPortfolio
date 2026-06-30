@@ -1,4 +1,4 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
+import { ScrollViewStyleReset, useServerDocumentContext } from 'expo-router/html';
 import { type PropsWithChildren } from 'react';
 
 /**
@@ -6,14 +6,17 @@ import { type PropsWithChildren } from 'react';
  * The contents of this function only run in Node.js environments and do not have access to the DOM or browser APIs.
  */
 export default function Root({ children }: PropsWithChildren) {
+  const { htmlAttributes, bodyAttributes, headNodes, bodyNodes } = useServerDocumentContext();
+
   return (
-    <html lang="en">
+    <html {...htmlAttributes} lang="en">
       <head>
+        {headNodes}
         <meta charSet="utf-8" />
         <meta name='impact-site-verification' content='a180ff90-b21a-4a80-93fc-36696aad5bdb'/>
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="color-scheme" content="light dark" />
+        <meta name="color-scheme" content="dark light" />
         
         {/* Default SEO Meta Tags */}
         <meta name="author" content="David Grimsley" />
@@ -29,11 +32,12 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/pwa-180x180.png" />
         
         {/* Theme Color */}
-        <meta name="theme-color" content="#E9DDEE" />
+        <meta name="theme-color" content="#20182D" />
+        <script src="/__djsportfolio_css__" />
         <script src="/__djsportfolio_runtime_config__" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(() => {\n  try {\n    const meta = document.querySelector('meta[name="theme-color"]');\n    if (!meta) return;\n    const mq = window.matchMedia('(prefers-color-scheme: dark)');\n    const set = () => meta.setAttribute('content', mq.matches ? '#20182D' : '#E9DDEE');\n    set();\n    if (mq.addEventListener) mq.addEventListener('change', set);\n    else mq.addListener(set);\n  } catch {}\n})();`,
+            __html: `(() => {\n  try {\n    const meta = document.querySelector('meta[name="theme-color"]');\n    const mq = window.matchMedia('(prefers-color-scheme: dark)');\n    const set = () => {\n      const color = mq.matches ? '#20182D' : '#E9DDEE';\n      if (meta) meta.setAttribute('content', color);\n      document.documentElement.style.backgroundColor = color;\n      if (document.body) document.body.style.backgroundColor = color;\n    };\n    set();\n    if (mq.addEventListener) mq.addEventListener('change', set);\n    else mq.addListener(set);\n  } catch {}\n})();`,
           }}
         />
 
@@ -55,14 +59,17 @@ export default function Root({ children }: PropsWithChildren) {
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
         {/* Add any additional <head> elements that you want globally available on web... */}
       </head>
-      <body>{children}</body>
+      <body {...bodyAttributes}>
+        {children}
+        {bodyNodes}
+      </body>
     </html>
   );
 }
 
 const responsiveBackground = `
 html, body, #root, #app, #expo-root {
-  background-color: #E9DDEE;
+  background-color: #20182D;
   height: 100%;
   min-height: 100%;
   min-height: 100svh;
@@ -74,9 +81,9 @@ body {
   overflow-x: hidden;
   overscroll-behavior: none;
 }
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   html, body, #root, #app, #expo-root {
-    background-color: #20182D;
+    background-color: #E9DDEE;
   }
 }
 `;

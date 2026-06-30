@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Uniwind } from 'uniwind';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { CinzelDecorative_700Bold } from '@expo-google-fonts/cinzel-decorative';
 import { EmblemaOne_400Regular } from '@expo-google-fonts/emblema-one';
@@ -20,6 +20,16 @@ import StartupLoading from '@/components/StartupLoading';
 import '~/global.css';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
+const ROOT_BACKGROUND_COLOR = '#20182D';
+const WEB_READY_FALLBACK_MS = 3000;
+
+const styles = StyleSheet.create({
+  webViewport: {
+    height: '100vh' as any,
+    minHeight: '100vh' as any,
+    width: '100%',
+  },
+});
 
 // Web client: apply theme ASAP (before first render) to reduce light→dark snapping.
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -32,7 +42,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
 
 function AppStack() {
   return (
-    <Stack>
+    <Stack screenOptions={{ contentStyle: { backgroundColor: 'transparent' } }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
@@ -40,31 +50,28 @@ function AppStack() {
 }
 
 function LoadingOverlay() {
-  const [showAnimation, setShowAnimation] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowAnimation(true), 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <View
       // Use fixed positioning on web so it covers the viewport even if the root
       // container hasn't measured yet.
-      style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999 }}
+      style={{
+        backgroundColor: ROOT_BACKGROUND_COLOR,
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        zIndex: 9999,
+      }}
     >
-      <StartupLoading message="Loading…" showAnimation={showAnimation} showMessage={showAnimation} />
+      <StartupLoading message="Getting things ready for you..." />
     </View>
   );
 }
 
 function RootLayoutWebSSR() {
   return (
-    <View className="flex-1">
-      {/* Render the real app for SEO, but keep it visually hidden to prevent FOUT. */}
-      <View className="flex-1" style={{ opacity: 0 }}>
-        <AppStack />
-      </View>
+    <View className="flex-1 bg-themed" style={styles.webViewport}>
       <LoadingOverlay />
     </View>
   );
@@ -72,6 +79,47 @@ function RootLayoutWebSSR() {
 
 function RootLayoutClient() {
   const [appIsReady, setAppIsReady] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (typeof window === 'undefined') return;
+
+    const neutralizeNavigationSceneBackground = () => {
+      const isDark =
+        document.documentElement.classList.contains('dark') ||
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      if (!isDark) return;
+
+      document
+        .querySelectorAll<HTMLElement>('div[style*="background-color: rgb(242, 242, 242)"]')
+        .forEach((element) => {
+          const rect = element.getBoundingClientRect();
+          const isFullScreenScene =
+            rect.width >= window.innerWidth * 0.75 &&
+            rect.height >= window.innerHeight * 0.75;
+
+          if (isFullScreenScene) {
+            element.style.backgroundColor = 'transparent';
+          }
+        });
+    };
+
+    neutralizeNavigationSceneBackground();
+    const frame = window.requestAnimationFrame(neutralizeNavigationSceneBackground);
+    const observer = new MutationObserver(neutralizeNavigationSceneBackground);
+    observer.observe(document.getElementById('root') ?? document.body, {
+      attributes: true,
+      attributeFilter: ['style'],
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -124,7 +172,21 @@ function RootLayoutClient() {
     if (!('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker
-      .register('/sw.js')
+      .getRegistrations()
+      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+      .then(() => {
+        if (!('caches' in window)) return undefined;
+
+        return window.caches
+          .keys()
+          .then((keys) =>
+            Promise.all(
+              keys
+                .filter((key) => key.startsWith('djsportfolio-'))
+                .map((key) => window.caches.delete(key))
+            )
+          );
+      })
       .catch(() => {
         // no-op
       });
@@ -165,20 +227,39 @@ function RootLayoutClient() {
     Uniwind.setTheme('system');
 
     if (Platform.OS === 'web') {
-      const timeout = window.setTimeout(() => setAppIsReady(true), 2500);
-      (document as any).fonts
-        ?.ready
-        .then(() => {
-          window.clearTimeout(timeout);
+      let cancelled = false;
+      const readyTimeout = window.setTimeout(() => {
+        if (!cancelled) {
           setAppIsReady(true);
+        }
+      }, WEB_READY_FALLBACK_MS);
+
+      const fontsReady = (document as any).fonts?.ready;
+      if (!fontsReady) {
+        window.clearTimeout(readyTimeout);
+        setAppIsReady(true);
+        return () => {
+          cancelled = true;
+        };
+      }
+
+      fontsReady
+        .then(() => {
+          if (!cancelled) {
+            window.clearTimeout(readyTimeout);
+            setAppIsReady(true);
+          }
         })
         .catch(() => {
-          window.clearTimeout(timeout);
-          setAppIsReady(true);
+          if (!cancelled) {
+            window.clearTimeout(readyTimeout);
+            setAppIsReady(true);
+          }
         });
 
       return () => {
-        window.clearTimeout(timeout);
+        cancelled = true;
+        window.clearTimeout(readyTimeout);
       };
     }
 
@@ -194,12 +275,16 @@ function RootLayoutClient() {
   }, [appIsReady]);
 
   if (Platform.OS === 'web') {
-    // Web: always render the real content (SEO/hydration), but cover it until ready.
+    // Web: keep the server and first client render identical, then mount routes
+    // after fonts/theme are ready. This avoids mobile-width Expo Router
+    // navigator hydration mismatches.
     return (
-      <View className="flex-1">
-        <View className="flex-1" style={{ opacity: appIsReady ? 1 : 0 }}>
-          <AppStack />
-        </View>
+      <View className="flex-1 bg-themed" style={styles.webViewport}>
+        {appIsReady ? (
+          <View className="flex-1 bg-themed" style={styles.webViewport}>
+            <AppStack />
+          </View>
+        ) : null}
         {!appIsReady ? <LoadingOverlay /> : null}
       </View>
     );

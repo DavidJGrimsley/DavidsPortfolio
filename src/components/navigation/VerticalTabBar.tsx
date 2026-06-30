@@ -15,6 +15,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { Nav } from '@expo/html-elements';
 import { useSegments, useRouter, Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -588,6 +589,8 @@ const CollapsedToggle: React.FC<CollapsedToggleProps> = ({ onToggle, accentColor
 
   const webButtonStyle = Platform.OS === 'web' ? {
     cursor: 'pointer',
+    borderRadius: 9999,
+    overflow: 'hidden',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
     transform: isHovered ? 'scale(1.15)' : 'scale(1)',
     boxShadow: isHovered ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.3)',
@@ -625,6 +628,7 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
   iconSize = 24,
   onTabPress,
 }) => {
+  const [hasMounted, setHasMounted] = useState(false);
   const { width } = useWindowDimensions();
   const forceCollapsed = width < 768;
   const colorScheme = useColorScheme();
@@ -650,6 +654,10 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
   // Derived state
   const activeRoute = useMemo(() => getActiveRoute(segments as string[]), [segments]);
   const isNested = useMemo(() => isNestedPage(segments as string[]), [segments]);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Auto-collapse on nested pages
   useEffect(() => {
@@ -736,8 +744,9 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
     }
   }, [hasExpandedGroupWithMessage, showOverlay]);
 
-  // Don't render on non-web platforms
-  if (Platform.OS !== 'web') {
+  // The dock depends on browser-only route/theme/icon state, so keep it out of
+  // the server HTML and first client render to avoid hydration mismatches.
+  if (Platform.OS !== 'web' || !hasMounted) {
     return null;
   }
 
@@ -795,7 +804,7 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
 
       {/* Main tab bar pill */}
       {shouldShowPill && (
-        <View style={[styles.pill, webPillStyle as any]}>
+        <Nav accessibilityLabel="Primary navigation" style={[styles.pill, webPillStyle as any]}>
           {tabs.map((tab, index) => {
             if (isTabGroup(tab)) {
               return (
@@ -843,7 +852,7 @@ export const VerticalTabBar: React.FC<VerticalTabBarProps> = ({
               </React.Fragment>
             );
           })}
-        </View>
+        </Nav>
       )}
     </>
   );

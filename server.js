@@ -16,6 +16,7 @@ const CLIENT_BUILD_DIR = path.join(__dirname, 'dist/client');
 const SERVER_BUILD_DIR = path.join(__dirname, 'dist/server');
 const ROUTES_MANIFEST_PATH = path.join(SERVER_BUILD_DIR, '_expo/routes.json');
 const BUILD_METADATA_PATH = path.join(CLIENT_BUILD_DIR, '__djsportfolio_build.json');
+const SERVICE_WORKER_PATH = path.join(CLIENT_BUILD_DIR, 'sw.js');
 
 const app = express();
 const PUBLIC_RUNTIME_ENV_KEYS = [
@@ -41,6 +42,7 @@ const HOSTED_RUNTIME_DEPRECATED_ENV_KEYS = ['QUANTUM_UPSTREAM_URL'];
 const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'false';
 const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS = ['/keys', '/ibm/profiles'];
+const STAGING_HOST_CLEAR_SITE_DATA_MARKERS = ['quizzical-hofstadter.', '.plesk.page'];
 
 function buildPublicRuntimeConfig() {
   return PUBLIC_RUNTIME_ENV_KEYS.reduce((config, key) => {
@@ -50,6 +52,43 @@ function buildPublicRuntimeConfig() {
 
     return config;
   }, {});
+}
+
+function getExpoCssAssets() {
+  try {
+    const routesManifest = JSON.parse(fs.readFileSync(ROUTES_MANIFEST_PATH, 'utf8'));
+    const cssAssets = routesManifest?.assets?.css;
+
+    if (!Array.isArray(cssAssets)) {
+      return [];
+    }
+
+    return cssAssets.filter((asset) => typeof asset === 'string' && asset.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function buildCssBootstrapScript() {
+  const cssAssets = getExpoCssAssets();
+
+  return `(() => {
+  try {
+    const assets = ${JSON.stringify(cssAssets)};
+    for (const href of assets) {
+      const exists = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+        .some((link) => link.getAttribute('href') === href);
+      if (exists) continue;
+
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.setAttribute('data-djsportfolio-css-bootstrap', '');
+      document.head.appendChild(link);
+    }
+  } catch {}
+})();
+`;
 }
 
 function parseSiteOriginOrThrow(rawSiteOrigin) {
@@ -77,6 +116,20 @@ function parseSiteOriginOrThrow(rawSiteOrigin) {
 function isLoopbackHostname(hostname) {
   const normalized = String(hostname || '').toLowerCase();
   return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1' || normalized === '[::1]';
+}
+
+function shouldClearStagingSiteData(req) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return false;
+  }
+
+  const host = String(req.headers.host || '').split(',')[0].trim().toLowerCase();
+  if (!STAGING_HOST_CLEAR_SITE_DATA_MARKERS.every((marker) => host.includes(marker))) {
+    return false;
+  }
+
+  const accept = String(req.headers.accept || '');
+  return accept.includes('text/html');
 }
 
 function assertHostedRuntimeEnvHealth() {
@@ -139,22 +192,19 @@ function normalizeQuantumUpstreamBaseUrl() {
 }
 
 const QUANTUM_UPSTREAM_BASE_URL = normalizeQuantumUpstreamBaseUrl();
-const QUANTUM_UPSTREAM_HOST = (() => {
-  if (!QUANTUM_UPSTREAM_BASE_URL) {
-    return '';
-  }
-
-  try {
-    return new URL(QUANTUM_UPSTREAM_BASE_URL).host.toLowerCase();
-  } catch {
-    return '';
-  }
-})();
-
 app.use(compression());
 app.disable('x-powered-by');
 app.use(morgan('tiny'));
 assertHostedRuntimeEnvHealth();
+
+app.use((req, res, next) => {
+  if (shouldClearStagingSiteData(req)) {
+    res.setHeader('Clear-Site-Data', '"cache", "storage"');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+
+  next();
+});
 
 function assertBuildArtifact(filePath, description) {
   if (!fs.existsSync(filePath)) {
@@ -190,53 +240,6 @@ function isLocalhostRequest(req) {
 
   const remoteAddress = req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : req.ip;
   return isLoopbackAddress(remoteAddress);
-}
-
-function normalizeRequestHost(rawHost) {
-  const firstHost = String(rawHost || '').split(',')[0].trim().toLowerCase();
-  if (!firstHost) {
-    return '';
-  }
-
-  try {
-    return new URL(`http://${firstHost}`).host.toLowerCase();
-  } catch {
-    return firstHost;
-  }
-}
-
-function getRequestHost(req) {
-  return normalizeRequestHost(req.headers['x-forwarded-host'] || req.headers.host);
-}
-
-function getHostnameFromHost(host) {
-  try {
-    return new URL(`http://${host}`).hostname.toLowerCase();
-  } catch {
-    return String(host || '').toLowerCase();
-  }
-}
-
-function isProductionQuantumHost(host) {
-  const hostname = getHostnameFromHost(host);
-  return hostname === 'davidjgrimsley.com' || hostname === 'www.davidjgrimsley.com';
-}
-
-function shouldProxyPublicQuantumRequest(req) {
-  if (!ENABLE_LOCAL_QUANTUM_PROXY) {
-    return false;
-  }
-
-  const requestHost = getRequestHost(req);
-  if (isProductionQuantumHost(requestHost)) {
-    return false;
-  }
-
-  if (!requestHost || !QUANTUM_UPSTREAM_HOST) {
-    return isLocalhostRequest(req);
-  }
-
-  return requestHost !== QUANTUM_UPSTREAM_HOST;
 }
 
 function getHeaderValue(value) {
@@ -385,37 +388,25 @@ function isIbmHardwareBackendProxyPath(pathname, searchParams) {
   );
 }
 
-app.use('/public-facing/api/quantum/v1', async (req, res, next) => {
-  if (!shouldProxyPublicQuantumRequest(req)) {
-    if (!isProductionQuantumHost(getRequestHost(req))) {
-      res.status(502).json({
-        error: 'quantum_public_proxy_not_enabled',
-        message:
-          'The public Quantum API proxy did not run for this host. Check ENABLE_LOCAL_QUANTUM_PROXY and EXPO_PUBLIC_QUANTUM_API_BASE_URL.',
-      });
-      return;
+function buildSafeQuantumBackendProxySearch(pathname, searchParams) {
+  const query = new URLSearchParams(searchParams);
+
+  if (pathname === '/list_backends') {
+    const provider = String(query.get('provider') || '').trim().toLowerCase();
+    const simulatorOnly = query.get('simulator_only');
+
+    if (!provider) {
+      query.set('provider', 'aer');
     }
 
-    return next();
+    if (!simulatorOnly && query.get('provider') !== 'ibm') {
+      query.set('simulator_only', 'true');
+    }
   }
 
-  if (!QUANTUM_UPSTREAM_BASE_URL) {
-    res.status(500).json({
-      error: 'quantum_public_proxy_not_configured',
-      message: 'EXPO_PUBLIC_QUANTUM_API_BASE_URL is missing on the server.',
-    });
-    return;
-  }
-
-  const requestUrl = new URL(req.originalUrl, 'http://localhost');
-  const publicPrefix = '/public-facing/api/quantum/v1';
-  const suffix = requestUrl.pathname.startsWith(publicPrefix)
-    ? requestUrl.pathname.slice(publicPrefix.length)
-    : requestUrl.pathname;
-  const normalizedSuffix = suffix.length > 0 ? suffix : '';
-  const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${requestUrl.search}`;
-  await proxyToQuantumOrigin(req, res, targetUrl);
-});
+  const serialized = query.toString();
+  return serialized ? `?${serialized}` : '';
+}
 
 app.use('/api/quantum-backend', async (req, res, next) => {
   if (!isLocalhostRequest(req)) {
@@ -466,7 +457,10 @@ app.use('/api/quantum-backend', async (req, res, next) => {
     return;
   }
 
-  const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${requestUrl.search}`;
+  const targetUrl = `${QUANTUM_UPSTREAM_BASE_URL}${normalizedSuffix}${buildSafeQuantumBackendProxySearch(
+    normalizedSuffix,
+    requestUrl.searchParams
+  )}`;
   await proxyToQuantumOrigin(req, res, targetUrl, { apiKey });
 });
 
@@ -478,10 +472,22 @@ app.get('/__djsportfolio_runtime_config__', (_req, res) => {
   );
 });
 
+app.get('/__djsportfolio_css__', (_req, res) => {
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.send(buildCssBootstrapScript());
+});
+
 app.get('/__djsportfolio_build.json', (_req, res) => {
   res.type('application/json');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.sendFile(BUILD_METADATA_PATH);
+  res.send(fs.readFileSync(BUILD_METADATA_PATH, 'utf8'));
+});
+
+app.get('/sw.js', (_req, res) => {
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(SERVICE_WORKER_PATH);
 });
 
 // Serve static files from client build
