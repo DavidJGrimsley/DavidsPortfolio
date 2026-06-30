@@ -31,7 +31,7 @@ export function PortfolioHeader({
   version,
   description,
   icon,
-  iconName = "code-slash",
+  iconName,
   isLive,
   baseUrl,
   docsUrl,
@@ -44,7 +44,7 @@ export function PortfolioHeader({
   const accentColor = useThemeColor({}, "accent");
   const tintColor = useThemeColor({}, "tint");
 
-  const displayIcon = iconName || (type === "api" ? "cloud" : "server");
+  const displayIcon = iconName ?? (type === "api" ? "cloud" : "server");
 
   return (
     <View className="mb-7.5">
