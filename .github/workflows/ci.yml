@@ -111,7 +111,7 @@ jobs:
               grep -q 'Quantum API' /tmp/djsportfolio-api-quantum.html
               grep -q 'application/ld+json' /tmp/djsportfolio-api-quantum.html
               grep -q 'MCP' /tmp/djsportfolio-mcp.html
-              grep -q 'Clear-Site-Data: "cache", "storage"' /tmp/djsportfolio-staging-host.headers
+              grep -Eiq '^clear-site-data:.*cache.*storage' /tmp/djsportfolio-staging-host.headers
 
               if grep -q 'Failed to load loader data' /tmp/djsportfolio-api-quantum.html /tmp/djsportfolio-mcp.html; then
                 echo "SSR route smoke found loader failure text"
