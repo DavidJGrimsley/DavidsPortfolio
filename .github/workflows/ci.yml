@@ -175,13 +175,9 @@ jobs:
     name: Deploy Staging
     runs-on: ubuntu-latest
     needs: quality
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/test') ||
-      (
-        github.event_name == 'pull_request' &&
-        github.base_ref == 'test' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      )
+    # Plesk staging is branch-pinned to test. PRs run Quality, including local
+    # production-server smoke; the shared staging domain deploys after test moves.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/test'
     timeout-minutes: 10
 
     steps:
