@@ -124,6 +124,7 @@ jobs:
           for attempt in $(seq 1 30); do
             if curl --fail --silent --show-error "http://127.0.0.1:${PORT}/__djsportfolio_runtime_config__" >/tmp/djsportfolio-runtime.js; then
               curl --fail --silent --show-error "http://127.0.0.1:${PORT}/__djsportfolio_build.json" >/tmp/djsportfolio-build.json
+              curl --fail --silent --show-error "http://127.0.0.1:${PORT}/__djsportfolio_css__" >/tmp/djsportfolio-css.js
               curl --fail --silent --show-error "http://127.0.0.1:${PORT}/" >/tmp/djsportfolio-home.html
               curl --fail --silent --show-error "http://127.0.0.1:${PORT}/public-facing/api/quantum" >/tmp/djsportfolio-api-quantum.html
               curl --fail --silent --show-error "http://127.0.0.1:${PORT}/public-facing/mcp" >/tmp/djsportfolio-mcp.html
@@ -135,7 +136,8 @@ jobs:
                 "http://127.0.0.1:${PORT}/"
 
               require_grep "home content" "David" /tmp/djsportfolio-home.html
-              require_grep "production stylesheet" "_expo/static/css" /tmp/djsportfolio-api-quantum.html
+              require_grep "CSS bootstrap script" "__djsportfolio_css__" /tmp/djsportfolio-api-quantum.html
+              require_grep "generated stylesheet asset" "_expo/static/css" /tmp/djsportfolio-css.js
               require_grep "API loader data" "__EXPO_ROUTER_LOADER_DATA__" /tmp/djsportfolio-api-quantum.html
               require_grep "Quantum API data" "Quantum API" /tmp/djsportfolio-api-quantum.html
               require_grep "MCP loader data" "__EXPO_ROUTER_LOADER_DATA__" /tmp/djsportfolio-mcp.html

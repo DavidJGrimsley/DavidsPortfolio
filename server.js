@@ -54,6 +54,43 @@ function buildPublicRuntimeConfig() {
   }, {});
 }
 
+function getExpoCssAssets() {
+  try {
+    const routesManifest = JSON.parse(fs.readFileSync(ROUTES_MANIFEST_PATH, 'utf8'));
+    const cssAssets = routesManifest?.assets?.css;
+
+    if (!Array.isArray(cssAssets)) {
+      return [];
+    }
+
+    return cssAssets.filter((asset) => typeof asset === 'string' && asset.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function buildCssBootstrapScript() {
+  const cssAssets = getExpoCssAssets();
+
+  return `(() => {
+  try {
+    const assets = ${JSON.stringify(cssAssets)};
+    for (const href of assets) {
+      const exists = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+        .some((link) => link.getAttribute('href') === href);
+      if (exists) continue;
+
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.setAttribute('data-djsportfolio-css-bootstrap', '');
+      document.head.appendChild(link);
+    }
+  } catch {}
+})();
+`;
+}
+
 function parseSiteOriginOrThrow(rawSiteOrigin) {
   let parsed;
   try {
@@ -433,6 +470,12 @@ app.get('/__djsportfolio_runtime_config__', (_req, res) => {
   res.send(
     `window.__DJS_RUNTIME_CONFIG__ = Object.freeze(${JSON.stringify(buildPublicRuntimeConfig())});\n`
   );
+});
+
+app.get('/__djsportfolio_css__', (_req, res) => {
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.send(buildCssBootstrapScript());
 });
 
 app.get('/__djsportfolio_build.json', (_req, res) => {

@@ -222,16 +222,21 @@ async function main() {
     const remainingMs = deadline - Date.now();
     const requestTimeoutMs = Math.max(1_000, Math.min(30_000, remainingMs));
 
-    const [buildMetaResult, homeResult, apiIndexResult, quantumDetailResult] =
+    const [buildMetaResult, cssBootstrapResult, homeResult, apiIndexResult, quantumDetailResult] =
       await Promise.all([
         fetchBuildMeta(args.siteUrl, requestTimeoutMs),
+        fetchRequiredPage(args.siteUrl, '/__djsportfolio_css__', requestTimeoutMs, [
+          { label: 'generated stylesheet asset', text: '_expo/static/css' },
+        ]),
         fetchHome(args.siteUrl, requestTimeoutMs),
         fetchRequiredPage(args.siteUrl, '/public-facing/api', requestTimeoutMs, [
+          { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
           { label: 'Public APIs content', text: 'Public APIs' },
           { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
           { label: 'JSON-LD metadata', text: 'application/ld+json' },
         ]),
         fetchRequiredPage(args.siteUrl, '/public-facing/api/quantum', requestTimeoutMs, [
+          { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
           { label: 'Quantum API content', text: 'Quantum API' },
           { label: 'endpoint section content', text: 'Endpoints' },
           { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
@@ -262,6 +267,7 @@ async function main() {
       Number.isFinite(builtAt) && builtAt >= notBeforeTime - clockSkewMs;
     const verifyingByExpectedSha = expectedSha.length > 0 && payloadHasKnownSha;
     const buildFresh = verifyingByExpectedSha ? buildMatchesExpected : buildFreshByTime;
+    const cssBootstrapOk = cssBootstrapResult.ok;
     const homeOk = homeResult.response.ok;
     const apiIndexOk = apiIndexResult.ok;
     const quantumDetailOk = quantumDetailResult.ok;
@@ -272,6 +278,8 @@ async function main() {
         `verificationMode=${verifyingByExpectedSha ? 'sha' : 'timestamp'} ` +
         `buildFresh=${buildFresh} ` +
         `buildMatchesExpected=${buildMatchesExpected} ` +
+        `cssBootstrapStatus=${cssBootstrapResult.response?.status ?? 'unreachable'} ` +
+        `cssBootstrapOk=${cssBootstrapOk} ` +
         `homeStatus=${homeResult.response.status} ` +
         `apiIndexStatus=${apiIndexResult.response?.status ?? 'unreachable'} ` +
         `apiIndexSsrOk=${apiIndexOk} ` +
@@ -279,7 +287,7 @@ async function main() {
         `quantumDetailSsrOk=${quantumDetailOk}`,
     );
 
-    if (buildFresh && homeOk && apiIndexOk && quantumDetailOk) {
+    if (buildFresh && cssBootstrapOk && homeOk && apiIndexOk && quantumDetailOk) {
       console.log(
         `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and SSR-rendered public API portfolio pages.`,
       );
@@ -297,6 +305,10 @@ async function main() {
     const homeError = homeOk
       ? 'home page is healthy'
       : `home returned ${homeResult.response.status} ${homeResult.response.statusText}`;
+    const cssBootstrapError = cssBootstrapOk
+      ? 'CSS bootstrap is healthy'
+      : (cssBootstrapResult.error ??
+        `CSS bootstrap missing: ${cssBootstrapResult.missing.join(', ')}`);
     const apiIndexError = apiIndexOk
       ? 'public API index SSR is healthy'
       : (apiIndexResult.error ??
@@ -305,7 +317,7 @@ async function main() {
       ? 'Quantum API detail SSR is healthy'
       : (quantumDetailResult.error ??
         `Quantum API detail SSR missing: ${quantumDetailResult.missing.join(', ')}`);
-    lastFailure = `${buildError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}`;
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;

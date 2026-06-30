@@ -33,6 +33,7 @@ export default function Root({ children }: PropsWithChildren) {
         
         {/* Theme Color */}
         <meta name="theme-color" content="#20182D" />
+        <script src="/__djsportfolio_css__" />
         <script src="/__djsportfolio_runtime_config__" />
         <script
           dangerouslySetInnerHTML={{
