@@ -218,7 +218,17 @@ jobs:
           PLESK_STAGING_WEBHOOK_URL: ${{ secrets.PLESK_STAGING_WEBHOOK_URL }}
         run: |
           echo "Requesting staging deploy for ${EXPECTED_DEPLOY_REF} at ${EXPECTED_DEPLOY_SHA}"
-          curl --fail --silent --show-error --request POST "${PLESK_STAGING_WEBHOOK_URL}"
+          payload="$(node -e "process.stdout.write(JSON.stringify({
+            ref: 'refs/heads/' + process.env.EXPECTED_DEPLOY_REF,
+            after: process.env.EXPECTED_DEPLOY_SHA,
+            repository: { full_name: process.env.GITHUB_REPOSITORY }
+          }))")"
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "X-GitHub-Event: push" \
+            --data "${payload}" \
+            "${PLESK_STAGING_WEBHOOK_URL}"
 
       - name: Verify staging deployment
         env:
