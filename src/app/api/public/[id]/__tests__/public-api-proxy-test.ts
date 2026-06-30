@@ -54,6 +54,40 @@ describe('dynamic public API proxy', () => {
     expect(calledUrl).toBe('https://example.com/upstream/v1/portfolio.json');
   });
 
+  it('allows same-host public-facing quantum backend mounts', async () => {
+    process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const response = await GET(
+      new Request('https://davidjgrimsley.com/api/public/quantum/v1/health', {
+        method: 'GET',
+      }),
+      { id: 'quantum', segments: ['v1', 'health'] }
+    );
+
+    expect(response.status).toBe(200);
+    const [calledUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('https://davidjgrimsley.com/public-facing/api/quantum/v1/health');
+  });
+
+  it('rejects same-host api/public self-proxy loops', async () => {
+    process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/api/public/quantum/v1';
+
+    const response = await GET(
+      new Request('https://davidjgrimsley.com/api/public/quantum/v1/health', {
+        method: 'GET',
+      }),
+      { id: 'quantum', segments: ['v1', 'health'] }
+    );
+
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'public_api_proxy_not_configured',
+    });
+    expect(response.status).toBe(500);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('forwards bearer and api key headers for authenticated API surfaces', async () => {
     await POST(
       new Request('http://localhost:3000/api/public/quantum/v1/keys', {

@@ -194,6 +194,50 @@ async function fetchRequiredPage(siteUrl, pathname, timeoutMs, requirements) {
   };
 }
 
+async function fetchJsonEndpoint(siteUrl, pathname, timeoutMs) {
+  const endpointUrl = resolveUrl(siteUrl, pathname);
+  let response;
+
+  try {
+    response = await fetchText(endpointUrl, timeoutMs);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+      ok: false,
+      response: null,
+      url: endpointUrl,
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      error: `${pathname} returned ${response.status} ${response.statusText}`,
+      ok: false,
+      response,
+      url: endpointUrl,
+    };
+  }
+
+  try {
+    JSON.parse(response.body);
+  } catch (error) {
+    return {
+      error: `${pathname} did not return JSON: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      ok: false,
+      response,
+      url: endpointUrl,
+    };
+  }
+
+  return {
+    ok: true,
+    response,
+    url: endpointUrl,
+  };
+}
+
 function formatBuildSummary(payload) {
   if (!payload || typeof payload !== 'object') {
     return 'unavailable';
@@ -234,6 +278,8 @@ async function main() {
       homeResult,
       apiIndexResult,
       quantumDetailResult,
+      apiIndexLoaderEndpointResult,
+      quantumDetailLoaderEndpointResult,
       mcpIndexResult,
     ] =
       await Promise.all([
@@ -263,6 +309,16 @@ async function main() {
             mustNotInclude: true,
           },
         ]),
+        fetchJsonEndpoint(
+          args.siteUrl,
+          '/_expo/loaders/public-facing/api/index',
+          requestTimeoutMs,
+        ),
+        fetchJsonEndpoint(
+          args.siteUrl,
+          '/_expo/loaders/public-facing/api/quantum',
+          requestTimeoutMs,
+        ),
         fetchRequiredPage(args.siteUrl, '/public-facing/mcp', requestTimeoutMs, [
           { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
           { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
@@ -301,6 +357,8 @@ async function main() {
     const homeOk = homeResult.response.ok;
     const apiIndexOk = apiIndexResult.ok;
     const quantumDetailOk = quantumDetailResult.ok;
+    const apiIndexLoaderEndpointOk = apiIndexLoaderEndpointResult.ok;
+    const quantumDetailLoaderEndpointOk = quantumDetailLoaderEndpointResult.ok;
     const mcpIndexOk = mcpIndexResult.ok;
 
     console.log(
@@ -316,11 +374,24 @@ async function main() {
         `apiIndexLoaderOk=${apiIndexOk} ` +
         `quantumDetailStatus=${quantumDetailResult.response?.status ?? 'unreachable'} ` +
         `quantumDetailLoaderOk=${quantumDetailOk} ` +
+        `apiIndexLoaderEndpointStatus=${apiIndexLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
+        `apiIndexLoaderEndpointOk=${apiIndexLoaderEndpointOk} ` +
+        `quantumDetailLoaderEndpointStatus=${quantumDetailLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
+        `quantumDetailLoaderEndpointOk=${quantumDetailLoaderEndpointOk} ` +
         `mcpIndexStatus=${mcpIndexResult.response?.status ?? 'unreachable'} ` +
         `mcpIndexLoaderOk=${mcpIndexOk}`,
     );
 
-    if (buildFresh && cssBootstrapOk && homeOk && apiIndexOk && quantumDetailOk && mcpIndexOk) {
+    if (
+      buildFresh &&
+      cssBootstrapOk &&
+      homeOk &&
+      apiIndexOk &&
+      quantumDetailOk &&
+      apiIndexLoaderEndpointOk &&
+      quantumDetailLoaderEndpointOk &&
+      mcpIndexOk
+    ) {
       console.log(
         `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and public API loader data.`,
       );
@@ -350,11 +421,18 @@ async function main() {
       ? 'Quantum API detail loader data is healthy'
       : (quantumDetailResult.error ??
         `Quantum API detail loader data missing: ${quantumDetailResult.missing.join(', ')}`);
+    const apiIndexLoaderEndpointError = apiIndexLoaderEndpointOk
+      ? 'public API index loader endpoint is healthy'
+      : (apiIndexLoaderEndpointResult.error ?? 'public API index loader endpoint is unhealthy');
+    const quantumDetailLoaderEndpointError = quantumDetailLoaderEndpointOk
+      ? 'Quantum API detail loader endpoint is healthy'
+      : (quantumDetailLoaderEndpointResult.error ??
+        'Quantum API detail loader endpoint is unhealthy');
     const mcpIndexError = mcpIndexOk
       ? 'MCP index loader data is healthy'
       : (mcpIndexResult.error ??
         `MCP index loader data missing: ${mcpIndexResult.missing.join(', ')}`);
-    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${mcpIndexError}`;
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;

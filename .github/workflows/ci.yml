@@ -257,6 +257,8 @@ jobs:
       - name: Capture deploy start time
         run: |
           echo "DEPLOY_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+          echo "EXPECTED_DEPLOY_SHA=${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "EXPECTED_DEPLOY_REF=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
 
       - name: Validate production deploy secrets
         env:
@@ -271,7 +273,18 @@ jobs:
         env:
           PLESK_PRODUCTION_WEBHOOK_URL: ${{ secrets.PLESK_PRODUCTION_WEBHOOK_URL }}
         run: |
-          curl --fail --silent --show-error --request POST "${PLESK_PRODUCTION_WEBHOOK_URL}"
+          echo "Requesting production deploy for ${EXPECTED_DEPLOY_REF} at ${EXPECTED_DEPLOY_SHA}"
+          payload="$(node -e "process.stdout.write(JSON.stringify({
+            ref: 'refs/heads/' + process.env.EXPECTED_DEPLOY_REF,
+            after: process.env.EXPECTED_DEPLOY_SHA,
+            repository: { full_name: process.env.GITHUB_REPOSITORY }
+          }))")"
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "X-GitHub-Event: push" \
+            --data "${payload}" \
+            "${PLESK_PRODUCTION_WEBHOOK_URL}"
 
       - name: Verify production deployment
         env:
@@ -281,7 +294,7 @@ jobs:
             --label "production" \
             --site-url "$SITE_URL" \
             --not-before "$DEPLOY_STARTED_AT" \
-            --expected-sha "$GITHUB_SHA" \
+            --expected-sha "$EXPECTED_DEPLOY_SHA" \
             --interval-ms 10000 \
             --timeout-ms 360000
 
