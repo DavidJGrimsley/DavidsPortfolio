@@ -69,18 +69,7 @@ function LoadingOverlay() {
   );
 }
 
-function RootLayoutWebSSR() {
-  return (
-    <View className="flex-1 bg-themed" style={styles.webViewport}>
-      <View className="flex-1 bg-themed" style={styles.webViewport}>
-        <AppStack />
-      </View>
-      <LoadingOverlay />
-    </View>
-  );
-}
-
-function RootLayoutClient() {
+function RootLayoutContent() {
   const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
@@ -302,7 +291,5 @@ function RootLayoutClient() {
 }
 
 export default function RootLayout() {
-  if (isTestEnv) return <AppStack />;
-  if (Platform.OS === 'web' && typeof window === 'undefined') return <RootLayoutWebSSR />;
-  return <RootLayoutClient />;
+  return isTestEnv ? <AppStack /> : <RootLayoutContent />;
 }
