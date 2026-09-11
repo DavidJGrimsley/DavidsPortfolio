@@ -13,7 +13,9 @@ import {
   usePathname,
   type ErrorBoundaryProps,
 } from "expo-router";
+import type { GenerateMetadataFunction, Metadata } from "expo-router/server";
 import Ionicons from "@/components/UI/HydratedIonicon";
+import { StructuredDataScript } from "@/components/SEO/SeoHead";
 import { LoadingComponent } from "@/components/UI/LoadingComponent";
 import { ThemedText } from "@/components/UI/ThemedText";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -38,6 +40,7 @@ import {
   getMcpFallbackPortfolio,
   getMcpFallbackRegistryEntry,
 } from "@/data/mcpFallbackPortfolios";
+import { SITE_URL, joinUrl } from "@/constants/seo";
 import type {
   MCPPortfolio,
   RegistryServer,
@@ -93,6 +96,129 @@ function createFallbackDetail(id = DEFAULT_MCP_ID): DetailData {
     method: "fallback",
   };
 }
+
+function buildMcpDetailMetadata({
+  mcp,
+  routePath,
+}: {
+  mcp: MCPPortfolio["mcp"];
+  routePath: string;
+}): Metadata {
+  const pageUrl = joinUrl(SITE_URL, routePath);
+  const title = `${mcp.name} | MCP Server | David Grimsley`;
+  const description =
+    mcp.description ??
+    `${mcp.name} is an MCP server by David Grimsley. View tools, resources, prompts, and integration guides.`;
+
+  return {
+    title,
+    description,
+    keywords: [
+      mcp.name,
+      "MCP",
+      "Model Context Protocol",
+      "AI tools",
+      ...(mcp.tags ?? []),
+    ],
+    authors: [{ name: "David Grimsley", url: SITE_URL }],
+    robots: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+    alternates: { canonical: pageUrl },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: "David Grimsley",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
+
+function buildMcpDetailStructuredData({
+  mcp,
+  endpoints,
+  routePath,
+}: {
+  mcp: MCPPortfolio["mcp"];
+  endpoints: MCPEndpointMeta[];
+  routePath: string;
+}) {
+  const pageUrl = joinUrl(SITE_URL, routePath);
+
+  return [
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${pageUrl}#mcp-server`,
+      name: mcp.name,
+      description:
+        mcp.description ??
+        `${mcp.name} is a Model Context Protocol server by David Grimsley.`,
+      url: pageUrl,
+      codeRepository: mcp.repoUrl,
+      softwareVersion: mcp.version,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Cross-platform",
+      provider: {
+        "@type": "Person",
+        name: "David Grimsley",
+        url: SITE_URL,
+      },
+      isAccessibleForFree: true,
+      keywords: mcp.tags?.join(", "),
+      mainEntityOfPage: pageUrl,
+    },
+    {
+      "@type": "ItemList",
+      "@id": `${pageUrl}#endpoints`,
+      name: `${mcp.name} endpoints`,
+      numberOfItems: endpoints.length,
+      itemListElement: endpoints.map((endpoint, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: endpoint.title,
+        description: endpoint.description,
+        url: endpoint.url,
+      })),
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${pageUrl}#breadcrumbs`,
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: SITE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "MCP Servers",
+          item: joinUrl(SITE_URL, "/public-facing/mcp"),
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: mcp.name,
+          item: pageUrl,
+        },
+      ],
+    },
+  ];
+}
+
+export const generateMetadata: GenerateMetadataFunction = (_request, params) => {
+  const id = getRouteId(params);
+  const fallback = getMcpFallbackPortfolio(id);
+  return buildMcpDetailMetadata({
+    mcp: fallback.mcp,
+    routePath: `/public-facing/mcp/${fallback.mcp.id}`,
+  });
+};
 
 // Server-side data loader
 export async function loader(
@@ -305,27 +431,16 @@ function MCPDetailContent() {
     setTimeout(() => setCopiedUrl(null), 2000);
   };
 
-  const seoTitle = `${mcpInfo.name} | MCP Server | David Grimsley`;
-  const seoDescription =
-    mcpInfo.description ??
-    `${mcpInfo.name} is an MCP server by David Grimsley. View tools, resources, prompts, and integration guides.`;
+  const routePath = `/public-facing/mcp/${mcpInfo.id}`;
+  const structuredData = buildMcpDetailStructuredData({
+    mcp: mcpInfo,
+    endpoints,
+    routePath,
+  });
 
   return (
-    <PublicFacingDetailWrapper
-      seo={{
-        title: seoTitle,
-        description: seoDescription,
-        path: `/public-facing/mcp/${mcpInfo.id}`,
-        keywords: [
-          mcpInfo.name,
-          "MCP",
-          "Model Context Protocol",
-          "AI tools",
-          ...(mcpInfo.tags ?? []),
-        ],
-        type: "website",
-      }}
-    >
+    <PublicFacingDetailWrapper>
+      <StructuredDataScript structuredData={structuredData} />
       <MCPHeroSection
         title={mcpInfo.name}
         version={mcpInfo.version}
