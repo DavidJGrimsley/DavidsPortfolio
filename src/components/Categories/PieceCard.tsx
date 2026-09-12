@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Image, Pressable, View, useColorScheme } from "react-native";
+import { Image, Platform, Pressable, View, useColorScheme } from "react-native";
 import { ThemedText } from "@/components/UI/ThemedText";
 
 type PieceCardProps = {
@@ -12,6 +12,43 @@ type PieceCardProps = {
   maxWidth?: number;
   className?: string;
 };
+
+type PieceCardImageProps = {
+  source: string;
+  title: string;
+  square: boolean;
+};
+
+/**
+ * react-native-web's Image initially renders a placeholder wrapper on the
+ * server, then can swap it for a loaded image before hydration in the browser.
+ * A native img element is stable across that server/client boundary.
+ */
+function PieceCardImage({ source, title, square }: PieceCardImageProps) {
+  if (Platform.OS === "web") {
+    return (
+      <img
+        src={source}
+        alt={title}
+        style={{
+          display: "block",
+          width: "100%",
+          height: square ? "100%" : 180,
+          objectFit: "cover",
+        }}
+      />
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri: source }}
+      className={square ? "w-full h-full" : "w-full"}
+      style={square ? undefined : { height: 180 }}
+      resizeMode="cover"
+    />
+  );
+}
 
 export function PieceCard({
   title,
@@ -55,12 +92,7 @@ export function PieceCard({
           className={`overflow-hidden rounded-[1.2%] ${isHovered ? "bg-themed" : "bg-accent"} mb-[2%]`}
           style={squareImage ? { aspectRatio: 1 } : undefined}
         >
-          <Image
-            source={{ uri: imageSource }}
-            className={squareImage ? "w-full h-full" : "w-full"}
-            style={squareImage ? undefined : { height: 180 }}
-            resizeMode="cover"
-          />
+          <PieceCardImage source={imageSource} title={title} square={squareImage} />
         </View>
       ) : null}
 

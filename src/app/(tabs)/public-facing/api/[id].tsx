@@ -12,13 +12,14 @@ import {
   usePathname,
   type ErrorBoundaryProps,
 } from "expo-router";
+import type { GenerateMetadataFunction, Metadata } from "expo-router/server";
 
 import { HelloWave } from "@/components/QuantumAnimation";
 import { LoadingComponent } from "@/components/UI/LoadingComponent";
 import { ThemedText } from "@/components/UI/ThemedText";
 import { ExternalLink } from "@/components/UI/ExternalLink";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { SeoHead, StructuredDataScript } from "@/components/SEO/SeoHead";
+import { StructuredDataScript } from "@/components/SEO/SeoHead";
 import { EndpointCard } from "~/src/components/PublicFacing/api/APIComponents";
 import { ApiAuthDashboardCard } from "~/src/components/PublicFacing/api/quantum-auth-dashboard-card";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
@@ -283,21 +284,24 @@ function buildApiDetailStructuredData({
   ];
 }
 
-function buildApiDetailSeo({
+function buildApiDetailMetadata({
   api,
   routePath,
-  endpoints,
 }: {
   api: APIPortfolio["api"];
   routePath: string;
-  endpoints: PortfolioEndpoint[];
-}) {
+}): Metadata {
+  const pageUrl = joinUrl(SITE_URL, routePath);
+  const title = /\bapi\b/iu.test(api.name)
+    ? `${api.name} | David Grimsley`
+    : `${api.name} API | David Grimsley`;
+  const description =
+    api.description ??
+    `${api.name} is a public API hosted by David Grimsley. View endpoints, docs, examples, and usage notes.`;
+
   return {
-    title: `${api.name} API | David Grimsley`,
-    description:
-      api.description ??
-      `${api.name} is a public API hosted by David Grimsley. View endpoints, docs, examples, and usage notes.`,
-    path: routePath,
+    title,
+    description,
     keywords: [
       api.name,
       "public API",
@@ -305,33 +309,33 @@ function buildApiDetailSeo({
       "developer tools",
       ...(api.tags ?? []),
     ],
-    type: "website" as const,
-    structuredData: buildApiDetailStructuredData({
-      api,
-      endpoints,
-      routePath,
-    }),
+    authors: [{ name: "David Grimsley", url: SITE_URL }],
+    robots: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+    alternates: { canonical: pageUrl },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: "David Grimsley",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
-function APIDetailSeoFallback() {
-  const pathname = usePathname();
-  const slug = pathname?.split("/").filter(Boolean).pop() ?? "api";
-  const fallback = createFallbackDetail(slug);
+export const generateMetadata: GenerateMetadataFunction = (_request, params) => {
+  const routeId = getRouteId(params);
+  const fallback = createFallbackDetail(routeId);
   const routePath = `/public-facing/api/${fallback.params.id}`;
-  const seo = buildApiDetailSeo({
+  return buildApiDetailMetadata({
     api: fallback.portfolio.api,
-    endpoints: fallback.portfolio.endpoints ?? [],
     routePath,
   });
-
-  return (
-    <>
-      <SeoHead {...seo} />
-      <StructuredDataScript structuredData={seo.structuredData} />
-    </>
-  );
-}
+};
 
 export async function loader(
   request: LoaderRequest | undefined,
@@ -656,18 +660,15 @@ function APIDetailContent() {
     api.liveTestExecutor === "quantum-sdk" ? executeQuantumEndpoint : undefined;
   const routeId = api.id || registryEntry.id || detail.params.id;
   const routePath = `/public-facing/api/${routeId}`;
-  const seo = buildApiDetailSeo({
+  const structuredData = buildApiDetailStructuredData({
     api,
     endpoints,
     routePath,
   });
 
   return (
-    <PublicFacingDetailWrapper
-      seo={{
-        ...seo,
-      }}
-    >
+    <PublicFacingDetailWrapper>
+      <StructuredDataScript structuredData={structuredData} />
       {source !== "live" && liveError ? (
         <View className="rounded-lg p-4 mb-5 bg-yellow-900/30 border border-yellow-600/50">
           <ThemedText type="defaultSemiBold" className="mb-1 text-yellow-400">
@@ -823,11 +824,8 @@ function APIDetailContent() {
 
 export default function APIDetailPage() {
   return (
-    <>
-      <APIDetailSeoFallback />
-      <Suspense fallback={<LoadingFallback />}>
-        <APIDetailContent />
-      </Suspense>
-    </>
+    <Suspense fallback={<LoadingFallback />}>
+      <APIDetailContent />
+    </Suspense>
   );
 }
