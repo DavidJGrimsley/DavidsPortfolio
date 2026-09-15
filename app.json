@@ -34,7 +34,7 @@
         "expo-router",
         {
           "unstable_useServerRendering": false,
-          "unstable_useServerDataLoaders": false
+          "unstable_useServerDataLoaders": true
         }
       ],
       "expo-font",
