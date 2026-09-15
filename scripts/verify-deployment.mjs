@@ -1,3 +1,5 @@
+import { verifyDetailSeoPages } from './verify-detail-seo.mjs';
+
 function parseArgs(argv) {
   const args = {
     intervalMs: 10_000,
@@ -281,6 +283,7 @@ async function main() {
       apiIndexLoaderEndpointResult,
       quantumDetailLoaderEndpointResult,
       mcpIndexResult,
+      detailSeoResult,
     ] =
       await Promise.all([
         fetchBuildMeta(args.siteUrl, requestTimeoutMs),
@@ -329,6 +332,7 @@ async function main() {
             mustNotInclude: true,
           },
         ]),
+        verifyDetailSeoPages(args.siteUrl, requestTimeoutMs),
       ]);
 
     const buildPayload = buildMetaResult.payload ?? null;
@@ -360,6 +364,7 @@ async function main() {
     const apiIndexLoaderEndpointOk = apiIndexLoaderEndpointResult.ok;
     const quantumDetailLoaderEndpointOk = quantumDetailLoaderEndpointResult.ok;
     const mcpIndexOk = mcpIndexResult.ok;
+    const detailSeoOk = detailSeoResult.ok;
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
@@ -379,7 +384,8 @@ async function main() {
         `quantumDetailLoaderEndpointStatus=${quantumDetailLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
         `quantumDetailLoaderEndpointOk=${quantumDetailLoaderEndpointOk} ` +
         `mcpIndexStatus=${mcpIndexResult.response?.status ?? 'unreachable'} ` +
-        `mcpIndexLoaderOk=${mcpIndexOk}`,
+        `mcpIndexLoaderOk=${mcpIndexOk} ` +
+        `detailSeoOk=${detailSeoOk}`,
     );
 
     if (
@@ -390,10 +396,11 @@ async function main() {
       quantumDetailOk &&
       apiIndexLoaderEndpointOk &&
       quantumDetailLoaderEndpointOk &&
-      mcpIndexOk
+      mcpIndexOk &&
+      detailSeoOk
     ) {
       console.log(
-        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and public API loader data.`,
+        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy SSR detail metadata, and public route loader data.`,
       );
       return;
     }
@@ -432,7 +439,10 @@ async function main() {
       ? 'MCP index loader data is healthy'
       : (mcpIndexResult.error ??
         `MCP index loader data missing: ${mcpIndexResult.missing.join(', ')}`);
-    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}`;
+    const detailSeoError = detailSeoOk
+      ? 'detail-page SSR SEO is healthy'
+      : `detail-page SSR SEO failed: ${detailSeoResult.failures.join(', ')}`;
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${detailSeoError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;

@@ -17,7 +17,7 @@
  *   large-scale refactors. If you switch to named exports, update imports
  *   accordingly.
  */
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Platform, View, useWindowDimensions } from 'react-native'
 import { Main } from '@expo/html-elements'
 import Animated, {
@@ -73,17 +73,26 @@ export const TabContainer = ({
 }: TabContainerProps) => {
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
-  const isDesktopWeb = Platform.OS === 'web' && width >= 1024;
+  const [hasHydrated, setHasHydrated] = useState(false);
   const skipWebEntranceAnimation = Platform.OS === 'web';
 
-  const leftInsetPercent = useMemo(() => {
-    if (width >= 1440) return 0.05;
-    if (width >= 1024) return 0.10;
-    if (width >= 768) return 0.15;
-    return 0;
-  }, [width]);
+  // React Native Web reports a zero-width viewport during SSR but the browser
+  // has its actual width on the first client render. Keep layout-affecting
+  // values at their SSR defaults until hydration completes.
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
-  const leftInset = Math.round(width * leftInsetPercent);
+  const hydratedWidth = hasHydrated ? width : 0;
+
+  const leftInsetPercent = useMemo(() => {
+    if (hydratedWidth >= 1440) return 0.05;
+    if (hydratedWidth >= 1024) return 0.10;
+    if (hydratedWidth >= 768) return 0.15;
+    return 0;
+  }, [hydratedWidth]);
+
+  const leftInset = Math.round(hydratedWidth * leftInsetPercent);
 
   const scrollY = useSharedValue(0);
   const bgFade = useSharedValue(reduceMotion || skipWebEntranceAnimation ? 1 : 0);
@@ -232,7 +241,7 @@ export const TabContainer = ({
         </Animated.ScrollView>
       </View>
 
-      {isDesktopWeb ? <View style={{ width: '10%' }} /> : null}
+      <View className="hidden lg:flex" style={{ width: '10%' }} />
     </View>
   );
 }
