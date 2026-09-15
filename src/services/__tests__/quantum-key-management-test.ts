@@ -66,7 +66,7 @@ describe('quantum key management', () => {
                 masked_key: ' qk_live_abc ',
                 created_at: '2026-03-01T10:00:00.000Z',
                 last_used_at: '2026-03-30T10:00:00.000Z',
-                status: 'revoked',
+                status: 'REVOKED',
               },
               {
                 id: 'key-002',
