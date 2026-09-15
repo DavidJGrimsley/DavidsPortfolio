@@ -7,19 +7,32 @@ let manifest;
 
 beforeEach(() => {
   directory = fs.mkdtempSync(path.join(__dirname, 'ssr-fixture-'));
-  fs.mkdirSync(path.join(directory, '_expo'));
+  fs.mkdirSync(path.join(directory, '_expo', 'loaders', '(tabs)', 'public-facing', 'api'), { recursive: true });
+  fs.mkdirSync(path.join(directory, '_expo', 'loaders', '(tabs)', 'public-facing', 'mcp'), { recursive: true });
+  fs.writeFileSync(path.join(directory, '_expo', 'server-render.js'), 'module.exports = {};');
   fs.writeFileSync(
-    path.join(directory, 'render.js'),
-    '__EXPO_ROUTER_LOADER_DATA__ public-facing/api/index.tsx public-facing/api/[id].tsx ' +
-      'public-facing/mcp/index.tsx public-facing/mcp/[id].tsx',
+    path.join(directory, '_expo', 'loaders', '(tabs)', 'public-facing', 'api', '[id].js'),
+    'module.exports = {};',
   );
-  fs.writeFileSync(path.join(directory, 'loader.js'), 'module.exports = {};');
+  fs.writeFileSync(
+    path.join(directory, '_expo', 'loaders', '(tabs)', 'public-facing', 'mcp', '[id].js'),
+    'module.exports = {};',
+  );
   manifest = {
-    rendering: { mode: 'ssr', file: 'render.js' },
+    rendering: { mode: 'ssr', file: '_expo/server-render.js' },
     htmlRoutes: [
-      { namedRegex: '^/public-facing/api$', loader: 'loader.js' },
-      { namedRegex: '^/public-facing/api/([^/]+)$', loader: 'loader.js' },
-      { namedRegex: '^/public-facing/mcp$', loader: 'loader.js' },
+      { file: './(tabs)/public-facing/api/index.tsx', page: '/(tabs)/public-facing/api/index' },
+      {
+        file: './(tabs)/public-facing/api/[id].tsx',
+        page: '/(tabs)/public-facing/api/[id]',
+        loader: '_expo/loaders/(tabs)/public-facing/api/[id].js',
+      },
+      { file: './(tabs)/public-facing/mcp/index.tsx', page: '/(tabs)/public-facing/mcp/index' },
+      {
+        file: './(tabs)/public-facing/mcp/[id].tsx',
+        page: '/(tabs)/public-facing/mcp/[id]',
+        loader: '_expo/loaders/(tabs)/public-facing/mcp/[id].js',
+      },
     ],
   };
 });
@@ -42,16 +55,23 @@ test.each([
   'public-facing/api/[id].tsx',
   'public-facing/mcp/index.tsx',
   'public-facing/mcp/[id].tsx',
-])('rejects missing embedded loader wiring for %s', (routeMarker) => {
-  const rendererPath = path.join(directory, 'render.js');
-  fs.writeFileSync(rendererPath, fs.readFileSync(rendererPath, 'utf8').replace(routeMarker, ''));
-  expect(validate).toThrow(`missing loader route wiring for ${routeMarker}`);
+])('rejects missing page route for %s', (routeMarker) => {
+  manifest.htmlRoutes = manifest.htmlRoutes.filter((route) => !route.file.endsWith(routeMarker));
+  expect(validate).toThrow(`missing page route for ${routeMarker}`);
 });
 
-test('rejects a renderer without loader-data wiring', () => {
-  const rendererPath = path.join(directory, 'render.js');
-  fs.writeFileSync(rendererPath, fs.readFileSync(rendererPath, 'utf8').replace('__EXPO_ROUTER_LOADER_DATA__', ''));
-  expect(validate).toThrow('does not contain Expo Router loader-data wiring');
+test.each([
+  'public-facing/api/[id].tsx',
+  'public-facing/mcp/[id].tsx',
+])('rejects a dynamic page without a loader entry for %s', (routeMarker) => {
+  const route = manifest.htmlRoutes.find((entry) => entry.file.endsWith(routeMarker));
+  delete route.loader;
+  expect(validate).toThrow(`missing loader for ${routeMarker}`);
+});
+
+test('rejects a missing loader module', () => {
+  fs.unlinkSync(path.join(directory, '_expo', 'loaders', '(tabs)', 'public-facing', 'api', '[id].js'));
+  expect(validate).toThrow('Invalid loader module for public-facing/api/[id].tsx');
 });
 
 test('rejects a static export', () => {
@@ -60,7 +80,7 @@ test('rejects a static export', () => {
 });
 
 test('rejects a missing SSR renderer module', () => {
-  const file = 'render.js';
+  const file = '_expo/server-render.js';
   fs.unlinkSync(path.join(directory, file));
   expect(validate).toThrow();
 });

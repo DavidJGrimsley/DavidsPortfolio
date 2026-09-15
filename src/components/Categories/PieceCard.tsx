@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, Platform, Pressable, View, useColorScheme } from "react-native";
 import { ThemedText } from "@/components/UI/ThemedText";
 
@@ -62,10 +62,17 @@ export function PieceCard({
 }: PieceCardProps) {
   const colorScheme = useColorScheme();
   const [isHovered, setIsHovered] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const canUseHoverState = Platform.OS !== "web" || hasHydrated;
+  const showHoveredState = canUseHoverState && isHovered;
 
-  const containerClassName = `${isHovered ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
-  const titleClassName = `detail-title leading-tight ${isHovered ? "text-white-or-black" : "text-secondary"}`;
-  const captionClassName = `detail-body leading-relaxed mt-[1%] ${isHovered ? "text-white-or-black" : "text-themed"}`;
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
+  const containerClassName = `${showHoveredState ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
+  const titleClassName = `detail-title leading-tight ${showHoveredState ? "text-white-or-black" : "text-secondary"}`;
+  const captionClassName = `detail-body leading-relaxed mt-[1%] ${showHoveredState ? "text-white-or-black" : "text-themed"}`;
 
   return (
     <Pressable
@@ -89,7 +96,7 @@ export function PieceCard({
     >
       {imageSource ? (
         <View
-          className={`overflow-hidden rounded-[1.2%] ${isHovered ? "bg-themed" : "bg-accent"} mb-[2%]`}
+          className={`overflow-hidden rounded-[1.2%] ${showHoveredState ? "bg-themed" : "bg-accent"} mb-[2%]`}
           style={squareImage ? { aspectRatio: 1 } : undefined}
         >
           <PieceCardImage source={imageSource} title={title} square={squareImage} />
