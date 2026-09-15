@@ -37,6 +37,7 @@ function renderDetailPage(request, detail, loaderData) {
     `<meta property="og:title" content="${detail.title}">`,
     `<meta property="og:url" content="${canonical}">`,
     `<script type="application/ld+json">${JSON.stringify({ '@graph': detail.types.map((type) => ({ '@type': type })) })}</script>`,
+    '__djsportfolio_css__',
     detail.content,
     loaderData,
   ].join(' ');
