@@ -9,6 +9,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const { createRequestHandler } = require('expo-server/adapter/express');
 const { loadFirstEnvFile } = require('./scripts/env-loader.cjs');
+const { assertSsrBuild } = require('./scripts/assert-ssr-build.cjs');
 
 const loadedEnv = loadFirstEnvFile({ cwd: __dirname, prefix: '[startup]' });
 
@@ -219,6 +220,7 @@ assertBuildArtifact(CLIENT_BUILD_DIR, 'Client build directory');
 assertBuildArtifact(SERVER_BUILD_DIR, 'Server build directory');
 assertBuildArtifact(ROUTES_MANIFEST_PATH, 'Generated Expo routes manifest');
 assertBuildArtifact(BUILD_METADATA_PATH, 'Build metadata');
+assertSsrBuild(SERVER_BUILD_DIR);
 
 function normalizeRemoteAddress(address) {
   const normalized = String(address || '').toLowerCase();

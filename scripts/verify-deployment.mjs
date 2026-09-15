@@ -283,6 +283,7 @@ async function main() {
       apiIndexLoaderEndpointResult,
       quantumDetailLoaderEndpointResult,
       mcpIndexResult,
+      mcpIndexLoaderEndpointResult,
       detailSeoResult,
     ] =
       await Promise.all([
@@ -332,6 +333,11 @@ async function main() {
             mustNotInclude: true,
           },
         ]),
+        fetchJsonEndpoint(
+          args.siteUrl,
+          '/_expo/loaders/public-facing/mcp/index',
+          requestTimeoutMs,
+        ),
         verifyDetailSeoPages(args.siteUrl, requestTimeoutMs),
       ]);
 
@@ -364,6 +370,7 @@ async function main() {
     const apiIndexLoaderEndpointOk = apiIndexLoaderEndpointResult.ok;
     const quantumDetailLoaderEndpointOk = quantumDetailLoaderEndpointResult.ok;
     const mcpIndexOk = mcpIndexResult.ok;
+    const mcpIndexLoaderEndpointOk = mcpIndexLoaderEndpointResult.ok;
     const detailSeoOk = detailSeoResult.ok;
 
     console.log(
@@ -385,6 +392,8 @@ async function main() {
         `quantumDetailLoaderEndpointOk=${quantumDetailLoaderEndpointOk} ` +
         `mcpIndexStatus=${mcpIndexResult.response?.status ?? 'unreachable'} ` +
         `mcpIndexLoaderOk=${mcpIndexOk} ` +
+        `mcpIndexLoaderEndpointStatus=${mcpIndexLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
+        `mcpIndexLoaderEndpointOk=${mcpIndexLoaderEndpointOk} ` +
         `detailSeoOk=${detailSeoOk}`,
     );
 
@@ -397,6 +406,7 @@ async function main() {
       apiIndexLoaderEndpointOk &&
       quantumDetailLoaderEndpointOk &&
       mcpIndexOk &&
+      mcpIndexLoaderEndpointOk &&
       detailSeoOk
     ) {
       console.log(
@@ -439,10 +449,13 @@ async function main() {
       ? 'MCP index loader data is healthy'
       : (mcpIndexResult.error ??
         `MCP index loader data missing: ${mcpIndexResult.missing.join(', ')}`);
+    const mcpIndexLoaderEndpointError = mcpIndexLoaderEndpointOk
+      ? 'MCP index loader endpoint is healthy'
+      : (mcpIndexLoaderEndpointResult.error ?? 'MCP index loader endpoint is unhealthy');
     const detailSeoError = detailSeoOk
       ? 'detail-page SSR SEO is healthy'
       : `detail-page SSR SEO failed: ${detailSeoResult.failures.join(', ')}`;
-    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${detailSeoError}`;
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${mcpIndexLoaderEndpointError}; ${detailSeoError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;
@@ -458,5 +471,6 @@ async function main() {
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
+  // Let pending fetch handles and diagnostic output close before exiting.
+  process.exitCode = 1;
 });
