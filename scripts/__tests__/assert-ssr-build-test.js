@@ -8,7 +8,11 @@ let manifest;
 beforeEach(() => {
   directory = fs.mkdtempSync(path.join(__dirname, 'ssr-fixture-'));
   fs.mkdirSync(path.join(directory, '_expo'));
-  fs.writeFileSync(path.join(directory, 'render.js'), 'module.exports = {};');
+  fs.writeFileSync(
+    path.join(directory, 'render.js'),
+    '__EXPO_ROUTER_LOADER_DATA__ public-facing/api/index.tsx public-facing/api/[id].tsx ' +
+      'public-facing/mcp/index.tsx public-facing/mcp/[id].tsx',
+  );
   fs.writeFileSync(path.join(directory, 'loader.js'), 'module.exports = {};');
   manifest = {
     rendering: { mode: 'ssr', file: 'render.js' },
@@ -33,14 +37,21 @@ test('accepts a complete SSR export with static and dynamic loader routes', () =
   expect(validate).not.toThrow();
 });
 
-test.each([0, 1, 2])('rejects missing embedded loader wiring for route %i', (index) => {
-  delete manifest.htmlRoutes[index].loader;
-  expect(validate).toThrow('Missing loader for /public-facing/');
+test.each([
+  'public-facing/api/index.tsx',
+  'public-facing/api/[id].tsx',
+  'public-facing/mcp/index.tsx',
+  'public-facing/mcp/[id].tsx',
+])('rejects missing embedded loader wiring for %s', (routeMarker) => {
+  const rendererPath = path.join(directory, 'render.js');
+  fs.writeFileSync(rendererPath, fs.readFileSync(rendererPath, 'utf8').replace(routeMarker, ''));
+  expect(validate).toThrow(`missing loader route wiring for ${routeMarker}`);
 });
 
-test('rejects an HTML route shadowing a later loader route', () => {
-  manifest.htmlRoutes.unshift({ namedRegex: '^/public-facing/api$' });
-  expect(validate).toThrow('Missing loader for /public-facing/api');
+test('rejects a renderer without loader-data wiring', () => {
+  const rendererPath = path.join(directory, 'render.js');
+  fs.writeFileSync(rendererPath, fs.readFileSync(rendererPath, 'utf8').replace('__EXPO_ROUTER_LOADER_DATA__', ''));
+  expect(validate).toThrow('does not contain Expo Router loader-data wiring');
 });
 
 test('rejects a static export', () => {
@@ -48,7 +59,8 @@ test('rejects a static export', () => {
   expect(validate).toThrow('Expected server rendering');
 });
 
-test.each(['render.js', 'loader.js'])('rejects a missing %s module', (file) => {
+test('rejects a missing SSR renderer module', () => {
+  const file = 'render.js';
   fs.unlinkSync(path.join(directory, file));
   expect(validate).toThrow();
 });

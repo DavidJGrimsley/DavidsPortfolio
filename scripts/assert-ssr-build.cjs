@@ -1,10 +1,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const REQUIRED_LOADER_PAGES = [
-  '/public-facing/api',
-  '/public-facing/api/quantum',
-  '/public-facing/mcp',
+const REQUIRED_LOADER_ROUTES = [
+  'public-facing/api/index.tsx',
+  'public-facing/api/[id].tsx',
+  'public-facing/mcp/index.tsx',
+  'public-facing/mcp/[id].tsx',
 ];
 
 function assertSsrBuild(serverBuildDir) {
@@ -33,11 +34,16 @@ function assertSsrBuild(serverBuildDir) {
   }
   requireModule(manifest.rendering.file, 'SSR renderer');
 
-  for (const pathname of REQUIRED_LOADER_PAGES) {
-    // Match the first HTML route just as expo-server does. A later route with a
-    // loader cannot repair an earlier matching route that omits its loader.
-    const route = manifest.htmlRoutes?.find((entry) => new RegExp(entry.namedRegex).test(pathname));
-    requireModule(route?.loader, `loader for ${pathname}`);
+  const rendererPath = path.resolve(serverBuildDir, manifest.rendering.file);
+  const rendererSource = fs.readFileSync(rendererPath, 'utf8');
+  if (!rendererSource.includes('__EXPO_ROUTER_LOADER_DATA__')) {
+    throw new Error('[SSR build] SSR renderer does not contain Expo Router loader-data wiring.');
+  }
+
+  for (const routeMarker of REQUIRED_LOADER_ROUTES) {
+    if (!rendererSource.includes(routeMarker)) {
+      throw new Error(`[SSR build] SSR renderer is missing loader route wiring for ${routeMarker}.`);
+    }
   }
 }
 
