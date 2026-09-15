@@ -1,4 +1,5 @@
 import { QuantumApiError as SdkQuantumApiError } from '@mr.dj2u/quantum-api';
+import { resolveQuantumBrowserApiBaseUrl } from '@/lib/quantum-api-config';
 import { createQuantumBearerClient } from '@/lib/quantum-sdk-client';
 
 export type QuantumKeyRecord = {
@@ -213,7 +214,10 @@ async function requestQuantumApi(
   path: string,
   init?: RequestInit
 ) {
-  const client = createQuantumBearerClient(baseUrl, accessToken);
+  const client = createQuantumBearerClient(
+    resolveQuantumBrowserApiBaseUrl(baseUrl, typeof window !== 'undefined'),
+    accessToken
+  );
   const method = (init?.method ?? 'GET').toUpperCase();
   const normalizedPath = normalizeQuantumPath(path);
   const parsedBody = asObject(parseRequestBody(init?.body));

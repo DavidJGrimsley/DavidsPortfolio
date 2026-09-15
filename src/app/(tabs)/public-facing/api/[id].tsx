@@ -130,6 +130,10 @@ function isLoopbackHost(hostname: string) {
   );
 }
 
+function isBrowserUrlProtocolSafe(runtimeOrigin: URL, configuredUrl: URL) {
+  return !(runtimeOrigin.protocol === "https:" && configuredUrl.protocol === "http:");
+}
+
 function resolveBrowserApiBaseUrl(
   api: APIPortfolio["api"],
   isWebRuntime: boolean,
@@ -153,7 +157,10 @@ function resolveBrowserApiBaseUrl(
     const runtimeOrigin = new URL(window.location.origin);
     const configuredUrl = new URL(configuredBaseUrl);
 
-    if (runtimeOrigin.host === configuredUrl.host) {
+    if (
+      runtimeOrigin.host === configuredUrl.host &&
+      isBrowserUrlProtocolSafe(runtimeOrigin, configuredUrl)
+    ) {
       return configuredBaseUrl;
     }
 
