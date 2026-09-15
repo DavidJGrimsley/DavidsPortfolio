@@ -3,7 +3,7 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
-import { useColorScheme } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Theme tokens matching global.css + temp/Colors.ts
 const lightColors = {

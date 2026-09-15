@@ -22,6 +22,15 @@ import '~/global.css';
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 const ROOT_BACKGROUND_COLOR = '#20182D';
 const WEB_READY_FALLBACK_MS = 3000;
+const loadingOverlayStyle = {
+  backgroundColor: ROOT_BACKGROUND_COLOR,
+  position: 'fixed',
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  zIndex: 9999,
+} as any;
 
 const styles = StyleSheet.create({
   webViewport: {
@@ -54,15 +63,7 @@ function LoadingOverlay() {
     <View
       // Use fixed positioning on web so it covers the viewport even if the root
       // container hasn't measured yet.
-      style={{
-        backgroundColor: ROOT_BACKGROUND_COLOR,
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-        zIndex: 9999,
-      }}
+      style={loadingOverlayStyle}
     >
       <StartupLoading message="Getting things ready for you..." />
     </View>
