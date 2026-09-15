@@ -4,6 +4,7 @@ import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 const { readFirstEnvFile } = require('./env-loader.cjs');
+const { assertSsrBuild } = require('./assert-ssr-build.cjs');
 
 const repoRoot = path.resolve(process.cwd());
 
@@ -40,3 +41,6 @@ const exitCode = await runExpoExport({
 if (exitCode !== 0) {
   process.exit(exitCode || 1);
 }
+
+// Do not publish a fresh build marker for an export that cannot render loaders.
+assertSsrBuild(path.join(repoRoot, 'dist/server'));
