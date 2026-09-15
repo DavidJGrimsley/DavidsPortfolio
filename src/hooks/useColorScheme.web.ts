@@ -6,13 +6,7 @@ import { useEffect, useState } from 'react';
 // to render different styles on the client and server, these aren't directly supported in React Native
 // but can be achieved using a styling library like Nativewind.
 export function useColorScheme() {
-  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>(() => {
-    // Check if window is available (client-side)
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return 'light';
-  });
+  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
@@ -20,10 +14,16 @@ export function useColorScheme() {
     }
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
+    const updateColorScheme = () => {
+      setColorScheme(mediaQuery.matches ? 'dark' : 'light');
+    };
+
     const handleChange = (e: MediaQueryListEvent) => {
       setColorScheme(e.matches ? 'dark' : 'light');
     };
+
+    updateColorScheme();
 
     // Listen for changes
     mediaQuery.addEventListener('change', handleChange);
