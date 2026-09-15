@@ -281,6 +281,7 @@ async function main() {
       apiIndexLoaderEndpointResult,
       quantumDetailLoaderEndpointResult,
       mcpIndexResult,
+      mcpIndexLoaderEndpointResult,
     ] =
       await Promise.all([
         fetchBuildMeta(args.siteUrl, requestTimeoutMs),
@@ -329,6 +330,11 @@ async function main() {
             mustNotInclude: true,
           },
         ]),
+        fetchJsonEndpoint(
+          args.siteUrl,
+          '/_expo/loaders/public-facing/mcp/index',
+          requestTimeoutMs,
+        ),
       ]);
 
     const buildPayload = buildMetaResult.payload ?? null;
@@ -360,6 +366,7 @@ async function main() {
     const apiIndexLoaderEndpointOk = apiIndexLoaderEndpointResult.ok;
     const quantumDetailLoaderEndpointOk = quantumDetailLoaderEndpointResult.ok;
     const mcpIndexOk = mcpIndexResult.ok;
+    const mcpIndexLoaderEndpointOk = mcpIndexLoaderEndpointResult.ok;
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
@@ -379,7 +386,9 @@ async function main() {
         `quantumDetailLoaderEndpointStatus=${quantumDetailLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
         `quantumDetailLoaderEndpointOk=${quantumDetailLoaderEndpointOk} ` +
         `mcpIndexStatus=${mcpIndexResult.response?.status ?? 'unreachable'} ` +
-        `mcpIndexLoaderOk=${mcpIndexOk}`,
+        `mcpIndexLoaderOk=${mcpIndexOk} ` +
+        `mcpIndexLoaderEndpointStatus=${mcpIndexLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
+        `mcpIndexLoaderEndpointOk=${mcpIndexLoaderEndpointOk}`,
     );
 
     if (
@@ -390,7 +399,8 @@ async function main() {
       quantumDetailOk &&
       apiIndexLoaderEndpointOk &&
       quantumDetailLoaderEndpointOk &&
-      mcpIndexOk
+      mcpIndexOk &&
+      mcpIndexLoaderEndpointOk
     ) {
       console.log(
         `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and public API loader data.`,
@@ -432,7 +442,10 @@ async function main() {
       ? 'MCP index loader data is healthy'
       : (mcpIndexResult.error ??
         `MCP index loader data missing: ${mcpIndexResult.missing.join(', ')}`);
-    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}`;
+    const mcpIndexLoaderEndpointError = mcpIndexLoaderEndpointOk
+      ? 'MCP index loader endpoint is healthy'
+      : (mcpIndexLoaderEndpointResult.error ?? 'MCP index loader endpoint is unhealthy');
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${mcpIndexLoaderEndpointError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;
@@ -448,5 +461,6 @@ async function main() {
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
+  // Let pending fetch handles and diagnostic output close before exiting.
+  process.exitCode = 1;
 });
