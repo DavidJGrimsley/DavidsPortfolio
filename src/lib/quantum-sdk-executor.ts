@@ -5,6 +5,7 @@ import {
   createQuantumPublicClient,
   createQuantumRuntimeProxyClient,
 } from '@/lib/quantum-sdk-client';
+import { QUANTUM_API_BASE_URL } from '@/lib/quantum-api-config';
 
 export type QuantumSdkEndpointExecutionInput = {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -193,9 +194,9 @@ export async function executeQuantumSdkEndpoint(
     } else if (method === 'GET' && pathname === '/list_backends') {
       data = await runtimeClient.listBackends(readListBackendsOptions(searchParams), { auth: 'none' });
     } else if (method === 'GET' && pathname === '/keys') {
-      data = await requireBearerClient(input.baseUrl, input.bearerToken).listKeys({ auth: 'bearer' });
+      data = await requireBearerClient(QUANTUM_API_BASE_URL, input.bearerToken).listKeys({ auth: 'bearer' });
     } else if (method === 'GET' && pathname === '/ibm/profiles') {
-      data = await requireBearerClient(input.baseUrl, input.bearerToken).listIbmProfiles({ auth: 'bearer' });
+      data = await requireBearerClient(QUANTUM_API_BASE_URL, input.bearerToken).listIbmProfiles({ auth: 'bearer' });
     } else {
       const getJobStatusMatch = method === 'GET' ? pathname.match(/^\/jobs\/([^/]+)$/) : null;
       if (getJobStatusMatch) {
@@ -209,11 +210,11 @@ export async function executeQuantumSdkEndpoint(
             auth: 'none',
           });
         } else if (method === 'POST' && pathname === '/keys') {
-          data = await requireBearerClient(input.baseUrl, input.bearerToken).createKey((input.body ?? {}) as any, {
+          data = await requireBearerClient(QUANTUM_API_BASE_URL, input.bearerToken).createKey((input.body ?? {}) as any, {
             auth: 'bearer',
           });
         } else if (method === 'POST' && pathname === '/ibm/profiles') {
-          data = await requireBearerClient(input.baseUrl, input.bearerToken).createIbmProfile((input.body ?? {}) as any, {
+          data = await requireBearerClient(QUANTUM_API_BASE_URL, input.bearerToken).createIbmProfile((input.body ?? {}) as any, {
             auth: 'bearer',
           });
         } else {

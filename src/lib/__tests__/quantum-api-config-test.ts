@@ -163,4 +163,16 @@ describe('quantum api config', () => {
       'https://davidjgrimsley.com/api/public/quantum/v1'
     );
   });
+
+  it('keeps the configured base URL available for authenticated Quantum operations', () => {
+    setWindowLocation('http://localhost:8081');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.QUANTUM_API_BASE_URL).toBe(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
+    );
+  });
 });

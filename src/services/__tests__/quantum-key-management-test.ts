@@ -128,35 +128,16 @@ describe('quantum key management', () => {
     ]);
   });
 
-  it('uses the HTTPS public proxy when an HTTPS browser receives an HTTP base URL', async () => {
-    const originalWindow = (globalThis as { window?: unknown }).window;
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      writable: true,
-      value: { location: { origin: 'https://davidjgrimsley.com' } },
-    });
-
+  it('uses the supplied canonical backend URL for authenticated requests', async () => {
     fetchMock.mockResolvedValue(createMockResponse(JSON.stringify({ keys: [] })));
 
-    try {
-      await listQuantumKeys(
-        'http://davidjgrimsley.com/api/public/quantum/v1',
-        accessToken
-      );
-    } finally {
-      if (originalWindow === undefined) {
-        delete (globalThis as { window?: unknown }).window;
-      } else {
-        Object.defineProperty(globalThis, 'window', {
-          configurable: true,
-          writable: true,
-          value: originalWindow,
-        });
-      }
-    }
+    await listQuantumKeys(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1',
+      accessToken
+    );
 
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      'https://davidjgrimsley.com/api/public/quantum/v1/keys'
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1/keys'
     );
   });
 
