@@ -69,15 +69,7 @@ function LoadingOverlay() {
   );
 }
 
-function RootLayoutWebSSR() {
-  return (
-    <View className="flex-1 bg-themed" style={styles.webViewport}>
-      <LoadingOverlay />
-    </View>
-  );
-}
-
-function RootLayoutClient() {
+function RootLayoutContent() {
   const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
@@ -275,16 +267,14 @@ function RootLayoutClient() {
   }, [appIsReady]);
 
   if (Platform.OS === 'web') {
-    // Web: keep the server and first client render identical, then mount routes
-    // after fonts/theme are ready. This avoids mobile-width Expo Router
-    // navigator hydration mismatches.
+    // Keep the route tree mounted in the server response and first client
+    // render. The overlay still hides incomplete fonts/theme visually without
+    // removing crawlable route content from the initial HTML.
     return (
       <View className="flex-1 bg-themed" style={styles.webViewport}>
-        {appIsReady ? (
-          <View className="flex-1 bg-themed" style={styles.webViewport}>
-            <AppStack />
-          </View>
-        ) : null}
+        <View className="flex-1 bg-themed" style={styles.webViewport}>
+          <AppStack />
+        </View>
         {!appIsReady ? <LoadingOverlay /> : null}
       </View>
     );
@@ -301,7 +291,5 @@ function RootLayoutClient() {
 }
 
 export default function RootLayout() {
-  if (isTestEnv) return <AppStack />;
-  if (Platform.OS === 'web' && typeof window === 'undefined') return <RootLayoutWebSSR />;
-  return <RootLayoutClient />;
+  return isTestEnv ? <AppStack /> : <RootLayoutContent />;
 }

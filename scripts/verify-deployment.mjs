@@ -1,3 +1,5 @@
+import { verifyDetailSeoPages } from './verify-detail-seo.mjs';
+
 function parseArgs(argv) {
   const args = {
     intervalMs: 10_000,
@@ -282,6 +284,7 @@ async function main() {
       quantumDetailLoaderEndpointResult,
       mcpIndexResult,
       mcpIndexLoaderEndpointResult,
+      detailSeoResult,
     ] =
       await Promise.all([
         fetchBuildMeta(args.siteUrl, requestTimeoutMs),
@@ -335,6 +338,7 @@ async function main() {
           '/_expo/loaders/public-facing/mcp/index',
           requestTimeoutMs,
         ),
+        verifyDetailSeoPages(args.siteUrl, requestTimeoutMs),
       ]);
 
     const buildPayload = buildMetaResult.payload ?? null;
@@ -367,6 +371,7 @@ async function main() {
     const quantumDetailLoaderEndpointOk = quantumDetailLoaderEndpointResult.ok;
     const mcpIndexOk = mcpIndexResult.ok;
     const mcpIndexLoaderEndpointOk = mcpIndexLoaderEndpointResult.ok;
+    const detailSeoOk = detailSeoResult.ok;
 
     console.log(
       `[verify-deployment] ${args.label} attempt ${attempt}: ` +
@@ -388,7 +393,8 @@ async function main() {
         `mcpIndexStatus=${mcpIndexResult.response?.status ?? 'unreachable'} ` +
         `mcpIndexLoaderOk=${mcpIndexOk} ` +
         `mcpIndexLoaderEndpointStatus=${mcpIndexLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
-        `mcpIndexLoaderEndpointOk=${mcpIndexLoaderEndpointOk}`,
+        `mcpIndexLoaderEndpointOk=${mcpIndexLoaderEndpointOk} ` +
+        `detailSeoOk=${detailSeoOk}`,
     );
 
     if (
@@ -400,10 +406,11 @@ async function main() {
       apiIndexLoaderEndpointOk &&
       quantumDetailLoaderEndpointOk &&
       mcpIndexOk &&
-      mcpIndexLoaderEndpointOk
+      mcpIndexLoaderEndpointOk &&
+      detailSeoOk
     ) {
       console.log(
-        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy home page response, and public API loader data.`,
+        `[verify-deployment] ${args.label} is live at ${args.siteUrl} with a fresh build, healthy SSR detail metadata, and public route loader data.`,
       );
       return;
     }
@@ -445,7 +452,10 @@ async function main() {
     const mcpIndexLoaderEndpointError = mcpIndexLoaderEndpointOk
       ? 'MCP index loader endpoint is healthy'
       : (mcpIndexLoaderEndpointResult.error ?? 'MCP index loader endpoint is unhealthy');
-    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${mcpIndexLoaderEndpointError}`;
+    const detailSeoError = detailSeoOk
+      ? 'detail-page SSR SEO is healthy'
+      : `detail-page SSR SEO failed: ${detailSeoResult.failures.join(', ')}`;
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${mcpIndexLoaderEndpointError}; ${detailSeoError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;

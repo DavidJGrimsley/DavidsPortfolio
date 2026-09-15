@@ -149,6 +149,8 @@ jobs:
               require_grep "MCP data" "mrdj-app-mcp" /tmp/djsportfolio-mcp.html
               require_header "staging cache reset header" "^clear-site-data:.*cache.*storage" /tmp/djsportfolio-staging-host.headers
 
+              node ./scripts/verify-detail-seo.mjs "http://127.0.0.1:${PORT}"
+
               if grep -q 'Failed to load loader data' /tmp/djsportfolio-api-index.html /tmp/djsportfolio-api-quantum.html /tmp/djsportfolio-mcp.html; then
                 echo "SSR route smoke found loader failure text"
                 exit 1

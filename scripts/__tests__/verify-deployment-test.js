@@ -3,6 +3,45 @@ const http = require('node:http');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
+const DETAIL_PAGES = {
+  '/public-facing/api/quantum': {
+    title: 'Quantum API | David Grimsley',
+    description:
+      'General-purpose quantum services for games and applications: simulations, text transformations, gate operations, and more.',
+    content: 'General-purpose quantum services',
+    types: ['WebAPI', 'ItemList', 'BreadcrumbList'],
+  },
+  '/public-facing/mcp/mrdj-app-mcp': {
+    title: 'mrdj-app-mcp | MCP Server | David Grimsley',
+    description:
+      'Model Context Protocol server exposing React Native, Expo Router, and full-stack development guides as structured resources.',
+    content: 'React Native, Expo Router',
+    types: ['SoftwareApplication', 'ItemList', 'BreadcrumbList'],
+  },
+  '/public-facing/mcp/mrdj-pokemon-mcp': {
+    title: 'mrdj-pokemon-mcp | MCP Server | David Grimsley',
+    description:
+      'MCP server exposing Pokemon strategy guides and PokeAPI-style tools: Pokemon lookup/search, type effectiveness, counter suggestions, and team coverage helpers.',
+    content: 'Pokemon strategy guides',
+    types: ['SoftwareApplication', 'ItemList', 'BreadcrumbList'],
+  },
+};
+
+function renderDetailPage(request, detail, loaderData) {
+  const origin = `http://${request.headers.host}`;
+  const canonical = `${origin}${request.url}`;
+  return [
+    `<title>${detail.title}</title>`,
+    `<meta name="description" content="${detail.description}">`,
+    `<link rel="canonical" href="${canonical}">`,
+    `<meta property="og:title" content="${detail.title}">`,
+    `<meta property="og:url" content="${canonical}">`,
+    `<script type="application/ld+json">${JSON.stringify({ '@graph': detail.types.map((type) => ({ '@type': type })) })}</script>`,
+    detail.content,
+    loaderData,
+  ].join(' ');
+}
+
 test.each([
   ['/public-facing/api'],
   ['/public-facing/api/quantum'],
@@ -18,9 +57,12 @@ test.each([
       response.end(JSON.stringify({ healthy: true }));
     } else {
       response.setHeader('Content-Type', 'text/html');
+      const loaderData = request.url === missingPage ? '' : '__EXPO_ROUTER_LOADER_DATA__';
+      const detail = DETAIL_PAGES[request.url];
       response.end(
-        'David __djsportfolio_css__ _expo/static/css Quantum API quantum mrdj-app-mcp ' +
-          (request.url === missingPage ? '' : '__EXPO_ROUTER_LOADER_DATA__')
+        detail
+          ? renderDetailPage(request, detail, loaderData)
+          : `David __djsportfolio_css__ _expo/static/css Quantum API quantum mrdj-app-mcp ${loaderData}`,
       );
     }
   });
