@@ -3,6 +3,7 @@ import {
   createIbmProfile,
   createQuantumKey,
   deleteIbmProfile,
+  deleteQuantumKey,
   deleteRevokedQuantumKeys,
   listIbmProfiles,
   listQuantumKeys,
@@ -231,6 +232,19 @@ describe('quantum key management', () => {
     await expect(deleteRevokedQuantumKeys(baseUrl, accessToken)).resolves.toEqual({
       deletedCount: 4,
     });
+  });
+
+  it('sends bearer-authenticated single key delete requests', async () => {
+    fetchMock.mockResolvedValue(createMockResponse('', { status: 204 }));
+
+    await expect(deleteQuantumKey(baseUrl, accessToken, 'key/delete me')).resolves.toBeUndefined();
+
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const calledHeaders = new Headers(calledInit.headers);
+
+    expect(calledUrl).toBe(`${baseUrl}/keys/key%2Fdelete%20me`);
+    expect(calledInit.method).toBe('DELETE');
+    expect(calledHeaders.get('Authorization')).toBe(`Bearer ${accessToken}`);
   });
 
   it('throws the custom error type for non-ok responses', async () => {

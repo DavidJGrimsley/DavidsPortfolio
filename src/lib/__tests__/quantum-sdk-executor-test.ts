@@ -1,10 +1,13 @@
-import { executeQuantumSdkEndpoint } from '../quantum-sdk-executor';
-
 describe('quantum sdk endpoint executor', () => {
   const fetchMock = jest.fn();
+  const mutableEnv = process.env as Record<string, string | undefined>;
+  const originalQuantumBaseUrl = mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL;
   const originalWindow = (globalThis as { window?: unknown }).window;
 
   beforeEach(() => {
+    jest.resetModules();
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
     fetchMock.mockReset();
     global.fetch = fetchMock as unknown as typeof fetch;
     Object.defineProperty(globalThis, 'window', {
@@ -25,19 +28,32 @@ describe('quantum sdk endpoint executor', () => {
   });
 
   afterEach(() => {
-    if (originalWindow === undefined) {
-      delete (globalThis as { window?: unknown }).window;
-      return;
+    if (originalQuantumBaseUrl === undefined) {
+      delete mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL;
+    } else {
+      mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL = originalQuantumBaseUrl;
     }
 
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      writable: true,
-      value: originalWindow,
-    });
+    if (originalWindow === undefined) {
+      delete (globalThis as { window?: unknown }).window;
+    } else {
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        writable: true,
+        value: originalWindow,
+      });
+    }
+
+    jest.resetModules();
   });
 
+  function loadExecutor() {
+    return jest.requireActual('../quantum-sdk-executor') as typeof import('../quantum-sdk-executor');
+  }
+
   it('executes backend discovery through the simulator-safe runtime proxy query', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+
     const result = await executeQuantumSdkEndpoint({
       method: 'GET',
       path: '/v1/list_backends',
@@ -58,6 +74,8 @@ describe('quantum sdk endpoint executor', () => {
   });
 
   it('executes authenticated key routes against the configured Quantum backend', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ keys: [] }), {
         status: 200,

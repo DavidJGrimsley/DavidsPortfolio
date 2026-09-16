@@ -132,6 +132,28 @@ function findPressableByText(root: renderer.ReactTestInstance, text: string) {
   return undefined;
 }
 
+function findPressableByExactText(root: renderer.ReactTestInstance, text: string) {
+  const matchingNodes = root.findAll((node) => {
+    if (!('children' in node.props)) {
+      return false;
+    }
+
+    return extractText(node.props.children).trim() === text;
+  });
+
+  for (const node of matchingNodes) {
+    let current: renderer.ReactTestInstance | null = node;
+    while (current) {
+      if (typeof current.props?.onPress === 'function') {
+        return current;
+      }
+      current = current.parent;
+    }
+  }
+
+  return undefined;
+}
+
 function findPressableByIconName(root: renderer.ReactTestInstance, iconName: string) {
   const pressables = root.findAll((node) => typeof node.props?.onPress === 'function');
   return pressables.find((pressable) => {
@@ -250,5 +272,113 @@ describe('QuantumAuthDashboardCard', () => {
 
     expect(findNodesByText(testRenderer.root, 'Profile name is required.').length).toBeGreaterThan(0);
     expect(mockCreateIbmProfile).not.toHaveBeenCalled();
+  });
+
+  it('allows a rotated key delete attempt and refreshes on success', async () => {
+    mockIsSupabaseConfigured.mockReturnValue(true);
+    mockGetSupabaseBrowserClient.mockReturnValue(
+      createSupabaseClient({
+        access_token: 'token-123',
+        user: { email: 'dj@example.com' },
+      })
+    );
+    mockListQuantumKeys
+      .mockResolvedValueOnce([
+        {
+          id: 'rotated-key-1',
+          label: 'Rotated cleanup candidate',
+          maskedKey: 'qapi_rotated_********',
+          createdAt: '2026-04-01T00:00:00.000Z',
+          lastUsedAt: null,
+          revokedAt: '2026-04-02T00:00:00.000Z',
+          status: 'rotated',
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    let testRenderer!: renderer.ReactTestRenderer;
+    await act(async () => {
+      testRenderer = renderer.create(
+        <QuantumAuthDashboardCard baseUrl="https://example.com/public-facing/api/quantum/v1" />
+      );
+    });
+
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    expect(findNodesByText(testRenderer.root, 'Rotated cleanup candidate').length).toBeGreaterThan(0);
+    expect(findNodesByText(testRenderer.root, 'Rotated').length).toBeGreaterThan(0);
+
+    const deleteButton = findPressableByExactText(testRenderer.root, 'Delete');
+    expect(deleteButton).toBeDefined();
+
+    await act(async () => {
+      deleteButton?.props.onPress();
+    });
+
+    await flushPromises();
+
+    const confirmMock = ((globalThis as unknown) as { window?: { confirm?: jest.Mock } }).window?.confirm;
+    expect(confirmMock).toHaveBeenCalledWith('Delete rotated key "Rotated cleanup candidate" permanently?');
+    expect(mockDeleteQuantumKey).toHaveBeenCalledWith(
+      'https://example.com/public-facing/api/quantum/v1',
+      'token-123',
+      'rotated-key-1'
+    );
+    expect(mockListQuantumKeys).toHaveBeenCalledTimes(2);
+  });
+
+  it('explains backend support is still required when rotated key delete is rejected', async () => {
+    mockIsSupabaseConfigured.mockReturnValue(true);
+    mockGetSupabaseBrowserClient.mockReturnValue(
+      createSupabaseClient({
+        access_token: 'token-123',
+        user: { email: 'dj@example.com' },
+      })
+    );
+    mockListQuantumKeys.mockResolvedValue([
+      {
+        id: 'rotated-key-2',
+        label: 'Blocked rotated key',
+        maskedKey: 'qapi_blocked_********',
+        createdAt: '2026-04-01T00:00:00.000Z',
+        lastUsedAt: null,
+        revokedAt: '2026-04-02T00:00:00.000Z',
+        status: 'rotated',
+      },
+    ]);
+    mockDeleteQuantumKey.mockRejectedValue(
+      Object.assign(new Error('Only revoked keys can be deleted.'), { status: 409 })
+    );
+
+    let testRenderer!: renderer.ReactTestRenderer;
+    await act(async () => {
+      testRenderer = renderer.create(
+        <QuantumAuthDashboardCard baseUrl="https://example.com/public-facing/api/quantum/v1" />
+      );
+    });
+
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    const deleteButton = findPressableByExactText(testRenderer.root, 'Delete');
+    expect(deleteButton).toBeDefined();
+
+    await act(async () => {
+      deleteButton?.props.onPress();
+    });
+
+    await flushPromises();
+
+    expect(
+      findNodesByText(testRenderer.root, 'Rotated key cleanup still needs backend support.').length
+    ).toBeGreaterThan(0);
+    expect(mockDeleteQuantumKey).toHaveBeenCalledWith(
+      'https://example.com/public-facing/api/quantum/v1',
+      'token-123',
+      'rotated-key-2'
+    );
   });
 });

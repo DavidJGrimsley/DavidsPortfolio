@@ -97,6 +97,19 @@ function formatTimestamp(value?: string | null) {
   return date.toLocaleString();
 }
 
+function isConflictError(error: unknown) {
+  if (error instanceof QuantumApiError && error.status === 409) {
+    return true;
+  }
+
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status?: unknown }).status === 409
+  );
+}
+
 function createEmptyIbmProfileForm(): IbmProfileFormState {
   return {
     profileName: '',
@@ -483,12 +496,13 @@ export function ApiAuthDashboardCard({
     [accessToken, baseUrl, rawKeyReveal?.label, refreshKeys]
   );
 
-  const handleDeleteRevokedKey = useCallback(
+  const handleDeleteInactiveKey = useCallback(
     async (key: QuantumKeyRecord) => {
       if (!accessToken) return;
-      if (key.status !== 'revoked') return;
+      if (key.status !== 'revoked' && key.status !== 'rotated') return;
 
-      const confirmed = await confirmAction(`Delete revoked key "${key.label}" permanently?`);
+      const statusLabel = key.status === 'rotated' ? 'rotated' : 'revoked';
+      const confirmed = await confirmAction(`Delete ${statusLabel} key "${key.label}" permanently?`);
       if (!confirmed) return;
 
       setBusyKeyId(key.id);
@@ -501,7 +515,13 @@ export function ApiAuthDashboardCard({
         }
         await refreshKeys();
       } catch (error) {
-        setKeysError(error instanceof Error ? error.message : 'Unable to delete this revoked key.');
+        if (key.status === 'rotated' && isConflictError(error)) {
+          setKeysError(
+            'Rotated key cleanup still needs backend support. The key is already inactive, but the server only deletes revoked keys right now.'
+          );
+        } else {
+          setKeysError(error instanceof Error ? error.message : `Unable to delete this ${statusLabel} key.`);
+        }
       } finally {
         setBusyKeyId(null);
       }
@@ -1252,10 +1272,10 @@ export function ApiAuthDashboardCard({
                             ) : null}
                           </View>
 
-                          {key.status === 'revoked' ? (
+                          {key.status === 'revoked' || key.status === 'rotated' ? (
                             <Pressable
                               disabled={isBusy}
-                              onPress={() => handleDeleteRevokedKey(key)}
+                              onPress={() => handleDeleteInactiveKey(key)}
                               style={({ pressed }) => ({
                                 alignItems: 'center',
                                 backgroundColor: backgroundColor,
