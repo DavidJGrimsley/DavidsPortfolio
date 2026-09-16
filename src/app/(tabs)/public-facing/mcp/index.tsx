@@ -7,6 +7,8 @@ import { WhatIsMCPCard } from '~/src/components/PublicFacing/mcp/WhatIsMCPCard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
 import { LoadingComponent } from '@/components/UI/LoadingComponent';
 import type { RegistryResponse, MCPPortfolio } from '~/src/types/registry';
+import { getMcpFallbackPortfolio } from '@/data/mcpFallbackPortfolios';
+import mcpServersData from '@json/mcpServers.json';
 
 // =============================================================================
 // TYPES
@@ -36,6 +38,11 @@ type LoaderRequest = {
   url?: string;
 };
 
+const FALLBACK_MCP_SERVERS = (mcpServersData.mcpServers ?? []) as {
+  id: string;
+  icon?: string;
+}[];
+
 function getRequestOrigin(request?: LoaderRequest) {
   if (!request?.url) return null;
   try {
@@ -43,6 +50,29 @@ function getRequestOrigin(request?: LoaderRequest) {
   } catch {
     return null;
   }
+}
+
+function buildFallbackServerCard(server: { id: string; icon?: string }): MCPCardItem {
+  const portfolio = getMcpFallbackPortfolio(server.id);
+  const mcpInfo = portfolio.mcp;
+
+  return {
+    id: server.id,
+    name: mcpInfo.name || server.id,
+    version: mcpInfo.version || '1.0.0',
+    icon: mcpInfo.icon ?? server.icon ?? '',
+    description: mcpInfo.description ?? '',
+    status: mcpInfo.status || 'active',
+    featured: mcpInfo.featured ?? false,
+    tags: mcpInfo.tags ?? [],
+    resources: portfolio.resources?.length ?? 0,
+    tools: portfolio.tools?.length ?? 0,
+    prompts: portfolio.prompts?.length ?? 0,
+  };
+}
+
+function buildFallbackServerCards() {
+  return FALLBACK_MCP_SERVERS.map(buildFallbackServerCard);
 }
 
 // =============================================================================
@@ -53,71 +83,77 @@ export async function loader(
   _params: Record<string, string | string[]>
 ): Promise<LoaderData> {
   const origin = getRequestOrigin(request) || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8082');
-  
-  const registryRes = await fetch(`${origin}/api/registry?type=mcp`, {
-    cache: 'no-store',
-  });
-  
-  if (!registryRes.ok) {
-    throw new Error(`Registry fetch failed: ${registryRes.status}`);
-  }
-  
-  const response = await registryRes.json();
-  const registry: RegistryResponse = response.data || response;
-  const mcpServers = registry.servers || [];
-  
-  if (mcpServers.length === 0) {
-    throw new Error('No MCP servers found in registry');
-  }
-  
-  const mcpPromises = mcpServers.map(async (server) => {
-    try {
-      const portfolioRes = await fetch(`${origin}/api/portfolio/${server.id}`, {
-        cache: 'no-store',
-      });
-      if (!portfolioRes.ok) {
-        console.warn(`Portfolio fetch failed for ${server.id}`);
-        return null;
-      }
-      const portfolioResponse = await portfolioRes.json();
-      const portfolio: MCPPortfolio = portfolioResponse?.data?.portfolio ?? portfolioResponse;
-      const mcpInfo = portfolio?.mcp ?? (portfolio as { server?: MCPPortfolio['mcp'] })?.server;
-      
-      if (!portfolio || !mcpInfo) {
-        console.warn(`Invalid portfolio structure for ${server.id}`);
-        return null;
-      }
-      
-      return {
-        id: server.id,
-        name: mcpInfo.name || server.id,
-        version: mcpInfo.version || '1.0.0',
-        icon: mcpInfo.icon ?? '',
-        description: mcpInfo.description ?? '',
-        status: mcpInfo.status || 'active',
-        featured: mcpInfo.featured ?? false,
-        tags: mcpInfo.tags ?? [],
-        resources: portfolio.resources?.length ?? 0,
-        tools: portfolio.tools?.length ?? 0,
-        prompts: portfolio.prompts?.length ?? 0,
-      } as MCPCardItem;
-    } catch (err) {
-      console.warn(`Error fetching portfolio for ${server.id}:`, err);
-      return null;
+
+  try {
+    const registryRes = await fetch(`${origin}/api/registry?type=mcp`, {
+      cache: 'no-store',
+    });
+
+    if (!registryRes.ok) {
+      throw new Error(`Registry fetch failed: ${registryRes.status}`);
     }
-  });
-  
-  const results = await Promise.all(mcpPromises);
-  const servers = results.filter((s): s is MCPCardItem => s !== null);
-  
-  if (servers.length === 0) {
-    throw new Error('No valid MCP servers found');
+
+    const response = await registryRes.json();
+    const registry: RegistryResponse = response.data || response;
+    const mcpServers = registry.servers || [];
+
+    if (mcpServers.length === 0) {
+      throw new Error('No MCP servers found in registry');
+    }
+
+    const mcpPromises = mcpServers.map(async (server) => {
+      try {
+        const portfolioRes = await fetch(`${origin}/api/portfolio/${server.id}`, {
+          cache: 'no-store',
+        });
+        if (!portfolioRes.ok) {
+          console.warn(`Portfolio fetch failed for ${server.id}`);
+          return null;
+        }
+        const portfolioResponse = await portfolioRes.json();
+        const portfolio: MCPPortfolio = portfolioResponse?.data?.portfolio ?? portfolioResponse;
+        const mcpInfo = portfolio?.mcp ?? (portfolio as { server?: MCPPortfolio['mcp'] })?.server;
+
+        if (!portfolio || !mcpInfo) {
+          console.warn(`Invalid portfolio structure for ${server.id}`);
+          return null;
+        }
+
+        return {
+          id: server.id,
+          name: mcpInfo.name || server.id,
+          version: mcpInfo.version || '1.0.0',
+          icon: mcpInfo.icon ?? '',
+          description: mcpInfo.description ?? '',
+          status: mcpInfo.status || 'active',
+          featured: mcpInfo.featured ?? false,
+          tags: mcpInfo.tags ?? [],
+          resources: portfolio.resources?.length ?? 0,
+          tools: portfolio.tools?.length ?? 0,
+          prompts: portfolio.prompts?.length ?? 0,
+        } as MCPCardItem;
+      } catch (err) {
+        console.warn(`Error fetching portfolio for ${server.id}:`, err);
+        return buildFallbackServerCard({ id: server.id });
+      }
+    });
+
+    const results = await Promise.all(mcpPromises);
+    const servers = results.filter((s): s is MCPCardItem => s !== null);
+
+    return {
+      servers: servers.length > 0 ? servers : buildFallbackServerCards(),
+      loadedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('MCP loader error:', error);
+
+    return {
+      servers: buildFallbackServerCards(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+      loadedAt: new Date().toISOString(),
+    };
   }
-  
-  return {
-    servers,
-    loadedAt: new Date().toISOString(),
-  };
 }
 
 function MCPListLoadingState({ label }: { label: string }) {

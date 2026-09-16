@@ -28,6 +28,7 @@ import {
   SyncStatus,
 } from "~/src/components/PublicFacing/PortfolioShared";
 import { SITE_URL, joinUrl } from "@/constants/seo";
+import { QUANTUM_API_BASE_URL } from "@/lib/quantum-api-config";
 import type {
   APIPortfolio,
   PortfolioComponentSlot,
@@ -130,6 +131,10 @@ function isLoopbackHost(hostname: string) {
   );
 }
 
+function isBrowserUrlProtocolSafe(runtimeOrigin: URL, configuredUrl: URL) {
+  return !(runtimeOrigin.protocol === "https:" && configuredUrl.protocol === "http:");
+}
+
 function resolveBrowserApiBaseUrl(
   api: APIPortfolio["api"],
   isWebRuntime: boolean,
@@ -153,7 +158,10 @@ function resolveBrowserApiBaseUrl(
     const runtimeOrigin = new URL(window.location.origin);
     const configuredUrl = new URL(configuredBaseUrl);
 
-    if (runtimeOrigin.host === configuredUrl.host) {
+    if (
+      runtimeOrigin.host === configuredUrl.host &&
+      isBrowserUrlProtocolSafe(runtimeOrigin, configuredUrl)
+    ) {
       return configuredBaseUrl;
     }
 
@@ -628,6 +636,8 @@ function APIDetailContent() {
   const { api } = portfolio;
   const isWebRuntime = Platform.OS === "web";
   const apiBaseUrl = resolveBrowserApiBaseUrl(api, isWebRuntime);
+  const quantumAuthBaseUrl =
+    api.id === "quantum" ? QUANTUM_API_BASE_URL : apiBaseUrl;
   const endpoints = portfolio.endpoints ?? [];
   const sections = portfolio.sections ?? [];
   const components = portfolio.components ?? [];
@@ -697,7 +707,7 @@ function APIDetailContent() {
         <ClientOnly>
           <ApiAuthDashboardCard
             apiName={api.name}
-            baseUrl={apiBaseUrl}
+            baseUrl={quantumAuthBaseUrl}
             dashboardDescription={apiAuth?.dashboardDescription}
             supportsIbmProfiles={Boolean(apiAuth?.supportsIbmProfiles)}
           />

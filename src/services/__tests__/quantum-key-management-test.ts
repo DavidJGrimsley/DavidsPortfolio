@@ -3,6 +3,7 @@ import {
   createIbmProfile,
   createQuantumKey,
   deleteIbmProfile,
+  deleteQuantumKey,
   deleteRevokedQuantumKeys,
   listIbmProfiles,
   listQuantumKeys,
@@ -66,7 +67,7 @@ describe('quantum key management', () => {
                 masked_key: ' qk_live_abc ',
                 created_at: '2026-03-01T10:00:00.000Z',
                 last_used_at: '2026-03-30T10:00:00.000Z',
-                status: 'revoked',
+                status: 'REVOKED',
               },
               {
                 id: 'key-002',
@@ -126,6 +127,19 @@ describe('quantum key management', () => {
         status: 'active',
       },
     ]);
+  });
+
+  it('uses the supplied canonical backend URL for authenticated requests', async () => {
+    fetchMock.mockResolvedValue(createMockResponse(JSON.stringify({ keys: [] })));
+
+    await listQuantumKeys(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1',
+      accessToken
+    );
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1/keys'
+    );
   });
 
   it('normalizes mutation payloads from nested response shapes', async () => {
@@ -218,6 +232,19 @@ describe('quantum key management', () => {
     await expect(deleteRevokedQuantumKeys(baseUrl, accessToken)).resolves.toEqual({
       deletedCount: 4,
     });
+  });
+
+  it('sends bearer-authenticated single key delete requests', async () => {
+    fetchMock.mockResolvedValue(createMockResponse('', { status: 204 }));
+
+    await expect(deleteQuantumKey(baseUrl, accessToken, 'key/delete me')).resolves.toBeUndefined();
+
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const calledHeaders = new Headers(calledInit.headers);
+
+    expect(calledUrl).toBe(`${baseUrl}/keys/key%2Fdelete%20me`);
+    expect(calledInit.method).toBe('DELETE');
+    expect(calledHeaders.get('Authorization')).toBe(`Bearer ${accessToken}`);
   });
 
   it('throws the custom error type for non-ok responses', async () => {

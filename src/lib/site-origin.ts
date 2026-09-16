@@ -2,7 +2,6 @@ import { SITE_URL } from '@/constants/seo';
 import { readTrimmedPublicRuntimeConfigValue } from '@/lib/runtime-config';
 
 const DEFAULT_SITE_ORIGIN = SITE_URL;
-const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
 function parseAbsoluteSiteOrigin(rawOrigin: string): string {
   let parsed: URL;
@@ -51,18 +50,6 @@ function readRuntimeWindowOrigin(): string {
   return '';
 }
 
-function isLoopbackOrigin(origin: string): boolean {
-  if (!origin) {
-    return false;
-  }
-
-  try {
-    return LOOPBACK_HOSTNAMES.has(new URL(origin).hostname);
-  } catch {
-    return false;
-  }
-}
-
 export function resolveSiteOrigin(): string {
   const configuredOrigin = readConfiguredSiteOrigin();
   if (configuredOrigin) {
@@ -79,22 +66,9 @@ export function resolveSiteOrigin(): string {
 
 export function resolveBrowserSiteOrigin(): string {
   const runtimeOrigin = readRuntimeWindowOrigin();
-  if (isLoopbackOrigin(runtimeOrigin)) {
-    return runtimeOrigin;
-  }
-
-  const configuredOrigin = readConfiguredSiteOrigin();
-  if (isLoopbackOrigin(configuredOrigin) && runtimeOrigin) {
-    return runtimeOrigin;
-  }
-
-  if (configuredOrigin) {
-    return configuredOrigin;
-  }
-
   if (runtimeOrigin) {
     return runtimeOrigin;
   }
 
-  return DEFAULT_SITE_ORIGIN;
+  return readConfiguredSiteOrigin() || DEFAULT_SITE_ORIGIN;
 }

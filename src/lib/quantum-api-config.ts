@@ -64,6 +64,10 @@ function isLoopbackHost(hostname: string) {
   );
 }
 
+export function isBrowserUrlProtocolSafe(runtimeOrigin: URL, configuredUrl: URL) {
+  return !(runtimeOrigin.protocol === 'https:' && configuredUrl.protocol === 'http:');
+}
+
 export function resolveQuantumBrowserApiBaseUrl(
   configuredBaseUrl = QUANTUM_API_BASE_URL,
   isWebRuntime = typeof window !== 'undefined'
@@ -78,7 +82,11 @@ export function resolveQuantumBrowserApiBaseUrl(
   }
 
   const configuredUrl = parseUrl(configuredBaseUrl);
-  if (configuredUrl && runtimeOrigin.host === configuredUrl.host) {
+  if (
+    configuredUrl &&
+    runtimeOrigin.host === configuredUrl.host &&
+    isBrowserUrlProtocolSafe(runtimeOrigin, configuredUrl)
+  ) {
     return configuredBaseUrl;
   }
 

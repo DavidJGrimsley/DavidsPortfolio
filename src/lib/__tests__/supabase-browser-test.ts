@@ -43,9 +43,7 @@ describe('supabase browser auth redirect', () => {
     });
   }
 
-  it('uses the configured hosted origin for OAuth redirects', () => {
-    // Hosted deployments serve EXPO_PUBLIC_SITE_ORIGIN through server.js runtime
-    // config, so OAuth redirects use the environment-specific origin contract.
+  it('uses the current hosted browser origin for OAuth redirects', () => {
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN =
       'https://quizzical-hofstadter.108-175-12-95.plesk.page';
     setWindowOrigin('https://davidjgrimsley.com');
@@ -53,7 +51,7 @@ describe('supabase browser auth redirect', () => {
     const supabaseBrowser = loadSupabaseBrowser();
 
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
-      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum',
+      'https://davidjgrimsley.com/public-facing/api/quantum',
     );
   });
 

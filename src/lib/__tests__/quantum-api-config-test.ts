@@ -151,4 +151,28 @@ describe('quantum api config', () => {
       'https://davidjgrimsley.com/public-facing/api/quantum/v1'
     );
   });
+
+  it('uses the same-origin proxy when an HTTPS page has an HTTP same-host base URL', () => {
+    setWindowLocation('https://davidjgrimsley.com');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'http://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
+      'https://davidjgrimsley.com/api/public/quantum/v1'
+    );
+  });
+
+  it('keeps the configured base URL available for authenticated Quantum operations', () => {
+    setWindowLocation('http://localhost:8081');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.QUANTUM_API_BASE_URL).toBe(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
+    );
+  });
 });
