@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Image, Pressable, View, useColorScheme } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Image, Platform, Pressable, View } from "react-native";
 import { ThemedText } from "@/components/UI/ThemedText";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 type PieceCardProps = {
   title: string;
@@ -12,6 +13,27 @@ type PieceCardProps = {
   maxWidth?: number;
   className?: string;
 };
+
+type PieceCardImageProps = {
+  source: string;
+  square: boolean;
+};
+
+/**
+ * react-native-web's Image can render a different placeholder wrapper between
+ * the server response and browser hydration. Web cards use a CSS background on
+ * the stable container View instead; native keeps the Image component.
+ */
+function PieceCardImage({ source, square }: PieceCardImageProps) {
+  return (
+    <Image
+      source={{ uri: source }}
+      className={square ? "w-full h-full" : "w-full"}
+      style={square ? undefined : { height: 180 }}
+      resizeMode="cover"
+    />
+  );
+}
 
 export function PieceCard({
   title,
@@ -25,10 +47,26 @@ export function PieceCard({
 }: PieceCardProps) {
   const colorScheme = useColorScheme();
   const [isHovered, setIsHovered] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const canUseHoverState = Platform.OS !== "web" || hasHydrated;
+  const showHoveredState = canUseHoverState && isHovered;
 
-  const containerClassName = `${isHovered ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
-  const titleClassName = `detail-title leading-tight ${isHovered ? "text-white-or-black" : "text-secondary"}`;
-  const captionClassName = `detail-body leading-relaxed mt-[1%] ${isHovered ? "text-white-or-black" : "text-themed"}`;
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
+  const containerClassName = `${showHoveredState ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
+  const titleClassName = `detail-title leading-tight ${showHoveredState ? "text-white-or-black" : "text-secondary"}`;
+  const captionClassName = `detail-body leading-relaxed mt-[1%] ${showHoveredState ? "text-white-or-black" : "text-themed"}`;
+  const imageContainerStyle = Platform.OS === "web" && imageSource
+    ? {
+        ...(squareImage ? { aspectRatio: 1 } : { height: 180 }),
+        backgroundImage: `url(${JSON.stringify(imageSource)})`,
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+      } as any
+    : squareImage ? { aspectRatio: 1 } : undefined;
 
   return (
     <Pressable
@@ -52,15 +90,10 @@ export function PieceCard({
     >
       {imageSource ? (
         <View
-          className={`overflow-hidden rounded-[1.2%] ${isHovered ? "bg-themed" : "bg-accent"} mb-[2%]`}
-          style={squareImage ? { aspectRatio: 1 } : undefined}
+          className={`overflow-hidden rounded-[1.2%] ${showHoveredState ? "bg-themed" : "bg-accent"} mb-[2%]`}
+          style={imageContainerStyle}
         >
-          <Image
-            source={{ uri: imageSource }}
-            className={squareImage ? "w-full h-full" : "w-full"}
-            style={squareImage ? undefined : { height: 180 }}
-            resizeMode="cover"
-          />
+          {Platform.OS === "web" ? null : <PieceCardImage source={imageSource} square={squareImage} />}
         </View>
       ) : null}
 

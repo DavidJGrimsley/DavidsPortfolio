@@ -22,6 +22,15 @@ import '~/global.css';
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 const ROOT_BACKGROUND_COLOR = '#20182D';
 const WEB_READY_FALLBACK_MS = 3000;
+const loadingOverlayStyle = {
+  backgroundColor: ROOT_BACKGROUND_COLOR,
+  position: 'fixed',
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  zIndex: 9999,
+} as any;
 
 const styles = StyleSheet.create({
   webViewport: {
@@ -54,30 +63,14 @@ function LoadingOverlay() {
     <View
       // Use fixed positioning on web so it covers the viewport even if the root
       // container hasn't measured yet.
-      style={{
-        backgroundColor: ROOT_BACKGROUND_COLOR,
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-        zIndex: 9999,
-      }}
+      style={loadingOverlayStyle}
     >
       <StartupLoading message="Getting things ready for you..." />
     </View>
   );
 }
 
-function RootLayoutWebSSR() {
-  return (
-    <View className="flex-1 bg-themed" style={styles.webViewport}>
-      <LoadingOverlay />
-    </View>
-  );
-}
-
-function RootLayoutClient() {
+function RootLayoutContent() {
   const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
@@ -275,16 +268,14 @@ function RootLayoutClient() {
   }, [appIsReady]);
 
   if (Platform.OS === 'web') {
-    // Web: keep the server and first client render identical, then mount routes
-    // after fonts/theme are ready. This avoids mobile-width Expo Router
-    // navigator hydration mismatches.
+    // Keep the route tree mounted in the server response and first client
+    // render. The overlay still hides incomplete fonts/theme visually without
+    // removing crawlable route content from the initial HTML.
     return (
       <View className="flex-1 bg-themed" style={styles.webViewport}>
-        {appIsReady ? (
-          <View className="flex-1 bg-themed" style={styles.webViewport}>
-            <AppStack />
-          </View>
-        ) : null}
+        <View className="flex-1 bg-themed" style={styles.webViewport}>
+          <AppStack />
+        </View>
         {!appIsReady ? <LoadingOverlay /> : null}
       </View>
     );
@@ -301,7 +292,5 @@ function RootLayoutClient() {
 }
 
 export default function RootLayout() {
-  if (isTestEnv) return <AppStack />;
-  if (Platform.OS === 'web' && typeof window === 'undefined') return <RootLayoutWebSSR />;
-  return <RootLayoutClient />;
+  return isTestEnv ? <AppStack /> : <RootLayoutContent />;
 }

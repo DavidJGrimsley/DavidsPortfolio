@@ -369,7 +369,7 @@ function normalizeKeyRecord(input: unknown): QuantumKeyRecord | null {
   }
 
   const revokedAt = pickString(record, 'revoked_at', 'revokedAt');
-  const statusValue = pickString(record, 'status', 'state');
+  const statusValue = pickString(record, 'status', 'state')?.toLowerCase();
   const normalizedStatus =
     statusValue === 'rotated'
       ? 'rotated'

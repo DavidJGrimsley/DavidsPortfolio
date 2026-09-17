@@ -19,6 +19,7 @@ import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { CompanyButton } from './CompanyButton';
 import {
+  getSupabaseAuthFlowType,
   getQuantumAuthRedirectUrl,
   getSupabaseBrowserClient,
   getSupabaseConfigError,
@@ -73,6 +74,8 @@ const BRAND_COLORS = {
   creatisphere: { primary: '#ff5e00', secondary: '#1058bc' },
   higher: { primary: '#228B22', secondary: '#C3B091' },
 } as const;
+const AUTH_CALLBACK_FAILURE_MESSAGE =
+  'We could not finish sign in from this callback. On the staging domain, use the Plesk "Continue to website" prompt first, then start sign in again from this page.';
 
 function withAlpha(hex: string, alpha: number) {
   const normalized = hex.replace('#', '').trim();
@@ -95,6 +98,19 @@ function formatTimestamp(value?: string | null) {
   }
 
   return date.toLocaleString();
+}
+
+function isConflictError(error: unknown) {
+  if (error instanceof QuantumApiError && error.status === 409) {
+    return true;
+  }
+
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status?: unknown }).status === 409
+  );
 }
 
 function createEmptyIbmProfileForm(): IbmProfileFormState {
@@ -128,6 +144,43 @@ function confirmAction(message: string): Promise<boolean> {
       { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
     ]);
   });
+}
+
+function readBrowserAuthCallbackState() {
+  if (typeof window === 'undefined') {
+    return {
+      error: null as string | null,
+      hasAuthCallback: false,
+      hasCodeCallback: false,
+      hasImplicitCallback: false,
+    };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const authError =
+    params.get('error_description') ??
+    params.get('error') ??
+    hashParams.get('error_description') ??
+    hashParams.get('error');
+  const hasCodeCallback = params.has('code');
+  const hasImplicitCallback =
+    params.has('access_token') ||
+    params.has('refresh_token') ||
+    hashParams.has('access_token') ||
+    hashParams.has('refresh_token');
+  const hasAuthCallback =
+    hasCodeCallback ||
+    hasImplicitCallback ||
+    params.has('token_hash') ||
+    hashParams.has('token_hash');
+
+  return {
+    error: authError ? authError.replace(/\+/g, ' ') : null,
+    hasAuthCallback,
+    hasCodeCallback,
+    hasImplicitCallback,
+  };
 }
 
 export function ApiAuthDashboardCard({
@@ -243,6 +296,18 @@ export function ApiAuthDashboardCard({
     }
 
     const bootstrapSession = async () => {
+      const callbackState = readBrowserAuthCallbackState();
+      if (
+        callbackState.hasCodeCallback &&
+        !callbackState.hasImplicitCallback &&
+        getSupabaseAuthFlowType() === 'implicit'
+      ) {
+        setSession(null);
+        setAuthError(AUTH_CALLBACK_FAILURE_MESSAGE);
+        setBootstrapping(false);
+        return;
+      }
+
       const { data, error } = await supabaseClient.auth.getSession();
       if (!isActive) return;
 
@@ -259,6 +324,13 @@ export function ApiAuthDashboardCard({
       }
 
       setSession(data.session);
+      if (data.session) {
+        setAuthError(null);
+      } else if (callbackState.error) {
+        setAuthError(callbackState.error);
+      } else if (callbackState.hasAuthCallback) {
+        setAuthError(AUTH_CALLBACK_FAILURE_MESSAGE);
+      }
       setBootstrapping(false);
     };
 
@@ -299,24 +371,6 @@ export function ApiAuthDashboardCard({
       refreshIbmProfiles();
     }
   }, [accessToken, refreshIbmProfiles, refreshKeys, supportsIbmProfiles]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const oauthError =
-      params.get('error_description') ??
-      params.get('error') ??
-      hashParams.get('error_description') ??
-      hashParams.get('error');
-
-    if (oauthError) {
-      setAuthError(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
-    }
-  }, []);
 
   const handleMagicLink = useCallback(async () => {
     if (!supabaseClient) return;
@@ -483,12 +537,13 @@ export function ApiAuthDashboardCard({
     [accessToken, baseUrl, rawKeyReveal?.label, refreshKeys]
   );
 
-  const handleDeleteRevokedKey = useCallback(
+  const handleDeleteInactiveKey = useCallback(
     async (key: QuantumKeyRecord) => {
       if (!accessToken) return;
-      if (key.status !== 'revoked') return;
+      if (key.status !== 'revoked' && key.status !== 'rotated') return;
 
-      const confirmed = await confirmAction(`Delete revoked key "${key.label}" permanently?`);
+      const statusLabel = key.status === 'rotated' ? 'rotated' : 'revoked';
+      const confirmed = await confirmAction(`Delete ${statusLabel} key "${key.label}" permanently?`);
       if (!confirmed) return;
 
       setBusyKeyId(key.id);
@@ -501,7 +556,13 @@ export function ApiAuthDashboardCard({
         }
         await refreshKeys();
       } catch (error) {
-        setKeysError(error instanceof Error ? error.message : 'Unable to delete this revoked key.');
+        if (key.status === 'rotated' && isConflictError(error)) {
+          setKeysError(
+            'Rotated key cleanup still needs backend support. The key is already inactive, but the server only deletes revoked keys right now.'
+          );
+        } else {
+          setKeysError(error instanceof Error ? error.message : `Unable to delete this ${statusLabel} key.`);
+        }
       } finally {
         setBusyKeyId(null);
       }
@@ -1252,10 +1313,10 @@ export function ApiAuthDashboardCard({
                             ) : null}
                           </View>
 
-                          {key.status === 'revoked' ? (
+                          {key.status === 'revoked' || key.status === 'rotated' ? (
                             <Pressable
                               disabled={isBusy}
-                              onPress={() => handleDeleteRevokedKey(key)}
+                              onPress={() => handleDeleteInactiveKey(key)}
                               style={({ pressed }) => ({
                                 alignItems: 'center',
                                 backgroundColor: backgroundColor,

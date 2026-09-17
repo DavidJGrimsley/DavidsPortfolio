@@ -1,4 +1,5 @@
 import { loadServerRuntimeEnv } from '@/server/runtime-env';
+import { resolveRequestOrigin } from '@/server/request-origin';
 
 const DEFAULT_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const PROXY_ROUTE_PREFIX = '/api/quantum-backend';
@@ -198,11 +199,7 @@ function appendVary(headers: Headers, value: string) {
 }
 
 function getRequestOrigin(request: Request) {
-  try {
-    return new URL(request.url).origin;
-  } catch {
-    return null;
-  }
+  return resolveRequestOrigin(request);
 }
 
 function isOriginAllowed(

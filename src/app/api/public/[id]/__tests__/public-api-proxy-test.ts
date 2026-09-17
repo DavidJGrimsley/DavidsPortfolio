@@ -70,6 +70,23 @@ describe('dynamic public API proxy', () => {
     expect(calledUrl).toBe('https://davidjgrimsley.com/public-facing/api/quantum/v1/health');
   });
 
+  it('allows staging same-origin requests when Plesk forwards to an internal http URL', async () => {
+    const response = await GET(
+      new Request('http://quizzical-hofstadter.108-175-12-95.plesk.page/api/public/quantum/v1/health', {
+        method: 'GET',
+        headers: {
+          origin: 'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+          'x-forwarded-proto': 'https',
+          'x-forwarded-host': 'quizzical-hofstadter.108-175-12-95.plesk.page',
+        },
+      }),
+      { id: 'quantum', segments: ['v1', 'health'] }
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects same-host api/public self-proxy loops', async () => {
     process.env.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
       'https://davidjgrimsley.com/api/public/quantum/v1';

@@ -111,6 +111,9 @@ describe('quantum api config', () => {
     expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe(
       'http://localhost:3000/api/public/quantum/v1'
     );
+    expect(config.resolveQuantumEndpointBaseUrl('bearer_jwt', true)).toBe(
+      'http://localhost:3000/api/public/quantum/v1'
+    );
   });
 
   it('uses the dynamic public API proxy path on Plesk staging hosts', () => {
@@ -148,6 +151,30 @@ describe('quantum api config', () => {
       'https://davidjgrimsley.com/public-facing/api/quantum/v1'
     );
     expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, false)).toBe(
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1'
+    );
+  });
+
+  it('uses the same-origin proxy when an HTTPS page has an HTTP same-host base URL', () => {
+    setWindowLocation('https://davidjgrimsley.com');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'http://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.resolveQuantumBrowserApiBaseUrl(config.QUANTUM_API_BASE_URL, true)).toBe(
+      'https://davidjgrimsley.com/api/public/quantum/v1'
+    );
+  });
+
+  it('keeps the configured base URL available for authenticated Quantum operations', () => {
+    setWindowLocation('http://localhost:8081');
+    mutableEnv.EXPO_PUBLIC_QUANTUM_API_BASE_URL =
+      'https://davidjgrimsley.com/public-facing/api/quantum/v1';
+
+    const config = loadConfig();
+
+    expect(config.QUANTUM_API_BASE_URL).toBe(
       'https://davidjgrimsley.com/public-facing/api/quantum/v1'
     );
   });

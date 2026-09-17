@@ -1,6 +1,7 @@
 describe('supabase browser auth redirect', () => {
   const mutableEnv = process.env as Record<string, string | undefined>;
   const originalSiteOrigin = mutableEnv.EXPO_PUBLIC_SITE_ORIGIN;
+  const originalAuthFlow = mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW;
   const originalWindow = (globalThis as { window?: unknown }).window;
 
   afterEach(() => {
@@ -8,6 +9,12 @@ describe('supabase browser auth redirect', () => {
       delete mutableEnv.EXPO_PUBLIC_SITE_ORIGIN;
     } else {
       mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = originalSiteOrigin;
+    }
+
+    if (originalAuthFlow === undefined) {
+      delete mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW;
+    } else {
+      mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW = originalAuthFlow;
     }
 
     if (originalWindow === undefined) {
@@ -43,9 +50,7 @@ describe('supabase browser auth redirect', () => {
     });
   }
 
-  it('uses the configured hosted origin for OAuth redirects', () => {
-    // Hosted deployments serve EXPO_PUBLIC_SITE_ORIGIN through server.js runtime
-    // config, so OAuth redirects use the environment-specific origin contract.
+  it('uses the current hosted browser origin for OAuth redirects', () => {
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN =
       'https://quizzical-hofstadter.108-175-12-95.plesk.page';
     setWindowOrigin('https://davidjgrimsley.com');
@@ -53,7 +58,7 @@ describe('supabase browser auth redirect', () => {
     const supabaseBrowser = loadSupabaseBrowser();
 
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
-      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum',
+      'https://davidjgrimsley.com/public-facing/api/quantum',
     );
   });
 
@@ -90,5 +95,38 @@ describe('supabase browser auth redirect', () => {
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
       'http://localhost:3000/public-facing/api/quantum',
     );
+  });
+
+  it('uses implicit auth flow on Plesk staging because the technical-domain gate clears storage', () => {
+    delete mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW;
+    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN =
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page';
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
+
+    const supabaseBrowser = loadSupabaseBrowser();
+
+    expect(supabaseBrowser.getSupabaseAuthFlowType()).toBe('implicit');
+  });
+
+  it('keeps PKCE auth flow on production domains', () => {
+    delete mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW;
+    mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'https://davidjgrimsley.com';
+    setWindowOrigin('https://davidjgrimsley.com');
+
+    const supabaseBrowser = loadSupabaseBrowser();
+
+    expect(supabaseBrowser.getSupabaseAuthFlowType()).toBe('pkce');
+  });
+
+  it('lets runtime config override automatic auth flow detection', () => {
+    delete mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW;
+    setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page', {
+      EXPO_PUBLIC_SUPABASE_AUTH_FLOW: 'pkce',
+      EXPO_PUBLIC_SITE_ORIGIN: 'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+    });
+
+    const supabaseBrowser = loadSupabaseBrowser();
+
+    expect(supabaseBrowser.getSupabaseAuthFlowType()).toBe('pkce');
   });
 });

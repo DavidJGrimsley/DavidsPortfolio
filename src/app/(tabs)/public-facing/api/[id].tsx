@@ -12,13 +12,14 @@ import {
   usePathname,
   type ErrorBoundaryProps,
 } from "expo-router";
+import type { GenerateMetadataFunction, Metadata } from "expo-router/server";
 
 import { HelloWave } from "@/components/QuantumAnimation";
 import { LoadingComponent } from "@/components/UI/LoadingComponent";
 import { ThemedText } from "@/components/UI/ThemedText";
 import { ExternalLink } from "@/components/UI/ExternalLink";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { SeoHead, StructuredDataScript } from "@/components/SEO/SeoHead";
+import { StructuredDataScript } from "@/components/SEO/SeoHead";
 import { EndpointCard } from "~/src/components/PublicFacing/api/APIComponents";
 import { ApiAuthDashboardCard } from "~/src/components/PublicFacing/api/quantum-auth-dashboard-card";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
@@ -27,6 +28,8 @@ import {
   SyncStatus,
 } from "~/src/components/PublicFacing/PortfolioShared";
 import { SITE_URL, joinUrl } from "@/constants/seo";
+import { resolveQuantumEndpointBaseUrl } from "@/lib/quantum-api-config";
+import { resolveBrowserApiBaseUrl } from "@/lib/browser-api-base-url";
 import type {
   APIPortfolio,
   PortfolioComponentSlot,
@@ -66,6 +69,7 @@ type ApiFallbackItem = APIPortfolio["api"] & {
 };
 
 const FALLBACK_API_ITEMS = (apisData.apis ?? []) as ApiFallbackItem[];
+const FALLBACK_LOADED_AT = "fallback";
 
 function createFallbackApi(id: string): APIPortfolio {
   const fallbackItem = FALLBACK_API_ITEMS.find((api) => api.id === id);
@@ -97,7 +101,7 @@ function createFallbackDetail(id: string): DetailData {
       type: "api",
       portfolioUrl: "",
     },
-    loadedAt: new Date().toISOString(),
+    loadedAt: FALLBACK_LOADED_AT,
     source: "fallback",
     params: { id },
     method: "fallback",
@@ -117,56 +121,6 @@ function getRouteId(params: Record<string, string | string[]>) {
   const idParam = params.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
   return id || "api";
-}
-
-function isLoopbackHost(hostname: string) {
-  const normalized = hostname.toLowerCase();
-  return (
-    normalized === "localhost" ||
-    normalized === "127.0.0.1" ||
-    normalized === "::1" ||
-    normalized === "[::1]"
-  );
-}
-
-function resolveBrowserApiBaseUrl(
-  api: APIPortfolio["api"],
-  isWebRuntime: boolean,
-) {
-  const configuredBaseUrl = api.baseUrl;
-  const publicBasePath = api.publicBasePath;
-
-  if (
-    !isWebRuntime ||
-    typeof window === "undefined" ||
-    !window.location?.origin
-  ) {
-    return configuredBaseUrl;
-  }
-
-  if (!publicBasePath) {
-    return configuredBaseUrl;
-  }
-
-  try {
-    const runtimeOrigin = new URL(window.location.origin);
-    const configuredUrl = new URL(configuredBaseUrl);
-
-    if (runtimeOrigin.host === configuredUrl.host) {
-      return configuredBaseUrl;
-    }
-
-    if (
-      isLoopbackHost(runtimeOrigin.hostname) &&
-      runtimeOrigin.port === "8081"
-    ) {
-      return configuredBaseUrl;
-    }
-
-    return `${runtimeOrigin.origin}${publicBasePath}`;
-  } catch {
-    return configuredBaseUrl || publicBasePath;
-  }
 }
 
 function normalizeEndpointMethod(method: string | undefined): EndpointMethod {
@@ -283,21 +237,24 @@ function buildApiDetailStructuredData({
   ];
 }
 
-function buildApiDetailSeo({
+function buildApiDetailMetadata({
   api,
   routePath,
-  endpoints,
 }: {
   api: APIPortfolio["api"];
   routePath: string;
-  endpoints: PortfolioEndpoint[];
-}) {
+}): Metadata {
+  const pageUrl = joinUrl(SITE_URL, routePath);
+  const title = /\bapi\b/iu.test(api.name)
+    ? `${api.name} | David Grimsley`
+    : `${api.name} API | David Grimsley`;
+  const description =
+    api.description ??
+    `${api.name} is a public API hosted by David Grimsley. View endpoints, docs, examples, and usage notes.`;
+
   return {
-    title: `${api.name} API | David Grimsley`,
-    description:
-      api.description ??
-      `${api.name} is a public API hosted by David Grimsley. View endpoints, docs, examples, and usage notes.`,
-    path: routePath,
+    title,
+    description,
     keywords: [
       api.name,
       "public API",
@@ -305,33 +262,33 @@ function buildApiDetailSeo({
       "developer tools",
       ...(api.tags ?? []),
     ],
-    type: "website" as const,
-    structuredData: buildApiDetailStructuredData({
-      api,
-      endpoints,
-      routePath,
-    }),
+    authors: [{ name: "David Grimsley", url: SITE_URL }],
+    robots: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+    alternates: { canonical: pageUrl },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: "David Grimsley",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
-function APIDetailSeoFallback() {
-  const pathname = usePathname();
-  const slug = pathname?.split("/").filter(Boolean).pop() ?? "api";
-  const fallback = createFallbackDetail(slug);
+export const generateMetadata: GenerateMetadataFunction = (_request, params) => {
+  const routeId = getRouteId(params);
+  const fallback = createFallbackDetail(routeId);
   const routePath = `/public-facing/api/${fallback.params.id}`;
-  const seo = buildApiDetailSeo({
+  return buildApiDetailMetadata({
     api: fallback.portfolio.api,
-    endpoints: fallback.portfolio.endpoints ?? [],
     routePath,
   });
-
-  return (
-    <>
-      <SeoHead {...seo} />
-      <StructuredDataScript structuredData={seo.structuredData} />
-    </>
-  );
-}
+};
 
 export async function loader(
   request: LoaderRequest | undefined,
@@ -565,6 +522,11 @@ function APIDetailContent() {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!slug || data.source === "live") return;
@@ -622,8 +584,12 @@ function APIDetailContent() {
   const detail = liveDetail ?? data;
   const { portfolio, registryEntry, source, loadedAt } = detail;
   const { api } = portfolio;
-  const isWebRuntime = Platform.OS === "web";
+  const isWebRuntime = Platform.OS === "web" && hasHydrated;
   const apiBaseUrl = resolveBrowserApiBaseUrl(api, isWebRuntime);
+  const quantumAuthBaseUrl =
+    api.id === "quantum"
+      ? resolveQuantumEndpointBaseUrl("bearer_jwt", isWebRuntime)
+      : apiBaseUrl;
   const endpoints = portfolio.endpoints ?? [];
   const sections = portfolio.sections ?? [];
   const components = portfolio.components ?? [];
@@ -656,18 +622,15 @@ function APIDetailContent() {
     api.liveTestExecutor === "quantum-sdk" ? executeQuantumEndpoint : undefined;
   const routeId = api.id || registryEntry.id || detail.params.id;
   const routePath = `/public-facing/api/${routeId}`;
-  const seo = buildApiDetailSeo({
+  const structuredData = buildApiDetailStructuredData({
     api,
     endpoints,
     routePath,
   });
 
   return (
-    <PublicFacingDetailWrapper
-      seo={{
-        ...seo,
-      }}
-    >
+    <PublicFacingDetailWrapper>
+      <StructuredDataScript structuredData={structuredData} />
       {source !== "live" && liveError ? (
         <View className="rounded-lg p-4 mb-5 bg-yellow-900/30 border border-yellow-600/50">
           <ThemedText type="defaultSemiBold" className="mb-1 text-yellow-400">
@@ -696,7 +659,7 @@ function APIDetailContent() {
         <ClientOnly>
           <ApiAuthDashboardCard
             apiName={api.name}
-            baseUrl={apiBaseUrl}
+            baseUrl={quantumAuthBaseUrl}
             dashboardDescription={apiAuth?.dashboardDescription}
             supportsIbmProfiles={Boolean(apiAuth?.supportsIbmProfiles)}
           />
@@ -823,11 +786,8 @@ function APIDetailContent() {
 
 export default function APIDetailPage() {
   return (
-    <>
-      <APIDetailSeoFallback />
-      <Suspense fallback={<LoadingFallback />}>
-        <APIDetailContent />
-      </Suspense>
-    </>
+    <Suspense fallback={<LoadingFallback />}>
+      <APIDetailContent />
+    </Suspense>
   );
 }

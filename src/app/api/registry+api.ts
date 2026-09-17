@@ -3,6 +3,8 @@
  * Fetches the external registry of APIs and MCPs from davidjgrimsley.com
  */
 import type { RegistryResponse } from '@/types/registry';
+import { loadServerRuntimeEnv } from '@/server/runtime-env';
+import { resolveRequestOrigin } from '@/server/request-origin';
 
 const REGISTRY_URL = 'https://davidjgrimsley.com/secret/registry.json';
 const QUANTUM_ROUTE_ID = 'quantum';
@@ -47,14 +49,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-function normalizeRegistryServer(server: RegistryResponse['servers'][number]) {
+function buildQuantumPortfolioUrl(origin: string | null) {
+  return `${origin ?? 'https://davidjgrimsley.com'}${QUANTUM_PUBLIC_BASE_PATH}/portfolio.json`;
+}
+
+function normalizeRegistryServer(server: RegistryResponse['servers'][number], origin: string | null) {
   if (server.type === 'api' && QUANTUM_LEGACY_IDS.has(server.id)) {
     return {
       ...server,
       id: QUANTUM_ROUTE_ID,
       aliases: ['quantum-echo-api'],
       publicBasePath: QUANTUM_PUBLIC_BASE_PATH,
-      portfolioUrl: QUANTUM_PORTFOLIO_URL,
+      portfolioUrl: buildQuantumPortfolioUrl(origin),
     };
   }
 
@@ -66,6 +72,9 @@ export function OPTIONS() {
 }
 
 export async function GET(request: Request) {
+  loadServerRuntimeEnv(request);
+  const origin = resolveRequestOrigin(request);
+
   try {
     const url = new URL(request.url);
     const typeFilter = url.searchParams.get('type'); // 'api' | 'mcp' | null
@@ -84,7 +93,7 @@ export async function GET(request: Request) {
 
     const registry: RegistryResponse = await response.json();
     const registryServers = Array.isArray(registry.servers)
-      ? registry.servers.map(normalizeRegistryServer)
+      ? registry.servers.map((server) => normalizeRegistryServer(server, origin))
       : [];
 
     // Filter by type if requested
@@ -114,13 +123,14 @@ export async function GET(request: Request) {
     const filteredServers = typeFilter
       ? FALLBACK_REGISTRY.servers.filter((s) => s.type === typeFilter)
       : FALLBACK_REGISTRY.servers;
+    const normalizedServers = filteredServers.map((server) => normalizeRegistryServer(server, origin));
 
     return Response.json(
       {
         success: true,
         data: {
           ...FALLBACK_REGISTRY,
-          servers: filteredServers,
+          servers: normalizedServers,
         },
         fetchedAt: new Date().toISOString(),
         source: 'fallback',

@@ -53,15 +53,15 @@ describe('site origin', () => {
     );
   });
 
-  it('prefers the configured hosted origin over arbitrary non-loopback browser origins', () => {
-    // Hosted deployments now get their public config from server.js at runtime,
-    // so EXPO_PUBLIC_SITE_ORIGIN is the deployment contract for OAuth redirects.
+  it('uses the current browser origin for hosted OAuth redirects', () => {
     mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = 'https://davidjgrimsley.com';
     setWindowOrigin('https://quizzical-hofstadter.108-175-12-95.plesk.page');
 
     const siteOrigin = loadSiteOrigin();
 
-    expect(siteOrigin.resolveBrowserSiteOrigin()).toBe('https://davidjgrimsley.com');
+    expect(siteOrigin.resolveBrowserSiteOrigin()).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+    );
   });
 
   it('prefers the hosted runtime origin when a loopback env leaks into a hosted build', () => {

@@ -9,6 +9,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const { createRequestHandler } = require('expo-server/adapter/express');
 const { loadFirstEnvFile } = require('./scripts/env-loader.cjs');
+const { assertSsrBuild } = require('./scripts/assert-ssr-build.cjs');
 
 const loadedEnv = loadFirstEnvFile({ cwd: __dirname, prefix: '[startup]' });
 
@@ -27,6 +28,7 @@ const PUBLIC_RUNTIME_ENV_KEYS = [
   'EXPO_PUBLIC_SITE_ORIGIN',
   'EXPO_PUBLIC_SITE_URL',
   'EXPO_PUBLIC_SUPABASE_ANON_KEY',
+  'EXPO_PUBLIC_SUPABASE_AUTH_FLOW',
   'EXPO_PUBLIC_SUPABASE_KEY',
   'EXPO_PUBLIC_SUPABASE_URL',
 ];
@@ -192,6 +194,7 @@ function normalizeQuantumUpstreamBaseUrl() {
 }
 
 const QUANTUM_UPSTREAM_BASE_URL = normalizeQuantumUpstreamBaseUrl();
+app.set('trust proxy', true);
 app.use(compression());
 app.disable('x-powered-by');
 app.use(morgan('tiny'));
@@ -199,7 +202,7 @@ assertHostedRuntimeEnvHealth();
 
 app.use((req, res, next) => {
   if (shouldClearStagingSiteData(req)) {
-    res.setHeader('Clear-Site-Data', '"cache", "storage"');
+    res.setHeader('Clear-Site-Data', '"cache"');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   }
 
@@ -210,7 +213,8 @@ function assertBuildArtifact(filePath, description) {
   if (!fs.existsSync(filePath)) {
     throw new Error(
       `${description} not found at ${filePath}. ` +
-        'Run "npm run build:web:deploy" first. dist artifacts are generated at deploy time.'
+        'Run "npm run serve:prod:fresh" for a local production rebuild and server start, ' +
+        'or run "npm run build:web:deploy" before "npm run serve:prod" to serve an existing dist.'
     );
   }
 }
@@ -219,6 +223,7 @@ assertBuildArtifact(CLIENT_BUILD_DIR, 'Client build directory');
 assertBuildArtifact(SERVER_BUILD_DIR, 'Server build directory');
 assertBuildArtifact(ROUTES_MANIFEST_PATH, 'Generated Expo routes manifest');
 assertBuildArtifact(BUILD_METADATA_PATH, 'Build metadata');
+assertSsrBuild(SERVER_BUILD_DIR);
 
 function normalizeRemoteAddress(address) {
   const normalized = String(address || '').toLowerCase();
@@ -266,6 +271,61 @@ function getFirstHeaderValue(value) {
   return String(value);
 }
 
+function normalizeRequestProtocol(value) {
+  const normalized = String(value || '').trim().replace(/:$/, '').toLowerCase();
+  return normalized === 'http' || normalized === 'https' ? normalized : '';
+}
+
+function parseOriginValue(value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
+function sameOriginHost(left, right) {
+  try {
+    return new URL(left).host.toLowerCase() === new URL(right).host.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+function isHttpsHostedHostname(hostname) {
+  const normalized = String(hostname || '').toLowerCase();
+  return (
+    normalized === 'davidjgrimsley.com' ||
+    normalized === 'www.davidjgrimsley.com' ||
+    normalized.endsWith('.plesk.page')
+  );
+}
+
+function canonicalizeHostedOrigin(origin) {
+  if (!origin) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(origin);
+    if (
+      parsed.protocol === 'http:' &&
+      !isLoopbackHostname(parsed.hostname) &&
+      isHttpsHostedHostname(parsed.hostname)
+    ) {
+      parsed.protocol = 'https:';
+    }
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
 function buildQuantumProxyHeaders(req, options = {}) {
   const headers = new Headers();
   const accept = getHeaderValue(req.headers.accept);
@@ -296,26 +356,36 @@ function buildQuantumProxyHeaders(req, options = {}) {
 }
 
 function getRequestOrigin(req) {
-  const configuredSiteOrigin = String(process.env.EXPO_PUBLIC_SITE_ORIGIN || '').trim();
-  if (configuredSiteOrigin) {
-    try {
-      return parseSiteOriginOrThrow(configuredSiteOrigin).origin;
-    } catch {
-      // Fall through to request-derived origin.
-    }
-  }
-
-  const forwardedProto = getFirstHeaderValue(req.headers['x-forwarded-proto']).split(',')[0].trim();
-  const forwardedHost = getFirstHeaderValue(req.headers['x-forwarded-host']).split(',')[0].trim();
+  const configuredSiteOrigin =
+    parseOriginValue(process.env.EXPO_PUBLIC_SITE_ORIGIN) ||
+    parseOriginValue(process.env.EXPO_PUBLIC_SITE_URL);
+  const forwardedProto =
+    normalizeRequestProtocol(getFirstHeaderValue(req.headers['x-forwarded-proto']).split(',')[0]) ||
+    normalizeRequestProtocol(getFirstHeaderValue(req.headers['x-forwarded-protocol']).split(',')[0]) ||
+    normalizeRequestProtocol(getFirstHeaderValue(req.headers['x-forwarded-scheme']).split(',')[0]);
+  const forwardedHost = (
+    getFirstHeaderValue(req.headers['x-forwarded-host']) ||
+    getFirstHeaderValue(req.headers['x-original-host'])
+  )
+    .split(',')[0]
+    .trim();
   const host = forwardedHost || getFirstHeaderValue(req.headers.host).split(',')[0].trim();
-  const protocol = forwardedProto || req.protocol || 'http';
+  const protocol = forwardedProto || normalizeRequestProtocol(req.protocol) || 'http';
 
   if (!host) {
     const fallbackPort = String(process.env.PORT || 3000);
     return `http://127.0.0.1:${fallbackPort}`;
   }
 
-  return `${protocol}://${host}`;
+  const requestOrigin = canonicalizeHostedOrigin(`${protocol}://${host}`);
+  if (
+    configuredSiteOrigin &&
+    (sameOriginHost(configuredSiteOrigin, requestOrigin) || sameOriginHost(configuredSiteOrigin, `http://${host}`))
+  ) {
+    return configuredSiteOrigin;
+  }
+
+  return requestOrigin || `${protocol}://${host}`;
 }
 
 async function fetchJsonOrThrow(url) {

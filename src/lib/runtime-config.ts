@@ -6,6 +6,7 @@ const PUBLIC_RUNTIME_ENV_KEYS = [
   'EXPO_PUBLIC_SITE_ORIGIN',
   'EXPO_PUBLIC_SITE_URL',
   'EXPO_PUBLIC_SUPABASE_ANON_KEY',
+  'EXPO_PUBLIC_SUPABASE_AUTH_FLOW',
   'EXPO_PUBLIC_SUPABASE_KEY',
   'EXPO_PUBLIC_SUPABASE_URL',
 ] as const;
@@ -36,6 +37,8 @@ function readBuildTimePublicRuntimeValue(key: PublicRuntimeEnvKey): string {
       return process.env.EXPO_PUBLIC_SITE_URL ?? '';
     case 'EXPO_PUBLIC_SUPABASE_ANON_KEY':
       return process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+    case 'EXPO_PUBLIC_SUPABASE_AUTH_FLOW':
+      return process.env.EXPO_PUBLIC_SUPABASE_AUTH_FLOW ?? '';
     case 'EXPO_PUBLIC_SUPABASE_KEY':
       return process.env.EXPO_PUBLIC_SUPABASE_KEY ?? '';
     case 'EXPO_PUBLIC_SUPABASE_URL':
