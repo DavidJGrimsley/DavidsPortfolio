@@ -49,6 +49,7 @@ api-server.env
 
 # typescript
 *.tsbuildinfo
+uniwind-types.d.ts
 
 # IDE
 .vscode/
