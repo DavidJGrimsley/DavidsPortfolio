@@ -2,9 +2,11 @@ import { GET } from '../[id]+api';
 
 describe('portfolio API route', () => {
   const fetchMock = jest.fn();
+  const originalSiteOrigin = process.env.EXPO_PUBLIC_SITE_ORIGIN;
 
   beforeEach(() => {
     fetchMock.mockReset();
+    delete process.env.EXPO_PUBLIC_SITE_ORIGIN;
     global.fetch = fetchMock as unknown as typeof fetch;
     fetchMock.mockImplementation(async (url: string) => {
       if (url === 'https://davidjgrimsley.com/secret/registry.json') {
@@ -27,7 +29,11 @@ describe('portfolio API route', () => {
         );
       }
 
-      if (url === 'http://localhost:3000/api/public/quantum/v1/portfolio.json') {
+      if (
+        url === 'http://localhost:3000/api/public/quantum/v1/portfolio.json' ||
+        url ===
+          'https://quizzical-hofstadter.108-175-12-95.plesk.page/api/public/quantum/v1/portfolio.json'
+      ) {
         return new Response(
           JSON.stringify({
             api: {
@@ -64,6 +70,14 @@ describe('portfolio API route', () => {
     });
   });
 
+  afterEach(() => {
+    if (originalSiteOrigin === undefined) {
+      delete process.env.EXPO_PUBLIC_SITE_ORIGIN;
+    } else {
+      process.env.EXPO_PUBLIC_SITE_ORIGIN = originalSiteOrigin;
+    }
+  });
+
   it('decorates quantum registry data with dynamic live-test metadata', async () => {
     const response = await GET(
       new Request('http://localhost:3000/api/portfolio/quantum'),
@@ -87,5 +101,24 @@ describe('portfolio API route', () => {
       liveTestDisabledReason:
         'This endpoint needs a concrete resource identifier before it can be tested from the portfolio page.',
     });
+  });
+
+  it('decorates staging portfolio metadata with the public https origin', async () => {
+    process.env.EXPO_PUBLIC_SITE_ORIGIN =
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page';
+
+    const response = await GET(
+      new Request('http://quizzical-hofstadter.108-175-12-95.plesk.page/api/portfolio/quantum'),
+      { id: 'quantum' }
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.portfolio.api.baseUrl).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/api/public/quantum/v1'
+    );
+    expect(body.data.registryEntry.portfolioUrl).toBe(
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/api/public/quantum/v1/portfolio.json'
+    );
   });
 });

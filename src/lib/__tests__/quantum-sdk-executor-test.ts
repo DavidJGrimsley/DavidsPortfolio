@@ -73,7 +73,7 @@ describe('quantum sdk endpoint executor', () => {
     expect(calledInit.method).toBe('GET');
   });
 
-  it('executes authenticated key routes against the configured Quantum backend', async () => {
+  it('executes authenticated key routes against the supplied browser-safe Quantum base URL', async () => {
     const { executeQuantumSdkEndpoint } = loadExecutor();
 
     fetchMock.mockResolvedValue(
@@ -91,7 +91,7 @@ describe('quantum sdk endpoint executor', () => {
     });
 
     const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(calledUrl).toBe('https://davidjgrimsley.com/public-facing/api/quantum/v1/keys');
+    expect(calledUrl).toBe('http://localhost:3000/api/public/quantum/v1/keys');
     expect(new Headers(calledInit.headers).get('Authorization')).toBe(
       'Bearer supabase-token'
     );

@@ -28,7 +28,8 @@ import {
   SyncStatus,
 } from "~/src/components/PublicFacing/PortfolioShared";
 import { SITE_URL, joinUrl } from "@/constants/seo";
-import { QUANTUM_API_BASE_URL } from "@/lib/quantum-api-config";
+import { resolveQuantumEndpointBaseUrl } from "@/lib/quantum-api-config";
+import { resolveBrowserApiBaseUrl } from "@/lib/browser-api-base-url";
 import type {
   APIPortfolio,
   PortfolioComponentSlot,
@@ -68,6 +69,7 @@ type ApiFallbackItem = APIPortfolio["api"] & {
 };
 
 const FALLBACK_API_ITEMS = (apisData.apis ?? []) as ApiFallbackItem[];
+const FALLBACK_LOADED_AT = "fallback";
 
 function createFallbackApi(id: string): APIPortfolio {
   const fallbackItem = FALLBACK_API_ITEMS.find((api) => api.id === id);
@@ -99,7 +101,7 @@ function createFallbackDetail(id: string): DetailData {
       type: "api",
       portfolioUrl: "",
     },
-    loadedAt: new Date().toISOString(),
+    loadedAt: FALLBACK_LOADED_AT,
     source: "fallback",
     params: { id },
     method: "fallback",
@@ -119,63 +121,6 @@ function getRouteId(params: Record<string, string | string[]>) {
   const idParam = params.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
   return id || "api";
-}
-
-function isLoopbackHost(hostname: string) {
-  const normalized = hostname.toLowerCase();
-  return (
-    normalized === "localhost" ||
-    normalized === "127.0.0.1" ||
-    normalized === "::1" ||
-    normalized === "[::1]"
-  );
-}
-
-function isBrowserUrlProtocolSafe(runtimeOrigin: URL, configuredUrl: URL) {
-  return !(runtimeOrigin.protocol === "https:" && configuredUrl.protocol === "http:");
-}
-
-function resolveBrowserApiBaseUrl(
-  api: APIPortfolio["api"],
-  isWebRuntime: boolean,
-) {
-  const configuredBaseUrl = api.baseUrl;
-  const publicBasePath = api.publicBasePath;
-
-  if (
-    !isWebRuntime ||
-    typeof window === "undefined" ||
-    !window.location?.origin
-  ) {
-    return configuredBaseUrl;
-  }
-
-  if (!publicBasePath) {
-    return configuredBaseUrl;
-  }
-
-  try {
-    const runtimeOrigin = new URL(window.location.origin);
-    const configuredUrl = new URL(configuredBaseUrl);
-
-    if (
-      runtimeOrigin.host === configuredUrl.host &&
-      isBrowserUrlProtocolSafe(runtimeOrigin, configuredUrl)
-    ) {
-      return configuredBaseUrl;
-    }
-
-    if (
-      isLoopbackHost(runtimeOrigin.hostname) &&
-      runtimeOrigin.port === "8081"
-    ) {
-      return configuredBaseUrl;
-    }
-
-    return `${runtimeOrigin.origin}${publicBasePath}`;
-  } catch {
-    return configuredBaseUrl || publicBasePath;
-  }
 }
 
 function normalizeEndpointMethod(method: string | undefined): EndpointMethod {
@@ -577,6 +522,11 @@ function APIDetailContent() {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!slug || data.source === "live") return;
@@ -634,10 +584,12 @@ function APIDetailContent() {
   const detail = liveDetail ?? data;
   const { portfolio, registryEntry, source, loadedAt } = detail;
   const { api } = portfolio;
-  const isWebRuntime = Platform.OS === "web";
+  const isWebRuntime = Platform.OS === "web" && hasHydrated;
   const apiBaseUrl = resolveBrowserApiBaseUrl(api, isWebRuntime);
   const quantumAuthBaseUrl =
-    api.id === "quantum" ? QUANTUM_API_BASE_URL : apiBaseUrl;
+    api.id === "quantum"
+      ? resolveQuantumEndpointBaseUrl("bearer_jwt", isWebRuntime)
+      : apiBaseUrl;
   const endpoints = portfolio.endpoints ?? [];
   const sections = portfolio.sections ?? [];
   const components = portfolio.components ?? [];

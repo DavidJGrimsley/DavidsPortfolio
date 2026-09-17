@@ -7,6 +7,7 @@ const mockIsSupabaseConfigured = jest.fn();
 const mockGetSupabaseBrowserClient = jest.fn();
 const mockGetSupabaseConfigError = jest.fn();
 const mockGetQuantumAuthRedirectUrl = jest.fn();
+const mockGetSupabaseAuthFlowType = jest.fn();
 
 const mockListQuantumKeys = jest.fn();
 const mockListIbmProfiles = jest.fn();
@@ -37,6 +38,7 @@ jest.mock('@/lib/supabase-browser', () => ({
   getSupabaseBrowserClient: () => mockGetSupabaseBrowserClient(),
   getSupabaseConfigError: () => mockGetSupabaseConfigError(),
   getQuantumAuthRedirectUrl: () => mockGetQuantumAuthRedirectUrl(),
+  getSupabaseAuthFlowType: () => mockGetSupabaseAuthFlowType(),
 }));
 
 jest.mock('@/services/quantum-key-management', () => {
@@ -186,6 +188,7 @@ describe('QuantumAuthDashboardCard', () => {
 
     mockGetSupabaseConfigError.mockReturnValue('Missing Supabase config.');
     mockGetQuantumAuthRedirectUrl.mockReturnValue('http://localhost:8081/public-facing/api/quantum');
+    mockGetSupabaseAuthFlowType.mockReturnValue('pkce');
 
     mockListQuantumKeys.mockResolvedValue([]);
     mockListIbmProfiles.mockResolvedValue([]);
@@ -225,6 +228,73 @@ describe('QuantumAuthDashboardCard', () => {
 
     expect(findNodesByText(testRenderer.root, 'Identerest auth is not configured yet').length).toBeGreaterThan(0);
     expect(findNodesByText(testRenderer.root, 'Missing Supabase config.').length).toBeGreaterThan(0);
+  });
+
+  it('shows a clear message when an auth callback does not restore a session', async () => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        location: {
+          search: '?code=stale-callback-code',
+          hash: '',
+          origin: 'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+        },
+        confirm: jest.fn().mockReturnValue(true),
+      },
+    });
+    mockIsSupabaseConfigured.mockReturnValue(true);
+    mockGetSupabaseBrowserClient.mockReturnValue(createSupabaseClient(null));
+
+    let testRenderer!: renderer.ReactTestRenderer;
+    await act(async () => {
+      testRenderer = renderer.create(
+        <QuantumAuthDashboardCard baseUrl="https://example.com/public-facing/api/quantum/v1" />
+      );
+    });
+
+    await flushPromises();
+    await flushPromises();
+
+    expect(
+      findNodesByText(testRenderer.root, 'We could not finish sign in from this callback.').length
+    ).toBeGreaterThan(0);
+  });
+
+  it('does not wait on a code-only callback when staging uses storage-free auth', async () => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        location: {
+          search: '?code=stale-callback-code',
+          hash: '',
+          origin: 'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+        },
+        confirm: jest.fn().mockReturnValue(true),
+      },
+    });
+    mockIsSupabaseConfigured.mockReturnValue(true);
+    mockGetSupabaseAuthFlowType.mockReturnValue('implicit');
+    const supabaseClient = createSupabaseClient(null);
+    supabaseClient.auth.getSession.mockImplementation(
+      () => new Promise(() => undefined) as ReturnType<typeof supabaseClient.auth.getSession>
+    );
+    mockGetSupabaseBrowserClient.mockReturnValue(supabaseClient);
+
+    let testRenderer!: renderer.ReactTestRenderer;
+    await act(async () => {
+      testRenderer = renderer.create(
+        <QuantumAuthDashboardCard baseUrl="https://example.com/public-facing/api/quantum/v1" />
+      );
+    });
+
+    await flushPromises();
+
+    expect(
+      findNodesByText(testRenderer.root, 'We could not finish sign in from this callback.').length
+    ).toBeGreaterThan(0);
+    expect(supabaseClient.auth.getSession).not.toHaveBeenCalled();
   });
 
   it('validates required IBM profile fields before submit', async () => {

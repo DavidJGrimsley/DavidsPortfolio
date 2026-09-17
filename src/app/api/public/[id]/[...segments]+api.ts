@@ -1,4 +1,5 @@
 import { loadServerRuntimeEnv } from '@/server/runtime-env';
+import { resolveRequestOrigin } from '@/server/request-origin';
 
 const QUANTUM_ROUTE_ID = 'quantum';
 const QUANTUM_LEGACY_IDS = new Set([QUANTUM_ROUTE_ID, 'quantum-echo-api']);
@@ -95,11 +96,7 @@ function getAllowedOrigins() {
 }
 
 function getRequestOrigin(request: Request) {
-  try {
-    return new URL(request.url).origin;
-  } catch {
-    return null;
-  }
+  return resolveRequestOrigin(request);
 }
 
 function isOriginAllowed(
@@ -205,6 +202,7 @@ async function handlePublicApiProxy(
   request: Request,
   context: RouteContext
 ) {
+  loadServerRuntimeEnv(request);
   const routeId = normalizeRouteId(context.id);
   const allowedOrigins = getAllowedOrigins();
 
