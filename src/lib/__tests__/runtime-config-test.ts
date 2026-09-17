@@ -1,6 +1,7 @@
 describe('runtime config', () => {
   const mutableEnv = process.env as Record<string, string | undefined>;
   const originalSiteOrigin = mutableEnv.EXPO_PUBLIC_SITE_ORIGIN;
+  const originalAuthFlow = mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW;
   const originalWindow = (globalThis as { window?: unknown }).window;
 
   afterEach(() => {
@@ -8,6 +9,12 @@ describe('runtime config', () => {
       delete mutableEnv.EXPO_PUBLIC_SITE_ORIGIN;
     } else {
       mutableEnv.EXPO_PUBLIC_SITE_ORIGIN = originalSiteOrigin;
+    }
+
+    if (originalAuthFlow === undefined) {
+      delete mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW;
+    } else {
+      mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW = originalAuthFlow;
     }
 
     if (originalWindow === undefined) {
@@ -54,6 +61,25 @@ describe('runtime config', () => {
 
     expect(runtimeConfig.readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SITE_ORIGIN')).toBe(
       'https://davidjgrimsley.com',
+    );
+  });
+
+  it('exposes the Supabase auth flow runtime override', () => {
+    mutableEnv.EXPO_PUBLIC_SUPABASE_AUTH_FLOW = 'pkce';
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        __DJS_RUNTIME_CONFIG__: {
+          EXPO_PUBLIC_SUPABASE_AUTH_FLOW: 'implicit',
+        },
+      },
+    });
+
+    const runtimeConfig = loadRuntimeConfig();
+
+    expect(runtimeConfig.readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_AUTH_FLOW')).toBe(
+      'implicit',
     );
   });
 });

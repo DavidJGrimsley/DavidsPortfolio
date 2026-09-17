@@ -1,5 +1,7 @@
 import type { APIPortfolio, Portfolio, RegistryResponse, RegistryServer } from '@/types/registry';
 import { MCP_FALLBACK_PORTFOLIOS } from '@/data/mcpFallbackPortfolios';
+import { loadServerRuntimeEnv } from '@/server/runtime-env';
+import { resolveRequestOrigin } from '@/server/request-origin';
 
 const REGISTRY_URL = 'https://davidjgrimsley.com/secret/registry.json';
 const QUANTUM_ROUTE_ID = 'quantum';
@@ -126,11 +128,7 @@ function isQuantumServer(server: RegistryServer) {
 }
 
 function getRequestOrigin(request: Request) {
-  try {
-    return new URL(request.url).origin;
-  } catch {
-    return null;
-  }
+  return resolveRequestOrigin(request);
 }
 
 function buildQuantumPortfolioUrl(origin: string | null) {
@@ -315,6 +313,7 @@ async function getRegistry(origin: string | null): Promise<RegistryServer[]> {
 }
 
 export async function GET(request: Request, { id }: { id: string }) {
+  loadServerRuntimeEnv(request);
   const routeId = normalizeRouteId(id);
   const origin = getRequestOrigin(request);
 

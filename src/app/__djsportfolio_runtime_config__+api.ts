@@ -46,6 +46,11 @@ function buildPublicRuntimeConfig() {
   );
   assignIfString(
     config,
+    'EXPO_PUBLIC_SUPABASE_AUTH_FLOW',
+    process.env.EXPO_PUBLIC_SUPABASE_AUTH_FLOW
+  );
+  assignIfString(
+    config,
     'EXPO_PUBLIC_SUPABASE_KEY',
     process.env.EXPO_PUBLIC_SUPABASE_KEY
   );
