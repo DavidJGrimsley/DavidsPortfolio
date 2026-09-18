@@ -15,6 +15,12 @@ export default function APIStackLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="quantum/[slug]"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

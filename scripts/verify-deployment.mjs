@@ -1,4 +1,16 @@
 import { verifyDetailSeoPages } from './verify-detail-seo.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const quantumDocsManifest = JSON.parse(
+  fs.readFileSync(
+    path.resolve(process.cwd(), 'src', 'constants', 'json', 'quantum-integration-docs.json'),
+    'utf8',
+  ),
+);
+const QUANTUM_INTEGRATION_DOCS = Array.isArray(quantumDocsManifest.docs)
+  ? quantumDocsManifest.docs
+  : [];
 
 function parseArgs(argv) {
   const args = {
@@ -240,6 +252,71 @@ async function fetchJsonEndpoint(siteUrl, pathname, timeoutMs) {
   };
 }
 
+async function verifyQuantumDocumentation(siteUrl, timeoutMs) {
+  const pages = [
+    {
+      path: '/public-facing/api/quantum',
+      markdownPath: '/public-facing/api/quantum.md',
+      title: 'Quantum API',
+      markdownTitle: '# Quantum API',
+    },
+    ...QUANTUM_INTEGRATION_DOCS.map((doc) => ({
+      path: doc.path,
+      markdownPath: doc.markdownPath,
+      title: doc.title,
+      markdownTitle: `# ${doc.title}`,
+    })),
+  ];
+
+  const checks = await Promise.all(
+    pages.flatMap((page) => [
+      fetchRequiredPage(siteUrl, page.path, timeoutMs, [
+        { label: `${page.title} content`, text: page.title },
+        { label: `${page.title} Markdown alternate`, text: 'rel="alternate"' },
+        { label: `${page.title} Markdown path`, text: page.markdownPath },
+        { label: `${page.title} llms describedby`, text: 'rel="describedby"' },
+      ]),
+      fetchRequiredPage(siteUrl, page.markdownPath, timeoutMs, [
+        { label: `${page.title} Markdown title`, text: page.markdownTitle },
+      ]),
+    ]),
+  );
+
+  const unrealMarkdown = checks.find(
+    (check) => check.url === resolveUrl(siteUrl, '/public-facing/api/quantum/ue-plugin.md'),
+  );
+  const unrealHuman = checks.find(
+    (check) => check.url === resolveUrl(siteUrl, '/public-facing/api/quantum/ue-plugin'),
+  );
+  const unrealRequired = unrealMarkdown && unrealMarkdown.response
+    ? ['What does', 'Quantum Api Circuit Operation', '## Troubleshooting'].filter(
+        (text) => !unrealMarkdown.response.body.includes(text),
+      )
+    : ['Unreal Markdown content'];
+
+  const failures = checks
+    .filter((check) => !check.ok)
+    .map((check) => check.error ?? `${check.url} missing: ${check.missing.join(', ')}`);
+
+  if (unrealRequired.length > 0) {
+    failures.push(`Unreal Markdown missing: ${unrealRequired.join(', ')}`);
+  }
+
+  const unrealRemovedText = unrealHuman && unrealHuman.response
+    ? ['Packaging / distribution', 'Portfolio Metadata', 'Start here', 'Back to Quantum API']
+      .filter((text) => unrealHuman.response.body.includes(text))
+    : ['Unreal human guide'];
+
+  if (unrealRemovedText.length > 0) {
+    failures.push(`Unreal human guide includes removed text: ${unrealRemovedText.join(', ')}`);
+  }
+
+  return {
+    ok: failures.length === 0,
+    failures,
+  };
+}
+
 function formatBuildSummary(payload) {
   if (!payload || typeof payload !== 'object') {
     return 'unavailable';
@@ -280,6 +357,10 @@ async function main() {
       homeResult,
       apiIndexResult,
       quantumDetailResult,
+      quantumDocumentationResult,
+      llmsTxtResult,
+      llmsFullTxtResult,
+      sitemapResult,
       apiIndexLoaderEndpointResult,
       quantumDetailLoaderEndpointResult,
       mcpIndexResult,
@@ -312,6 +393,28 @@ async function main() {
             text: 'Failed to load loader data',
             mustNotInclude: true,
           },
+        ]),
+        verifyQuantumDocumentation(args.siteUrl, requestTimeoutMs),
+        fetchRequiredPage(args.siteUrl, '/llms.txt', requestTimeoutMs, [
+          { label: 'llms title', text: '# David Grimsley' },
+          { label: 'llms Quantum API markdown link', text: '/public-facing/api/quantum.md' },
+          ...QUANTUM_INTEGRATION_DOCS.map((doc) => ({
+            label: `llms ${doc.title} markdown link`,
+            text: doc.markdownPath,
+          })),
+          { label: 'llms full link', text: '/llms-full.txt' },
+        ]),
+        fetchRequiredPage(args.siteUrl, '/llms-full.txt', requestTimeoutMs, [
+          { label: 'llms-full title', text: '# David Grimsley Full Agent Context' },
+          { label: 'llms-full plugin docs', text: 'Quantum API Unreal Plugin' },
+          { label: 'llms-full pain point', text: 'Quantum Api Circuit Operation' },
+        ]),
+        fetchRequiredPage(args.siteUrl, '/sitemap.xml', requestTimeoutMs, [
+          { label: 'sitemap Quantum API markdown URL', text: '/public-facing/api/quantum.md' },
+          ...QUANTUM_INTEGRATION_DOCS.flatMap((doc) => [
+            { label: `sitemap ${doc.title} human URL`, text: doc.path },
+            { label: `sitemap ${doc.title} Markdown URL`, text: doc.markdownPath },
+          ]),
         ]),
         fetchJsonEndpoint(
           args.siteUrl,
@@ -367,6 +470,10 @@ async function main() {
     const homeOk = homeResult.response.ok;
     const apiIndexOk = apiIndexResult.ok;
     const quantumDetailOk = quantumDetailResult.ok;
+    const quantumDocumentationOk = quantumDocumentationResult.ok;
+    const llmsTxtOk = llmsTxtResult.ok;
+    const llmsFullTxtOk = llmsFullTxtResult.ok;
+    const sitemapOk = sitemapResult.ok;
     const apiIndexLoaderEndpointOk = apiIndexLoaderEndpointResult.ok;
     const quantumDetailLoaderEndpointOk = quantumDetailLoaderEndpointResult.ok;
     const mcpIndexOk = mcpIndexResult.ok;
@@ -386,6 +493,13 @@ async function main() {
         `apiIndexLoaderOk=${apiIndexOk} ` +
         `quantumDetailStatus=${quantumDetailResult.response?.status ?? 'unreachable'} ` +
         `quantumDetailLoaderOk=${quantumDetailOk} ` +
+        `quantumDocumentationOk=${quantumDocumentationOk} ` +
+        `llmsTxtStatus=${llmsTxtResult.response?.status ?? 'unreachable'} ` +
+        `llmsTxtOk=${llmsTxtOk} ` +
+        `llmsFullTxtStatus=${llmsFullTxtResult.response?.status ?? 'unreachable'} ` +
+        `llmsFullTxtOk=${llmsFullTxtOk} ` +
+        `sitemapStatus=${sitemapResult.response?.status ?? 'unreachable'} ` +
+        `sitemapOk=${sitemapOk} ` +
         `apiIndexLoaderEndpointStatus=${apiIndexLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
         `apiIndexLoaderEndpointOk=${apiIndexLoaderEndpointOk} ` +
         `quantumDetailLoaderEndpointStatus=${quantumDetailLoaderEndpointResult.response?.status ?? 'unreachable'} ` +
@@ -403,6 +517,10 @@ async function main() {
       homeOk &&
       apiIndexOk &&
       quantumDetailOk &&
+      quantumDocumentationOk &&
+      llmsTxtOk &&
+      llmsFullTxtOk &&
+      sitemapOk &&
       apiIndexLoaderEndpointOk &&
       quantumDetailLoaderEndpointOk &&
       mcpIndexOk &&
@@ -438,6 +556,19 @@ async function main() {
       ? 'Quantum API detail loader data is healthy'
       : (quantumDetailResult.error ??
         `Quantum API detail loader data missing: ${quantumDetailResult.missing.join(', ')}`);
+    const quantumDocumentationError = quantumDocumentationOk
+      ? 'Quantum API documentation is healthy'
+      : `Quantum API documentation failed: ${quantumDocumentationResult.failures.join('; ')}`;
+    const llmsTxtError = llmsTxtOk
+      ? 'llms.txt is healthy'
+      : (llmsTxtResult.error ?? `llms.txt missing: ${llmsTxtResult.missing.join(', ')}`);
+    const llmsFullTxtError = llmsFullTxtOk
+      ? 'llms-full.txt is healthy'
+      : (llmsFullTxtResult.error ??
+        `llms-full.txt missing: ${llmsFullTxtResult.missing.join(', ')}`);
+    const sitemapError = sitemapOk
+      ? 'sitemap includes the Quantum API documentation'
+      : (sitemapResult.error ?? `sitemap missing: ${sitemapResult.missing.join(', ')}`);
     const apiIndexLoaderEndpointError = apiIndexLoaderEndpointOk
       ? 'public API index loader endpoint is healthy'
       : (apiIndexLoaderEndpointResult.error ?? 'public API index loader endpoint is unhealthy');
@@ -455,7 +586,7 @@ async function main() {
     const detailSeoError = detailSeoOk
       ? 'detail-page SSR SEO is healthy'
       : `detail-page SSR SEO failed: ${detailSeoResult.failures.join(', ')}`;
-    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${mcpIndexLoaderEndpointError}; ${detailSeoError}`;
+    lastFailure = `${buildError}; ${cssBootstrapError}; ${homeError}; ${apiIndexError}; ${quantumDetailError}; ${quantumDocumentationError}; ${llmsTxtError}; ${llmsFullTxtError}; ${sitemapError}; ${apiIndexLoaderEndpointError}; ${quantumDetailLoaderEndpointError}; ${mcpIndexError}; ${mcpIndexLoaderEndpointError}; ${detailSeoError}`;
 
     if (Date.now() + args.intervalMs > deadline) {
       break;

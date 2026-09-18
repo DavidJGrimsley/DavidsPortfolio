@@ -45,6 +45,14 @@ const ENABLE_LOCAL_QUANTUM_PROXY = process.env.ENABLE_LOCAL_QUANTUM_PROXY !== 'f
 const DEFAULT_QUANTUM_UPSTREAM_BASE_URL_LOCAL = 'http://127.0.0.1:8000/v1';
 const DISALLOWED_QUANTUM_BACKEND_PROXY_PATHS = ['/keys', '/ibm/profiles'];
 const STAGING_HOST_CLEAR_SITE_DATA_MARKERS = ['quizzical-hofstadter.', '.plesk.page'];
+const QUANTUM_API_DOCS_PATH = '/public-facing/api/quantum';
+const QUANTUM_API_MARKDOWN_PATH = '/public-facing/api/quantum.md';
+const LLMS_TXT_PATH = '/llms.txt';
+const quantumIntegrationDocsManifest = require('./src/constants/json/quantum-integration-docs.json');
+const QUANTUM_DOCUMENTATION_LINKS = new Map([
+  [QUANTUM_API_DOCS_PATH, QUANTUM_API_MARKDOWN_PATH],
+  ...quantumIntegrationDocsManifest.docs.map((doc) => [doc.path, doc.markdownPath]),
+]);
 
 function buildPublicRuntimeConfig() {
   return PUBLIC_RUNTIME_ENV_KEYS.reduce((config, key) => {
@@ -719,6 +727,101 @@ app.get('/sw.js', (_req, res) => {
   res.sendFile(SERVICE_WORKER_PATH);
 });
 
+function getQuantumDocumentationMarkdownPath(req) {
+  const requestUrl = new URL(req.originalUrl, 'http://localhost');
+  const pathname = requestUrl.pathname.replace(/\/+$/, '') || '/';
+  return QUANTUM_DOCUMENTATION_LINKS.get(pathname);
+}
+
+function shouldInjectQuantumDocumentationLinks(req) {
+  if (req.method !== 'GET') {
+    return false;
+  }
+
+  if (!getQuantumDocumentationMarkdownPath(req)) {
+    return false;
+  }
+
+  const accept = String(req.headers.accept || '');
+  return !accept || accept.includes('text/html') || accept.includes('*/*');
+}
+
+function injectQuantumDocumentationHeadLinks(html, req) {
+  const markdownPath = getQuantumDocumentationMarkdownPath(req);
+  if (!markdownPath || !html.includes('</head>')) {
+    return html;
+  }
+
+  const origin = getRequestOrigin(req);
+  const alternateHref = `${origin}${markdownPath}`;
+  const describedByHref = `${origin}${LLMS_TXT_PATH}`;
+  const links = [
+    html.includes(`href="${alternateHref}"`)
+      ? ''
+      : `<link rel="alternate" type="text/markdown" href="${alternateHref}">`,
+    html.includes(`href="${describedByHref}"`)
+      ? ''
+      : `<link rel="describedby" href="${describedByHref}">`,
+  ].join('');
+
+  return links ? html.replace('</head>', `${links}</head>`) : html;
+}
+
+app.use((req, res, next) => {
+  if (!shouldInjectQuantumDocumentationLinks(req)) {
+    next();
+    return;
+  }
+
+  const chunks = [];
+  const originalEnd = res.end.bind(res);
+
+  res.write = (chunk, encoding, callback) => {
+    if (typeof encoding === 'function') {
+      callback = encoding;
+      encoding = undefined;
+    }
+
+    if (chunk) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding));
+    }
+
+    if (typeof callback === 'function') {
+      callback();
+    }
+
+    return true;
+  };
+
+  res.end = (chunk, encoding, callback) => {
+    if (typeof encoding === 'function') {
+      callback = encoding;
+      encoding = undefined;
+    }
+
+    if (chunk) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding));
+    }
+
+    const body = Buffer.concat(chunks);
+    const contentType = String(res.getHeader('content-type') || '');
+    const shouldInject =
+      !contentType ||
+      contentType.includes('text/html') ||
+      body.subarray(0, 256).toString('utf8').includes('<html');
+
+    if (!shouldInject) {
+      return originalEnd(body, encoding, callback);
+    }
+
+    const updated = injectQuantumDocumentationHeadLinks(body.toString('utf8'), req);
+    res.removeHeader('content-length');
+    return originalEnd(updated, 'utf8', callback);
+  };
+
+  next();
+});
+
 app.get(/^\/_expo\/loaders(?:\/\(tabs\))?\/public-facing\/api(?:\/index)?\/?$/, async (req, res) => {
   try {
     const payload = await buildApiIndexLoaderPayload(getRequestOrigin(req));
@@ -761,8 +864,9 @@ app.get(/^\/_expo\/loaders(?:\/\(tabs\))?\/public-facing\/mcp\/([^/]+)\/?$/, asy
   }
 });
 
-// Serve static files from client build
-app.use(express.static(CLIENT_BUILD_DIR, { maxAge: '1h' }));
+// Serve static files from client build. Let Expo Router handle extensionless
+// page URLs so `/public-facing/api/quantum` renders instead of redirecting.
+app.use(express.static(CLIENT_BUILD_DIR, { maxAge: '1h', redirect: false }));
 
 // Handle all remaining requests through Expo Router
 app.all('/{*all}', createRequestHandler({

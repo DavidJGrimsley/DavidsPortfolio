@@ -21,6 +21,11 @@ export type SeoHeadProps = {
   description?: string;
   path?: string;
   canonicalUrl?: string;
+  links?: {
+    rel: string;
+    href: string;
+    type?: string;
+  }[];
   keywords?: string[];
   image?: string;
   imageAlt?: string;
@@ -59,6 +64,7 @@ export function SeoHead({
   description,
   path,
   canonicalUrl,
+  links,
   keywords,
   image,
   imageAlt,
@@ -118,6 +124,14 @@ export function SeoHead({
       ) : null}
 
       <link rel="canonical" href={resolvedCanonical} />
+      {links?.map((link) => (
+        <link
+          key={`${link.rel}:${link.href}`}
+          rel={link.rel}
+          href={link.href}
+          type={link.type}
+        />
+      ))}
 
       {/* Open Graph */}
       <meta property="og:locale" content="en_US" />

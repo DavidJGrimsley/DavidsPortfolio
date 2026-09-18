@@ -91,6 +91,13 @@ function encodePathname(pathname) {
 }
 
 function main() {
+  const quantumDocsManifest = readJson(
+    path.join(repoRoot, 'src', 'constants', 'json', 'quantum-integration-docs.json')
+  );
+  const quantumIntegrationDocs = Array.isArray(quantumDocsManifest?.docs)
+    ? quantumDocsManifest.docs
+    : [];
+
   // Static routes (group folders like (tabs) are NOT part of the URL)
   const staticRoutes = [
     { path: '/', changefreq: 'weekly', priority: 1.0 },
@@ -107,6 +114,13 @@ function main() {
 
     { path: '/public-facing/api', changefreq: 'weekly', priority: 0.8 },
     { path: '/public-facing/api/quantum', changefreq: 'weekly', priority: 0.7 },
+    { path: '/public-facing/api/quantum.md', changefreq: 'weekly', priority: 0.6 },
+    { path: '/llms.txt', changefreq: 'weekly', priority: 0.5 },
+    { path: '/llms-full.txt', changefreq: 'weekly', priority: 0.5 },
+    ...quantumIntegrationDocs.flatMap((doc) => [
+      { path: doc.path, changefreq: 'monthly', priority: 0.6 },
+      { path: doc.markdownPath, changefreq: 'monthly', priority: 0.5 },
+    ]),
 
     { path: '/public-facing/mcp', changefreq: 'weekly', priority: 0.8 },
     { path: '/public-facing/mcp/mrdj-app-mcp', changefreq: 'monthly', priority: 0.6 },
@@ -175,6 +189,11 @@ function main() {
   // If a web export exists, also copy into dist/ so it deploys with the build
   if (fs.existsSync(distDir)) {
     fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapXml, 'utf8');
+  }
+
+  const clientBuildDir = path.join(distDir, 'client');
+  if (fs.existsSync(clientBuildDir)) {
+    fs.writeFileSync(path.join(clientBuildDir, 'sitemap.xml'), sitemapXml, 'utf8');
   }
 
   // Minimal robots.txt (do not overwrite if user maintains a custom one)

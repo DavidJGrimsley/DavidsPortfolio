@@ -1,0 +1,28 @@
+# David Grimsley
+
+> Portfolio and public developer resources for David Grimsley, including public APIs, MCP servers, production apps, and Quantum API integration guides.
+
+Use these Markdown links when an AI agent needs low-noise source material. Human pages remain available from the same site navigation.
+
+## Quantum API Docs
+
+- [Quantum API](/public-facing/api/quantum.md): Agent entry point with base URL, auth, error shape, live OpenAPI, and endpoint-directory links.
+- [Unreal Plugin](/public-facing/api/quantum/ue-plugin.md): UE 5.8 Blueprint integration guide.
+- [TypeScript SDK](/public-facing/api/quantum/typescript-sdk.md): Node.js package guide.
+- [Python SDK](/public-facing/api/quantum/python-sdk.md): Sync Python client guide.
+- [Godot Addon](/public-facing/api/quantum/godot-addon.md): Godot 4 runtime addon guide.
+- [Unity Package](/public-facing/api/quantum/unity-package.md): Unity runtime package guide.
+- [Full agent context](/llms-full.txt): Fuller site and Quantum API context.
+
+## Human Pages
+
+- [Public APIs](/public-facing/api)
+- [Quantum API](/public-facing/api/quantum)
+- [Plugin & package docs](/public-facing/api/quantum/ue-plugin)
+- [MCP Servers](/public-facing/mcp)
+- [Production Apps](/public-facing/production)
+
+## Discovery
+
+- [Sitemap](/sitemap.xml)
+- [Robots policy](/robots.txt)

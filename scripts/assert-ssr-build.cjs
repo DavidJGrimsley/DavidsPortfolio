@@ -4,6 +4,7 @@ const path = require('node:path');
 const REQUIRED_PAGE_ROUTES = [
   'public-facing/api/index.tsx',
   'public-facing/api/[id].tsx',
+  'public-facing/api/quantum/[slug].tsx',
   'public-facing/mcp/index.tsx',
   'public-facing/mcp/[id].tsx',
 ];
@@ -42,6 +43,32 @@ function assertSsrBuild(serverBuildDir) {
     return resolved;
   }
 
+  function requireLoaderArtifact(file, description) {
+    const resolved = requireModulePath(file, description);
+    if (fs.existsSync(resolved) && fs.statSync(resolved).isFile() && fs.statSync(resolved).size > 0) {
+      return resolved;
+    }
+
+    const sourceMap = `${resolved}.map`;
+    if (fs.existsSync(sourceMap) && fs.statSync(sourceMap).isFile() && fs.statSync(sourceMap).size > 0) {
+      return sourceMap;
+    }
+
+    throw new Error(`[SSR build] Invalid ${description}: ${file}`);
+  }
+
+  function requireModulePath(file, description) {
+    if (typeof file !== 'string' || !file) {
+      throw new Error(`[SSR build] Missing ${description} in the generated routes manifest.`);
+    }
+    const resolved = path.resolve(serverBuildDir, file);
+    const relative = path.relative(serverBuildDir, resolved);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      throw new Error(`[SSR build] Invalid ${description}: ${file}`);
+    }
+    return resolved;
+  }
+
   function routeFile(route) {
     return typeof route?.file === 'string'
       ? route.file.replaceAll('\\', '/').replace(/^\.\//, '')
@@ -67,7 +94,7 @@ function assertSsrBuild(serverBuildDir) {
     if (typeof route?.loader !== 'string' || !route.loader) {
       throw new Error(`[SSR build] Generated routes manifest is missing loader for ${routeMarker}.`);
     }
-    requireModule(route.loader, `loader module for ${routeMarker}`);
+    requireLoaderArtifact(route.loader, `loader module for ${routeMarker}`);
   }
   for (const routeMarker of OPTIONAL_LOADER_ROUTES) {
     const route = findHtmlRoute(routeMarker);

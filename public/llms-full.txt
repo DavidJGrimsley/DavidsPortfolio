@@ -1,0 +1,53 @@
+# David Grimsley Full Agent Context
+
+> Fuller AI-agent context for David Grimsley's public portfolio, public APIs, MCP servers, production apps, and Quantum API integration guides.
+
+Start with `/llms.txt` for the short index. This file uses plain Markdown intentionally.
+
+Canonical site origin: `https://davidjgrimsley.com`
+
+## Quantum API
+
+- Human page: `/public-facing/api/quantum`
+- Agent Markdown: `/public-facing/api/quantum.md`
+- Direct API base URL: `https://davidjgrimsley.com/public-facing/api/quantum/v1`
+- Live OpenAPI: `/public-facing/api/quantum/openapi.json`
+- Live endpoint directory: `/public-facing/api/quantum/v1/portfolio.json`
+
+Use the OpenAPI document for exact current endpoint schemas. The portfolio document lists the current public API surface and request-ready mounted paths.
+
+Authentication summary:
+
+- Health and portfolio metadata are public.
+- Runtime endpoints normally use `X-API-Key`.
+- Key management and IBM profile endpoints use the signed-in user's bearer token.
+- Never invent or expose credentials, IBM tokens, API keys, or private service state.
+
+## Plugin & Package Guides
+
+- Quantum API Unreal Plugin: `/public-facing/api/quantum/ue-plugin.md` (`QuantumApi`, UE 5.8 Runtime plugin, version `0.2.0-beta`)
+- TypeScript SDK: `/public-facing/api/quantum/typescript-sdk.md` (`@mr.dj2u/quantum-api`, version `0.1.2`)
+- Python SDK: `/public-facing/api/quantum/python-sdk.md` (`quantum-api-sdk`, version `0.1.0`)
+- Godot Addon: `/public-facing/api/quantum/godot-addon.md` (Godot 4 runtime addon)
+- Unity Package: `/public-facing/api/quantum/unity-package.md` (`com.quantumapi.runtime`, Unity 2021.3+, version `0.1.0`)
+
+Each guide has a human companion at the same path without `.md`. The human page advertises its Markdown companion with `rel="alternate" type="text/markdown"` and points to `/llms.txt` with `rel="describedby"`.
+
+Important Unreal beginner point:
+
+“What does ‘array of Quantum Api Circuit Operation’ mean?”
+
+It means a list of gate steps. A struct is a bundle of fields, an array is a list, and each `Quantum Api Circuit Operation` is one gate instruction such as applying an H gate to qubit 0.
+
+## Public MCP Resources
+
+- Human MCP index: `/public-facing/mcp`
+- App MCP server: `/public-facing/mcp/mrdj-app-mcp`
+- Pokemon MCP server: `/public-facing/mcp/mrdj-pokemon-mcp`
+
+## Discovery
+
+- Root agent index: `/llms.txt`
+- Full agent context: `/llms-full.txt`
+- Sitemap: `/sitemap.xml`
+- Robots policy: `/robots.txt`
