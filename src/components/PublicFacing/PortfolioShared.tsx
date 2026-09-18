@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { View } from "react-native";
+import { Image } from "expo-image";
 
 import Ionicons from "@/components/UI/HydratedIonicon";
 import { ThemedText } from "@/components/UI/ThemedText";
@@ -45,6 +46,9 @@ export function PortfolioHeader({
   const tintColor = useThemeColor({}, "tint");
 
   const displayIcon = iconName ?? (type === "api" ? "cloud" : "server");
+  const iconIsImage =
+    typeof icon === "string" &&
+    (/^(https?:)?\/\//.test(icon) || icon.startsWith("/"));
 
   return (
     <View className="mb-7.5">
@@ -53,7 +57,14 @@ export function PortfolioHeader({
           className="w-18 h-18 rounded-2xl items-center justify-center mr-4"
           style={{ backgroundColor: `${tintColor}33` }}
         >
-          {icon ? (
+          {iconIsImage ? (
+            <Image
+              source={{ uri: icon }}
+              contentFit="contain"
+              style={{ width: 58, height: 58 }}
+              accessibilityLabel={`${name} icon`}
+            />
+          ) : icon ? (
             <ThemedText className="text-4xl">{icon}</ThemedText>
           ) : (
             <Ionicons name={displayIcon} size={40} color={tintColor} />

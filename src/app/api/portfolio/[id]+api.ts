@@ -253,8 +253,8 @@ function decorateQuantumPortfolio(portfolio: APIPortfolio, origin: string | null
       publicBasePath: QUANTUM_PUBLIC_BASE_PATH,
       docsUrl: portfolio.api.docsUrl || QUANTUM_DOCS_URL,
       healthUrl: `${baseUrl}/health`,
-      icon: undefined,
-      iconName: 'nuclear',
+      icon: '/images/quantum-api-icon.png',
+      iconName: undefined,
       features: portfolio.api.features ?? getQuantumFeatures(),
       liveTestExecutor: 'quantum-sdk',
       auth: {
