@@ -864,8 +864,9 @@ app.get(/^\/_expo\/loaders(?:\/\(tabs\))?\/public-facing\/mcp\/([^/]+)\/?$/, asy
   }
 });
 
-// Serve static files from client build
-app.use(express.static(CLIENT_BUILD_DIR, { maxAge: '1h' }));
+// Serve static files from client build. Let Expo Router handle extensionless
+// page URLs so `/public-facing/api/quantum` renders instead of redirecting.
+app.use(express.static(CLIENT_BUILD_DIR, { maxAge: '1h', redirect: false }));
 
 // Handle all remaining requests through Expo Router
 app.all('/{*all}', createRequestHandler({
