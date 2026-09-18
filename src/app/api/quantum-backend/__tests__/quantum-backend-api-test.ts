@@ -123,6 +123,25 @@ describe('quantum-backend API proxy', () => {
     expect(headers.get('X-API-Key')).toBe('server-demo-key');
   });
 
+  it('allows staging same-origin proxy requests when Plesk forwards to an internal http URL', async () => {
+    const response = await GET(
+      new Request(
+        'http://quizzical-hofstadter.108-175-12-95.plesk.page/api/quantum-backend/v1/health',
+        {
+          method: 'GET',
+          headers: {
+            origin: 'https://quizzical-hofstadter.108-175-12-95.plesk.page',
+            'x-forwarded-proto': 'https',
+            'x-forwarded-host': 'quizzical-hofstadter.108-175-12-95.plesk.page',
+          },
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps bearer-only key and IBM profile routes blocked', async () => {
     const keysResponse = await GET(
       new Request('http://localhost:3000/api/quantum-backend/v1/keys', {

@@ -65,12 +65,18 @@ test.each([
   expect(validate).toThrow(`missing page route for ${routeMarker}`);
 });
 
-test.each([
-  'public-facing/api/[id].tsx',
-])('rejects a dynamic page without a loader entry for %s', (routeMarker) => {
+test('rejects the API dynamic page without a loader entry', () => {
+  const routeMarker = 'public-facing/api/[id].tsx';
   const route = manifest.htmlRoutes.find((entry) => entry.file.endsWith(routeMarker));
   delete route.loader;
   expect(validate).toThrow(`missing loader for ${routeMarker}`);
+});
+
+test('accepts the MCP dynamic page without a generated loader entry', () => {
+  const routeMarker = 'public-facing/mcp/[id].tsx';
+  const route = manifest.htmlRoutes.find((entry) => entry.file.endsWith(routeMarker));
+  delete route.loader;
+  expect(validate).not.toThrow();
 });
 
 test('rejects a missing loader module', () => {

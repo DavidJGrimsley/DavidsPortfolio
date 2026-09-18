@@ -5,6 +5,7 @@ import { readTrimmedPublicRuntimeConfigValue } from '@/lib/runtime-config';
 import { resolveBrowserSiteOrigin } from '@/lib/site-origin';
 
 const isWeb = Platform.OS === 'web';
+type SupabaseAuthFlowType = 'implicit' | 'pkce';
 
 type StorageLike = {
   getItem: (key: string) => string | null;
@@ -38,6 +39,39 @@ function getSupabaseAnonKey() {
     readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_ANON_KEY') ||
     readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_KEY')
   );
+}
+
+function parseHostname(value: string) {
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function readBrowserHostname() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const hostname = String(window.location?.hostname ?? '').trim().toLowerCase();
+  return hostname || parseHostname(String(window.location?.origin ?? ''));
+}
+
+function readConfiguredSiteHostname() {
+  return (
+    parseHostname(readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SITE_ORIGIN')) ||
+    parseHostname(readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SITE_URL'))
+  );
+}
+
+function isPleskTechnicalHostname(hostname: string) {
+  return hostname.endsWith('.plesk.page');
+}
+
+function normalizeAuthFlowType(value: string): SupabaseAuthFlowType | null {
+  const normalized = value.trim().toLowerCase();
+  return normalized === 'implicit' || normalized === 'pkce' ? normalized : null;
 }
 
 function getSupabaseConfig() {
@@ -79,13 +113,32 @@ export function getQuantumAuthRedirectUrl() {
   return new URL(QUANTUM_AUTH_PATH, resolveBrowserSiteOrigin()).toString();
 }
 
+export function getSupabaseAuthFlowType(): SupabaseAuthFlowType {
+  const configuredFlow = normalizeAuthFlowType(
+    readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_AUTH_FLOW')
+  );
+  if (configuredFlow) {
+    return configuredFlow;
+  }
+
+  if (
+    isPleskTechnicalHostname(readBrowserHostname()) ||
+    isPleskTechnicalHostname(readConfiguredSiteHostname())
+  ) {
+    return 'implicit';
+  }
+
+  return 'pkce';
+}
+
 export function getSupabaseBrowserClient() {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey) {
     throw new Error(getSupabaseConfigError() ?? 'Supabase is not configured.');
   }
 
-  const configKey = `${url}\n${anonKey}`;
+  const authFlowType = getSupabaseAuthFlowType();
+  const configKey = `${url}\n${anonKey}\n${authFlowType}`;
   if (supabaseClient && supabaseClientConfigKey === configKey) {
     return supabaseClient;
   }
@@ -94,7 +147,7 @@ export function getSupabaseBrowserClient() {
     auth: {
       autoRefreshToken: isWeb,
       detectSessionInUrl: isWeb,
-      flowType: 'pkce',
+      flowType: authFlowType,
       persistSession: isWeb,
       storage: isWeb ? undefined : memoryStorage(),
     },

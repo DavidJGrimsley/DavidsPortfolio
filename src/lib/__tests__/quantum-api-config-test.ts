@@ -111,6 +111,9 @@ describe('quantum api config', () => {
     expect(config.resolveQuantumEndpointBaseUrl('api_key', true)).toBe(
       'http://localhost:3000/api/public/quantum/v1'
     );
+    expect(config.resolveQuantumEndpointBaseUrl('bearer_jwt', true)).toBe(
+      'http://localhost:3000/api/public/quantum/v1'
+    );
   });
 
   it('uses the dynamic public API proxy path on Plesk staging hosts', () => {
