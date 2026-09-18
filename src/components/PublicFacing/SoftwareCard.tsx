@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { StatusBadge } from './StatusBadge';
 import { StatsRow } from './StatsRow';
@@ -21,7 +22,13 @@ type SoftwareCardProps = {
   onPress: () => void;
 };
 
+function isImageIcon(icon: string) {
+  return /^(https?:)?\/\//.test(icon) || icon.startsWith('/');
+}
+
 export function SoftwareCard({ item, stats, ctaLabel, ctaHint, onPress }: SoftwareCardProps) {
+  const iconIsImage = isImageIcon(item.icon);
+
   return (
     <Pressable
       onPress={onPress}
@@ -30,9 +37,18 @@ export function SoftwareCard({ item, stats, ctaLabel, ctaHint, onPress }: Softwa
       {/* Header with Icon and Status */}
       <View className="flex-row justify-between items-start mb-3">
         <View className="flex-row items-center gap-3 flex-1">
-          <ThemedText className="text-4xl">
-            {item.icon}
-          </ThemedText>
+          {iconIsImage ? (
+            <Image
+              source={{ uri: item.icon }}
+              contentFit="contain"
+              style={{ width: 44, height: 44 }}
+              accessibilityLabel={`${item.name} icon`}
+            />
+          ) : (
+            <ThemedText className="text-4xl">
+              {item.icon}
+            </ThemedText>
+          )}
           <View className="flex-1">
             <ThemedText type="subtitle" className="text-xl">
               {item.name}

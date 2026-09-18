@@ -12,6 +12,7 @@ import {
   usePathname,
   type ErrorBoundaryProps,
 } from "expo-router";
+import Head from "expo-router/head";
 import type { GenerateMetadataFunction, Metadata } from "expo-router/server";
 
 import { HelloWave } from "@/components/QuantumAnimation";
@@ -21,6 +22,13 @@ import { ExternalLink } from "@/components/UI/ExternalLink";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { StructuredDataScript } from "@/components/SEO/SeoHead";
 import { EndpointCard } from "~/src/components/PublicFacing/api/APIComponents";
+import {
+  LLMS_TXT_PATH,
+  QUANTUM_API_MARKDOWN_PATH,
+  QUANTUM_INTEGRATION_DOCS,
+  QUANTUM_DOCS_FEEDBACK_EMAIL,
+  QUANTUM_DOCS_ISSUES_URL,
+} from "~/src/components/PublicFacing/api/quantum-integration-docs";
 import { ApiAuthDashboardCard } from "~/src/components/PublicFacing/api/quantum-auth-dashboard-card";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
 import {
@@ -643,6 +651,7 @@ function APIDetailContent() {
   const components = portfolio.components ?? [];
 
   const accentColor = useThemeColor({}, "accent");
+  const tintColor = useThemeColor({}, "tint");
 
   const statusRaw = (api.status ?? "").toLowerCase();
   const isLive =
@@ -678,6 +687,16 @@ function APIDetailContent() {
 
   return (
     <PublicFacingDetailWrapper>
+      {routeId === "quantum" ? (
+        <Head>
+          <link
+            rel="alternate"
+            type="text/markdown"
+            href={joinUrl(SITE_URL, QUANTUM_API_MARKDOWN_PATH)}
+          />
+          <link rel="describedby" href={joinUrl(SITE_URL, LLMS_TXT_PATH)} />
+        </Head>
+      ) : null}
       <StructuredDataScript structuredData={structuredData} />
       {source !== "live" && liveError ? (
         <View className="rounded-lg p-4 mb-5 bg-yellow-900/30 border border-yellow-600/50">
@@ -692,7 +711,7 @@ function APIDetailContent() {
         name={api.name}
         version={api.version}
         description={api.description}
-        icon={api.icon && api.icon.length <= 4 ? api.icon : undefined}
+        icon={api.icon}
         iconName={(api.iconName as never) ?? "cloud"}
         isLive={isLive}
         baseUrl={apiBaseUrl}
@@ -702,6 +721,46 @@ function APIDetailContent() {
         isSynced={isSynced}
         type="api"
       />
+
+      {routeId === "quantum" ? (
+        <View
+          className="rounded-lg p-4 mb-7.5 border"
+          style={{
+            backgroundColor: accentColor,
+            borderColor: tintColor,
+          }}
+        >
+          <ThemedText type="defaultSemiBold" className="mb-2 text-tint">
+            Plugin & package docs
+          </ThemedText>
+          <ThemedText className="detail-body opacity-90 mb-4">
+            Use the beginner-friendly guide for specific integration guidance.
+            Every guide has a matching Markdown file that coding agents can read
+            directly.
+          </ThemedText>
+          <View className="gap-3 md:flex-row md:flex-wrap">
+            {QUANTUM_INTEGRATION_DOCS.map((doc) => (
+              <Link
+                key={doc.slug}
+                href={doc.path as any}
+                asChild
+              >
+                <Pressable
+                  className="py-3.5 px-5 rounded-lg md:w-[31%] items-center justify-center border"
+                  style={{ borderColor: tintColor }}
+                >
+                  <ThemedText
+                    className="font-bold text-base text-center"
+                    style={{ color: tintColor }}
+                  >
+                    {doc.directoryLabel}
+                  </ThemedText>
+                </Pressable>
+              </Link>
+            ))}
+          </View>
+        </View>
+      ) : null}
 
       {showApiKeyDashboard ? (
         <ClientOnly>
@@ -826,6 +885,67 @@ function APIDetailContent() {
           </View>
         </View>
       </View>
+
+      {routeId === "quantum" ? (
+        <>
+          <View className="mb-7.5">
+            <ThemedText type="subtitle" className="mb-4">
+              Feedback, contributions, comments, and questions
+            </ThemedText>
+            <View
+              className="p-4 rounded-lg gap-3"
+              style={{ backgroundColor: accentColor }}
+            >
+              <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
+                Questions, corrections, and issue reports are welcome.
+              </ThemedText>
+              <ExternalLink
+                href={`mailto:${QUANTUM_DOCS_FEEDBACK_EMAIL}`}
+                className="font-mono text-sm underline"
+                style={{ color: tintColor }}
+              >
+                {QUANTUM_DOCS_FEEDBACK_EMAIL}
+              </ExternalLink>
+              <ExternalLink
+                href={QUANTUM_DOCS_ISSUES_URL}
+                className="font-mono text-sm underline"
+                style={{ color: tintColor }}
+              >
+                {QUANTUM_DOCS_ISSUES_URL}
+              </ExternalLink>
+            </View>
+          </View>
+
+          <View className="mb-7.5">
+            <ThemedText type="subtitle" className="mb-4">
+              Agent version (.md)
+            </ThemedText>
+            <View
+              className="p-4 rounded-lg gap-3"
+              style={{ backgroundColor: accentColor }}
+            >
+              <ThemedText className="detail-body opacity-90 text-base md:text-lg leading-relaxed">
+                Coding agents can use the plain Markdown guide for lower-noise
+                context, then follow the links to each integration guide.
+              </ThemedText>
+              <ExternalLink
+                href={joinUrl(SITE_URL, QUANTUM_API_MARKDOWN_PATH)}
+                className="font-mono text-sm underline"
+                style={{ color: tintColor }}
+              >
+                {QUANTUM_API_MARKDOWN_PATH}
+              </ExternalLink>
+              <ExternalLink
+                href={joinUrl(SITE_URL, LLMS_TXT_PATH)}
+                className="font-mono text-sm underline"
+                style={{ color: tintColor }}
+              >
+                {LLMS_TXT_PATH}
+              </ExternalLink>
+            </View>
+          </View>
+        </>
+      ) : null}
 
       <SyncStatus isSynced={isSynced} sourceUrl={registryEntry.portfolioUrl} />
     </PublicFacingDetailWrapper>

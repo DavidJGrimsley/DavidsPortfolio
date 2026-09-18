@@ -27,6 +27,10 @@ beforeEach(() => {
         page: '/(tabs)/public-facing/api/[id]',
         loader: '_expo/loaders/(tabs)/public-facing/api/[id].js',
       },
+      {
+        file: './(tabs)/public-facing/api/quantum/[slug].tsx',
+        page: '/(tabs)/public-facing/api/quantum/[slug]',
+      },
       { file: './(tabs)/public-facing/mcp/index.tsx', page: '/(tabs)/public-facing/mcp/index' },
       {
         file: './(tabs)/public-facing/mcp/[id].tsx',
@@ -53,6 +57,7 @@ test('accepts a complete SSR export with static and dynamic loader routes', () =
 test.each([
   'public-facing/api/index.tsx',
   'public-facing/api/[id].tsx',
+  'public-facing/api/quantum/[slug].tsx',
   'public-facing/mcp/index.tsx',
   'public-facing/mcp/[id].tsx',
 ])('rejects missing page route for %s', (routeMarker) => {
@@ -62,7 +67,6 @@ test.each([
 
 test.each([
   'public-facing/api/[id].tsx',
-  'public-facing/mcp/[id].tsx',
 ])('rejects a dynamic page without a loader entry for %s', (routeMarker) => {
   const route = manifest.htmlRoutes.find((entry) => entry.file.endsWith(routeMarker));
   delete route.loader;

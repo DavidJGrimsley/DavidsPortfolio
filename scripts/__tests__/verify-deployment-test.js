@@ -2,6 +2,7 @@
 const http = require('node:http');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const quantumDocsManifest = require('../../src/constants/json/quantum-integration-docs.json');
 
 const DETAIL_PAGES = {
   '/public-facing/api/quantum': {
@@ -26,6 +27,21 @@ const DETAIL_PAGES = {
     types: ['SoftwareApplication', 'ItemList', 'BreadcrumbList'],
   },
 };
+
+const QUANTUM_DOCUMENTATION_PAGES = [
+  {
+    path: '/public-facing/api/quantum',
+    markdownPath: '/public-facing/api/quantum.md',
+    title: 'Quantum API',
+  },
+  ...quantumDocsManifest.docs,
+];
+const QUANTUM_DOCUMENTATION_BY_PATH = new Map(
+  QUANTUM_DOCUMENTATION_PAGES.map((page) => [page.path, page]),
+);
+const QUANTUM_DOCUMENTATION_BY_MARKDOWN_PATH = new Map(
+  QUANTUM_DOCUMENTATION_PAGES.map((page) => [page.markdownPath, page]),
+);
 
 function renderDetailPage(request, detail, loaderData) {
   const origin = `http://${request.headers.host}`;
@@ -56,6 +72,48 @@ test.each([
     } else if (request.url.startsWith('/_expo/loaders/')) {
       response.setHeader('Content-Type', 'application/json');
       response.end(JSON.stringify({ healthy: true }));
+    } else if (QUANTUM_DOCUMENTATION_BY_PATH.has(request.url)) {
+      const page = QUANTUM_DOCUMENTATION_BY_PATH.get(request.url);
+      response.setHeader('Content-Type', 'text/html');
+      response.end(
+        `<link rel="alternate" href="${page.markdownPath}">` +
+          '<link rel="describedby" href="/llms.txt">' +
+          `__djsportfolio_css__ ${page.title}` +
+          (page.path === '/public-facing/api/quantum/ue-plugin'
+            ? ' What does Quantum Api Circuit Operation'
+            : '') +
+          (request.url === missingPage ? '' : ' __EXPO_ROUTER_LOADER_DATA__'),
+      );
+    } else if (QUANTUM_DOCUMENTATION_BY_MARKDOWN_PATH.has(request.url)) {
+      const page = QUANTUM_DOCUMENTATION_BY_MARKDOWN_PATH.get(request.url);
+      response.setHeader('Content-Type', 'text/markdown');
+      response.end(
+        `# ${page.title}\n\n` +
+          (page.path === '/public-facing/api/quantum/ue-plugin'
+            ? 'What does Quantum Api Circuit Operation\n\n## Troubleshooting\n'
+            : ''),
+      );
+    } else if (request.url === '/llms.txt') {
+      response.setHeader('Content-Type', 'text/plain');
+      response.end(
+        '# David Grimsley\n\n' +
+          QUANTUM_DOCUMENTATION_PAGES.map((page) => page.markdownPath).join('\n') +
+          '\n/llms-full.txt\n',
+      );
+    } else if (request.url === '/llms-full.txt') {
+      response.setHeader('Content-Type', 'text/plain');
+      response.end(
+        '# David Grimsley Full Agent Context\n\nQuantum API Unreal Plugin\nQuantum Api Circuit Operation\n',
+      );
+    } else if (request.url === '/sitemap.xml') {
+      response.setHeader('Content-Type', 'application/xml');
+      response.end(
+        '<urlset>' +
+          QUANTUM_DOCUMENTATION_PAGES.map(
+            (page) => `<loc>${page.path}</loc><loc>${page.markdownPath}</loc>`,
+          ).join('') +
+          '</urlset>',
+      );
     } else {
       response.setHeader('Content-Type', 'text/html');
       const loaderData = request.url === missingPage ? '' : '__EXPO_ROUTER_LOADER_DATA__';
