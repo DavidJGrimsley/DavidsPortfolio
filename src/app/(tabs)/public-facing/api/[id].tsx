@@ -259,6 +259,7 @@ function buildApiDetailMetadata({
   const description =
     api.description ??
     `${api.name} is a public API hosted by David Grimsley. View endpoints, docs, examples, and usage notes.`;
+  const isQuantumApi = routePath === "/public-facing/api/quantum";
 
   return {
     title,
@@ -272,7 +273,19 @@ function buildApiDetailMetadata({
     ],
     authors: [{ name: "David Grimsley", url: SITE_URL }],
     robots: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
-    alternates: { canonical: pageUrl },
+    alternates: {
+      canonical: pageUrl,
+      ...(isQuantumApi
+        ? { types: { "text/markdown": joinUrl(SITE_URL, QUANTUM_API_MARKDOWN_PATH) } }
+        : {}),
+    },
+    ...(isQuantumApi
+      ? {
+          icons: {
+            other: [{ rel: "describedby", url: joinUrl(SITE_URL, LLMS_TXT_PATH) }],
+          },
+        }
+      : {}),
     openGraph: {
       title,
       description,
