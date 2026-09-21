@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, Platform } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, ScrollView, Pressable, Platform, Animated } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -177,6 +178,77 @@ const FALLBACK_ENDPOINTS: QuantumEndpoint[] = [
     ],
   },
 ];
+
+function CopyableBox({
+  textToCopy,
+  children,
+  className,
+  style,
+  copiedMessage = 'Copied!',
+}: {
+  textToCopy: string;
+  children: React.ReactNode;
+  className?: string;
+  style?: any;
+  copiedMessage?: string;
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await Clipboard.setStringAsync(textToCopy);
+    } catch (e) {
+      console.warn('Failed to copy to clipboard', e);
+    }
+
+    fadeAnim.setValue(0);
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.delay(1000),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start();
+  }, [textToCopy, fadeAnim]);
+
+  return (
+    <Pressable
+      onPress={handleCopy}
+      className={`relative overflow-hidden cursor-pointer ${className ?? ''}`.trim()}
+      style={style}
+    >
+      {children}
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          opacity: fadeAnim,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 8,
+          zIndex: 10,
+        }}
+      >
+        <ThemedText className="font-bold text-emerald-400 text-sm">
+          {copiedMessage}
+        </ThemedText>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+const AGENT_SKILL_COMMAND = 'npx skills add -g davidjgrimsley/quantum-api';
 
 export default function QuantumAPIPage() {
   const backgroundColor = useThemeColor({}, 'background');
@@ -360,40 +432,88 @@ export default function QuantumAPIPage() {
             </View>
           </View>
 
-          {/* Base URL & API Docs */}
+          {/* Actions & Links: 2x2 grid on large screens, stacked on small/medium screens */}
           <View className="gap-3">
-            <View 
-              className="p-4 rounded-lg border-l-4"
-              style={{
-                backgroundColor: accentColor,
-                borderLeftColor: tintColor,
-              }}
-            >
-              <ThemedText type="defaultSemiBold" className="mb-1.5 text-secondary">
-                Base URL
-              </ThemedText>
-              <ExternalLink 
-                href={apiBaseUrl}
-                className="font-mono text-sm break-all"
-                style={{ color: tintColor }}
-              >
-                {apiBaseUrl}
-              </ExternalLink>
+            {/* Row 1: Base URL & Agent Skill */}
+            <View className="gap-3 lg:flex-row">
+              {/* Base URL Box */}
+              <View className="flex-1">
+                <CopyableBox 
+                  textToCopy={apiBaseUrl}
+                  className="p-4 rounded-lg border-l-4 h-full justify-between"
+                  style={{
+                    backgroundColor: accentColor,
+                    borderLeftColor: tintColor,
+                  }}
+                >
+                  <ThemedText type="defaultSemiBold" className="mb-1.5 text-secondary">
+                    Base URL
+                  </ThemedText>
+                  <View className="flex-row items-center justify-between">
+                    <ThemedText 
+                      className="font-mono text-xs sm:text-sm break-all flex-1 mr-2"
+                      style={{ color: tintColor }}
+                    >
+                      {apiBaseUrl}
+                    </ThemedText>
+                    <Ionicons name="copy-outline" size={16} color={tintColor} />
+                  </View>
+                </CopyableBox>
+              </View>
+
+              {/* Agent Skill Box */}
+              <View className="flex-1">
+                <CopyableBox 
+                  textToCopy={AGENT_SKILL_COMMAND}
+                  className="p-4 rounded-lg border border-neutral-700/60 bg-[#121212] h-full justify-between"
+                >
+                  <ThemedText type="defaultSemiBold" className="mb-1.5 text-neutral-300">
+                    Agent Skill
+                  </ThemedText>
+                  <View className="flex-row items-center justify-between">
+                    <ThemedText 
+                      className="font-mono text-xs sm:text-sm text-emerald-400 break-all flex-1 mr-2"
+                      style={{ fontFamily: Platform.OS === 'web' ? 'monospace' : undefined }}
+                    >
+                      {AGENT_SKILL_COMMAND}
+                    </ThemedText>
+                    <Ionicons name="copy-outline" size={16} color="#9ca3af" />
+                  </View>
+                </CopyableBox>
+              </View>
             </View>
 
-            {/* OpenAPI/Swagger Button */}
-            <ExternalLink 
-              href={apiDocsUrl}
-              className="py-3.5 px-5 rounded-lg flex-row items-center justify-center gap-2.5"
-              style={{
-                backgroundColor: tintColor,
-              }}
-            >
-              <Ionicons name="document-text" size={20} color="#fff" />
-              <ThemedText className="font-bold text-white text-base">
-                View Interactive API Docs (Swagger UI)
-              </ThemedText>
-            </ExternalLink>
+            {/* Row 2: Swagger UI & Support */}
+            <View className="gap-3 lg:flex-row">
+              {/* Swagger UI Button */}
+              <View className="flex-1">
+                <ExternalLink 
+                  href={apiDocsUrl}
+                  className="py-3.5 px-5 rounded-lg flex-row items-center justify-center gap-2.5 h-full"
+                  style={{
+                    backgroundColor: tintColor,
+                  }}
+                >
+                  <Ionicons name="document-text" size={20} color="#fff" />
+                  <ThemedText className="font-bold text-white text-base">
+                    View Interactive API Docs (Swagger UI)
+                  </ThemedText>
+                </ExternalLink>
+              </View>
+
+              {/* Support Button */}
+              <View className="flex-1">
+                <Pressable
+                  onPress={() => {}}
+                  className="py-3.5 px-5 rounded-lg border border-neutral-700/60 bg-[#121212] flex-row items-center justify-center gap-2.5 h-full cursor-pointer"
+                >
+                  <Ionicons name="heart-outline" size={20} color="#f43f5e" />
+                  <ThemedText className="font-bold text-white text-base">
+                    Support
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
           </View>
         </View>
 
