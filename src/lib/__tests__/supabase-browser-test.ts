@@ -58,7 +58,7 @@ describe('supabase browser auth redirect', () => {
     const supabaseBrowser = loadSupabaseBrowser();
 
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
-      'https://davidjgrimsley.com/public-facing/api/quantum',
+      'https://davidjgrimsley.com/public-facing/api/quantum/auth',
     );
   });
 
@@ -69,7 +69,7 @@ describe('supabase browser auth redirect', () => {
     const supabaseBrowser = loadSupabaseBrowser();
 
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
-      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum',
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum/auth',
     );
   });
 
@@ -82,7 +82,7 @@ describe('supabase browser auth redirect', () => {
     const supabaseBrowser = loadSupabaseBrowser();
 
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
-      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum',
+      'https://quizzical-hofstadter.108-175-12-95.plesk.page/public-facing/api/quantum/auth',
     );
   });
 
@@ -93,7 +93,7 @@ describe('supabase browser auth redirect', () => {
     const supabaseBrowser = loadSupabaseBrowser();
 
     expect(supabaseBrowser.getQuantumAuthRedirectUrl()).toBe(
-      'http://localhost:3000/public-facing/api/quantum',
+      'http://localhost:3000/public-facing/api/quantum/auth',
     );
   });
 
