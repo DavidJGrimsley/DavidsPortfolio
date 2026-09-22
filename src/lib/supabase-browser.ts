@@ -131,14 +131,15 @@ export function getSupabaseAuthFlowType(): SupabaseAuthFlowType {
   return 'pkce';
 }
 
-export function getSupabaseBrowserClient() {
+export function getSupabaseBrowserClient(options?: { detectSessionInUrl?: boolean }) {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey) {
     throw new Error(getSupabaseConfigError() ?? 'Supabase is not configured.');
   }
 
   const authFlowType = getSupabaseAuthFlowType();
-  const configKey = `${url}\n${anonKey}\n${authFlowType}`;
+  const detectSessionInUrl = options?.detectSessionInUrl ?? isWeb;
+  const configKey = `${url}\n${anonKey}\n${authFlowType}\n${detectSessionInUrl}`;
   if (supabaseClient && supabaseClientConfigKey === configKey) {
     return supabaseClient;
   }
@@ -146,7 +147,7 @@ export function getSupabaseBrowserClient() {
   supabaseClient = createClient(url, anonKey, {
     auth: {
       autoRefreshToken: isWeb,
-      detectSessionInUrl: isWeb,
+      detectSessionInUrl,
       flowType: authFlowType,
       persistSession: isWeb,
       storage: isWeb ? undefined : memoryStorage(),
