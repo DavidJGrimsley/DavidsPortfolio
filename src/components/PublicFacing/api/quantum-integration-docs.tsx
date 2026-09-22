@@ -132,14 +132,16 @@ function IntegrationIntroPanel({ doc }: { doc: QuantumIntegrationDoc }) {
                 className="rounded-lg border p-3 md:w-[31%]"
                 style={{ borderColor: withOpacity(tintColor, 0.4) }}
               >
-                <ThemedText className="font-bold text-tint mb-1">
-                  {link.label}
-                </ThemedText>
-                {link.description ? (
-                  <ThemedText className="text-sm leading-5 opacity-80">
-                    {link.description}
+                <View className="gap-1">
+                  <ThemedText className="font-bold text-tint">
+                    {link.label}
                   </ThemedText>
-                ) : null}
+                  {link.description ? (
+                    <ThemedText className="text-sm leading-5 opacity-80">
+                      {link.description}
+                    </ThemedText>
+                  ) : null}
+                </View>
               </ExternalLink>
             ))}
           </View>
