@@ -16,6 +16,12 @@ export default function APIStackLayout() {
         }}
       />
       <Stack.Screen
+        name="quantum/auth"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="quantum/[slug]"
         options={{
           headerShown: false,
