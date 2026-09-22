@@ -126,7 +126,7 @@
       "slug": "unity-package",
       "title": "Quantum API Unity Package",
       "directoryLabel": "Unity Package",
-      "kind": "Unity 2021.3+ runtime package",
+      "kind": "Unity 2021 LTS+ runtime package",
       "version": "0.1.0",
       "path": "/public-facing/api/quantum/unity-package",
       "markdownPath": "/public-facing/api/quantum/unity-package.md",

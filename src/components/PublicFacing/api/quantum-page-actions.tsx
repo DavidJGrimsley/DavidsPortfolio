@@ -182,10 +182,15 @@ export function QuantumActionButton({
       className={`min-h-[52px] rounded-lg px-5 py-3.5 flex-row items-center justify-center gap-3 border ${className}`}
       style={{
         backgroundColor: filled ? tintColor : "transparent",
-        borderColor: filled ? tintColor : withOpacity(tintColor, 0.45),
+        borderColor: tintColor,
       }}
     >
-      <Ionicons name={iconName} size={20} color={foregroundColor} />
+      <Ionicons
+        name={iconName}
+        size={20}
+        color={foregroundColor}
+        style={{ marginRight: 10 }}
+      />
       <ThemedText
         className="font-bold text-base text-center"
         style={{
@@ -207,7 +212,12 @@ export function QuantumSupportButton({ className = "" }: { className?: string })
       href={QUANTUM_SUPPORT_URL}
       className={`min-h-[52px] rounded-lg border border-neutral-700/60 bg-[#121212] px-5 py-3.5 flex-row items-center justify-center gap-3 ${className}`}
     >
-      <FontAwesome6 name="coins" size={20} color={QUANTUM_TOKEN_GOLD} />
+      <FontAwesome6
+        name="coins"
+        size={20}
+        color={QUANTUM_TOKEN_GOLD}
+        style={{ marginRight: 10 }}
+      />
       <ThemedText
         className="font-bold text-white text-base text-center"
         style={{

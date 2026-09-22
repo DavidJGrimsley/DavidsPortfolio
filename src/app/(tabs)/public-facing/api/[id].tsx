@@ -713,13 +713,6 @@ function APIDetailContent() {
             directly.
           </ThemedText>
           <View className="gap-3 md:flex-row md:flex-wrap">
-            <QuantumActionButton
-              href={QUANTUM_YOUTUBE_PLAYLIST_URL}
-              iconName="logo-youtube"
-              label="Quantum API playlist"
-              filled
-              className="md:w-[31%]"
-            />
             {QUANTUM_INTEGRATION_DOCS.map((doc) => (
               <Link
                 key={doc.slug}
@@ -739,6 +732,12 @@ function APIDetailContent() {
                 </Pressable>
               </Link>
             ))}
+            <QuantumActionButton
+              href={QUANTUM_YOUTUBE_PLAYLIST_URL}
+              iconName="logo-youtube"
+              label="Quantum API playlist"
+              className="md:w-[31%]"
+            />
           </View>
         </View>
       ) : null}
