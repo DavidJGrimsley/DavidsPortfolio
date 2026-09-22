@@ -736,6 +736,8 @@ function APIDetailContent() {
               href={QUANTUM_YOUTUBE_PLAYLIST_URL}
               iconName="logo-youtube"
               label="Quantum API playlist"
+              filled
+              filledBorderColor="#fff"
               className="md:w-[31%]"
             />
           </View>

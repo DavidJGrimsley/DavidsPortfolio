@@ -37,6 +37,7 @@ type QuantumActionButtonProps = {
   label: string;
   iconName: React.ComponentProps<typeof Ionicons>["name"];
   filled?: boolean;
+  filledBorderColor?: string;
   className?: string;
 };
 
@@ -171,6 +172,7 @@ export function QuantumActionButton({
   label,
   iconName,
   filled = false,
+  filledBorderColor,
   className = "",
 }: QuantumActionButtonProps) {
   const tintColor = useThemeColor({}, "tint");
@@ -182,7 +184,7 @@ export function QuantumActionButton({
       className={`min-h-[52px] rounded-lg px-5 py-3.5 flex-row items-center justify-center gap-3 border ${className}`}
       style={{
         backgroundColor: filled ? tintColor : "transparent",
-        borderColor: tintColor,
+        borderColor: filled ? filledBorderColor ?? tintColor : tintColor,
       }}
     >
       <Ionicons
