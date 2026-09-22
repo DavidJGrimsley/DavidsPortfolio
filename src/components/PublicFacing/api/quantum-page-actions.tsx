@@ -55,11 +55,13 @@ function CopyableQuantumCard({
   title,
   textToCopy,
   variant = "accent",
+  valuePlacement = "spread",
   style,
 }: {
   title: string;
   textToCopy: string;
   variant?: "accent" | "code";
+  valuePlacement?: "spread" | "start";
   style?: StyleProp<ViewStyle>;
 }) {
   const accentColor = useThemeColor({}, "accent");
@@ -114,7 +116,9 @@ function CopyableQuantumCard({
   return (
     <Pressable
       onPress={handleCopy}
-      className="relative overflow-hidden cursor-pointer p-4 rounded-lg h-full justify-between"
+      className={`relative overflow-hidden cursor-pointer p-4 rounded-lg h-full ${
+        valuePlacement === "start" ? "justify-start" : "justify-between"
+      }`}
       style={cardStyle}
       accessibilityRole="button"
       accessibilityLabel={`Copy ${title}`}
@@ -381,6 +385,7 @@ export function QuantumAgentSkillInstallCard() {
         title="Agent Skill"
         textToCopy={QUANTUM_AGENT_SKILL_COMMAND}
         variant="code"
+        valuePlacement="start"
       />
     </View>
   );
