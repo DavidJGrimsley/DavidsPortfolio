@@ -56,12 +56,14 @@ function CopyableQuantumCard({
   textToCopy,
   variant = "accent",
   valuePlacement = "spread",
+  compact = false,
   style,
 }: {
   title: string;
   textToCopy: string;
   variant?: "accent" | "code";
   valuePlacement?: "spread" | "start";
+  compact?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const accentColor = useThemeColor({}, "accent");
@@ -116,7 +118,9 @@ function CopyableQuantumCard({
   return (
     <Pressable
       onPress={handleCopy}
-      className={`relative overflow-hidden cursor-pointer p-4 rounded-lg h-full ${
+      className={`relative overflow-hidden cursor-pointer p-4 rounded-lg ${
+        compact ? "min-h-[92px]" : "h-full"
+      } ${
         valuePlacement === "start" ? "justify-start" : "justify-between"
       }`}
       style={cardStyle}
@@ -185,29 +189,35 @@ export function QuantumActionButton({
   return (
     <ExternalLink
       href={href}
-      className={`min-h-[52px] rounded-lg px-5 py-3.5 flex-row items-center justify-center gap-3 border ${className}`}
+      className={`min-h-[52px] rounded-lg px-5 py-3.5 border ${className}`}
       style={{
         backgroundColor: filled ? tintColor : "transparent",
         borderColor: filled ? filledBorderColor ?? tintColor : tintColor,
+        alignItems: "center",
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
       }}
     >
-      <Ionicons
-        name={iconName}
-        size={20}
-        color={foregroundColor}
-        style={{ marginRight: 10 }}
-      />
-      <ThemedText
-        className="font-bold text-base text-center"
-        style={{
-          color: foregroundColor,
-          flexShrink: 1,
-          fontSize: 16,
-          lineHeight: 20,
-        }}
-      >
-        {label}
-      </ThemedText>
+      <View className="flex-row items-center justify-center">
+        <Ionicons
+          name={iconName}
+          size={20}
+          color={foregroundColor}
+          style={{ marginRight: 10 }}
+        />
+        <ThemedText
+          className="font-bold text-base text-center"
+          style={{
+            color: foregroundColor,
+            flexShrink: 1,
+            fontSize: 16,
+            lineHeight: 20,
+          }}
+        >
+          {label}
+        </ThemedText>
+      </View>
     </ExternalLink>
   );
 }
@@ -359,7 +369,7 @@ export function QuantumAgentSkillInstallCard() {
 
   return (
     <View
-      className="rounded-lg border p-4 gap-3"
+      className="rounded-lg border p-4 gap-3 mb-8"
       style={{
         backgroundColor: withOpacity(accentColor, 0.62),
         borderColor: withOpacity(tintColor, 0.4),
@@ -386,6 +396,7 @@ export function QuantumAgentSkillInstallCard() {
         textToCopy={QUANTUM_AGENT_SKILL_COMMAND}
         variant="code"
         valuePlacement="start"
+        compact
       />
     </View>
   );

@@ -17,7 +17,7 @@ import { ExternalLink } from "@/components/UI/ExternalLink";
 export const QUANTUM_API_PATH = "/public-facing/api/quantum";
 export const QUANTUM_API_MARKDOWN_PATH = "/public-facing/api/quantum.md";
 export const LLMS_TXT_PATH = "/llms.txt";
-export const QUANTUM_DOCS_FEEDBACK_EMAIL = "DavidJGrimsley@gmail.com";
+export const QUANTUM_DOCS_FEEDBACK_EMAIL = "MrDJ@DavidJGrimsley.com";
 export const QUANTUM_DOCS_ISSUES_URL =
   "https://github.com/davidjgrimsley/quantum-api/issues";
 export const IBM_QUANTUM_URL = "https://quantum.cloud.ibm.com/";
@@ -628,7 +628,7 @@ function TypeScriptGuide() {
         </Paragraph>
       </DocsSection>
       <DocsSection title="Install">
-        <CodeBlock value="npm install @mr.dj2u/quantum-api" />
+        <CodeBlock value={`npm install "@mr.dj2u/quantum-api"`} />
         <Paragraph>Use Node.js 18 or later. The package supports ESM and CommonJS consumers.</Paragraph>
       </DocsSection>
       <DocsSection title="Configure">

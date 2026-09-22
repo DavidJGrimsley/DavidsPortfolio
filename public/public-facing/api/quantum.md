@@ -68,7 +68,7 @@ The API returns normalized errors. Preserve the `request_id` when reporting a fa
 
 Questions, corrections, and issue reports are welcome.
 
-- Email: [DavidJGrimsley@gmail.com](mailto:DavidJGrimsley@gmail.com)
+- Email: [MrDJ@DavidJGrimsley.com](mailto:MrDJ@DavidJGrimsley.com)
 - Issues: [github.com/davidjgrimsley/quantum-api/issues](https://github.com/davidjgrimsley/quantum-api/issues)
 
 ## Agent version (.md)

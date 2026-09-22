@@ -30,7 +30,7 @@ export interface IntakeFormConfig {
   fields: IntakeField[];
 }
 
-export const FORM_SUBMIT_ENDPOINT = 'https://formsubmit.co/ajax/DavidJGrimsley@gmail.com';
+export const FORM_SUBMIT_ENDPOINT = 'https://formsubmit.co/ajax/MrDJ@DavidJGrimsley.com';
 
 export const intakeForms: Record<string, IntakeFormConfig> = {
   'app-development': {
