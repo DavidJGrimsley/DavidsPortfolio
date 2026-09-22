@@ -31,8 +31,7 @@ import {
 } from "~/src/components/PublicFacing/api/quantum-integration-docs";
 import {
   QuantumActionButton,
-  QuantumAgentSkillInstallCard,
-  QuantumSupportCard,
+  QuantumApiActionGrid,
   QUANTUM_YOUTUBE_PLAYLIST_URL,
 } from "~/src/components/PublicFacing/api/quantum-page-actions";
 import { ApiAuthDashboardCard } from "~/src/components/PublicFacing/api/quantum-auth-dashboard-card";
@@ -649,6 +648,7 @@ function APIDetailContent() {
   const requestExecutor =
     api.liveTestExecutor === "quantum-sdk" ? executeQuantumEndpoint : undefined;
   const routeId = api.id || registryEntry.id || detail.params.id;
+  const isQuantumRoute = routeId === "quantum";
   const routePath = `/public-facing/api/${routeId}`;
   const structuredData = buildApiDetailStructuredData({
     api,
@@ -658,7 +658,7 @@ function APIDetailContent() {
 
   return (
     <PublicFacingDetailWrapper>
-      {routeId === "quantum" ? (
+      {isQuantumRoute ? (
         <Head>
           <link
             rel="alternate"
@@ -685,14 +685,18 @@ function APIDetailContent() {
         icon={api.icon}
         iconName={(api.iconName as never) ?? "cloud"}
         isLive={isLive}
-        baseUrl={apiBaseUrl}
-        docsUrl={api.docsUrl}
-        tags={api.tags}
+        baseUrl={isQuantumRoute ? undefined : apiBaseUrl}
+        docsUrl={isQuantumRoute ? undefined : api.docsUrl}
+        tags={isQuantumRoute ? undefined : api.tags}
         features={api.features}
         type="api"
       />
 
-      {routeId === "quantum" ? (
+      {isQuantumRoute ? (
+        <QuantumApiActionGrid baseUrl={apiBaseUrl} docsUrl={api.docsUrl} />
+      ) : null}
+
+      {isQuantumRoute ? (
         <View
           className="rounded-lg p-4 mb-7.5 border"
           style={{
@@ -736,12 +740,6 @@ function APIDetailContent() {
               </Link>
             ))}
           </View>
-        </View>
-      ) : null}
-
-      {routeId === "quantum" ? (
-        <View className="mb-7.5">
-          <QuantumSupportCard />
         </View>
       ) : null}
 
@@ -869,7 +867,7 @@ function APIDetailContent() {
         </View>
       </View>
 
-      {routeId === "quantum" ? (
+      {isQuantumRoute ? (
         <>
           <View className="mb-7.5">
             <ThemedText type="subtitle" className="mb-4">
@@ -897,10 +895,6 @@ function APIDetailContent() {
                 {QUANTUM_DOCS_ISSUES_URL}
               </ExternalLink>
             </View>
-          </View>
-
-          <View className="mb-7.5">
-            <QuantumAgentSkillInstallCard />
           </View>
 
           <View className="mb-7.5">

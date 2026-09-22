@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Uniwind } from 'uniwind';
@@ -211,6 +212,7 @@ function RootLayoutContent() {
     'Playfair Display-Bold': PlayfairDisplay_700Bold,
     'Emblema One': EmblemaOne_400Regular,
     ...Ionicons.font,
+    ...FontAwesome6.font,
   });
 
   useEffect(() => {
