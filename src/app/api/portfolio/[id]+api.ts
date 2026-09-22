@@ -7,8 +7,9 @@ const REGISTRY_URL = 'https://davidjgrimsley.com/secret/registry.json';
 const QUANTUM_ROUTE_ID = 'quantum';
 const QUANTUM_LEGACY_IDS = new Set([QUANTUM_ROUTE_ID, 'quantum-echo-api']);
 const QUANTUM_PUBLIC_BASE_PATH = '/api/public/quantum/v1';
+const QUANTUM_CANONICAL_PUBLIC_BASE_URL = `https://davidjgrimsley.com${QUANTUM_PUBLIC_BASE_PATH}`;
 const QUANTUM_CANONICAL_PORTFOLIO_URL =
-  `https://davidjgrimsley.com${QUANTUM_PUBLIC_BASE_PATH}/portfolio.json`;
+  `${QUANTUM_CANONICAL_PUBLIC_BASE_URL}/portfolio.json`;
 const QUANTUM_DOCS_URL = 'https://davidjgrimsley.com/public-facing/api/quantum/docs';
 
 const FALLBACK_REGISTRY: RegistryServer[] = [
@@ -252,7 +253,7 @@ function decorateQuantumPortfolio(portfolio: APIPortfolio, origin: string | null
       baseUrl,
       publicBasePath: QUANTUM_PUBLIC_BASE_PATH,
       docsUrl: portfolio.api.docsUrl || QUANTUM_DOCS_URL,
-      healthUrl: `${baseUrl}/health`,
+      healthUrl: `${QUANTUM_CANONICAL_PUBLIC_BASE_URL}/health`,
       icon: '/images/quantum-api-icon.png',
       iconName: undefined,
       features: portfolio.api.features ?? getQuantumFeatures(),
@@ -270,7 +271,7 @@ function decorateQuantumPortfolio(portfolio: APIPortfolio, origin: string | null
       },
     },
     endpoints,
-    sections: portfolio.sections ?? getQuantumSections(baseUrl),
+    sections: portfolio.sections ?? getQuantumSections(QUANTUM_CANONICAL_PUBLIC_BASE_URL),
     components:
       portfolio.components ??
       [

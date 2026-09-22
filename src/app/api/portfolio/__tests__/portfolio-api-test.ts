@@ -89,11 +89,19 @@ describe('portfolio API route', () => {
     expect(body.data.portfolio.api).toMatchObject({
       id: 'quantum',
       baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+      healthUrl: 'https://davidjgrimsley.com/api/public/quantum/v1/health',
       liveTestExecutor: 'quantum-sdk',
       auth: {
         showApiKeyDashboard: true,
       },
     });
+    expect(body.data.portfolio.sections[1].links[0]).toMatchObject({
+      label: 'https://davidjgrimsley.com/api/public/quantum/v1/health',
+      href: 'https://davidjgrimsley.com/api/public/quantum/v1/health',
+    });
+    expect(body.data.portfolio.sections[2].code.value).toContain(
+      "'https://davidjgrimsley.com/api/public/quantum/v1/gates/run'"
+    );
     expect(body.data.portfolio.endpoints[0]).toMatchObject({
       liveTestPath: '/v1/list_backends?provider=aer&simulator_only=true',
     });
