@@ -304,7 +304,7 @@ export function QuantumResourceLinks({ links }: { links?: readonly QuantumResour
           <ExternalLink
             key={`${link.kind ?? "link"}:${link.url}`}
             href={link.url}
-            className="rounded-lg border p-3 md:w-[31%]"
+            className="rounded-lg border p-3 md:basis-[48%] md:flex-1 md:max-w-[50%]"
             style={{ borderColor: withOpacity(tintColor, 0.4) }}
           >
             <ThemedText className="text-sm md:text-base leading-6 opacity-80">
