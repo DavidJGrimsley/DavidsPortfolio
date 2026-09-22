@@ -76,7 +76,9 @@ export default function QuantumAuthCallbackPage() {
       }
 
       try {
-        const supabase = getSupabaseBrowserClient();
+        const supabase = getSupabaseBrowserClient({
+          detectSessionInUrl: !(callback.tokenHash || callback.code),
+        });
 
         if (callback.tokenHash) {
           if (!callback.type) {
