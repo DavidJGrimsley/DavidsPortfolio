@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import type { EmailOtpType } from '@supabase/supabase-js';
 
 import { ThemedText } from '@/components/UI/ThemedText';
-import { CompanyButton } from '@/components/PublicFacing/api/CompanyButton';
 import { QUANTUM_DASHBOARD_PATH } from '@/lib/quantum-api-config';
 import {
   getSupabaseBrowserClient,
@@ -139,10 +138,13 @@ export default function QuantumAuthCallbackPage() {
               The link may already have been used or may no longer be valid. Return to the
               Quantum API page and request a fresh sign-in link.
             </ThemedText>
-            <CompanyButton
-              title="Back to Quantum API"
+            <Pressable
+              accessibilityRole="button"
+              className="self-start rounded-lg bg-tint px-4 py-3"
               onPress={() => router.replace(QUANTUM_DASHBOARD_PATH as Href)}
-            />
+            >
+              <ThemedText className="font-bold text-black">Back to Quantum API</ThemedText>
+            </Pressable>
           </>
         ) : (
           <View className="flex-row items-center gap-3">
