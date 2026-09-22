@@ -118,8 +118,8 @@ function CopyableQuantumCard({
   return (
     <Pressable
       onPress={handleCopy}
-      className={`relative overflow-hidden cursor-pointer p-4 rounded-lg ${
-        compact ? "min-h-[76px]" : "h-full"
+      className={`relative overflow-hidden cursor-pointer rounded-lg ${
+        compact ? "min-h-[68px] p-3" : "h-full p-4"
       } ${
         valuePlacement === "start" ? "justify-start" : "justify-between"
       }`}
@@ -369,7 +369,7 @@ export function QuantumAgentSkillInstallCard() {
 
   return (
     <View
-      className="rounded-lg border p-4 gap-3 mb-12"
+      className="rounded-lg border p-3 gap-2 mb-8"
       style={{
         backgroundColor: withOpacity(accentColor, 0.62),
         borderColor: withOpacity(tintColor, 0.4),
@@ -397,7 +397,7 @@ export function QuantumAgentSkillInstallCard() {
         variant="code"
         valuePlacement="start"
         compact
-        style={{ marginBottom: -36 }}
+        style={{ marginBottom: -24 }}
       />
     </View>
   );
