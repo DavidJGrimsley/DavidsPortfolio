@@ -29,6 +29,12 @@ import {
   QUANTUM_DOCS_FEEDBACK_EMAIL,
   QUANTUM_DOCS_ISSUES_URL,
 } from "~/src/components/PublicFacing/api/quantum-integration-docs";
+import {
+  QuantumActionButton,
+  QuantumAgentSkillInstallCard,
+  QuantumSupportCard,
+  QUANTUM_YOUTUBE_PLAYLIST_URL,
+} from "~/src/components/PublicFacing/api/quantum-page-actions";
 import { ApiAuthDashboardCard } from "~/src/components/PublicFacing/api/quantum-auth-dashboard-card";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
 import {
@@ -683,7 +689,6 @@ function APIDetailContent() {
         docsUrl={api.docsUrl}
         tags={api.tags}
         features={api.features}
-        isSynced={isSynced}
         type="api"
       />
 
@@ -704,6 +709,13 @@ function APIDetailContent() {
             directly.
           </ThemedText>
           <View className="gap-3 md:flex-row md:flex-wrap">
+            <QuantumActionButton
+              href={QUANTUM_YOUTUBE_PLAYLIST_URL}
+              iconName="logo-youtube"
+              label="Quantum API playlist"
+              filled
+              className="md:w-[31%]"
+            />
             {QUANTUM_INTEGRATION_DOCS.map((doc) => (
               <Link
                 key={doc.slug}
@@ -724,6 +736,12 @@ function APIDetailContent() {
               </Link>
             ))}
           </View>
+        </View>
+      ) : null}
+
+      {routeId === "quantum" ? (
+        <View className="mb-7.5">
+          <QuantumSupportCard />
         </View>
       ) : null}
 
@@ -879,6 +897,10 @@ function APIDetailContent() {
                 {QUANTUM_DOCS_ISSUES_URL}
               </ExternalLink>
             </View>
+          </View>
+
+          <View className="mb-7.5">
+            <QuantumAgentSkillInstallCard />
           </View>
 
           <View className="mb-7.5">

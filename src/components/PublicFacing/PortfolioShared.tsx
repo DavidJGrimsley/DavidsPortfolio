@@ -23,7 +23,6 @@ interface PortfolioHeaderProps {
   repoUrl?: string;
   tags?: string[];
   features?: string[];
-  isSynced: boolean;
   type: "api" | "mcp";
 }
 
@@ -39,7 +38,6 @@ export function PortfolioHeader({
   repoUrl,
   tags,
   features,
-  isSynced,
   type,
 }: PortfolioHeaderProps) {
   const accentColor = useThemeColor({}, "accent");
@@ -118,7 +116,6 @@ export function PortfolioHeader({
           <View className="pl-2">
             <ThemedText className="opacity-85 text-sm leading-6">
               {features.map((feature, index) => `- ${feature}${index < features.length - 1 ? "\n" : ""}`)}
-              {"\n"}- Metadata: {isSynced ? "synced" : "fallback"}
             </ThemedText>
           </View>
         </View>

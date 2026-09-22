@@ -7,6 +7,13 @@ import { ThemedText } from "@/components/UI/ThemedText";
 import { SITE_URL, joinUrl } from "@/constants/seo";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
+import {
+  QuantumActionButton,
+  QuantumAgentSkillInstallCard,
+  QuantumResourceLinks,
+  QuantumSupportCard,
+  QUANTUM_YOUTUBE_PLAYLIST_URL,
+} from "~/src/components/PublicFacing/api/quantum-page-actions";
 
 export const QUANTUM_API_PATH = "/public-facing/api/quantum";
 export const QUANTUM_API_MARKDOWN_PATH = "/public-facing/api/quantum.md";
@@ -243,6 +250,10 @@ function FeedbackAndAgentSections({ markdownPath }: { markdownPath: string }) {
           .
         </Paragraph>
       </DocsSection>
+
+      <View className="py-6 border-t border-tint/30">
+        <QuantumAgentSkillInstallCard />
+      </View>
 
       <DocsSection title="Agent version (.md)">
         <Paragraph>
@@ -1039,46 +1050,67 @@ export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
     >
       <View className="gap-6">
         <View className="gap-4">
-          <ThemedText
-            type="title"
-            headingLevel={1}
-            visualHeadingLevel={1}
-            className="font-noto-serif-display text-tint"
-          >
-            {doc.title}
-          </ThemedText>
+          <View className="gap-3">
+            <ThemedText
+              type="title"
+              headingLevel={1}
+              visualHeadingLevel={1}
+              className="font-noto-serif-display text-tint"
+            >
+              {doc.title}
+            </ThemedText>
+            <View className="flex-row flex-wrap gap-2">
+              <View className="rounded-full border border-tint/40 px-3 py-1.5">
+                <ThemedText className="text-sm text-tint">{doc.kind}</ThemedText>
+              </View>
+              <View className="rounded-full border border-tint/40 px-3 py-1.5">
+                <ThemedText className="text-sm text-tint">v{doc.version}</ThemedText>
+              </View>
+            </View>
+          </View>
           <InfoPanel>
             <Paragraph>{doc.summary}</Paragraph>
           </InfoPanel>
-          <View className="rounded-lg border border-tint/30 bg-accent/40 p-4 md:flex-row md:gap-6">
-            <View className="mb-3 md:mb-0 md:flex-1">
-              <ThemedText type="defaultSemiBold" className="mb-1 text-tint">
-                Runtime / package
-              </ThemedText>
-              <ThemedText className="opacity-85">{doc.kind}</ThemedText>
+          <QuantumResourceLinks links={doc.resourceLinks} />
+          <QuantumSupportCard />
+          <View className="rounded-lg border border-tint/30 bg-accent/40 p-4 gap-4">
+            <View className="gap-3 md:flex-row md:flex-wrap">
+              <QuantumActionButton
+                href={QUANTUM_YOUTUBE_PLAYLIST_URL}
+                iconName="logo-youtube"
+                label="Quantum API playlist"
+                filled
+                className="md:w-[31%]"
+              />
+              <QuantumActionButton
+                href={markdownUrl}
+                iconName="document-text"
+                label="Agent Markdown"
+                className="md:w-[31%]"
+              />
+              <QuantumActionButton
+                href={llmsUrl}
+                iconName="sparkles"
+                label="llms.txt"
+                className="md:w-[31%]"
+              />
             </View>
-            <View className="md:flex-1">
-              <ThemedText type="defaultSemiBold" className="mb-1 text-tint">
-                Version
+            <View>
+              <ThemedText type="defaultSemiBold" className="mb-3 text-tint">
+                On this page
               </ThemedText>
-              <ThemedText className="opacity-85">{doc.version}</ThemedText>
-            </View>
-          </View>
-          <View className="rounded-lg border border-tint/30 bg-accent/40 p-4">
-            <ThemedText type="defaultSemiBold" className="mb-3 text-tint">
-              On this page
-            </ThemedText>
-            <View className="flex-row flex-wrap gap-2">
-              {guide.sectionTitles.map((title) => (
-                <Link
-                  key={title}
-                  href={`${doc.path}#${slugify(title)}` as Href}
-                  onPress={() => scrollToSection(slugify(title))}
-                  className="rounded-md border border-tint/40 px-3 py-2"
-                >
-                  <ThemedText className="text-sm text-tint">{title}</ThemedText>
-                </Link>
-              ))}
+              <View className="flex-row flex-wrap gap-2">
+                {guide.sectionTitles.map((title) => (
+                  <Link
+                    key={title}
+                    href={`${doc.path}#${slugify(title)}` as Href}
+                    onPress={() => scrollToSection(slugify(title))}
+                    className="rounded-md border border-tint/40 px-3 py-2"
+                  >
+                    <ThemedText className="text-sm text-tint">{title}</ThemedText>
+                  </Link>
+                ))}
+              </View>
             </View>
           </View>
         </View>
