@@ -303,12 +303,12 @@ export function QuantumResourceLinks({ links }: { links?: readonly QuantumResour
             className="rounded-lg border p-3 md:w-[31%]"
             style={{ borderColor: withOpacity(tintColor, 0.4) }}
           >
-            <View className="gap-1">
+            <ThemedText className="text-sm md:text-base leading-6 opacity-80">
               <ThemedText className="font-bold text-tint">{link.label}</ThemedText>
               {link.description ? (
-                <ThemedText className="text-sm leading-5 opacity-80">{link.description}</ThemedText>
+                <ThemedText> {link.description}</ThemedText>
               ) : null}
-            </View>
+            </ThemedText>
           </ExternalLink>
         ))}
       </View>
