@@ -71,7 +71,7 @@ export function PortfolioHeader({
           )}
         </View>
 
-        <View className="flex-1 flex-row mr-2">
+        <View className="flex-1 flex-row flex-wrap items-baseline mr-2">
           <ThemedText
             type="title"
             headingLevel={1}
@@ -82,6 +82,20 @@ export function PortfolioHeader({
           </ThemedText>
           <ThemedText className="opacity-60 mt-0.5 text-sm ml-2">v{version}</ThemedText>
         </View>
+
+        {repoStarUrl ? (
+          <ExternalLink
+            href={repoStarUrl}
+            className="ml-2 flex-row items-center justify-center gap-2 rounded-lg border px-3 py-1.5"
+            style={{ borderColor: tintColor, backgroundColor: accentColor }}
+            accessibilityLabel="Star the Quantum API repository on GitHub"
+          >
+            <Ionicons name="star" size={16} color={tintColor} />
+            <ThemedText className="font-semibold text-xs" style={{ color: tintColor }}>
+              Star repo
+            </ThemedText>
+          </ExternalLink>
+        ) : null}
 
         <View className={`px-3 py-1.5 rounded-xl ml-2 ${isLive ? "bg-success" : "bg-error"}`}>
           <ThemedText inverse className="font-bold text-xs">
@@ -124,19 +138,6 @@ export function PortfolioHeader({
               </ThemedText>
             </View>
           </View>
-          {repoStarUrl ? (
-            <ExternalLink
-              href={repoStarUrl}
-              className="self-start flex-row items-center justify-center gap-2 rounded-lg border px-4 py-3 lg:self-auto"
-              style={{ borderColor: tintColor, backgroundColor: accentColor }}
-              accessibilityLabel="Star the Quantum API repository on GitHub"
-            >
-              <Ionicons name="star" size={18} color={tintColor} />
-              <ThemedText className="font-semibold" style={{ color: tintColor }}>
-                Star repo
-              </ThemedText>
-            </ExternalLink>
-          ) : null}
         </View>
       ) : null}
 
