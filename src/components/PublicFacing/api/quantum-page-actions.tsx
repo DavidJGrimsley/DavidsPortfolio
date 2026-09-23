@@ -17,7 +17,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 
 export const QUANTUM_SUPPORT_URL = "https://buymeacoffee.com/davidjgrimsley";
 export const QUANTUM_YOUTUBE_PLAYLIST_URL =
-  "https://www.youtube.com/playlist?list=PLKeHno6MnYo8";
+  "https://youtube.com/playlist?list=PLKeHno6MnYo8&si=Ct0rZ0qkie24yT1G";
 export const QUANTUM_AGENT_SKILL_COMMAND =
   "npx skills add -g davidjgrimsley/quantum-api";
 export const QUANTUM_SUPPORT_BUTTON_LABEL =
