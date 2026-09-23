@@ -21,6 +21,7 @@ interface PortfolioHeaderProps {
   baseUrl?: string;
   docsUrl?: string;
   repoUrl?: string;
+  repoStarUrl?: string;
   tags?: string[];
   features?: string[];
   type: "api" | "mcp";
@@ -36,6 +37,7 @@ export function PortfolioHeader({
   baseUrl,
   docsUrl,
   repoUrl,
+  repoStarUrl,
   tags,
   features,
   type,
@@ -109,15 +111,32 @@ export function PortfolioHeader({
       ) : null}
 
       {features && features.length > 0 ? (
-        <View className="mb-4">
-          <ThemedText type="subtitle" className="mb-3">
-            Features
-          </ThemedText>
-          <View className="pl-2">
-            <ThemedText className="opacity-85 text-sm leading-6">
-              {features.map((feature, index) => `- ${feature}${index < features.length - 1 ? "\n" : ""}`)}
+        <View
+          className={`mb-4 gap-4 ${repoStarUrl ? "lg:flex-row lg:items-center" : ""}`}
+        >
+          <View className="flex-1">
+            <ThemedText type="subtitle" className="mb-3">
+              Features
             </ThemedText>
+            <View className="pl-2">
+              <ThemedText className="opacity-85 text-sm leading-6">
+                {features.map((feature, index) => `- ${feature}${index < features.length - 1 ? "\n" : ""}`)}
+              </ThemedText>
+            </View>
           </View>
+          {repoStarUrl ? (
+            <ExternalLink
+              href={repoStarUrl}
+              className="self-start flex-row items-center justify-center gap-2 rounded-lg border px-4 py-3 lg:self-auto"
+              style={{ borderColor: tintColor, backgroundColor: accentColor }}
+              accessibilityLabel="Star the Quantum API repository on GitHub"
+            >
+              <Ionicons name="star" size={18} color={tintColor} />
+              <ThemedText className="font-semibold" style={{ color: tintColor }}>
+                Star repo
+              </ThemedText>
+            </ExternalLink>
+          ) : null}
         </View>
       ) : null}
 

@@ -56,6 +56,8 @@ type LoaderRequest = {
   url?: string;
 };
 
+const QUANTUM_REPO_URL = "https://github.com/DavidJGrimsley/quantum-api";
+
 type PortfolioApiResponse = {
   success: boolean;
   data: {
@@ -687,6 +689,7 @@ function APIDetailContent() {
         isLive={isLive}
         baseUrl={isQuantumRoute ? undefined : apiBaseUrl}
         docsUrl={isQuantumRoute ? undefined : api.docsUrl}
+        repoStarUrl={isQuantumRoute ? QUANTUM_REPO_URL : undefined}
         tags={isQuantumRoute ? undefined : api.tags}
         features={api.features}
         type="api"

@@ -325,7 +325,7 @@ function FeedbackAndAgentSections({ markdownPath }: { markdownPath: string }) {
         </Paragraph>
       </DocsSection>
 
-      <View className="py-6 border-t border-tint/30">
+      <View className="pt-6 pb-2 border-t border-tint/30">
         <QuantumAgentSkillInstallCard />
       </View>
 

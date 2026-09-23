@@ -369,7 +369,7 @@ export function QuantumAgentSkillInstallCard() {
 
   return (
     <View
-      className="rounded-lg border p-3 gap-2 mb-8"
+      className="rounded-lg border p-3 gap-2"
       style={{
         backgroundColor: withOpacity(accentColor, 0.62),
         borderColor: withOpacity(tintColor, 0.4),
