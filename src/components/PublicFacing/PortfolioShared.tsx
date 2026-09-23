@@ -21,9 +21,9 @@ interface PortfolioHeaderProps {
   baseUrl?: string;
   docsUrl?: string;
   repoUrl?: string;
+  repoStarUrl?: string;
   tags?: string[];
   features?: string[];
-  isSynced: boolean;
   type: "api" | "mcp";
 }
 
@@ -37,9 +37,9 @@ export function PortfolioHeader({
   baseUrl,
   docsUrl,
   repoUrl,
+  repoStarUrl,
   tags,
   features,
-  isSynced,
   type,
 }: PortfolioHeaderProps) {
   const accentColor = useThemeColor({}, "accent");
@@ -71,7 +71,7 @@ export function PortfolioHeader({
           )}
         </View>
 
-        <View className="flex-1 flex-row mr-2">
+        <View className="flex-1 flex-row flex-wrap items-baseline mr-2">
           <ThemedText
             type="title"
             headingLevel={1}
@@ -82,6 +82,20 @@ export function PortfolioHeader({
           </ThemedText>
           <ThemedText className="opacity-60 mt-0.5 text-sm ml-2">v{version}</ThemedText>
         </View>
+
+        {repoStarUrl ? (
+          <ExternalLink
+            href={repoStarUrl}
+            className="ml-2 flex-row items-center justify-center gap-2 rounded-lg border px-3 py-1.5"
+            style={{ borderColor: tintColor, backgroundColor: accentColor }}
+            accessibilityLabel="Star the Quantum API repository on GitHub"
+          >
+            <Ionicons name="star" size={16} color={tintColor} />
+            <ThemedText className="font-semibold text-xs" style={{ color: tintColor }}>
+              Star repo
+            </ThemedText>
+          </ExternalLink>
+        ) : null}
 
         <View className={`px-3 py-1.5 rounded-xl ml-2 ${isLive ? "bg-success" : "bg-error"}`}>
           <ThemedText inverse className="font-bold text-xs">
@@ -111,15 +125,18 @@ export function PortfolioHeader({
       ) : null}
 
       {features && features.length > 0 ? (
-        <View className="mb-4">
-          <ThemedText type="subtitle" className="mb-3">
-            Features
-          </ThemedText>
-          <View className="pl-2">
-            <ThemedText className="opacity-85 text-sm leading-6">
-              {features.map((feature, index) => `- ${feature}${index < features.length - 1 ? "\n" : ""}`)}
-              {"\n"}- Metadata: {isSynced ? "synced" : "fallback"}
+        <View
+          className={`mb-4 gap-4 ${repoStarUrl ? "lg:flex-row lg:items-center" : ""}`}
+        >
+          <View className="flex-1">
+            <ThemedText type="subtitle" className="mb-3">
+              Features
             </ThemedText>
+            <View className="pl-2">
+              <ThemedText className="opacity-85 text-sm leading-6">
+                {features.map((feature, index) => `- ${feature}${index < features.length - 1 ? "\n" : ""}`)}
+              </ThemedText>
+            </View>
           </View>
         </View>
       ) : null}

@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -50,6 +51,8 @@ type ApiAuthDashboardCardProps = {
   dashboardDescription?: string;
   supportsIbmProfiles?: boolean;
 };
+
+const IBM_QUANTUM_URL = 'https://quantum.cloud.ibm.com/';
 
 type RawKeyReveal = {
   action: 'created' | 'rotated';
@@ -1439,7 +1442,7 @@ export function ApiAuthDashboardCard({
                 {showIbmCredentials ? (
                   <View className="gap-3">
                     <ThemedText className="opacity-80 text-base leading-6">
-                      IBM credentials are optional. Without them, simulator-backed {apiName}
+                      IBM credentials are optional. Without them, simulator-backed {apiName}{" "}
                       features still work. Add a profile to enable IBM backend discovery,
                       transpilation, and async hardware jobs through the same {apiAccountLabel}.
                     </ThemedText>
@@ -2040,18 +2043,29 @@ export function ApiAuthDashboardCard({
               </View>
 
               <ThemedText className="opacity-90 text-base leading-6">
-                IBM credentials are optional. You can keep using simulator-backed {apiName} features
-                without adding IBM credentials.
+                IBM credentials are optional. Simulator-backed {apiName} features stay available without
+                an IBM account or IBM token.
               </ThemedText>
 
               <ThemedText className="mt-2 opacity-90 text-base leading-6">
-                If you add your own IBM profile, this same {apiAccountLabel} can use IBM backend
-                discovery, transpilation, and async hardware jobs.
+                Add your own IBM profile only when you want hardware workflows. A verified profile lets
+                this same {apiAccountLabel} use IBM backend discovery, transpilation, and async hardware jobs.
               </ThemedText>
 
               <ThemedText className="mt-2 opacity-80 text-base leading-6">
                 Your IBM token is write-only. After save, only masked token metadata is shown.
               </ThemedText>
+
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => Linking.openURL(IBM_QUANTUM_URL)}
+                className="mt-4 rounded-lg bg-tint px-4 py-3 flex-row items-center justify-center gap-2"
+              >
+                <Ionicons color="#fff" name="open-outline" size={18} />
+                <ThemedText className="font-bold text-white">
+                  Open IBM Quantum
+                </ThemedText>
+              </Pressable>
             </ScrollView>
           </View>
         </View>

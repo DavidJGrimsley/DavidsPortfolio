@@ -34,4 +34,44 @@ describe("Quantum integration documentation registry", () => {
     expect(unrealMarkdown).not.toContain("Packaging / distribution");
     expect(unrealMarkdown).not.toContain("Portfolio Metadata");
   });
+
+  it("publishes package, source, and demo links for the current integration pages", () => {
+    const linksBySlug = Object.fromEntries(
+      quantumDocs.map((doc) => [
+        doc.slug,
+        (doc.resourceLinks ?? []).map((link) => link.url),
+      ]),
+    );
+
+    expect(linksBySlug["ue-plugin"]).toEqual(
+      expect.arrayContaining([
+        "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/unreal",
+        "https://github.com/DavidJGrimsley/guess-the-qubit",
+      ]),
+    );
+    expect(linksBySlug["typescript-sdk"]).toEqual(
+      expect.arrayContaining([
+        "https://www.npmjs.com/package/@mr.dj2u/quantum-api",
+        "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/js",
+      ]),
+    );
+    expect(linksBySlug["python-sdk"]).toEqual(
+      expect.arrayContaining([
+        "https://pypi.org/project/quantum-api-sdk/",
+        "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/python",
+      ]),
+    );
+    expect(linksBySlug["godot-addon"]).toEqual(
+      expect.arrayContaining([
+        "https://godotengine.org/asset-library/asset/5008",
+        "https://store.godotengine.org/asset/david-grimsley/quantum-api/",
+      ]),
+    );
+    expect(linksBySlug["unity-package"]).toEqual(
+      expect.arrayContaining([
+        "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/unity",
+        "https://github.com/DavidJGrimsley/qrng-unity-demo",
+      ]),
+    );
+  });
 });
