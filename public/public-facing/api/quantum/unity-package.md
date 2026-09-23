@@ -74,7 +74,7 @@ Call `HealthAsync` first to confirm the API address is reachable. Smoke-test the
 
 Questions, corrections, and issue reports are welcome.
 
-- Email: [DavidJGrimsley@gmail.com](mailto:DavidJGrimsley@gmail.com)
+- Email: [MrDJ@DavidJGrimsley.com](mailto:MrDJ@DavidJGrimsley.com)
 - Issues: [github.com/davidjgrimsley/quantum-api/issues](https://github.com/davidjgrimsley/quantum-api/issues)
 
 ## Agent version (.md)

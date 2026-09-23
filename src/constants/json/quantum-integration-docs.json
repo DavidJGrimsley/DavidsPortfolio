@@ -10,7 +10,21 @@
       "markdownPath": "/public-facing/api/quantum/ue-plugin.md",
       "sourcePath": "sdk/unreal/README.md",
       "description": "Beginner-friendly Blueprint docs for the QuantumApi Unreal Engine runtime plugin.",
-      "summary": "QuantumApi is a UE 5.8 Runtime plugin that gives Blueprints asynchronous nodes for Quantum API requests. Use it to call simulations, random helpers, QASM tools, and hardware jobs without blocking the game thread."
+      "summary": "QuantumApi is a UE 5.8 Runtime plugin that gives Blueprints asynchronous nodes for Quantum API requests. Use it to call simulations, random helpers, QASM tools, and hardware jobs without blocking the game thread.",
+      "resourceLinks": [
+        {
+          "kind": "source",
+          "label": "Plugin source",
+          "url": "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/unreal",
+          "description": "Unreal Engine plugin source in the Quantum API repository."
+        },
+        {
+          "kind": "demo",
+          "label": "Demo project",
+          "url": "https://github.com/DavidJGrimsley/guess-the-qubit",
+          "description": "Example Unreal project using the Quantum API plugin."
+        }
+      ]
     },
     {
       "slug": "typescript-sdk",
@@ -22,7 +36,27 @@
       "markdownPath": "/public-facing/api/quantum/typescript-sdk.md",
       "sourcePath": "sdk/js/README.md",
       "description": "Beginner-friendly TypeScript and Node.js docs for @mr.dj2u/quantum-api.",
-      "summary": "The TypeScript SDK is a package-ready Node.js client for the Quantum API. It normalizes the mounted API address for you and provides typed methods for runtime calls, account setup, IBM profiles, and jobs."
+      "summary": "The TypeScript SDK is a package-ready Node.js client for the Quantum API. It normalizes the mounted API address for you and provides typed methods for runtime calls, account setup, IBM profiles, and jobs.",
+      "resourceLinks": [
+        {
+          "kind": "published",
+          "label": "npm package",
+          "url": "https://www.npmjs.com/package/@mr.dj2u/quantum-api",
+          "description": "Published TypeScript package for Node.js and JavaScript clients."
+        },
+        {
+          "kind": "source",
+          "label": "SDK source",
+          "url": "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/js",
+          "description": "TypeScript SDK source in the Quantum API repository."
+        },
+        {
+          "kind": "demo",
+          "label": "Demo source",
+          "url": "https://github.com/DavidJGrimsley/DavidsPortfolio/blob/main/src/components/QuantumAnimation.tsx",
+          "description": "Portfolio demo component that calls the Quantum API."
+        }
+      ]
     },
     {
       "slug": "python-sdk",
@@ -34,7 +68,21 @@
       "markdownPath": "/public-facing/api/quantum/python-sdk.md",
       "sourcePath": "sdk/python/README.md",
       "description": "Beginner-friendly Python docs for the quantum-api-sdk synchronous client.",
-      "summary": "The Python SDK is a synchronous, package-ready client for scripts, CLIs, services, and backend automation. It handles the Quantum API's mounted /v1 address and returns structured errors when a request fails."
+      "summary": "The Python SDK is a synchronous, package-ready client for scripts, CLIs, services, and backend automation. It handles the Quantum API's mounted /v1 address and returns structured errors when a request fails.",
+      "resourceLinks": [
+        {
+          "kind": "published",
+          "label": "PyPI package",
+          "url": "https://pypi.org/project/quantum-api-sdk/",
+          "description": "Published Python client package."
+        },
+        {
+          "kind": "source",
+          "label": "SDK source",
+          "url": "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/python",
+          "description": "Python SDK source in the Quantum API repository."
+        }
+      ]
     },
     {
       "slug": "godot-addon",
@@ -46,19 +94,59 @@
       "markdownPath": "/public-facing/api/quantum/godot-addon.md",
       "sourcePath": "sdk/godot/quantum_api_client/README.MD",
       "description": "Beginner-friendly Godot 4 runtime addon docs for Quantum API gameplay calls.",
-      "summary": "The Godot addon is a runtime client you add to a Godot project. It provides health checks, text transforms, gate runs, backend discovery, transpile, and IBM circuit-job calls without becoming editor tooling."
+      "summary": "The Godot addon is a runtime client you add to a Godot project. It provides health checks, text transforms, gate runs, backend discovery, transpile, and IBM circuit-job calls without becoming editor tooling.",
+      "resourceLinks": [
+        {
+          "kind": "published",
+          "label": "Godot Asset Library",
+          "url": "https://godotengine.org/asset-library/asset/5008",
+          "description": "Legacy Godot asset library listing."
+        },
+        {
+          "kind": "published",
+          "label": "Godot Asset Store",
+          "url": "https://store.godotengine.org/asset/david-grimsley/quantum-api/",
+          "description": "Beta Godot asset store listing."
+        },
+        {
+          "kind": "source",
+          "label": "Addon source",
+          "url": "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/godot/quantum_api_client",
+          "description": "Godot addon source in the Quantum API repository."
+        },
+        {
+          "kind": "demo",
+          "label": "Demo project",
+          "url": "https://github.com/ReneJSchwartz/quantum-jam-2025-choose-your-own-adventure/tree/main/godot_project",
+          "description": "Quantum Jam Godot project using Quantum API gameplay calls."
+        }
+      ]
     },
     {
       "slug": "unity-package",
       "title": "Quantum API Unity Package",
       "directoryLabel": "Unity Package",
-      "kind": "Unity 2021.3+ runtime package",
+      "kind": "Unity 2021 LTS+ runtime package",
       "version": "0.1.0",
       "path": "/public-facing/api/quantum/unity-package",
       "markdownPath": "/public-facing/api/quantum/unity-package.md",
       "sourcePath": "sdk/unity/README.md",
       "description": "Beginner-friendly Unity runtime package docs for Quantum API gameplay calls.",
-      "summary": "The Unity package is a runtime helper for gameplay code. It uses UnityWebRequest behind coroutine and Task entry points, normalizes the Quantum API address, and starts with health, gate, and text-transform calls."
+      "summary": "The Unity package is a runtime helper for gameplay code. It uses UnityWebRequest behind coroutine and Task entry points, normalizes the Quantum API address, and starts with health, gate, and text-transform calls.",
+      "resourceLinks": [
+        {
+          "kind": "source",
+          "label": "Package source",
+          "url": "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/unity",
+          "description": "Unity runtime package source in the Quantum API repository."
+        },
+        {
+          "kind": "demo",
+          "label": "Demo project",
+          "url": "https://github.com/DavidJGrimsley/qrng-unity-demo",
+          "description": "Unity demo project for Quantum API random generation."
+        }
+      ]
     }
   ]
 }

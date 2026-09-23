@@ -29,6 +29,7 @@ const memoryStorage = (): StorageLike => {
 
 let supabaseClient: SupabaseClient | null = null;
 let supabaseClientConfigKey = '';
+let reusableDefaultClient: { client: SupabaseClient; configKey: string } | null = null;
 
 function getSupabaseUrl() {
   return readTrimmedPublicRuntimeConfigValue('EXPO_PUBLIC_SUPABASE_URL');
@@ -131,14 +132,23 @@ export function getSupabaseAuthFlowType(): SupabaseAuthFlowType {
   return 'pkce';
 }
 
-export function getSupabaseBrowserClient() {
+export function getSupabaseBrowserClient(options?: { detectSessionInUrl?: boolean }) {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey) {
     throw new Error(getSupabaseConfigError() ?? 'Supabase is not configured.');
   }
 
   const authFlowType = getSupabaseAuthFlowType();
-  const configKey = `${url}\n${anonKey}\n${authFlowType}`;
+  const reusableConfigKey = `${url}\n${anonKey}\n${authFlowType}`;
+  if (!options && reusableDefaultClient?.configKey === reusableConfigKey) {
+    return reusableDefaultClient.client;
+  }
+  if (reusableDefaultClient?.configKey !== reusableConfigKey) {
+    reusableDefaultClient = null;
+  }
+
+  const detectSessionInUrl = options?.detectSessionInUrl ?? isWeb;
+  const configKey = `${url}\n${anonKey}\n${authFlowType}\n${detectSessionInUrl}`;
   if (supabaseClient && supabaseClientConfigKey === configKey) {
     return supabaseClient;
   }
@@ -146,13 +156,24 @@ export function getSupabaseBrowserClient() {
   supabaseClient = createClient(url, anonKey, {
     auth: {
       autoRefreshToken: isWeb,
-      detectSessionInUrl: isWeb,
+      detectSessionInUrl,
       flowType: authFlowType,
       persistSession: isWeb,
       storage: isWeb ? undefined : memoryStorage(),
     },
   });
   supabaseClientConfigKey = configKey;
+  reusableDefaultClient = null;
 
   return supabaseClient;
+}
+
+export function reuseSupabaseBrowserClientForDefaultGets(client: SupabaseClient) {
+  if (client !== supabaseClient) return;
+
+  const [url, anonKey, authFlowType] = supabaseClientConfigKey.split('\n');
+  reusableDefaultClient = {
+    client,
+    configKey: `${url}\n${anonKey}\n${authFlowType}`,
+  };
 }

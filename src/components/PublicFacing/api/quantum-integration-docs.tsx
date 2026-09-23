@@ -4,14 +4,20 @@ import { Platform, ScrollView, View } from "react-native";
 
 import quantumIntegrationDocsData from "@json/quantum-integration-docs.json";
 import { ThemedText } from "@/components/UI/ThemedText";
+import Ionicons from "@/components/UI/HydratedIonicon";
 import { SITE_URL, joinUrl } from "@/constants/seo";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
+import {
+  QuantumAgentSkillInstallCard,
+  QuantumSupportButton,
+} from "~/src/components/PublicFacing/api/quantum-page-actions";
+import { ExternalLink } from "@/components/UI/ExternalLink";
 
 export const QUANTUM_API_PATH = "/public-facing/api/quantum";
 export const QUANTUM_API_MARKDOWN_PATH = "/public-facing/api/quantum.md";
 export const LLMS_TXT_PATH = "/llms.txt";
-export const QUANTUM_DOCS_FEEDBACK_EMAIL = "DavidJGrimsley@gmail.com";
+export const QUANTUM_DOCS_FEEDBACK_EMAIL = "MrDJ@DavidJGrimsley.com";
 export const QUANTUM_DOCS_ISSUES_URL =
   "https://github.com/davidjgrimsley/quantum-api/issues";
 export const IBM_QUANTUM_URL = "https://quantum.cloud.ibm.com/";
@@ -86,6 +92,85 @@ function withOpacity(hexColor: string, opacity: number) {
   const g = parseInt(hex.slice(2, 4), 16);
   const b = parseInt(hex.slice(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getIntegrationSummary(doc: QuantumIntegrationDoc) {
+  const kind = doc.kind.trim();
+  const summary = doc.summary.trim();
+
+  if (summary.toLowerCase().includes(kind.toLowerCase())) {
+    return summary;
+  }
+
+  return `${kind}. ${summary}`;
+}
+
+function formatIntegrationVersion(version: string) {
+  return /^\d/.test(version) ? `v${version}` : version;
+}
+
+function IntegrationIntroPanel({ doc }: { doc: QuantumIntegrationDoc }) {
+  const tintColor = useThemeColor({}, "tint");
+  const accentColor = useThemeColor({}, "accent");
+
+  return (
+    <View
+      className="rounded-lg border p-4 gap-5"
+      style={{
+        backgroundColor: withOpacity(accentColor, 0.62),
+        borderColor: withOpacity(tintColor, 0.4),
+      }}
+    >
+      <Paragraph>{getIntegrationSummary(doc)}</Paragraph>
+
+      {doc.resourceLinks?.length ? (
+        <View className="gap-3">
+          <ThemedText type="defaultSemiBold" className="text-tint">
+            Downloads, source, and demos
+          </ThemedText>
+          <View className="gap-3 md:flex-row md:flex-wrap">
+            {doc.resourceLinks.map((link) => (
+              <ExternalLink
+                key={`${link.kind ?? "link"}:${link.url}`}
+                href={link.url}
+                className="rounded-lg border p-3 md:basis-[48%] md:flex-1 md:max-w-[50%]"
+                style={{ borderColor: withOpacity(tintColor, 0.4) }}
+              >
+                <ThemedText className="text-sm md:text-base leading-6 opacity-80">
+                  <ThemedText className="font-bold text-tint">
+                    {link.label}
+                  </ThemedText>
+                  {link.description ? (
+                    <ThemedText> {link.description}</ThemedText>
+                  ) : null}
+                </ThemedText>
+              </ExternalLink>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      <View className="gap-3">
+        <View className="flex-row gap-3">
+          <View
+            className="h-11 w-11 rounded-lg items-center justify-center"
+            style={{ backgroundColor: withOpacity(tintColor, 0.18) }}
+          >
+            <Ionicons name="heart" size={22} color={tintColor} />
+          </View>
+          <View className="flex-1 gap-1">
+            <ThemedText type="defaultSemiBold" className="text-tint">
+              Support the Quantum API work
+            </ThemedText>
+            <ThemedText className="text-sm md:text-base leading-6 opacity-85">
+              These guides, SDKs, plugins, and demos take real testing time across engines and package ecosystems.
+            </ThemedText>
+          </View>
+        </View>
+        <QuantumSupportButton className="self-start" />
+      </View>
+    </View>
+  );
 }
 
 function DocsSection({
@@ -244,18 +329,17 @@ function FeedbackAndAgentSections({ markdownPath }: { markdownPath: string }) {
         </Paragraph>
       </DocsSection>
 
+      <View className="pt-6 pb-2 border-t border-tint/30">
+        <QuantumAgentSkillInstallCard />
+      </View>
+
       <DocsSection title="Agent version (.md)">
         <Paragraph>
           Coding agents can use the plain Markdown companion for this guide at{" "}
           <Link href={markdownUrl as Href}>
             <ThemedText className="text-tint underline">{markdownPath}</ThemedText>
           </Link>
-          . For best results, also point the agent at{" "}
-          <Link href={joinUrl(SITE_URL, LLMS_TXT_PATH) as Href}>
-            <ThemedText className="text-tint underline">{LLMS_TXT_PATH}</ThemedText>
-          </Link>{" "}
-          so it can discover the core API guide, OpenAPI references, and the
-          other integration guides.
+          .
         </Paragraph>
       </DocsSection>
     </>
@@ -548,7 +632,7 @@ function TypeScriptGuide() {
         </Paragraph>
       </DocsSection>
       <DocsSection title="Install">
-        <CodeBlock value="npm install @mr.dj2u/quantum-api" />
+        <CodeBlock value={`npm install "@mr.dj2u/quantum-api"`} />
         <Paragraph>Use Node.js 18 or later. The package supports ESM and CommonJS consumers.</Paragraph>
       </DocsSection>
       <DocsSection title="Configure">
@@ -871,7 +955,7 @@ function UnityGuide() {
         <BulletList
           items={[
             "Copy sdk/unity into your Unity project's Packages directory, or add it by local path in Unity Package Manager.",
-            "Use Unity 2021.3 or later.",
+            "Use Unity 2021 LTS or later.",
             "Create QuantumApiClient with your API address and keep BackendProxyMode enabled for shipped builds.",
           ]}
         />
@@ -1039,46 +1123,37 @@ export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
     >
       <View className="gap-6">
         <View className="gap-4">
-          <ThemedText
-            type="title"
-            headingLevel={1}
-            visualHeadingLevel={1}
-            className="font-noto-serif-display text-tint"
-          >
-            {doc.title}
-          </ThemedText>
-          <InfoPanel>
-            <Paragraph>{doc.summary}</Paragraph>
-          </InfoPanel>
-          <View className="rounded-lg border border-tint/30 bg-accent/40 p-4 md:flex-row md:gap-6">
-            <View className="mb-3 md:mb-0 md:flex-1">
-              <ThemedText type="defaultSemiBold" className="mb-1 text-tint">
-                Runtime / package
-              </ThemedText>
-              <ThemedText className="opacity-85">{doc.kind}</ThemedText>
-            </View>
-            <View className="md:flex-1">
-              <ThemedText type="defaultSemiBold" className="mb-1 text-tint">
-                Version
-              </ThemedText>
-              <ThemedText className="opacity-85">{doc.version}</ThemedText>
-            </View>
-          </View>
-          <View className="rounded-lg border border-tint/30 bg-accent/40 p-4">
-            <ThemedText type="defaultSemiBold" className="mb-3 text-tint">
-              On this page
+          <View className="flex-row flex-wrap items-end gap-3">
+            <ThemedText
+              type="title"
+              headingLevel={1}
+              visualHeadingLevel={1}
+              className="font-noto-serif-display text-tint"
+            >
+              {doc.title}
             </ThemedText>
-            <View className="flex-row flex-wrap gap-2">
-              {guide.sectionTitles.map((title) => (
-                <Link
-                  key={title}
-                  href={`${doc.path}#${slugify(title)}` as Href}
-                  onPress={() => scrollToSection(slugify(title))}
-                  className="rounded-md border border-tint/40 px-3 py-2"
-                >
-                  <ThemedText className="text-sm text-tint">{title}</ThemedText>
-                </Link>
-              ))}
+            <ThemedText className="pb-1 text-lg font-bold text-tint">
+              {formatIntegrationVersion(doc.version)}
+            </ThemedText>
+          </View>
+          <IntegrationIntroPanel doc={doc} />
+          <View className="rounded-lg border border-tint/30 bg-accent/40 p-4 gap-4">
+            <View>
+              <ThemedText type="defaultSemiBold" className="mb-3 text-tint">
+                On this page
+              </ThemedText>
+              <View className="flex-row flex-wrap gap-2">
+                {guide.sectionTitles.map((title) => (
+                  <Link
+                    key={title}
+                    href={`${doc.path}#${slugify(title)}` as Href}
+                    onPress={() => scrollToSection(slugify(title))}
+                    className="rounded-md border border-tint/40 px-3 py-2"
+                  >
+                    <ThemedText className="text-sm text-tint">{title}</ThemedText>
+                  </Link>
+                ))}
+              </View>
             </View>
           </View>
         </View>
