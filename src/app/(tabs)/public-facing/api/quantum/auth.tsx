@@ -1,38 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import type { EmailOtpType } from '@supabase/supabase-js';
-
 import { ThemedText } from '@/components/UI/ThemedText';
 import { QUANTUM_DASHBOARD_PATH } from '@/lib/quantum-api-config';
+import {
+  normalizeQuantumOtpType,
+  readImplicitAuthError,
+} from '@/lib/quantum-auth-callback';
 import {
   getSupabaseBrowserClient,
   getSupabaseConfigError,
   isSupabaseConfigured,
+  reuseSupabaseBrowserClientForDefaultGets,
 } from '@/lib/supabase-browser';
-
-const TOKEN_HASH_TYPES = new Set<EmailOtpType>([
-  'email',
-  'recovery',
-  'invite',
-  'email_change',
-]);
 
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function normalizeOtpType(value: string | undefined): EmailOtpType | null {
-  if (!value) return null;
-
-  const normalized = value.toLowerCase();
-  if (normalized === 'signup' || normalized === 'magiclink') {
-    return 'email';
-  }
-
-  return TOKEN_HASH_TYPES.has(normalized as EmailOtpType)
-    ? (normalized as EmailOtpType)
-    : null;
 }
 
 export default function QuantumAuthCallbackPage() {
@@ -51,8 +34,13 @@ export default function QuantumAuthCallbackPage() {
     () => ({
       code: firstParam(params.code),
       tokenHash: firstParam(params.token_hash),
-      type: normalizeOtpType(firstParam(params.type)),
-      error: firstParam(params.error_description) ?? firstParam(params.error),
+      type: normalizeQuantumOtpType(firstParam(params.type)),
+      error:
+        firstParam(params.error_description) ??
+        firstParam(params.error) ??
+        (typeof window === 'undefined'
+          ? null
+          : readImplicitAuthError(window.location.hash) ?? undefined),
     }),
     [params.code, params.error, params.error_description, params.token_hash, params.type],
   );
@@ -110,6 +98,7 @@ export default function QuantumAuthCallbackPage() {
 
         if (!active) return;
         setMessage('Signed in. Opening your Quantum API dashboard…');
+        reuseSupabaseBrowserClientForDefaultGets(supabase);
         router.replace(QUANTUM_DASHBOARD_PATH as Href);
       } catch (error) {
         if (!active) return;
