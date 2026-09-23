@@ -105,6 +105,10 @@ function getIntegrationSummary(doc: QuantumIntegrationDoc) {
   return `${kind}. ${summary}`;
 }
 
+function formatIntegrationVersion(version: string) {
+  return /^\d/.test(version) ? `v${version}` : version;
+}
+
 function IntegrationIntroPanel({ doc }: { doc: QuantumIntegrationDoc }) {
   const tintColor = useThemeColor({}, "tint");
   const accentColor = useThemeColor({}, "accent");
@@ -1129,7 +1133,7 @@ export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
               {doc.title}
             </ThemedText>
             <ThemedText className="pb-1 text-lg font-bold text-tint">
-              v{doc.version}
+              {formatIntegrationVersion(doc.version)}
             </ThemedText>
           </View>
           <IntegrationIntroPanel doc={doc} />
