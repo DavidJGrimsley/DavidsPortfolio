@@ -35,6 +35,7 @@ import {
   QUANTUM_YOUTUBE_PLAYLIST_URL,
 } from "~/src/components/PublicFacing/api/quantum-page-actions";
 import { ApiAuthDashboardCard } from "~/src/components/PublicFacing/api/quantum-auth-dashboard-card";
+import { FloatingSectionNav, SectionNav, useSectionNav } from "~/src/components/PublicFacing/api/SectionNav";
 import { PublicFacingDetailWrapper } from "~/src/components/PublicFacing/PublicFacingDetailWrapper";
 import {
   PortfolioHeader,
@@ -416,10 +417,14 @@ function renderBody(body: PortfolioContentSection["body"]) {
 
 function PortfolioSectionCard({
   section,
+  targetId,
+  targetRef,
   expanded,
   onToggle,
 }: {
   section: PortfolioContentSection;
+  targetId: string;
+  targetRef: (view: View | null) => void;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -428,7 +433,7 @@ function PortfolioSectionCard({
   const isOpen = !section.collapsible || expanded;
 
   return (
-    <View className="mb-7.5">
+    <View ref={targetRef} nativeID={targetId} className="mb-7.5">
       {section.collapsible ? (
         <Pressable
           onPress={onToggle}
@@ -494,8 +499,12 @@ function PortfolioSectionCard({
 
 function ExtraComponentSlot({
   component,
+  targetId,
+  targetRef,
 }: {
   component: PortfolioComponentSlot;
+  targetId: string;
+  targetRef: (view: View | null) => void;
 }) {
   const accentColor = useThemeColor({}, "accent");
 
@@ -504,7 +513,7 @@ function ExtraComponentSlot({
   }
 
   return (
-    <View className="mb-5">
+    <View ref={targetRef} nativeID={targetId} className="mb-5">
       {component.title ? (
         <ThemedText
           type="subtitle"
@@ -538,6 +547,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 function APIDetailContent() {
+  const { scrollRef, viewportRef, inlineRef, onScroll, measureInline, registerTarget, controller } = useSectionNav();
   const pathname = usePathname();
   const slug = pathname?.split("/").filter(Boolean).pop() ?? "api";
   const fallbackDetail = useMemo(() => createFallbackDetail(slug), [slug]);
@@ -652,6 +662,25 @@ function APIDetailContent() {
   const routeId = api.id || registryEntry.id || detail.params.id;
   const isQuantumRoute = routeId === "quantum";
   const routePath = `/public-facing/api/${routeId}`;
+  const contentSections = sections.map((section, index) => ({
+    section,
+    id: `section-${toFragmentId(section.id) || "content"}-${index}`,
+  }));
+  const titledComponents = components
+    .map((component, index) => ({ component, id: `component-${toFragmentId(component.id ?? component.title ?? component.type)}-${index}` }))
+    .filter(({ component }) => component.type === "quantum-animation" && Boolean(component.title));
+  const navItems = [
+    ...(isQuantumRoute ? [{ id: "quantum-guides", label: "Plugin & package docs" }] : []),
+    ...(showApiKeyDashboard ? [{ id: "api-key-dashboard", label: "API key dashboard" }] : []),
+    { id: "endpoints", label: "Endpoints" },
+    ...contentSections.map(({ section, id }) => ({ id, label: section.title })),
+    ...titledComponents.map(({ component, id }) => ({ id, label: component.title! })),
+    { id: "technical-details", label: "Technical Details" },
+    ...(isQuantumRoute ? [
+      { id: "feedback", label: "Feedback, contributions, comments, and questions" },
+      { id: "agent-version", label: "Agent version (.md)" },
+    ] : []),
+  ];
   const structuredData = buildApiDetailStructuredData({
     api,
     endpoints,
@@ -659,7 +688,14 @@ function APIDetailContent() {
   });
 
   return (
-    <PublicFacingDetailWrapper>
+    <PublicFacingDetailWrapper
+      ref={scrollRef}
+      viewportRef={viewportRef}
+      onScroll={onScroll}
+      onContentSizeChange={measureInline}
+      scrollEventThrottle={16}
+      floatingContent={<FloatingSectionNav items={navItems} routePath={routePath} controller={controller} />}
+    >
       {isQuantumRoute ? (
         <Head>
           <link
@@ -695,12 +731,16 @@ function APIDetailContent() {
         type="api"
       />
 
+      <SectionNav items={navItems} routePath={routePath} controller={controller} inlineRef={inlineRef} measureInline={measureInline} />
+
       {isQuantumRoute ? (
         <QuantumApiActionGrid baseUrl={apiBaseUrl} docsUrl={api.docsUrl} />
       ) : null}
 
       {isQuantumRoute ? (
         <View
+          ref={registerTarget("quantum-guides")}
+          nativeID="quantum-guides"
           className="rounded-lg p-4 mb-7.5 border"
           style={{
             backgroundColor: accentColor,
@@ -748,17 +788,19 @@ function APIDetailContent() {
       ) : null}
 
       {showApiKeyDashboard ? (
-        <ClientOnly>
-          <ApiAuthDashboardCard
-            apiName={api.name}
-            baseUrl={quantumAuthBaseUrl}
-            dashboardDescription={apiAuth?.dashboardDescription}
-            supportsIbmProfiles={Boolean(apiAuth?.supportsIbmProfiles)}
-          />
-        </ClientOnly>
+        <View ref={registerTarget("api-key-dashboard")} nativeID="api-key-dashboard">
+          <ClientOnly>
+            <ApiAuthDashboardCard
+              apiName={api.name}
+              baseUrl={quantumAuthBaseUrl}
+              dashboardDescription={apiAuth?.dashboardDescription}
+              supportsIbmProfiles={Boolean(apiAuth?.supportsIbmProfiles)}
+            />
+          </ClientOnly>
+        </View>
       ) : null}
 
-      <View className="mb-7.5">
+      <View ref={registerTarget("endpoints")} nativeID="endpoints" className="mb-7.5">
         <ThemedText type="subtitle" className="mb-4">
           Endpoints
         </ThemedText>
@@ -798,10 +840,12 @@ function APIDetailContent() {
         )}
       </View>
 
-      {sections.map((section) => (
+      {contentSections.map(({ section, id }) => (
         <PortfolioSectionCard
           key={section.id}
           section={section}
+          targetId={id}
+          targetRef={registerTarget(id)}
           expanded={
             expandedSections[section.id] ?? Boolean(section.defaultExpanded)
           }
@@ -816,14 +860,16 @@ function APIDetailContent() {
         />
       ))}
 
-      {components.map((component) => (
+      {components.map((component, index) => (
         <ExtraComponentSlot
           key={component.id ?? component.type}
           component={component}
+          targetId={`component-${toFragmentId(component.id ?? component.title ?? component.type)}-${index}`}
+          targetRef={registerTarget(`component-${toFragmentId(component.id ?? component.title ?? component.type)}-${index}`)}
         />
       ))}
 
-      <View className="mb-7.5">
+      <View ref={registerTarget("technical-details")} nativeID="technical-details" className="mb-7.5">
         <ThemedText type="subtitle" className="mb-4">
           Technical Details
         </ThemedText>
@@ -873,7 +919,7 @@ function APIDetailContent() {
 
       {isQuantumRoute ? (
         <>
-          <View className="mb-7.5">
+          <View ref={registerTarget("feedback")} nativeID="feedback" className="mb-7.5">
             <ThemedText type="subtitle" className="mb-4">
               Feedback, contributions, comments, and questions
             </ThemedText>
@@ -901,7 +947,7 @@ function APIDetailContent() {
             </View>
           </View>
 
-          <View className="mb-7.5">
+          <View ref={registerTarget("agent-version")} nativeID="agent-version" className="mb-7.5">
             <ThemedText type="subtitle" className="mb-4">
               Agent version (.md)
             </ThemedText>

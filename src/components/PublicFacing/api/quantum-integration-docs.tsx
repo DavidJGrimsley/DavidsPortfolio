@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, type Href } from "expo-router";
-import { Platform, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import quantumIntegrationDocsData from "@json/quantum-integration-docs.json";
 import { ThemedText } from "@/components/UI/ThemedText";
@@ -13,6 +13,7 @@ import {
   QuantumSupportButton,
 } from "~/src/components/PublicFacing/api/quantum-page-actions";
 import { ExternalLink } from "@/components/UI/ExternalLink";
+import { FloatingSectionNav, SectionNav, SectionNavTargets, useSectionNav, useSectionTarget } from "./SectionNav";
 
 export const QUANTUM_API_PATH = "/public-facing/api/quantum";
 export const QUANTUM_API_MARKDOWN_PATH = "/public-facing/api/quantum.md";
@@ -73,15 +74,6 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-}
-
-function scrollToSection(sectionId: string) {
-  if (Platform.OS !== "web" || typeof document === "undefined") return;
-
-  document.getElementById(sectionId)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
 }
 
 function withOpacity(hexColor: string, opacity: number) {
@@ -180,8 +172,9 @@ function DocsSection({
   title: string;
   children: React.ReactNode;
 }) {
+  const targetRef = useSectionTarget(slugify(title));
   return (
-    <View nativeID={slugify(title)} className="py-6 border-t border-tint/30">
+    <View ref={targetRef} nativeID={slugify(title)} className="py-6 border-t border-tint/30">
       <ThemedText
         type="subtitle"
         headingLevel={2}
@@ -1061,6 +1054,7 @@ const guideContent: Record<string, { sectionTitles: readonly string[]; content: 
 };
 
 export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
+  const { scrollRef, viewportRef, inlineRef, onScroll, measureInline, registerTarget, controller } = useSectionNav();
   const doc = getQuantumIntegrationDoc(slug);
   const guide = doc ? guideContent[doc.slug] : undefined;
 
@@ -1081,6 +1075,7 @@ export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
   }
 
   const pageUrl = joinUrl(SITE_URL, doc.path);
+  const navItems = guide.sectionTitles.map((title) => ({ id: slugify(title), label: title }));
   const markdownUrl = joinUrl(SITE_URL, doc.markdownPath);
   const llmsUrl = joinUrl(SITE_URL, LLMS_TXT_PATH);
   const structuredData = [
@@ -1107,6 +1102,12 @@ export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
 
   return (
     <PublicFacingDetailWrapper
+      ref={scrollRef}
+      viewportRef={viewportRef}
+      onScroll={onScroll}
+      onContentSizeChange={measureInline}
+      scrollEventThrottle={16}
+      floatingContent={<FloatingSectionNav items={navItems} routePath={doc.path} controller={controller} />}
       contentClassName="max-w-5xl"
       seo={{
         title: doc.title,
@@ -1137,27 +1138,9 @@ export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
             </ThemedText>
           </View>
           <IntegrationIntroPanel doc={doc} />
-          <View className="rounded-lg border border-tint/30 bg-accent/40 p-4 gap-4">
-            <View>
-              <ThemedText type="defaultSemiBold" className="mb-3 text-tint">
-                On this page
-              </ThemedText>
-              <View className="flex-row flex-wrap gap-2">
-                {guide.sectionTitles.map((title) => (
-                  <Link
-                    key={title}
-                    href={`${doc.path}#${slugify(title)}` as Href}
-                    onPress={() => scrollToSection(slugify(title))}
-                    className="rounded-md border border-tint/40 px-3 py-2"
-                  >
-                    <ThemedText className="text-sm text-tint">{title}</ThemedText>
-                  </Link>
-                ))}
-              </View>
-            </View>
-          </View>
+          <SectionNav items={navItems} routePath={doc.path} controller={controller} inlineRef={inlineRef} measureInline={measureInline} />
         </View>
-        {guide.content}
+        <SectionNavTargets registerTarget={registerTarget}>{guide.content}</SectionNavTargets>
         <FeedbackAndAgentSections markdownPath={doc.markdownPath} />
       </View>
     </PublicFacingDetailWrapper>
