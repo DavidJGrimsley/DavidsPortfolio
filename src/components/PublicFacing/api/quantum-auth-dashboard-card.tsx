@@ -1442,7 +1442,7 @@ export function ApiAuthDashboardCard({
                 {showIbmCredentials ? (
                   <View className="gap-3">
                     <ThemedText className="opacity-80 text-base leading-6">
-                      IBM credentials are optional. Without them, simulator-backed {apiName}
+                      IBM credentials are optional. Without them, simulator-backed {apiName}{" "}
                       features still work. Add a profile to enable IBM backend discovery,
                       transpilation, and async hardware jobs through the same {apiAccountLabel}.
                     </ThemedText>
