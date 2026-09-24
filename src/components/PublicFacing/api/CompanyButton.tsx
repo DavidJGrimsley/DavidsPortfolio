@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { openBrowserAsync } from 'expo-web-browser';
 import { Image, Pressable, type ImageSourcePropType, Text, View } from 'react-native';
@@ -46,15 +46,10 @@ export function CompanyButton({
 }: CompanyButtonProps) {
   const buttonHeight = 132;
   const imageSize = Math.round(buttonHeight * 1.04);
-  const burstExpandMs = 1120;
-  const burstReturnMs = 220;
-  const navigateDelayMs = burstExpandMs + burstReturnMs;
   const burstBaseSize = 74;
   const shimmerWidth = 92;
   const shimmerOverscan = 34;
   const normalizedName = name.toLowerCase();
-  const isNavigatingRef = useRef(false);
-  const navigateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scale = useSharedValue(1);
   const shimmerX = useSharedValue(-shimmerWidth - shimmerOverscan);
@@ -144,17 +139,6 @@ export function CompanyButton({
 
   const labelStyle = useMemo(
     () => {
-      if (normalizedName === 'higher') {
-        return {
-          color: primaryColor,
-          fontFamily,
-          fontSize: 60,
-          lineHeight: 64,
-          textAlign: 'center' as const,
-          width: '96%' as const,
-        };
-      }
-
       if (normalizedName === 'identerest') {
         return {
           color: primaryColor,
@@ -215,23 +199,19 @@ export function CompanyButton({
   };
 
   const handlePressIn = () => {
-    if (isNavigatingRef.current) return;
-
     scale.value = withTiming(0.968, { duration: 110 });
     cancelAnimation(burst);
     burst.value = 0;
     burst.value = withSequence(
       withTiming(1, {
-        duration: burstExpandMs,
+        duration: 1120,
         easing: Easing.out(Easing.quad),
       }),
-      withTiming(0, { duration: burstReturnMs })
+      withTiming(0, { duration: 220 })
     );
   };
 
   const handlePressOut = () => {
-    if (isNavigatingRef.current) return;
-
     scale.value = withSequence(
       withTiming(1.03, { duration: 180 }),
       withTiming(1, { duration: 180 })
@@ -239,48 +219,13 @@ export function CompanyButton({
   };
 
   const handlePress = () => {
-    if (isNavigatingRef.current) return;
-    isNavigatingRef.current = true;
-
-    if (navigateTimerRef.current) {
-      clearTimeout(navigateTimerRef.current);
-      navigateTimerRef.current = null;
-    }
-
     if (typeof window !== 'undefined') {
-      // Pre-open a blank tab synchronously to preserve the user-gesture context
-      // and avoid popup blockers, then navigate it after the animation finishes.
-      const tab = window.open('', '_blank', 'noopener,noreferrer');
-      navigateTimerRef.current = setTimeout(() => {
-        navigateTimerRef.current = null;
-        if (tab && !tab.closed) {
-          tab.location.href = href;
-        } else {
-          // Fallback if the tab was blocked or closed before we navigated it
-          window.open(href, '_blank', 'noopener,noreferrer');
-        }
-        isNavigatingRef.current = false;
-      }, navigateDelayMs);
+      window.open(href, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    navigateTimerRef.current = setTimeout(() => {
-      navigateTimerRef.current = null;
-      void openBrowserAsync(href).finally(() => {
-        isNavigatingRef.current = false;
-      });
-    }, navigateDelayMs);
+    void openBrowserAsync(href);
   };
-
-  useEffect(
-    () => () => {
-      if (navigateTimerRef.current) {
-        clearTimeout(navigateTimerRef.current);
-        navigateTimerRef.current = null;
-      }
-    },
-    []
-  );
 
   return (
     <Animated.View style={animatedScaleStyle}>
