@@ -4,6 +4,7 @@ import {
   createQuantumBearerClient,
   createQuantumPublicClient,
   createQuantumRuntimeProxyClient,
+  resolveQuantumRuntimeProxyBaseUrl,
 } from '@/lib/quantum-sdk-client';
 
 export type QuantumSdkEndpointExecutionInput = {
@@ -167,6 +168,32 @@ function requireBearerClient(baseUrl: string, bearerToken?: string | null) {
   return createQuantumBearerClient(baseUrl, token);
 }
 
+async function executeDirectRuntimePost(
+  baseUrl: string,
+  pathname: '/qasm/run' | '/random',
+  body: unknown
+): Promise<QuantumSdkEndpointExecutionResult> {
+  // The published SDK does not expose these methods, so use the same runtime proxy directly.
+  const fetchImpl = typeof window !== 'undefined' && typeof window.fetch === 'function'
+    ? window.fetch.bind(window)
+    : globalThis.fetch.bind(globalThis);
+  const response = await fetchImpl(`${resolveQuantumRuntimeProxyBaseUrl(baseUrl)}/v1${pathname}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body ?? {}),
+  });
+  const rawBody = await response.text();
+  let data: unknown = null;
+  if (rawBody) {
+    try {
+      data = JSON.parse(rawBody);
+    } catch {
+      data = { message: rawBody };
+    }
+  }
+  return { status: response.status, statusText: response.statusText, data };
+}
+
 export async function executeQuantumSdkEndpoint(
   input: QuantumSdkEndpointExecutionInput
 ): Promise<QuantumSdkEndpointExecutionResult> {
@@ -176,6 +203,10 @@ export async function executeQuantumSdkEndpoint(
 
   if (pathname.includes('{') || pathname.includes('}')) {
     throw new Error(`Cannot execute templated route ${pathname}. Provide a concrete resource identifier first.`);
+  }
+
+  if (method === 'POST' && (pathname === '/qasm/run' || pathname === '/random')) {
+    return executeDirectRuntimePost(input.baseUrl, pathname, input.body);
   }
 
   const publicClient = createQuantumPublicClient(input.baseUrl);

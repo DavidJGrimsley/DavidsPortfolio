@@ -224,15 +224,6 @@ function decorateQuantumPortfolio(portfolio: APIPortfolio, origin: string | null
   const baseUrl = `${origin ?? 'https://davidjgrimsley.com'}${QUANTUM_PUBLIC_BASE_PATH}`;
   const endpoints = (portfolio.endpoints ?? []).map((endpoint) => {
     const operationPath = endpoint.operationPath ?? endpoint.path;
-    const normalizedOperationPath = operationPath.split('?')[0];
-
-    if (endpoint.method.toUpperCase() === 'GET' && normalizedOperationPath === '/v1/list_backends') {
-      return {
-        ...endpoint,
-        liveTestPath: '/v1/list_backends?provider=aer&simulator_only=true',
-      };
-    }
-
     if (operationPath.includes('{') || operationPath.includes('}')) {
       return {
         ...endpoint,

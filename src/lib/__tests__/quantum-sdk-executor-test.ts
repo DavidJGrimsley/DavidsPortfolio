@@ -96,4 +96,80 @@ describe('quantum sdk endpoint executor', () => {
       'Bearer supabase-token'
     );
   });
+
+  it('sends selected IBM filters through the runtime proxy without a visitor key', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    await executeQuantumSdkEndpoint({
+      method: 'GET',
+      path: '/v1/list_backends?provider=ibm&simulator_only=false&min_qubits=5',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+    });
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe(
+      'http://localhost:3000/api/quantum-backend/v1/list_backends?provider=ibm&simulator_only=false&min_qubits=5'
+    );
+    expect(new Headers(calledInit.headers).get('X-API-Key')).toBeNull();
+  });
+
+  it('executes POST /qasm/run through the runtime proxy', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    const payload = { qasm: 'OPENQASM 2.0;', shots: 10 };
+    const result = await executeQuantumSdkEndpoint({
+      method: 'POST',
+      path: '/v1/qasm/run',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+      body: payload,
+    });
+    expect(result.status).toBe(200);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('http://localhost:3000/api/quantum-backend/v1/qasm/run');
+    expect(calledInit.method).toBe('POST');
+    expect(JSON.parse(calledInit.body as string)).toEqual(payload);
+  });
+
+  it('shows the upstream QASM error status and body', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ error: 'invalid_qasm', message: 'Bad program' }), {
+      status: 422,
+      statusText: 'Unprocessable Content',
+      headers: { 'content-type': 'application/json' },
+    }));
+    await expect(executeQuantumSdkEndpoint({
+      method: 'POST',
+      path: '/v1/qasm/run',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+      body: { qasm: 'bad' },
+    })).resolves.toMatchObject({
+      status: 422,
+      data: { error: 'invalid_qasm', message: 'Bad program' },
+    });
+  });
+
+  it('executes local POST /random through the runtime proxy', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    const result = await executeQuantumSdkEndpoint({
+      method: 'POST',
+      path: '/v1/random',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+      body: { min: 0, max: 1 },
+    });
+    expect(result.status).toBe(200);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('http://localhost:3000/api/quantum-backend/v1/random');
+    expect(calledInit.method).toBe('POST');
+    expect(JSON.parse(calledInit.body as string)).toEqual({ min: 0, max: 1 });
+  });
+
+  it.each([
+    ['GET', '/v1/qasm/run'],
+    ['POST', '/v1/qasm/unknown'],
+  ] as const)('keeps unsupported %s %s rejected', async (method, path) => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    await expect(executeQuantumSdkEndpoint({
+      method,
+      path,
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+    })).rejects.toThrow(`Unsupported Quantum endpoint ${method} ${path.slice(3)}`);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
