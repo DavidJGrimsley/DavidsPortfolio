@@ -102,9 +102,7 @@ describe('portfolio API route', () => {
     expect(body.data.portfolio.sections[2].code.value).toContain(
       "'https://davidjgrimsley.com/api/public/quantum/v1/gates/run'"
     );
-    expect(body.data.portfolio.endpoints[0]).toMatchObject({
-      liveTestPath: '/v1/list_backends?provider=aer&simulator_only=true',
-    });
+    expect(body.data.portfolio.endpoints[0].liveTestPath).toBeUndefined();
     expect(body.data.portfolio.endpoints[1]).toMatchObject({
       liveTestDisabledReason:
         'This endpoint needs a concrete resource identifier before it can be tested from the portfolio page.',

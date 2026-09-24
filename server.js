@@ -595,34 +595,8 @@ function isDisallowedQuantumBackendProxyPath(pathname) {
   );
 }
 
-function isTruthyQueryValue(value) {
-  if (!value) {
-    return false;
-  }
-
-  const normalized = String(value).trim().toLowerCase();
-  return normalized === '1' || normalized === 'true' || normalized === 'yes';
-}
-
-function isIbmHardwareBackendsProxyPath(pathname, searchParams) {
-  if (pathname !== '/list_backends') {
-    return false;
-  }
-
-  const provider = String(searchParams.get('provider') || '').trim().toLowerCase();
-  if (provider !== 'ibm') {
-    return false;
-  }
-
-  return !isTruthyQueryValue(searchParams.get('simulator_only'));
-}
-
-function isIbmHardwareBackendProxyPath(pathname, searchParams) {
-  return (
-    pathname === '/jobs/circuits' ||
-    pathname.startsWith('/jobs/') ||
-    isIbmHardwareBackendsProxyPath(pathname, searchParams)
-  );
+function isUserKeyQuantumBackendPath(pathname) {
+  return pathname === '/jobs/circuits' || pathname.startsWith('/jobs/');
 }
 
 function buildSafeQuantumBackendProxySearch(pathname, searchParams) {
@@ -673,7 +647,7 @@ app.use('/api/quantum-backend', async (req, res, next) => {
     return;
   }
 
-  const requiresUserApiKey = isIbmHardwareBackendProxyPath(normalizedSuffix, requestUrl.searchParams);
+  const requiresUserApiKey = isUserKeyQuantumBackendPath(normalizedSuffix);
   const userApiKey = getFirstHeaderValue(req.headers['x-api-key']).trim();
   const backendApiKey = process.env.QUANTUM_BACKEND_API_KEY?.trim() ?? '';
   const apiKey = requiresUserApiKey ? userApiKey : backendApiKey;

@@ -89,7 +89,7 @@ describe('quantum-backend API proxy', () => {
     expect(headers.get('X-API-Key')).toBe('user-hardware-key');
   });
 
-  it('requires a user API key for IBM hardware backend discovery', async () => {
+  it('uses the server key for IBM hardware backend discovery', async () => {
     const response = await GET(
       new Request(
         'http://localhost:3000/api/quantum-backend/v1/list_backends?provider=ibm&simulator_only=false',
@@ -99,11 +99,46 @@ describe('quantum-backend API proxy', () => {
       )
     );
 
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toMatchObject({
-      error: 'user_api_key_required',
-    });
+    expect(response.status).toBe(200);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toContain('provider=ibm&simulator_only=false');
+    expect(new Headers(calledInit.headers).get('X-API-Key')).toBe('server-demo-key');
+  });
+
+  it('uses the server key for IBM simulator discovery without a profile', async () => {
+    const response = await GET(new Request(
+      'http://localhost:3000/api/quantum-backend/v1/list_backends?provider=ibm&simulator_only=true'
+    ));
+
+    expect(response.status).toBe(200);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).not.toContain('ibm_profile');
+    expect(new Headers(calledInit.headers).get('X-API-Key')).toBe('server-demo-key');
+  });
+
+  it('reports missing server configuration for IBM discovery', async () => {
+    delete process.env.QUANTUM_BACKEND_API_KEY;
+    const response = await GET(new Request(
+      'http://localhost:3000/api/quantum-backend/v1/list_backends?provider=ibm&simulator_only=true'
+    ));
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({ error: 'proxy_not_configured' });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('forwards QASM execution to the supported upstream POST route', async () => {
+    const payload = { qasm: 'OPENQASM 2.0;', shots: 10 };
+    const response = await POST(new Request('http://localhost:3000/api/quantum-backend/v1/qasm/run', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    }));
+    expect(response.status).toBe(200);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('https://example.com/public-facing/api/quantum/v1/qasm/run');
+    expect(calledInit.method).toBe('POST');
+    expect(new Headers(calledInit.headers).get('X-API-Key')).toBe('server-demo-key');
+    expect(JSON.parse(Buffer.from(calledInit.body as ArrayBuffer).toString())).toEqual(payload);
   });
 
   it('defaults backend discovery to the AER simulator path for portfolio live tests', async () => {
