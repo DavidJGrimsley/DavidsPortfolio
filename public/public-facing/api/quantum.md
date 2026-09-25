@@ -58,11 +58,11 @@ The API returns normalized errors. Preserve the `request_id` when reporting a fa
 
 ## Integration guides
 
-- [Unreal Plugin](/public-facing/api/quantum/ue-plugin.md)
-- [TypeScript SDK](/public-facing/api/quantum/typescript-sdk.md)
-- [Python SDK](/public-facing/api/quantum/python-sdk.md)
-- [Godot Addon](/public-facing/api/quantum/godot-addon.md)
-- [Unity Package](/public-facing/api/quantum/unity-package.md)
+- [Unreal Plugin](/public-facing/api/quantum/ue-plugin.md): UE 5.8 Win64 Blueprint quickstart and plugin download.
+- [TypeScript SDK](/public-facing/api/quantum/typescript-sdk.md): browser, Expo, and Node.js setup.
+- [Python SDK](/public-facing/api/quantum/python-sdk.md): synchronous Python setup.
+- [Godot Addon](/public-facing/api/quantum/godot-addon.md): Godot 4 addon and Project Settings helper.
+- [Unity Package](/public-facing/api/quantum/unity-package.md): Unity manager setup, local random calls, and IBM jobs.
 
 ## Feedback, contributions, comments, and questions
 

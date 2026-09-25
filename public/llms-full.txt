@@ -25,11 +25,11 @@ Authentication summary:
 
 ## Plugin & Package Guides
 
-- Quantum API Unreal Plugin: `/public-facing/api/quantum/ue-plugin.md` (`QuantumApi`, UE 5.8 Runtime plugin, version `0.2.0-beta`)
+- Quantum API Unreal Plugin: `/public-facing/api/quantum/ue-plugin.md` (`QuantumApi`, UE 5.8 Win64 Runtime plugin, version `0.3.0-beta`)
 - TypeScript SDK: `/public-facing/api/quantum/typescript-sdk.md` (`@mr.dj2u/quantum-api`, version `0.1.2`)
 - Python SDK: `/public-facing/api/quantum/python-sdk.md` (`quantum-api-sdk`, version `0.1.0`)
 - Godot Addon: `/public-facing/api/quantum/godot-addon.md` (Godot 4 runtime addon)
-- Unity Package: `/public-facing/api/quantum/unity-package.md` (`com.quantumapi.runtime`, Unity 2021.3+, version `0.1.0`)
+- Unity Package: `/public-facing/api/quantum/unity-package.md` (`com.quantumapi.runtime`, Unity 2021.3+, version `1.1.0`)
 
 Each guide has a human companion at the same path without `.md`. The human page advertises its Markdown companion with `rel="alternate" type="text/markdown"` and points to `/llms.txt` with `rel="describedby"`.
 
