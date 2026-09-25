@@ -1,10 +1,14 @@
 import React from 'react';
+import type { GenerateMetadataFunction } from 'expo-router/server';
+import { landingMetadata, landingSeoProps } from '@/constants/landing-seo';
+
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { TabContainer } from '@/components/navigation/TabContainer';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 
+export const generateMetadata: GenerateMetadataFunction = () => landingMetadata('/portfolio');
 export default function PortfolioIndexPage() {
   const router = useRouter();
 
@@ -12,13 +16,9 @@ export default function PortfolioIndexPage() {
     <TabContainer
       titleA="My"
       titleB="Portfolio"
-      leadBody="Browse projects across mobile apps, website development, game design, and software development. Each piece includes highlights, screenshots, and the tech and skills involved."
-      leadSubBody="If you're looking to hire someone to build a website or app, these are real examples of how I approach UX, architecture, and production details."
+      leadBody="Explore my mobile apps, websites, games, and software projects."
+      leadSubBody="Each project shows what I built and how I approached it."
       seo={{
-        title: 'Portfolio',
-        description:
-          'Portfolio projects by David Grimsley: mobile apps, websites, game design, and software development. Explore real examples of UX, architecture, and APIs.',
-        path: '/portfolio',
         keywords: [
           'portfolio',
           'website building',
@@ -29,6 +29,7 @@ export default function PortfolioIndexPage() {
           'API development',
         ],
         type: 'website',
+        ...landingSeoProps('/portfolio'),
       }}
     >
       <View className="w-full flex flex-col gap-4">

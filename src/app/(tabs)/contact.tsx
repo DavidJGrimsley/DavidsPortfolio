@@ -1,5 +1,8 @@
 import { ThemedText } from "@/components/UI/ThemedText";
 import React, { useMemo, useState } from "react";
+import type { GenerateMetadataFunction } from 'expo-router/server';
+import { landingMetadata, landingSeoProps } from '@/constants/landing-seo';
+
 import { ActivityIndicator, Modal, Pressable, TextInput, View, Linking } from "react-native";
 import { type Href, router } from "expo-router";
 import { Controller, useForm } from 'react-hook-form';
@@ -8,6 +11,7 @@ import { TabContainer } from "@/components/navigation/TabContainer";
 import { FORM_SUBMIT_ENDPOINT, intakeForms, type IntakeField } from '@/constants/intakeForms';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
+export const generateMetadata: GenerateMetadataFunction = () => landingMetadata('/contact');
 
 export default function Index() {
   const contactForm = intakeForms['contact'];
@@ -94,13 +98,9 @@ export default function Index() {
       <TabContainer
         titleA="Contact"
         titleB="me"
-        leadBody="I believe accessibility and transparency are some of the most important factors in choosing where and with whom to do business. I’d love to hear from you."
-        leadSubBody="Please feel free to contact me via email, social media, or the form below. There are also specialized forms on the services page for starting a project."
+        leadBody="Have a project or question? I'd love to hear from you."
+        leadSubBody="Use the form below, or visit Services for a project-specific form."
         seo={{
-          title: 'Contact',
-          description:
-            'Contact David Grimsley to discuss website building, app development, APIs, tutoring, game development, or online presence services.',
-          path: '/contact',
           keywords: [
             'contact',
             'website quote',
@@ -110,6 +110,7 @@ export default function Index() {
             'freelance developer',
           ],
           type: 'website',
+          ...landingSeoProps('/contact'),
         }}
       >
         <View className="w-full max-w-[980px]">

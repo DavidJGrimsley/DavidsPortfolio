@@ -114,6 +114,14 @@ npm run build:web:deploy
 
 ## CI + Deploy Flow
 
+### Search and agent discovery
+
+- Public landing pages and portfolio case studies use server-rendered titles, descriptions, canonical URLs, and social metadata. The human HTML page is the search result target.
+- `/llms.txt` is a curated map of the portfolio, services, public tools, and Quantum API documentation. `/llms-full.txt` adds navigation context. Concise Markdown guides live under `/guides/`; Quantum integration guides keep their existing Markdown companions.
+- Matching HTML pages advertise Markdown with `rel="alternate" type="text/markdown"` and point to `/llms.txt` with `rel="describedby"`. Markdown and agent indexes remain accessible but return `X-Robots-Tag: noindex`; Markdown companions also return an HTML canonical link header.
+- `scripts/generate-sitemap.mjs` lists canonical HTML pages only. It omits build-time `lastmod` guesses and utility or form routes. `robots.txt` permits public crawling and identifies the sitemap.
+- After a production build, run `node scripts/verify-agent-seo.mjs <site-origin>` against a production server to verify guide links, metadata, indexing headers, and sitemap behavior.
+
 - Branch model: `feature/* -> test -> main`.
 - GitHub Actions workflow: `.github/workflows/ci.yml`.
 - Main PR source guard workflow: `.github/workflows/require-main-pr-source.yml`.

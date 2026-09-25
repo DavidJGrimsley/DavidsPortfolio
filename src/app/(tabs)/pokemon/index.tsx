@@ -5,7 +5,7 @@ import { TabContainer } from "@/components/navigation/TabContainer";
 
 export default function Pokemon() {
   return (
-    <TabContainer titleA="Pokemon" titleB="Center" showFooter={false}>
+    <TabContainer titleA="Pokemon" titleB="Center" showFooter={false} seo={{ title: 'PokePages has moved', path: '/pokemon', noIndex: true }}>
       <View className="flex-1 w-full items-center justify-center min-h-100"> 
         <View className="bg-accent/80 rounded-2xl p-7 max-w-150 w-full items-center">
         <ThemedText headingLevel={2} visualHeadingLevel={2} className="text-3xl font-bold text-center my-6">

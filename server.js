@@ -18,6 +18,26 @@ const SERVER_BUILD_DIR = path.join(__dirname, 'dist/server');
 const ROUTES_MANIFEST_PATH = path.join(SERVER_BUILD_DIR, '_expo/routes.json');
 const BUILD_METADATA_PATH = path.join(CLIENT_BUILD_DIR, '__djsportfolio_build.json');
 const SERVICE_WORKER_PATH = path.join(CLIENT_BUILD_DIR, 'sw.js');
+const port = process.env.PORT || 3000;
+
+// Expo SDK 57 uses relative loader URLs during Node SSR. Resolve those
+// requests against this server's loopback origin so dynamic pages can render.
+const nodeFetch = globalThis.fetch.bind(globalThis);
+globalThis.fetch = (input, init) => {
+  if (typeof input === 'string' && input.startsWith('/_expo/loaders/')) {
+    const headers = new Headers(init?.headers);
+    const siteOrigin = parseOriginValue(
+      process.env.EXPO_PUBLIC_SITE_ORIGIN || process.env.EXPO_PUBLIC_SITE_URL
+    );
+    if (siteOrigin) {
+      const siteUrl = new URL(siteOrigin);
+      headers.set('X-Forwarded-Host', siteUrl.host);
+      headers.set('X-Forwarded-Proto', siteUrl.protocol.slice(0, -1));
+    }
+    return nodeFetch(new URL(input, `http://127.0.0.1:${port}`), { ...init, headers });
+  }
+  return nodeFetch(input, init);
+};
 
 const app = express();
 const PUBLIC_RUNTIME_ENV_KEYS = [
@@ -49,10 +69,15 @@ const QUANTUM_API_DOCS_PATH = '/public-facing/api/quantum';
 const QUANTUM_API_MARKDOWN_PATH = '/public-facing/api/quantum.md';
 const LLMS_TXT_PATH = '/llms.txt';
 const quantumIntegrationDocsManifest = require('./src/constants/json/quantum-integration-docs.json');
-const QUANTUM_DOCUMENTATION_LINKS = new Map([
+const agentGuidesManifest = require('./src/constants/json/agent-guides.json');
+const DOCUMENTATION_LINKS = new Map([
+  ...agentGuidesManifest.guides.map((guide) => [guide.path, guide.markdownPath]),
   [QUANTUM_API_DOCS_PATH, QUANTUM_API_MARKDOWN_PATH],
   ...quantumIntegrationDocsManifest.docs.map((doc) => [doc.path, doc.markdownPath]),
 ]);
+const MARKDOWN_CANONICAL_PATHS = new Map(
+  [...DOCUMENTATION_LINKS].map(([htmlPath, markdownPath]) => [markdownPath, htmlPath])
+);
 
 function buildPublicRuntimeConfig() {
   return PUBLIC_RUNTIME_ENV_KEYS.reduce((config, key) => {
@@ -701,18 +726,18 @@ app.get('/sw.js', (_req, res) => {
   res.sendFile(SERVICE_WORKER_PATH);
 });
 
-function getQuantumDocumentationMarkdownPath(req) {
+function getDocumentationMarkdownPath(req) {
   const requestUrl = new URL(req.originalUrl, 'http://localhost');
   const pathname = requestUrl.pathname.replace(/\/+$/, '') || '/';
-  return QUANTUM_DOCUMENTATION_LINKS.get(pathname);
+  return DOCUMENTATION_LINKS.get(pathname);
 }
 
-function shouldInjectQuantumDocumentationLinks(req) {
+function shouldInjectDocumentationLinks(req) {
   if (req.method !== 'GET') {
     return false;
   }
 
-  if (!getQuantumDocumentationMarkdownPath(req)) {
+  if (!getDocumentationMarkdownPath(req)) {
     return false;
   }
 
@@ -720,8 +745,8 @@ function shouldInjectQuantumDocumentationLinks(req) {
   return !accept || accept.includes('text/html') || accept.includes('*/*');
 }
 
-function injectQuantumDocumentationHeadLinks(html, req) {
-  const markdownPath = getQuantumDocumentationMarkdownPath(req);
+function injectDocumentationHeadLinks(html, req) {
+  const markdownPath = getDocumentationMarkdownPath(req);
   if (!markdownPath || !html.includes('</head>')) {
     return html;
   }
@@ -742,7 +767,24 @@ function injectQuantumDocumentationHeadLinks(html, req) {
 }
 
 app.use((req, res, next) => {
-  if (!shouldInjectQuantumDocumentationLinks(req)) {
+  const pathname = new URL(req.originalUrl, 'http://localhost').pathname;
+  if (
+    pathname === '/pokemon' ||
+    pathname === '/public-facing/api/quantum/auth' ||
+    pathname === '/services/survey' ||
+    (pathname.startsWith('/services/') && pathname !== '/services/learn')
+  ) {
+    res.setHeader('X-Robots-Tag', 'noindex, follow');
+  }
+  if (pathname === '/llms.txt' || pathname === '/llms-full.txt' || pathname.endsWith('.md')) {
+    res.setHeader('X-Robots-Tag', 'noindex, follow');
+    const canonicalPath = MARKDOWN_CANONICAL_PATHS.get(pathname);
+    if (canonicalPath) {
+      res.setHeader('Link', `<${getRequestOrigin(req)}${canonicalPath}>; rel="canonical"`);
+    }
+  }
+
+  if (!shouldInjectDocumentationLinks(req)) {
     next();
     return;
   }
@@ -788,7 +830,7 @@ app.use((req, res, next) => {
       return originalEnd(body, encoding, callback);
     }
 
-    const updated = injectQuantumDocumentationHeadLinks(body.toString('utf8'), req);
+    const updated = injectDocumentationHeadLinks(body.toString('utf8'), req);
     res.removeHeader('content-length');
     return originalEnd(updated, 'utf8', callback);
   };
@@ -846,8 +888,6 @@ app.use(express.static(CLIENT_BUILD_DIR, { maxAge: '1h', redirect: false }));
 app.all('/{*all}', createRequestHandler({
   build: SERVER_BUILD_DIR,
 }));
-
-const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
   console.log(`DJsPortfolio server listening on http://localhost:${port}`);

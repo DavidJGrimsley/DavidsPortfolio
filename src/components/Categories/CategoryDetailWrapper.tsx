@@ -60,9 +60,9 @@ export function CategoryDetailWrapper({
 
     const seoTitle = piece ? (piece.displayTitle || piece.title) : 'Portfolio Piece';
     const seoDescription = piece
-        ? (piece.caption || piece.breakdown || '').toString().slice(0, 300)
+        ? String(piece.caption || piece.breakdown || `${seoTitle} is a portfolio project by David Grimsley.`).replace(/\s+/g, ' ').trim().slice(0, 160)
         : 'Portfolio detail page.';
-    const seoPath = piece ? `/portfolio/${category}/${piece.title}` : `/portfolio/${category}`;
+    const seoPath = piece ? `/portfolio/${category}/${encodeURIComponent(piece.title)}` : `/portfolio/${category}`;
     const seoImage = piece?.picture ? toAbsoluteUrl(piece.picture) : undefined;
 
     const seoKeywords = useMemo(() => {

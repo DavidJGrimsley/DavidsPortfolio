@@ -120,6 +120,7 @@ export const IntakeFormScreen = ({ formId }: IntakeFormScreenProps) => {
           title: form.title,
           description: form.description,
           path: `/services/${form.id}`,
+          noIndex: true,
           keywords: [
             'services',
             'project intake',

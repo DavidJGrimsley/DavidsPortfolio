@@ -1,0 +1,16 @@
+{
+  "guides": [
+    { "path": "/", "markdownPath": "/guides/home.md" },
+    { "path": "/portfolio", "markdownPath": "/guides/portfolio.md" },
+    { "path": "/portfolio/mobile-apps", "markdownPath": "/guides/mobile-apps.md" },
+    { "path": "/portfolio/website-development", "markdownPath": "/guides/website-development.md" },
+    { "path": "/portfolio/game-design", "markdownPath": "/guides/game-design.md" },
+    { "path": "/portfolio/software-development", "markdownPath": "/guides/software-development.md" },
+    { "path": "/public-facing", "markdownPath": "/guides/public-tools.md" },
+    { "path": "/public-facing/api", "markdownPath": "/guides/apis.md" },
+    { "path": "/public-facing/mcp", "markdownPath": "/guides/mcp.md" },
+    { "path": "/public-facing/production", "markdownPath": "/guides/production-apps.md" },
+    { "path": "/services", "markdownPath": "/guides/services.md" },
+    { "path": "/contact", "markdownPath": "/guides/contact.md" }
+  ]
+}
