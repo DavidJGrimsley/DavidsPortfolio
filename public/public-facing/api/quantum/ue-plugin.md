@@ -1,14 +1,14 @@
 # Quantum API Unreal Plugin
 
-`QuantumApi` is a UE 5.8 Runtime plugin for the Quantum API `/v1` contract. It gives Blueprints asynchronous nodes for simulations, random helpers, QASM tools, and IBM hardware jobs.
+`QuantumApi` is a UE 5.8 Win64 Runtime plugin for the Quantum API `/v1` contract. It gives Blueprints asynchronous nodes for simulations, random helpers, QASM tools, and IBM hardware jobs. UEFN is unsupported.
 
-Plugin version: `0.2.0-beta`
+Plugin version: `0.3.0-beta`
 
 Human guide: `/public-facing/api/quantum/ue-plugin`
 
 ## What this plugin is
 
-Copy the project plugin into an Unreal project, enable it, configure authentication, then call Blueprint async actions.
+Copy the project plugin into an Unreal project, enable it, configure authentication, then call Blueprint async actions. Start with `Health Check`, then `Run Gate` and `Generate Random Int` before trying circuits or IBM jobs.
 
 - White execution pins decide when a request starts.
 - Request pins are the values you fill in before sending a request.
@@ -17,29 +17,15 @@ Copy the project plugin into an Unreal project, enable it, configure authenticat
 
 ## Install
 
-1. Copy `sdk/unreal` to `<YourProject>/Plugins/QuantumApi`.
-2. Regenerate project files and build the project.
-3. Enable **Quantum API** in Unreal's Plugin Browser if Unreal asks.
-4. Put game-specific settings in `Config/DefaultGame.ini`.
+Download and extract the [UE 5.8 Win64 beta release](https://github.com/DavidJGrimsley/quantum-api/releases/tag/quantumapi-unreal-v0.3.0-beta-ue5.8).
+
+1. Copy the extracted `QuantumApi` folder to `<YourProject>/Plugins/QuantumApi`.
+2. Open the project and enable **Quantum API** in the Plugin Browser if Unreal asks. Build only if Unreal says compilation is needed.
+3. Open **Project Settings → Quantum API** and choose an authentication mode.
 
 ## Configure
 
-Start with `BackendProxy` for a shipped game. Use `Direct API Key (Development Only)` only for local development, demos, and game jams.
-
-```ini
-[/Script/QuantumApi.QuantumApiSettings]
-AuthMode=BackendProxy
-ApiKey=
-bUseEnvironmentApiKey=True
-ApiKeyEnvironmentVariable=QUANTUM_API_KEY
-BearerToken=
-DefaultIbmProfile=
-RequestTimeoutSeconds=10.000000
-MaxReadRetries=2
-MaxRetryDelaySeconds=5.000000
-```
-
-The base URL is the web address the plugin sends requests to. The hosted Quantum API address is already configured. Only set `BaseUrl` in `Config/DefaultGame.ini` when your project uses its own service.
+In **Project Settings → Quantum API**, choose **Direct API Key** for a local test using an existing key. Direct mode always calls the hosted Quantum API address. For a shipped game, choose **Backend Proxy** and enter your own **Backend Proxy URL**. That server must expose the compatible API and keep the upstream key private. A blank proxy URL fails before a request is sent. There is no editable direct-mode Base URL.
 
 ## First Blueprint call: Health Check
 
@@ -101,7 +87,7 @@ Tiny first circuit:
 
 ## IBM hardware jobs
 
-The plugin submits jobs by IBM profile name. IBM tokens and instances stay on the Quantum API service, not inside the game.
+The plugin submits jobs by IBM profile name. IBM tokens and instances stay on the Quantum API service, not inside the game. You can set **Default IBM Hardware Backend** in Project Settings; an explicit backend on a request takes priority.
 
 1. Set **Default IBM Profile Name** in Project Settings, or use the request's `IbmProfile`.
 2. Use `List Backends` with `Provider = ibm` to choose a backend.
@@ -121,8 +107,7 @@ IBM hardware jobs have to wait in a queue before starting; get started at [quant
 `Direct API Key (Development Only)`:
 
 - For local development, demos, and game jams.
-- Sends `X-API-Key` from the environment, Plugin Settings, or request `Options`.
-- Restart Unreal after changing `QUANTUM_API_KEY`.
+- Sends `X-API-Key` from Project Settings or a request's `Options`. The Project Settings field is masked, but project files do not keep it secret.
 - Do not ship a client with a real upstream key.
 
 ## All Blueprint nodes
@@ -150,7 +135,7 @@ Named JSON-result async actions:
 - `Get Job Result`
 - `Cancel Job`
 
-Advanced JSON actions:
+Advanced operations through one `Call Advanced JSON` node (these are allowlisted request types, not separate nodes):
 
 - `Grover Search`, `Amplitude Estimation`, `Phase Estimation`, `Time Evolution`
 - `QAOA`, `VQE`, `MaxCut`, `Knapsack`, `Traveling Salesperson`
@@ -161,7 +146,7 @@ Advanced JSON actions:
 
 ## Troubleshooting
 
-- Run `Health Check` first when a node errors immediately.
+- Run `Health Check` first when a node errors immediately. In proxy mode, confirm the Backend Proxy URL is set and reachable.
 - If `Run Circuit` feels confusing, use `Run Gate`, then `Generate Random Int`, then return to one `h` operation targeting qubit `0`.
 - If IBM hardware does not run, check the profile name, backend availability, account access, queue time, and service-side IBM configuration.
 - GET health, backend, and job reads retry limited transient failures. POSTs and cancellation do not retry automatically.

@@ -7,11 +7,11 @@ Use these Markdown links when an AI agent needs low-noise source material. Human
 ## Quantum API Docs
 
 - [Quantum API](/public-facing/api/quantum.md): Agent entry point with base URL, auth, error shape, live OpenAPI, and endpoint-directory links.
-- [Unreal Plugin](/public-facing/api/quantum/ue-plugin.md): UE 5.8 Blueprint integration guide.
-- [TypeScript SDK](/public-facing/api/quantum/typescript-sdk.md): Node.js package guide.
+- [Unreal Plugin](/public-facing/api/quantum/ue-plugin.md): UE 5.8 Win64 Blueprint plugin v0.3.0-beta setup and examples.
+- [TypeScript SDK](/public-facing/api/quantum/typescript-sdk.md): Browser, Expo, and Node.js package guide.
 - [Python SDK](/public-facing/api/quantum/python-sdk.md): Sync Python client guide.
-- [Godot Addon](/public-facing/api/quantum/godot-addon.md): Godot 4 runtime addon guide.
-- [Unity Package](/public-facing/api/quantum/unity-package.md): Unity runtime package guide.
+- [Godot Addon](/public-facing/api/quantum/godot-addon.md): Godot 4 runtime addon and optional settings helper.
+- [Unity Package](/public-facing/api/quantum/unity-package.md): Unity v1.1.0 manager setup and gameplay calls.
 - [Full agent context](/llms-full.txt): Fuller site and Quantum API context.
 
 ## Human Pages

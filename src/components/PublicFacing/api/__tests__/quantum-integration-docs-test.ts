@@ -45,6 +45,7 @@ describe("Quantum integration documentation registry", () => {
 
     expect(linksBySlug["ue-plugin"]).toEqual(
       expect.arrayContaining([
+        "https://github.com/DavidJGrimsley/quantum-api/releases/tag/quantumapi-unreal-v0.3.0-beta-ue5.8",
         "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/unreal",
         "https://github.com/DavidJGrimsley/guess-the-qubit",
       ]),
@@ -69,9 +70,48 @@ describe("Quantum integration documentation registry", () => {
     );
     expect(linksBySlug["unity-package"]).toEqual(
       expect.arrayContaining([
+        "https://github.com/DavidJGrimsley/quantum-api/releases/tag/quantumapi-unity-v1.1.0",
         "https://github.com/DavidJGrimsley/quantum-api/tree/main/sdk/unity",
         "https://github.com/DavidJGrimsley/qrng-unity-demo",
       ]),
     );
+  });
+
+  it("keeps release versions and shipped method names aligned with the Markdown guides", () => {
+    for (const [slug, version] of [
+      ["ue-plugin", "0.3.0-beta"],
+      ["unity-package", "1.1.0"],
+    ]) {
+      const doc = quantumDocs.find((item) => item.slug === slug);
+      const markdown = fs.readFileSync(path.join(publicDirectory, doc!.markdownPath), "utf8");
+      expect(doc!.version).toBe(version);
+      expect(markdown).toContain(`version: \`${version}\``);
+    }
+
+    const typescript = fs.readFileSync(path.join(publicDirectory, "public-facing", "api", "quantum", "typescript-sdk.md"), "utf8");
+    expect(typescript).not.toMatch(/\b(runQasm|submitRandomJob|submitQasmJob|statusCode)\b/);
+
+    const python = fs.readFileSync(path.join(publicDirectory, "public-facing", "api", "quantum", "python-sdk.md"), "utf8");
+    expect(python).not.toContain("submit_random_job");
+  });
+
+  it("keeps private account administration out of the public guides", () => {
+    const guideFiles = quantumDocs.map((doc) =>
+      path.join(publicDirectory, doc.markdownPath),
+    );
+    guideFiles.push(
+      path.resolve(process.cwd(), "src/components/PublicFacing/api/quantum-integration-docs.tsx"),
+    );
+
+    for (const file of guideFiles) {
+      const content = fs.readFileSync(file, "utf8");
+      expect(content).not.toMatch(/owner-only|account administration|profile management|administration methods/i);
+    }
+
+    const godot = fs.readFileSync(
+      path.join(publicDirectory, "public-facing", "api", "quantum", "godot-addon.md"),
+      "utf8",
+    );
+    expect(godot).not.toContain('base_url="https://davidjgrimsley.com');
   });
 });
