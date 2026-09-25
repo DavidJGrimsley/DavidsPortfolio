@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import type { GenerateMetadataFunction } from 'expo-router/server';
+import { landingMetadata, landingSeoProps } from '@/constants/landing-seo';
+
 import { View, Pressable } from "react-native";
 import { type Href, router } from "expo-router";
 import { ThemedText } from "@/components/UI/ThemedText";
@@ -6,6 +9,7 @@ import { TabContainer } from "@/components/navigation/TabContainer";
 import { getContent } from "@/services/contentApi";
 import type { ServiceCard } from "@/types/content";
 
+export const generateMetadata: GenerateMetadataFunction = () => landingMetadata('/services');
 
 const hexToRgba = (hex: string, alpha: number) => {
   const sanitized = hex.replace("#", "");
@@ -107,13 +111,9 @@ const ServicesPage = () => {
     <TabContainer
       titleA="Whatcha"
       titleB="need?"
-      leadBody="It would be my pleasure to meet and discuss your goals. Whether you need a mobile app, website, game, or other software, I’ll get to know the why before I start to code. The greater purpose of your business or organization will be baked into the layout, UI, and functionality of your project."
-      leadSubBody="My normal tech stack includes Expo, React Native, , but I’m happy to explore other technologies to turn your ideas into reality."
+      leadBody="Need a website, app, game, or custom software? Tell me what you're trying to achieve, and we'll find a practical way to build it."
+      leadSubBody="Explore the services below to start a project, or contact me with a question."
       seo={{
-        title: 'Services: website building, apps, APIs, tutoring, games',
-        description:
-          'Hire David Grimsley for website building, app development, API/backend development, game development, tutoring, and online presence services. Request a quote and get started.',
-        path: '/services',
         keywords: [
           'website building',
           'website made',
@@ -146,6 +146,7 @@ const ServicesPage = () => {
           ],
         },
         type: 'website',
+        ...landingSeoProps('/services'),
       }}
     >
       {content}

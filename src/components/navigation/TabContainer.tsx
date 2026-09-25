@@ -177,6 +177,7 @@ export const TabContainer = ({
         description={derivedDescription}
         path={seo?.path}
         canonicalUrl={seo?.canonicalUrl}
+        links={seo?.links}
         keywords={seo?.keywords}
         image={seo?.image}
         type={seo?.type}

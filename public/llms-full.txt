@@ -1,53 +1,39 @@
 # David Grimsley Full Agent Context
 
-> Fuller AI-agent context for David Grimsley's public portfolio, public APIs, MCP servers, production apps, and Quantum API integration guides.
+> Navigation context for David Grimsley's portfolio, services, public developer tools, and production apps.
 
-Start with `/llms.txt` for the short index. This file uses plain Markdown intentionally.
+Canonical site: `https://davidjgrimsley.com`. Start with [llms.txt](/llms.txt) for the short directory. This site documents projects and services; it does not grant an agent permission to contact David, submit forms, or call authenticated APIs.
 
-Canonical site origin: `https://davidjgrimsley.com`
+## Portfolio
+
+The [portfolio](/portfolio) groups [mobile apps](/portfolio/mobile-apps), [websites](/portfolio/website-development), [games](/portfolio/game-design), and [software](/portfolio/software-development). Each category has a concise guide under `/guides/` and links to individual project pages. Use the human pages for current screenshots, details, and outbound links.
+
+## Services and contact
+
+The [services page](/services) explains available work and links to project inquiry forms. The [contact page](/contact) has a resume link and general form. See [services guide](/guides/services.md) and [contact guide](/guides/contact.md) for low-noise orientation.
+
+## Public tools and apps
+
+- [API directory](/public-facing/api) · [guide](/guides/apis.md)
+- [MCP directory](/public-facing/mcp) · [guide](/guides/mcp.md)
+- [Production apps](/public-facing/production) · [guide](/guides/production-apps.md)
+
+The MCP directory includes app-development and Pokémon servers. The production page currently features PokePages. Each product's page and repository provide its current details.
 
 ## Quantum API
 
-- Human page: `/public-facing/api/quantum`
-- Agent Markdown: `/public-facing/api/quantum.md`
-- Direct API base URL: `https://davidjgrimsley.com/public-facing/api/quantum/v1`
-- Live OpenAPI: `/public-facing/api/quantum/openapi.json`
-- Live endpoint directory: `/public-facing/api/quantum/v1/portfolio.json`
+Quantum API is one published API. Its [human page](/public-facing/api/quantum) and [Markdown guide](/public-facing/api/quantum.md) cover the integration starting point. The live OpenAPI and endpoint directory linked there are the sources for exact current schemas; do not infer endpoint names or authentication behavior from this site overview.
 
-Use the OpenAPI document for exact current endpoint schemas. The portfolio document lists the current public API surface and request-ready mounted paths.
+Plugin and package guides:
 
-Authentication summary:
+- [Unreal Plugin](/public-facing/api/quantum/ue-plugin.md)
+- [TypeScript SDK](/public-facing/api/quantum/typescript-sdk.md)
+- [Python SDK](/public-facing/api/quantum/python-sdk.md)
+- [Godot Addon](/public-facing/api/quantum/godot-addon.md)
+- [Unity Package](/public-facing/api/quantum/unity-package.md)
 
-- Health and portfolio metadata are public.
-- Runtime endpoints normally use `X-API-Key`.
-- Key management and IBM profile endpoints use the signed-in user's bearer token.
-- Never invent or expose credentials, IBM tokens, API keys, or private service state.
-
-## Plugin & Package Guides
-
-- Quantum API Unreal Plugin: `/public-facing/api/quantum/ue-plugin.md` (`QuantumApi`, UE 5.8 Win64 Runtime plugin, version `0.3.0-beta`)
-- TypeScript SDK: `/public-facing/api/quantum/typescript-sdk.md` (`@mr.dj2u/quantum-api`, version `0.1.2`)
-- Python SDK: `/public-facing/api/quantum/python-sdk.md` (`quantum-api-sdk`, version `0.1.0`)
-- Godot Addon: `/public-facing/api/quantum/godot-addon.md` (Godot 4 runtime addon)
-- Unity Package: `/public-facing/api/quantum/unity-package.md` (`com.quantumapi.runtime`, Unity 2021.3+, version `1.1.0`)
-
-Each guide has a human companion at the same path without `.md`. The human page advertises its Markdown companion with `rel="alternate" type="text/markdown"` and points to `/llms.txt` with `rel="describedby"`.
-
-Important Unreal beginner point:
-
-“What does ‘array of Quantum Api Circuit Operation’ mean?”
-
-It means a list of gate steps. A struct is a bundle of fields, an array is a list, and each `Quantum Api Circuit Operation` is one gate instruction such as applying an H gate to qubit 0.
-
-## Public MCP Resources
-
-- Human MCP index: `/public-facing/mcp`
-- App MCP server: `/public-facing/mcp/mrdj-app-mcp`
-- Pokemon MCP server: `/public-facing/mcp/mrdj-pokemon-mcp`
+Authentication and version details may change. Read the current product documentation before integrating. Never expose credentials, tokens, API keys, or private service state.
 
 ## Discovery
 
-- Root agent index: `/llms.txt`
-- Full agent context: `/llms-full.txt`
-- Sitemap: `/sitemap.xml`
-- Robots policy: `/robots.txt`
+Landing pages advertise their corresponding Markdown guide with `rel="alternate" type="text/markdown"` and point to `/llms.txt` with `rel="describedby"`. [robots.txt](/robots.txt) and [sitemap.xml](/sitemap.xml) describe public crawling and canonical HTML pages.

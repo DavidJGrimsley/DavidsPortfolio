@@ -63,7 +63,7 @@ test.each([
   ['/public-facing/api'],
   ['/public-facing/api/quantum'],
   ['/public-facing/mcp'],
-])('rejects healthy endpoints when %s omits embedded loader data', async (missingPage) => {
+])('rejects healthy endpoints when %s omits server-rendered route content', async (missingPage) => {
   const builtAt = new Date().toISOString();
   const server = http.createServer((request, response) => {
     if (request.url === '/__djsportfolio_build.json') {
@@ -82,7 +82,7 @@ test.each([
           (page.path === '/public-facing/api/quantum/ue-plugin'
             ? ' What does Quantum Api Circuit Operation'
             : '') +
-          (request.url === missingPage ? '' : ' __EXPO_ROUTER_LOADER_DATA__'),
+          (request.url === missingPage ? '' : ' route content'),
       );
     } else if (QUANTUM_DOCUMENTATION_BY_MARKDOWN_PATH.has(request.url)) {
       const page = QUANTUM_DOCUMENTATION_BY_MARKDOWN_PATH.get(request.url);
@@ -97,31 +97,35 @@ test.each([
       response.setHeader('Content-Type', 'text/plain');
       response.end(
         '# David Grimsley\n\n' +
+          '/guides/portfolio.md\n/guides/services.md\n/guides/mcp.md\n' +
           QUANTUM_DOCUMENTATION_PAGES.map((page) => page.markdownPath).join('\n') +
           '\n/llms-full.txt\n',
       );
     } else if (request.url === '/llms-full.txt') {
       response.setHeader('Content-Type', 'text/plain');
       response.end(
-        '# David Grimsley Full Agent Context\n\nQuantum API Unreal Plugin\nQuantum Api Circuit Operation\n',
+        '# David Grimsley Full Agent Context\n\n## Portfolio\n## Services and contact\n/public-facing/api/quantum/ue-plugin.md\n',
       );
     } else if (request.url === '/sitemap.xml') {
       response.setHeader('Content-Type', 'application/xml');
       response.end(
         '<urlset>' +
+          '<loc>/portfolio</loc><loc>/services</loc><loc>/public-facing/api</loc>' +
           QUANTUM_DOCUMENTATION_PAGES.map(
-            (page) => `<loc>${page.path}</loc><loc>${page.markdownPath}</loc>`,
+            (page) => `<loc>${page.path}</loc>`,
           ).join('') +
           '</urlset>',
       );
     } else {
       response.setHeader('Content-Type', 'text/html');
-      const loaderData = request.url === missingPage ? '' : '__EXPO_ROUTER_LOADER_DATA__';
       const detail = DETAIL_PAGES[request.url];
       response.end(
         detail
-          ? renderDetailPage(request, detail, loaderData)
-          : `David __djsportfolio_css__ _expo/static/css Quantum API quantum mrdj-app-mcp ${loaderData}`,
+          ? renderDetailPage(request, {
+              ...detail,
+              content: request.url === missingPage ? '' : detail.content,
+            }, '')
+          : `David __djsportfolio_css__ _expo/static/css ${request.url === missingPage ? '' : 'Quantum API quantum mrdj-app-mcp'}`,
       );
     }
   });
@@ -143,7 +147,12 @@ test.each([
       child.once('exit', (code) => resolve({ code, output }));
     });
     expect(result.code).toBe(1);
-    expect(result.output).toContain('loader data missing: Expo Router loader data');
+    const expectedFailure = missingPage === '/public-facing/api/quantum'
+      ? 'missing unique server-rendered content'
+      : missingPage === '/public-facing/api'
+        ? 'Public API route data'
+        : 'MCP server route data';
+    expect(result.output).toContain(expectedFailure);
     expect(result.output).toContain('apiIndexLoaderEndpointOk=true');
     expect(result.output).toContain('quantumDetailLoaderEndpointOk=true');
     expect(result.output).toContain('mcpIndexLoaderEndpointOk=true');

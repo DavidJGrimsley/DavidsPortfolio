@@ -6,8 +6,7 @@ export const SITE_URL =
 
 export const AUTHOR_NAME = 'David Grimsley';
 
-// Put a real image at this path for rich link previews (1200x630 recommended).
-export const DEFAULT_OG_IMAGE_PATH = '/images/icon.png';
+export const DEFAULT_OG_IMAGE_PATH = '/images/portfolio-social-preview.png';
 
 export const DEFAULT_DESCRIPTION =
   "David Grimsley builds fast, accessible websites and cross-platform apps. Explore portfolio work, public APIs, and Model Context Protocol (MCP) tools.";

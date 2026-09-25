@@ -1,22 +1,22 @@
 import React from 'react';
+import type { GenerateMetadataFunction } from 'expo-router/server';
+import { landingMetadata, landingSeoProps } from '@/constants/landing-seo';
+
 import { useRouter } from 'expo-router';
 
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 
+export const generateMetadata: GenerateMetadataFunction = () => landingMetadata('/public-facing');
 export default function PublicFacingHomePage() {
   const router = useRouter();
 
   return (
     <PublicFacingIndexWrapper
       title="Public Tools"
-      leadBody="These pages are here for developers, builders, and curious folks. I publish public APIs and MCP (Model Context Protocol) tools, plus a list of production apps you can try right now."
-      leadSubBody="If you're searching for what an API is or what MCP means, you're in the right place — each section includes practical explanations and real examples."
+      leadBody="Try my public APIs, explore MCP tools, and visit apps I've shipped."
+      leadSubBody="Each section explains what the tools do and where to start."
       seo={{
-        title: 'Public tools: APIs, MCP servers, production apps',
-        description:
-          'Explore public developer tools by David Grimsley: APIs, Model Context Protocol (MCP) servers, and production applications. Learn what an API or MCP is with real examples.',
-        path: '/public-facing',
         keywords: [
           'public APIs',
           'what is an API',
@@ -27,6 +27,7 @@ export default function PublicFacingHomePage() {
           'APIs and MCPs',
         ],
         type: 'website',
+        ...landingSeoProps('/public-facing'),
       }}
     >
       <SoftwareCard

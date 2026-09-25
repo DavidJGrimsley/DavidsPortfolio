@@ -1,9 +1,13 @@
 import React, { useMemo } from 'react';
+import type { GenerateMetadataFunction } from 'expo-router/server';
+import { landingMetadata, landingSeoProps } from '@/constants/landing-seo';
+
 import { Linking } from 'react-native';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
 import { PublicFacingIndexWrapper } from '~/src/components/PublicFacing/PublicFacingIndexWrapper';
 import productionData from '@json/production.json';
 
+export const generateMetadata: GenerateMetadataFunction = () => landingMetadata('/public-facing/production');
 type ProductionApp = {
   id: string;
   name: string;
@@ -38,13 +42,9 @@ export default function ProductionIndexPage() {
   return (
     <PublicFacingIndexWrapper
       title="Production Applications"
-      leadBody="These apps, games, and other creations are from my own mind and built by me, with possible collaboration from others. Your support is greatly appreciated, so please check them out and share them with folks who might benefit from their use."
-      leadSubBody="My Linux VPS is where I host web apps and the backend APIs that mobile applications and games need."
+      leadBody="These are live apps you can use today."
+      leadSubBody="Open an app to try it, or follow its source link when available."
       seo={{
-        title: 'Production applications',
-        description:
-          'Live production apps and projects by David Grimsley. Explore shipped web apps, games, and hosted tools along with links and status.',
-        path: '/public-facing/production',
         keywords: [
           'production apps',
           'live projects',
@@ -54,6 +54,7 @@ export default function ProductionIndexPage() {
           'backend APIs',
         ],
         type: 'website',
+        ...landingSeoProps('/public-facing/production'),
       }}
     >
       {apps.map((app) => (

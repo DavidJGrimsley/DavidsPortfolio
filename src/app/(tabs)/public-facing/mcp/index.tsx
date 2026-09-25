@@ -1,4 +1,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
+import type { GenerateMetadataFunction } from 'expo-router/server';
+import { landingMetadata } from '@/constants/landing-seo';
+
 import { View, Text } from 'react-native';
 import { useRouter, useLoaderData, ErrorBoundaryProps } from 'expo-router';
 import Head from 'expo-router/head';
@@ -10,6 +13,7 @@ import type { RegistryResponse, MCPPortfolio } from '~/src/types/registry';
 import { getMcpFallbackPortfolio } from '@/data/mcpFallbackPortfolios';
 import mcpServersData from '@json/mcpServers.json';
 
+export const generateMetadata: GenerateMetadataFunction = () => landingMetadata('/public-facing/mcp');
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -186,10 +190,10 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 // =============================================================================
 const seoTitle = 'MCP Servers | Model Context Protocol | David Grimsley Portfolio';
 const seoDescription = 
-  'Explore MCP (Model Context Protocol) servers by David Grimsley. Open-source implementations exposing development guides, architecture patterns, and structured resources for AI-powered code assistance. MCP servers for React Native, Expo Router, full-stack development, and more.';
+  'Explore David Grimsley’s MCP servers for app development guidance and Pokémon strategy tools. See each server’s resources and setup details.';
 const seoKeywords = 
   'MCP, Model Context Protocol, MCP server, AI tools, Pokemon MCP, developer resources, React Native MCP, Expo Router MCP, AI code assistance, structured knowledge, open-source MCP, developer documentation, software engineering, David Grimsley, mrdj-app-mcp, AI assistant integration';
-const seoImage = 'https://davidjgrimsley.com/images/icon.png';
+const seoImage = 'https://davidjgrimsley.com/images/portfolio-social-preview.png';
 const seoUrl = 'https://davidjgrimsley.com/public-facing/mcp';
 // =============================================================================
 // PAGE COMPONENT - SSR DATA LOADER
@@ -307,8 +311,8 @@ export default function MCPListPage() {
       
       <PublicFacingIndexWrapper
         title="MCP Servers"
-        leadBody="Using advanced models like Claude Sonnet and OpenAI allows me to leverage the speed and effectiveness of agentic coding, while my solid understanding of programming fundamentals, UI/UX principles, and data flow keeps projects actually working and makes architecture design and debugging my strong suit. It's important to keep the AI agent in check. This is just one use of an MCP. I also made an MCP focused on Pokemon, which includes guides written by me and a full database of Pokemon information."
-        leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
+        leadBody="My MCP servers give AI assistants structured tools and reference material for specific tasks."
+        leadSubBody="Explore each server to see what it offers and how to connect it."
       >
         
         {/* What is MCP? Info Card */}
