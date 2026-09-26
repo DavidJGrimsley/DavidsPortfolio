@@ -236,18 +236,18 @@ export async function executeQuantumSdkEndpoint(
     } else if (method === 'GET' && pathname === '/ibm/profiles') {
       data = await requireBearerClient(input.baseUrl, input.bearerToken).listIbmProfiles({ auth: 'bearer' });
     } else {
-      const getJobStatusMatch = method === 'GET' ? pathname.match(/^\\/jobs\\/([^/]+)$/) : null;
-      const getJobResultMatch = method === 'GET' ? pathname.match(/^\\/jobs\\/([^/]+)\\/result$/) : null;
+      const getJobStatusMatch = method === 'GET' ? pathname.match(/^\/jobs\/([^/]+)$/) : null;
+      const getJobResultMatch = method === 'GET' ? pathname.match(/^\/jobs\/([^/]+)\/result$/) : null;
       const postKeyActionMatch = method === 'POST'
-        ? pathname.match(/^\\/keys\\/([^/]+)\\/(revoke|rotate)$/)
+        ? pathname.match(/^\/keys\/([^/]+)\/(revoke|rotate)$/)
         : null;
       const verifyProfileMatch = method === 'POST'
-        ? pathname.match(/^\\/ibm\\/profiles\\/([^/]+)\\/verify$/)
+        ? pathname.match(/^\/ibm\/profiles\/([^/]+)\/verify$/)
         : null;
-      const cancelJobMatch = method === 'POST' ? pathname.match(/^\\/jobs\\/([^/]+)\\/cancel$/) : null;
-      const patchProfileMatch = method === 'PATCH' ? pathname.match(/^\\/ibm\\/profiles\\/([^/]+)$/) : null;
-      const deleteKeyMatch = method === 'DELETE' ? pathname.match(/^\\/keys\\/([^/]+)$/) : null;
-      const deleteProfileMatch = method === 'DELETE' ? pathname.match(/^\\/ibm\\/profiles\\/([^/]+)$/) : null;
+      const cancelJobMatch = method === 'POST' ? pathname.match(/^\/jobs\/([^/]+)\/cancel$/) : null;
+      const patchProfileMatch = method === 'PATCH' ? pathname.match(/^\/ibm\/profiles\/([^/]+)$/) : null;
+      const deleteKeyMatch = method === 'DELETE' ? pathname.match(/^\/keys\/([^/]+)$/) : null;
+      const deleteProfileMatch = method === 'DELETE' ? pathname.match(/^\/ibm\/profiles\/([^/]+)$/) : null;
       const runtimeHandler = method === 'POST' ? RUNTIME_POST_HANDLERS[pathname] : undefined;
 
       if (getJobStatusMatch) {

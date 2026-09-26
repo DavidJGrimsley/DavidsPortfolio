@@ -182,6 +182,80 @@ describe('quantum sdk endpoint executor', () => {
     expect(JSON.parse(calledInit.body as string)).toEqual(payload);
   });
 
+  it('keeps a job result on its typed runtime handler', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    await executeQuantumSdkEndpoint({
+      method: 'GET',
+      path: '/v1/jobs/job%201/result',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+    });
+
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('http://localhost:3000/api/quantum-backend/v1/jobs/job%201/result');
+    expect(calledInit.method).toBe('GET');
+  });
+
+  it('keeps a key action on its authenticated SDK handler', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    await executeQuantumSdkEndpoint({
+      method: 'POST',
+      path: '/v1/keys/key%201/revoke',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+      bearerToken: 'supabase-token',
+    });
+
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('http://localhost:3000/api/public/quantum/v1/keys/key%201/revoke');
+    expect(new Headers(calledInit.headers).get('Authorization')).toBe('Bearer supabase-token');
+  });
+
+  it('keeps profile updates on the authenticated SDK handler', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    const body = { name: 'Updated profile' };
+    await executeQuantumSdkEndpoint({
+      method: 'PATCH',
+      path: '/v1/ibm/profiles/profile%201',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+      bearerToken: 'supabase-token',
+      body,
+    });
+
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('http://localhost:3000/api/public/quantum/v1/ibm/profiles/profile%201');
+    expect(calledInit.method).toBe('PATCH');
+    expect(new Headers(calledInit.headers).get('Authorization')).toBe('Bearer supabase-token');
+    expect(JSON.parse(calledInit.body as string)).toEqual(body);
+  });
+
+  it('forwards an unmatched method, query, and body and returns the backend error', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    const body = { shots: 8 };
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ detail: 'Invalid shots' }), {
+        status: 422,
+        statusText: 'Unprocessable Content',
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+
+    const result = await executeQuantumSdkEndpoint({
+      method: 'PUT',
+      path: '/v1/new/runtime?provider=aer&mode=fast',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+      body,
+    });
+
+    expect(result).toMatchObject({
+      status: 422,
+      statusText: 'Unprocessable Content',
+      data: { detail: 'Invalid shots' },
+    });
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('http://localhost:3000/api/quantum-backend/v1/new/runtime?provider=aer&mode=fast');
+    expect(calledInit.method).toBe('PUT');
+    expect(JSON.parse(calledInit.body as string)).toEqual(body);
+  });
+
   it('lets the backend validate unknown methods and paths instead of rejecting them in the frontend', async () => {
     const { executeQuantumSdkEndpoint } = loadExecutor();
     fetchMock.mockResolvedValue(
