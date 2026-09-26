@@ -160,16 +160,51 @@ describe('quantum sdk endpoint executor', () => {
     expect(JSON.parse(calledInit.body as string)).toEqual({ min: 0, max: 1 });
   });
 
-  it.each([
-    ['GET', '/v1/qasm/run'],
-    ['POST', '/v1/qasm/unknown'],
-  ] as const)('keeps unsupported %s %s rejected', async (method, path) => {
+  it('forwards newly discovered portfolio endpoints through the runtime proxy', async () => {
     const { executeQuantumSdkEndpoint } = loadExecutor();
-    await expect(executeQuantumSdkEndpoint({
-      method,
-      path,
+    const payload = {
+      braid: ['sigma1', 'sigma2_inverse'],
+      initial_state: 'vacuum',
+      shots: 64,
+    };
+
+    const result = await executeQuantumSdkEndpoint({
+      method: 'POST',
+      path: '/v1/topological/braid',
       baseUrl: 'http://localhost:3000/api/public/quantum/v1',
-    })).rejects.toThrow(`Unsupported Quantum endpoint ${method} ${path.slice(3)}`);
-    expect(fetchMock).not.toHaveBeenCalled();
+      body: payload,
+    });
+
+    expect(result.status).toBe(200);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe('http://localhost:3000/api/quantum-backend/v1/topological/braid');
+    expect(calledInit.method).toBe('POST');
+    expect(JSON.parse(calledInit.body as string)).toEqual(payload);
+  });
+
+  it('lets the backend validate unknown methods and paths instead of rejecting them in the frontend', async () => {
+    const { executeQuantumSdkEndpoint } = loadExecutor();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ detail: 'Method Not Allowed' }), {
+        status: 405,
+        statusText: 'Method Not Allowed',
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+
+    const result = await executeQuantumSdkEndpoint({
+      method: 'GET',
+      path: '/v1/qasm/run',
+      baseUrl: 'http://localhost:3000/api/public/quantum/v1',
+    });
+
+    expect(result).toMatchObject({
+      status: 405,
+      data: { detail: 'Method Not Allowed' },
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:3000/api/quantum-backend/v1/qasm/run',
+      expect.objectContaining({ method: 'GET' })
+    );
   });
 });
