@@ -168,20 +168,31 @@ function requireBearerClient(baseUrl: string, bearerToken?: string | null) {
   return createQuantumBearerClient(baseUrl, token);
 }
 
-async function executeDirectRuntimePost(
+async function executeRuntimeProxyRequest(
   baseUrl: string,
-  pathname: '/qasm/run' | '/random',
+  method: QuantumSdkEndpointExecutionInput['method'],
+  operationPath: string,
   body: unknown
 ): Promise<QuantumSdkEndpointExecutionResult> {
-  // The published SDK does not expose these methods, so use the same runtime proxy directly.
+  // Endpoint discovery comes from portfolio.json. The runtime proxy is the
+  // generic execution path so new backend endpoints do not require a frontend
+  // allowlist update just to become testable from the portfolio page.
   const fetchImpl = typeof window !== 'undefined' && typeof window.fetch === 'function'
     ? window.fetch.bind(window)
     : globalThis.fetch.bind(globalThis);
-  const response = await fetchImpl(`${resolveQuantumRuntimeProxyBaseUrl(baseUrl)}/v1${pathname}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body ?? {}),
-  });
+  const normalizedPath = operationPath.startsWith('/') ? operationPath : `/${operationPath}`;
+  const headers = new Headers({ Accept: 'application/json' });
+  const requestInit: RequestInit = { method, headers };
+
+  if (method !== 'GET' && body !== undefined) {
+    headers.set('Content-Type', 'application/json');
+    requestInit.body = JSON.stringify(body);
+  }
+
+  const response = await fetchImpl(
+    `${resolveQuantumRuntimeProxyBaseUrl(baseUrl)}/v1${normalizedPath}`,
+    requestInit
+  );
   const rawBody = await response.text();
   let data: unknown = null;
   if (rawBody) {
@@ -191,6 +202,7 @@ async function executeDirectRuntimePost(
       data = { message: rawBody };
     }
   }
+
   return { status: response.status, statusText: response.statusText, data };
 }
 
@@ -203,10 +215,6 @@ export async function executeQuantumSdkEndpoint(
 
   if (pathname.includes('{') || pathname.includes('}')) {
     throw new Error(`Cannot execute templated route ${pathname}. Provide a concrete resource identifier first.`);
-  }
-
-  if (method === 'POST' && (pathname === '/qasm/run' || pathname === '/random')) {
-    return executeDirectRuntimePost(input.baseUrl, pathname, input.body);
   }
 
   const publicClient = createQuantumPublicClient(input.baseUrl);
@@ -228,92 +236,74 @@ export async function executeQuantumSdkEndpoint(
     } else if (method === 'GET' && pathname === '/ibm/profiles') {
       data = await requireBearerClient(input.baseUrl, input.bearerToken).listIbmProfiles({ auth: 'bearer' });
     } else {
-      const getJobStatusMatch = method === 'GET' ? pathname.match(/^\/jobs\/([^/]+)$/) : null;
+      const getJobStatusMatch = method === 'GET' ? pathname.match(/^\\/jobs\\/([^/]+)$/) : null;
+      const getJobResultMatch = method === 'GET' ? pathname.match(/^\\/jobs\\/([^/]+)\\/result$/) : null;
+      const postKeyActionMatch = method === 'POST'
+        ? pathname.match(/^\\/keys\\/([^/]+)\\/(revoke|rotate)$/)
+        : null;
+      const verifyProfileMatch = method === 'POST'
+        ? pathname.match(/^\\/ibm\\/profiles\\/([^/]+)\\/verify$/)
+        : null;
+      const cancelJobMatch = method === 'POST' ? pathname.match(/^\\/jobs\\/([^/]+)\\/cancel$/) : null;
+      const patchProfileMatch = method === 'PATCH' ? pathname.match(/^\\/ibm\\/profiles\\/([^/]+)$/) : null;
+      const deleteKeyMatch = method === 'DELETE' ? pathname.match(/^\\/keys\\/([^/]+)$/) : null;
+      const deleteProfileMatch = method === 'DELETE' ? pathname.match(/^\\/ibm\\/profiles\\/([^/]+)$/) : null;
+      const runtimeHandler = method === 'POST' ? RUNTIME_POST_HANDLERS[pathname] : undefined;
+
       if (getJobStatusMatch) {
         data = await runtimeClient.getCircuitJob(decodeURIComponent(getJobStatusMatch[1] ?? ''), {
           auth: 'none',
         });
+      } else if (getJobResultMatch) {
+        data = await runtimeClient.getCircuitJobResult(decodeURIComponent(getJobResultMatch[1] ?? ''), {
+          auth: 'none',
+        });
+      } else if (method === 'POST' && pathname === '/keys') {
+        data = await requireBearerClient(input.baseUrl, input.bearerToken).createKey((input.body ?? {}) as any, {
+          auth: 'bearer',
+        });
+      } else if (method === 'POST' && pathname === '/ibm/profiles') {
+        data = await requireBearerClient(input.baseUrl, input.bearerToken).createIbmProfile((input.body ?? {}) as any, {
+          auth: 'bearer',
+        });
+      } else if (postKeyActionMatch) {
+        const keyId = decodeURIComponent(postKeyActionMatch[1] ?? '');
+        data = postKeyActionMatch[2] === 'revoke'
+          ? await requireBearerClient(input.baseUrl, input.bearerToken).revokeKey(keyId, { auth: 'bearer' })
+          : await requireBearerClient(input.baseUrl, input.bearerToken).rotateKey(keyId, { auth: 'bearer' });
+      } else if (verifyProfileMatch) {
+        data = await requireBearerClient(input.baseUrl, input.bearerToken).verifyIbmProfile(
+          decodeURIComponent(verifyProfileMatch[1] ?? ''),
+          { auth: 'bearer' }
+        );
+      } else if (cancelJobMatch) {
+        data = await runtimeClient.cancelCircuitJob(decodeURIComponent(cancelJobMatch[1] ?? ''), {
+          auth: 'none',
+        });
+      } else if (patchProfileMatch) {
+        data = await requireBearerClient(input.baseUrl, input.bearerToken).updateIbmProfile(
+          decodeURIComponent(patchProfileMatch[1] ?? ''),
+          (input.body ?? {}) as any,
+          { auth: 'bearer' }
+        );
+      } else if (method === 'DELETE' && pathname === '/keys/revoked') {
+        data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteRevokedKeys({
+          auth: 'bearer',
+        });
+      } else if (deleteKeyMatch) {
+        data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteKey(
+          decodeURIComponent(deleteKeyMatch[1] ?? ''),
+          { auth: 'bearer' }
+        );
+      } else if (deleteProfileMatch) {
+        data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteIbmProfile(
+          decodeURIComponent(deleteProfileMatch[1] ?? ''),
+          { auth: 'bearer' }
+        );
+      } else if (runtimeHandler) {
+        data = await runtimeHandler(runtimeClient, input.body);
       } else {
-        const getJobResultMatch = method === 'GET' ? pathname.match(/^\/jobs\/([^/]+)\/result$/) : null;
-        if (getJobResultMatch) {
-          data = await runtimeClient.getCircuitJobResult(decodeURIComponent(getJobResultMatch[1] ?? ''), {
-            auth: 'none',
-          });
-        } else if (method === 'POST' && pathname === '/keys') {
-          data = await requireBearerClient(input.baseUrl, input.bearerToken).createKey((input.body ?? {}) as any, {
-            auth: 'bearer',
-          });
-        } else if (method === 'POST' && pathname === '/ibm/profiles') {
-          data = await requireBearerClient(input.baseUrl, input.bearerToken).createIbmProfile((input.body ?? {}) as any, {
-            auth: 'bearer',
-          });
-        } else {
-          const postKeyActionMatch = method === 'POST' ? pathname.match(/^\/keys\/([^/]+)\/(revoke|rotate)$/) : null;
-          if (postKeyActionMatch) {
-            const keyId = decodeURIComponent(postKeyActionMatch[1] ?? '');
-            data = postKeyActionMatch[2] === 'revoke'
-              ? await requireBearerClient(input.baseUrl, input.bearerToken).revokeKey(keyId, { auth: 'bearer' })
-              : await requireBearerClient(input.baseUrl, input.bearerToken).rotateKey(keyId, { auth: 'bearer' });
-          } else {
-            const verifyProfileMatch = method === 'POST'
-              ? pathname.match(/^\/ibm\/profiles\/([^/]+)\/verify$/)
-              : null;
-            if (verifyProfileMatch) {
-              data = await requireBearerClient(input.baseUrl, input.bearerToken).verifyIbmProfile(
-                decodeURIComponent(verifyProfileMatch[1] ?? ''),
-                { auth: 'bearer' }
-              );
-            } else {
-              const cancelJobMatch = method === 'POST' ? pathname.match(/^\/jobs\/([^/]+)\/cancel$/) : null;
-              if (cancelJobMatch) {
-                data = await runtimeClient.cancelCircuitJob(decodeURIComponent(cancelJobMatch[1] ?? ''), {
-                  auth: 'none',
-                });
-              } else if (method === 'PATCH') {
-                const patchProfileMatch = pathname.match(/^\/ibm\/profiles\/([^/]+)$/);
-                if (patchProfileMatch) {
-                  data = await requireBearerClient(input.baseUrl, input.bearerToken).updateIbmProfile(
-                    decodeURIComponent(patchProfileMatch[1] ?? ''),
-                    (input.body ?? {}) as any,
-                    { auth: 'bearer' }
-                  );
-                } else {
-                  throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
-                }
-              } else if (method === 'DELETE') {
-                if (pathname === '/keys/revoked') {
-                  data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteRevokedKeys({
-                    auth: 'bearer',
-                  });
-                } else {
-                  const deleteKeyMatch = pathname.match(/^\/keys\/([^/]+)$/);
-                  const deleteProfileMatch = pathname.match(/^\/ibm\/profiles\/([^/]+)$/);
-                  if (deleteKeyMatch) {
-                    data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteKey(
-                      decodeURIComponent(deleteKeyMatch[1] ?? ''),
-                      { auth: 'bearer' }
-                    );
-                  } else if (deleteProfileMatch) {
-                    data = await requireBearerClient(input.baseUrl, input.bearerToken).deleteIbmProfile(
-                      decodeURIComponent(deleteProfileMatch[1] ?? ''),
-                      { auth: 'bearer' }
-                    );
-                  } else {
-                    throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
-                  }
-                }
-              } else if (method === 'POST') {
-                const runtimeHandler = RUNTIME_POST_HANDLERS[pathname];
-                if (!runtimeHandler) {
-                  throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
-                }
-                data = await runtimeHandler(runtimeClient, input.body);
-              } else {
-                throw new Error(`Unsupported Quantum endpoint ${method} ${pathname}`);
-              }
-            }
-          }
-        }
+        return executeRuntimeProxyRequest(input.baseUrl, method, normalizedPath, input.body);
       }
     }
 
