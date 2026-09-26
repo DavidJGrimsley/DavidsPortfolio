@@ -17,6 +17,7 @@ import Ionicons from '@/components/UI/HydratedIonicon';
 import { Picker } from '@react-native-picker/picker';
 import Svg, { Line } from 'react-native-svg';
 import { ThemedText } from '@/components/UI/ThemedText';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { CompanyButton } from './CompanyButton';
 import {
@@ -69,13 +70,12 @@ type IbmProfileFormState = {
 };
 
 const IDENTEREST_LOGO = require('~/assets/images/identerest-logo.png');
+const IDENTEREST_ICON = require('~/assets/images/identerest-icon.png');
 const CREATISPHERE_LOGO = require('~/assets/images/creatisphere-logo.png');
-const HIGHER_LOGO = require('~/assets/images/higher-logo.png');
 
 const BRAND_COLORS = {
   identerest: { primary: '#475569', secondary: '#94a3b8' },
   creatisphere: { primary: '#ff5e00', secondary: '#1058bc' },
-  higher: { primary: '#228B22', secondary: '#C3B091' },
 } as const;
 const AUTH_CALLBACK_FAILURE_MESSAGE =
   'We could not finish sign in from this callback. On the staging domain, use the Plesk "Continue to website" prompt first, then start sign in again from this page.';
@@ -193,6 +193,8 @@ export function ApiAuthDashboardCard({
   supportsIbmProfiles = false,
 }: ApiAuthDashboardCardProps) {
   const isWeb = Platform.OS === 'web';
+  const colorScheme = useColorScheme() ?? 'light';
+  const isDarkTheme = colorScheme === 'dark';
   const backgroundColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
   const tintColor = useThemeColor({}, 'tint');
@@ -201,6 +203,9 @@ export function ApiAuthDashboardCard({
   const ibmPickerBackgroundColor = isWeb ? '#ffffff' : accentColor + '12';
   const ibmPickerTextColor = isWeb ? '#11181C' : textColor;
   const ibmPickerBorderColor = isWeb ? '#9ca3af' : tintColor + '30';
+  const githubButtonBackgroundColor = isDarkTheme ? '#24292f' : '#ffffff';
+  const githubButtonForegroundColor = isDarkTheme ? '#ffffff' : '#24292f';
+  const githubButtonBorderColor = isDarkTheme ? '#24292f' : '#d1d5db';
 
   const [email, setEmail] = useState('');
   const [keyName, setKeyName] = useState('');
@@ -963,8 +968,8 @@ export function ApiAuthDashboardCard({
                     onPress={handleGithubSignIn}
                     style={({ pressed }) => ({
                       alignItems: 'center',
-                      backgroundColor: backgroundColor,
-                      borderColor: accentColor + '45',
+                      backgroundColor: githubButtonBackgroundColor,
+                      borderColor: githubButtonBorderColor,
                       borderCurve: 'continuous',
                       borderRadius: 16,
                       borderWidth: 1,
@@ -978,11 +983,11 @@ export function ApiAuthDashboardCard({
                     })}
                   >
                     {startingGithubSignIn ? (
-                      <ActivityIndicator color={secondaryColor} />
+                      <ActivityIndicator color={githubButtonForegroundColor} />
                     ) : (
                       <>
-                        <Ionicons color={secondaryColor} name="logo-github" size={18} />
-                        <ThemedText className="font-bold text-base" style={{ color: secondaryColor }}>
+                        <Ionicons color={githubButtonForegroundColor} name="logo-github" size={18} />
+                        <ThemedText className="font-bold text-base" style={{ color: githubButtonForegroundColor }}>
                           Continue with GitHub
                         </ThemedText>
                       </>
@@ -1934,7 +1939,7 @@ export function ApiAuthDashboardCard({
 
               <ThemedText className="opacity-90 text-base leading-6">
                 You are creating or signing into your Identerest Account. This shared account works
-                across the ecosystem, including this API dashboard, Creatisphere, and Higher.
+                across the ecosystem, including this API dashboard, Creatisphere, and Peared Work.
               </ThemedText>
               <ThemedText className="mt-2 opacity-80 text-base leading-6">
                 Sign in once, then reuse the same identity anywhere Identerest is supported.
@@ -1983,13 +1988,13 @@ export function ApiAuthDashboardCard({
 
                     {/* Company Button Component */}
                     <CompanyButton
-                      accessibilityLabel="Open Higher"
+                      accessibilityLabel="Open Peared Work"
                       fontFamily="Playfair Display-Bold"
-                      href="https://higher.app"
-                      imageSource={HIGHER_LOGO}
-                      name="Higher"
-                      primaryColor={BRAND_COLORS.higher.primary}
-                      secondaryColor={BRAND_COLORS.higher.secondary}
+                      href="https://peared.work"
+                      imageSource={IDENTEREST_ICON}
+                      name="Peared Work"
+                      primaryColor={BRAND_COLORS.identerest.primary}
+                      secondaryColor={BRAND_COLORS.identerest.secondary}
                     />
                   </View>
                 </View>

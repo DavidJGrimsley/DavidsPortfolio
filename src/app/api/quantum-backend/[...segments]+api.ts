@@ -83,33 +83,10 @@ function getTrimmedHeader(request: Request, name: string) {
   return request.headers.get(name)?.trim() ?? '';
 }
 
-function isTruthyQueryValue(value: string | null) {
-  if (!value) {
-    return false;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  return normalized === '1' || normalized === 'true' || normalized === 'yes';
-}
-
-function isIbmHardwareBackendsRequest(path: string, searchParams: URLSearchParams) {
-  if (path !== '/v1/list_backends') {
-    return false;
-  }
-
-  const provider = searchParams.get('provider')?.trim().toLowerCase();
-  if (provider !== 'ibm') {
-    return false;
-  }
-
-  return !isTruthyQueryValue(searchParams.get('simulator_only'));
-}
-
-function isIbmHardwareProxyPath(path: string, searchParams: URLSearchParams) {
+function isUserKeyProxyPath(path: string) {
   return (
     path === '/v1/jobs/circuits' ||
-    path.startsWith('/v1/jobs/') ||
-    isIbmHardwareBackendsRequest(path, searchParams)
+    path.startsWith('/v1/jobs/')
   );
 }
 
@@ -265,7 +242,7 @@ async function handleProxy(method: Exclude<Method, 'OPTIONS'>, request: Request)
 
   const url = new URL(request.url);
   const operationPath = normalizeOperationPath(url.pathname);
-  const requiresUserApiKey = isIbmHardwareProxyPath(operationPath, url.searchParams);
+  const requiresUserApiKey = isUserKeyProxyPath(operationPath);
 
   if (isDisallowedPath(operationPath)) {
     return Response.json(

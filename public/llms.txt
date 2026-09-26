@@ -1,28 +1,37 @@
 # David Grimsley
 
-> Portfolio and public developer resources for David Grimsley, including public APIs, MCP servers, production apps, and Quantum API integration guides.
+> Portfolio, services, public APIs, MCP servers, and production apps by David Grimsley. Quantum API is one part of this work.
 
-Use these Markdown links when an AI agent needs low-noise source material. Human pages remain available from the same site navigation.
+These concise Markdown guides point to the current human pages. Start with the area relevant to the user's task.
 
-## Quantum API Docs
+## Portfolio and services
 
-- [Quantum API](/public-facing/api/quantum.md): Agent entry point with base URL, auth, error shape, live OpenAPI, and endpoint-directory links.
+- [Site overview](/guides/home.md): What this site covers and where to go next.
+- [Portfolio](/guides/portfolio.md): Mobile apps, websites, games, and software projects.
+- [Mobile apps](/guides/mobile-apps.md): Cross-platform app projects.
+- [Website development](/guides/website-development.md): Website projects.
+- [Game design](/guides/game-design.md): Games and interactive prototypes.
+- [Software development](/guides/software-development.md): APIs, backend work, and integrations.
+- [Services](/guides/services.md): Available work and inquiry paths.
+- [Contact](/guides/contact.md): Resume and contact options.
+
+## Public tools and apps
+
+- [Public tools](/guides/public-tools.md): Directory for APIs, MCP servers, and live apps.
+- [Public APIs](/guides/apis.md): Published API directory.
+- [MCP servers](/guides/mcp.md): App development and Pokémon servers.
+- [Production apps](/guides/production-apps.md): Shipped applications.
+
+## Quantum API documentation
+
+- [Quantum API](/public-facing/api/quantum.md): Base URL, authentication, live OpenAPI, and endpoint-directory links.
 - [Unreal Plugin](/public-facing/api/quantum/ue-plugin.md): UE 5.8 Blueprint integration guide.
 - [TypeScript SDK](/public-facing/api/quantum/typescript-sdk.md): Node.js package guide.
 - [Python SDK](/public-facing/api/quantum/python-sdk.md): Sync Python client guide.
 - [Godot Addon](/public-facing/api/quantum/godot-addon.md): Godot 4 runtime addon guide.
 - [Unity Package](/public-facing/api/quantum/unity-package.md): Unity runtime package guide.
-- [Full agent context](/llms-full.txt): Fuller site and Quantum API context.
 
-## Human Pages
+## More context
 
-- [Public APIs](/public-facing/api)
-- [Quantum API](/public-facing/api/quantum)
-- [Plugin & package docs](/public-facing/api/quantum/ue-plugin)
-- [MCP Servers](/public-facing/mcp)
-- [Production Apps](/public-facing/production)
-
-## Discovery
-
+- [Full agent context](/llms-full.txt)
 - [Sitemap](/sitemap.xml)
-- [Robots policy](/robots.txt)

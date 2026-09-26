@@ -1,4 +1,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
+import type { GenerateMetadataFunction } from 'expo-router/server';
+import { landingMetadata, landingSeoProps } from '@/constants/landing-seo';
+
 import { View, Text } from 'react-native';
 import { useRouter, useLoaderData } from 'expo-router';
 import { SoftwareCard } from '~/src/components/PublicFacing/SoftwareCard';
@@ -11,6 +14,7 @@ import { SITE_URL, joinUrl } from '@/constants/seo';
 import type { RegistryResponse, APIPortfolio } from '~/src/types/registry';
 import apisData from '@json/apis.json';
 
+export const generateMetadata: GenerateMetadataFunction = () => landingMetadata('/public-facing/api');
 // =============================================================================
 // FALLBACK DATA (for static export or when registry unavailable)
 // =============================================================================
@@ -114,10 +118,6 @@ function buildApiIndexStructuredData(apis: ApiCardItem[]) {
 
 function buildApiIndexSeo(apis: ApiCardItem[]) {
   return {
-    title: 'Public APIs',
-    description:
-      'Explore public APIs built and hosted by David Grimsley. Learn what an API is, how to call endpoints, and view documentation, uptime, and rate limits.',
-    path: '/public-facing/api',
     keywords: [
       'public API',
       'API portfolio',
@@ -129,6 +129,7 @@ function buildApiIndexSeo(apis: ApiCardItem[]) {
     ],
     type: 'website' as const,
     structuredData: buildApiIndexStructuredData(apis),
+    ...landingSeoProps('/public-facing/api'),
   };
 }
 
@@ -350,8 +351,8 @@ function APIListContent() {
   return (
     <PublicFacingIndexWrapper
       title="Public APIs"
-      leadBody="The internet's interconnectivity depends on APIs. It's collaboration in action. I enjoy the resources available via existing APIs for developers to use, and this is my contribution to that process. PokeAPI (Pokémon), SWAPI (Star Wars), and OpenAI are just a few of the tools that I call."
-      leadSubBody="NGINX helps me host these endpoints on my VPS at DavidJGrimsley.com/whatever-i-want. This allows me to use the SSL that my website uses for HTTPS calls, which is super important in production. Please view each info page for how-to-use details and rate limits. Contact me for any problems or raise an issue on GitHub."
+      leadBody="Explore the public APIs I've built and the problems they help solve."
+      leadSubBody="Open an API page for current documentation, examples, and usage details."
       seo={{
         ...seo,
       }}

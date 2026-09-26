@@ -18,11 +18,6 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="color-scheme" content="dark light" />
         
-        {/* Default SEO Meta Tags */}
-        <meta name="author" content="David Grimsley" />
-        <meta name="robots" content="index, follow" />
-        <meta name="googlebot" content="index, follow" />
-
         {/* PWA */}
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="mobile-web-app-capable" content="yes" />

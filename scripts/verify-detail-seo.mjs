@@ -113,8 +113,9 @@ async function fetchHtml(url, timeoutMs) {
   }
 }
 
-export async function verifyDetailSeoPage(siteUrl, specification, timeoutMs = 30_000) {
+export async function verifyDetailSeoPage(siteUrl, specification, timeoutMs = 30_000, canonicalOrigin = siteUrl) {
   const url = new URL(specification.pathname, siteUrl).toString();
+  const canonicalUrl = new URL(specification.pathname, canonicalOrigin).toString();
   const failures = [];
   let response;
   let body;
@@ -154,15 +155,12 @@ export async function verifyDetailSeoPage(siteUrl, specification, timeoutMs = 30
 
   requireSingleExact('title', titles, specification.title);
   requireSingleExact('description', descriptions, specification.description);
-  requireSingleExact('canonical', canonicals, url);
+  requireSingleExact('canonical', canonicals, canonicalUrl);
   requireSingleExact('Open Graph title', openGraphTitles, specification.title);
-  requireSingleExact('Open Graph URL', openGraphUrls, url);
+  requireSingleExact('Open Graph URL', openGraphUrls, canonicalUrl);
 
   if (!body.includes(specification.content)) {
     failures.push(`missing unique server-rendered content ${JSON.stringify(specification.content)}`);
-  }
-  if (!body.includes('__EXPO_ROUTER_LOADER_DATA__')) {
-    failures.push('missing Expo Router loader data');
   }
   if (body.includes('Failed to load loader data')) {
     failures.push('contains loader-failure text');
@@ -193,10 +191,10 @@ export async function verifyDetailSeoPage(siteUrl, specification, timeoutMs = 30
   };
 }
 
-export async function verifyDetailSeoPages(siteUrl, timeoutMs = 30_000) {
+export async function verifyDetailSeoPages(siteUrl, timeoutMs = 30_000, canonicalOrigin = siteUrl) {
   const results = await Promise.all(
     DETAIL_SEO_CASES.map((specification) =>
-      verifyDetailSeoPage(siteUrl, specification, timeoutMs),
+      verifyDetailSeoPage(siteUrl, specification, timeoutMs, canonicalOrigin),
     ),
   );
 
@@ -219,7 +217,7 @@ if (isDirectInvocation) {
     process.exit(2);
   }
 
-  verifyDetailSeoPages(siteUrl)
+  verifyDetailSeoPages(siteUrl, 30_000, process.argv[3] ?? siteUrl)
     .then((verification) => {
       for (const result of verification.results) {
         console.log(

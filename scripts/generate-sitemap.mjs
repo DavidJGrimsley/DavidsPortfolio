@@ -49,16 +49,11 @@ function readJson(filePath) {
 }
 
 function buildUrlset(urlEntries) {
-  const now = new Date().toISOString();
-
   const items = urlEntries
     .filter((u) => u && u.loc)
     .map((u) => {
       const loc = escapeXml(u.loc);
-      const lastmod = escapeXml(u.lastmod || now);
-      const changefreq = u.changefreq ? `<changefreq>${escapeXml(u.changefreq)}</changefreq>` : '';
-      const priority = typeof u.priority === 'number' ? `<priority>${u.priority.toFixed(1)}</priority>` : '';
-      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n${changefreq ? `    ${changefreq}\n` : ''}${priority ? `    ${priority}\n` : ''}  </url>`;
+      return `  <url>\n    <loc>${loc}</loc>\n  </url>`;
     })
     .join('\n');
 
@@ -104,9 +99,6 @@ function main() {
     { path: '/contact', changefreq: 'monthly', priority: 0.7 },
     { path: '/services', changefreq: 'weekly', priority: 0.9 },
     { path: '/services/learn', changefreq: 'monthly', priority: 0.6 },
-    { path: '/services/survey', changefreq: 'monthly', priority: 0.4 },
-
-    { path: '/pokemon', changefreq: 'monthly', priority: 0.4 },
 
     { path: '/portfolio', changefreq: 'weekly', priority: 0.8 },
 
@@ -114,13 +106,7 @@ function main() {
 
     { path: '/public-facing/api', changefreq: 'weekly', priority: 0.8 },
     { path: '/public-facing/api/quantum', changefreq: 'weekly', priority: 0.7 },
-    { path: '/public-facing/api/quantum.md', changefreq: 'weekly', priority: 0.6 },
-    { path: '/llms.txt', changefreq: 'weekly', priority: 0.5 },
-    { path: '/llms-full.txt', changefreq: 'weekly', priority: 0.5 },
-    ...quantumIntegrationDocs.flatMap((doc) => [
-      { path: doc.path, changefreq: 'monthly', priority: 0.6 },
-      { path: doc.markdownPath, changefreq: 'monthly', priority: 0.5 },
-    ]),
+    ...quantumIntegrationDocs.map((doc) => ({ path: doc.path, changefreq: 'monthly', priority: 0.6 })),
 
     { path: '/public-facing/mcp', changefreq: 'weekly', priority: 0.8 },
     { path: '/public-facing/mcp/mrdj-app-mcp', changefreq: 'monthly', priority: 0.6 },
@@ -159,22 +145,7 @@ function main() {
     }
   }
 
-  // Intake form routes from intakeForms.ts keys
-  const intakeFormsPath = path.join(repoRoot, 'src', 'constants', 'intakeForms.ts');
-  const intakeFile = fs.readFileSync(intakeFormsPath, 'utf8');
-  const intakeKeyRegex = /'([a-z0-9-]+)'\s*:\s*\{/g;
-  const intakeKeys = new Set();
-  for (const match of intakeFile.matchAll(intakeKeyRegex)) {
-    if (match?.[1]) intakeKeys.add(match[1]);
-  }
-
-  const intakeRoutes = Array.from(intakeKeys).map((key) => ({
-    path: `/services/${key}`,
-    changefreq: 'monthly',
-    priority: 0.5,
-  }));
-
-  const allRoutes = [...staticRoutes, ...portfolioRoutes, ...intakeRoutes]
+  const allRoutes = [...staticRoutes, ...portfolioRoutes]
     .map((r) => ({
       loc: joinUrl(SITE_URL, encodePathname(r.path)),
       changefreq: r.changefreq,

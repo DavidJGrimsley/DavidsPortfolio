@@ -344,7 +344,7 @@ function UnrealGuide() {
     <>
       <DocsSection title="What this plugin is">
         <Paragraph>
-          This is a project plugin you copy into an Unreal project. Its Blueprint
+          This is a UE 5.8 Win64 project plugin. UEFN is not supported. Its Blueprint
           async actions send HTTP requests and then return either <InlineToken>On Success</InlineToken>{" "}
           with a response or <InlineToken>On Error</InlineToken> with a safe error
           object.
@@ -354,17 +354,25 @@ function UnrealGuide() {
             "White execution pins control when the request starts.",
             "Request pins are forms you fill out before sending the request.",
             "Options is for advanced per-call auth or proxy overrides. Leave it empty for normal project settings.",
-            "The plugin never stores or edits IBM credentials and never logs credential values.",
+            "Start with Health Check, then Run Gate and Generate Random Int before trying circuits or IBM jobs.",
+            "The plugin does not manage IBM credentials; it sends an existing profile name to the service.",
           ]}
         />
       </DocsSection>
 
       <DocsSection title="Install">
+        <Paragraph>
+          Download the{" "}
+          <Link href={"https://github.com/DavidJGrimsley/quantum-api/releases/tag/quantumapi-unreal-v0.3.0-beta-ue5.8" as Href}>
+            <ThemedText className="text-tint underline">UE 5.8 Win64 beta release</ThemedText>
+          </Link>{" "}
+          and extract it before opening your Unreal project.
+        </Paragraph>
         <BulletList
           items={[
-            "Copy sdk/unreal into <YourProject>/Plugins/QuantumApi.",
-            "Regenerate project files, build the project, then enable Quantum API in Unreal's Plugin Browser if Unreal asks.",
-            "Keep game-specific configuration in the host project's Config/DefaultGame.ini.",
+            "Copy the extracted QuantumApi folder to <YourProject>/Plugins/QuantumApi.",
+            "Open the project and enable Quantum API in the Plugin Browser if Unreal asks. Build only if Unreal says compilation is needed.",
+            "Open Project Settings → Quantum API to choose an authentication mode.",
           ]}
         />
       </DocsSection>
@@ -375,23 +383,12 @@ function UnrealGuide() {
           local development, demos, and game jams because a key packaged into a
           game client can be extracted.
         </Paragraph>
-        <CodeBlock
-          value={`[/Script/QuantumApi.QuantumApiSettings]
-AuthMode=BackendProxy
-ApiKey=
-bUseEnvironmentApiKey=True
-ApiKeyEnvironmentVariable=QUANTUM_API_KEY
-BearerToken=
-DefaultIbmProfile=
-RequestTimeoutSeconds=10.000000
-MaxReadRetries=2
-MaxRetryDelaySeconds=5.000000`}
-        />
         <Paragraph>
-          The base URL is the web address the plugin sends requests to. The
-          hosted Quantum API address is already configured, so leave it alone
-          unless you run your own service. A self-hosted project can set{" "}
-          <InlineToken>BaseUrl</InlineToken> in <InlineToken>Config/DefaultGame.ini</InlineToken>.
+          In Project Settings → Quantum API, choose <InlineToken>Direct API Key</InlineToken>{" "}
+          for a local test using an existing key. Direct mode always calls the hosted
+          Quantum API address. For a shipped game, choose <InlineToken>Backend Proxy</InlineToken>{" "}
+          and enter your own proxy URL. That server must expose the compatible
+          API and keep the upstream key private. A blank proxy URL fails before a request is sent.
         </Paragraph>
       </DocsSection>
 
@@ -534,7 +531,9 @@ MaxRetryDelaySeconds=5.000000`}
           The plugin submits jobs by profile name. The IBM token and instance stay
           on the Quantum API service, not inside the game. Set{" "}
           <InlineToken>Default IBM Profile Name</InlineToken> in Project Settings
-          or fill the request struct's <InlineToken>IbmProfile</InlineToken>.
+          or fill the request struct's <InlineToken>IbmProfile</InlineToken>. You can
+          also set <InlineToken>Default IBM Hardware Backend</InlineToken>; an
+          explicit backend on a request takes priority.
         </Paragraph>
         <BulletList
           items={[
@@ -557,7 +556,7 @@ MaxRetryDelaySeconds=5.000000`}
             {
               name: "Direct API Key (Development Only)",
               meaning:
-                "For local development, demos, and game jams. It sends X-API-Key from the environment, Plugin Settings, or one request's Options.",
+                "For local development, demos, and game jams. Enter an existing key in Project Settings. The field is masked, but project files do not keep it secret.",
             },
             {
               name: "Options",
@@ -567,8 +566,8 @@ MaxRetryDelaySeconds=5.000000`}
           ]}
         />
         <Paragraph>
-          Restart Unreal after changing <InlineToken>QUANTUM_API_KEY</InlineToken>.
-          Never ship a packaged client with a real upstream key.
+          Never ship a packaged client with a real upstream key. Direct mode uses
+          the hosted API address; only Backend Proxy mode accepts a custom URL.
         </Paragraph>
       </DocsSection>
 
@@ -595,7 +594,11 @@ MaxRetryDelaySeconds=5.000000`}
             ]}
           />
         </InfoPanel>
-        <InfoPanel title="Advanced JSON actions">
+        <InfoPanel title="Advanced operations through Call Advanced JSON">
+          <Paragraph>
+            These are allowlisted request types inside one advanced Blueprint node,
+            not separate nodes. Start with the simpler calls above.
+          </Paragraph>
           <BulletList items={[...UNREAL_ADVANCED_NODE_LABELS]} />
         </InfoPanel>
       </DocsSection>
@@ -603,7 +606,7 @@ MaxRetryDelaySeconds=5.000000`}
       <DocsSection title="Troubleshooting">
         <BulletList
           items={[
-            "If a node errors immediately, run Health Check first and confirm that the configured base URL or proxy is reachable.",
+            "If a node errors immediately, run Health Check first. In proxy mode, confirm that your Backend Proxy URL is set and reachable.",
             "If Run Circuit feels confusing, start with Run Gate, then Generate Random Int, then one h operation targeting qubit 0.",
             "If IBM hardware does not run, check the profile name, backend availability, account access, queue time, and service-side IBM configuration.",
             "GET health, backend, and job reads retry limited transport and transient-server failures. POSTs and cancellation do not retry automatically.",
@@ -620,29 +623,39 @@ function TypeScriptGuide() {
       <DocsSection title="What this SDK is">
         <Paragraph>
           <InlineToken>@mr.dj2u/quantum-api</InlineToken> is a TypeScript client
-          for Node.js applications. It exposes named methods instead of making you
-          build every URL and header yourself.
+          for browser, Expo, and Node.js apps. It exposes named methods instead of
+          making you build every URL and header yourself. The examples below use
+          a trusted Node.js environment for protected calls.
         </Paragraph>
       </DocsSection>
       <DocsSection title="Install">
         <CodeBlock value={`npm install "@mr.dj2u/quantum-api"`} />
-        <Paragraph>Use Node.js 18 or later. The package supports ESM and CommonJS consumers.</Paragraph>
+        <Paragraph>
+          Get the published package from{" "}
+          <Link href={"https://www.npmjs.com/package/@mr.dj2u/quantum-api" as Href}>
+            <ThemedText className="text-tint underline">npm</ThemedText>
+          </Link>. It supports ESM and CommonJS. Use a runtime with <InlineToken>fetch</InlineToken>,
+          such as Node.js 18 or later, or supply your own fetch implementation.
+        </Paragraph>
       </DocsSection>
       <DocsSection title="Configure">
         <Paragraph>
-          The base URL is the web address the SDK sends requests to. Give the
-          client either the mounted Quantum API address or the same address ending
-          in <InlineToken>/v1</InlineToken>; the SDK normalizes it.
+          The published SDK requires a <InlineToken>baseUrl</InlineToken> when
+          creating the client. Use the Quantum API address shown below; the SDK
+          adds <InlineToken>/v1</InlineToken> for you.
         </Paragraph>
         <CodeBlock
           value={`import { QuantumApiClient } from "@mr.dj2u/quantum-api";
 
-const runtimeApiKey = "<your-runtime-api-key>";
 const client = new QuantumApiClient({
   baseUrl: "https://davidjgrimsley.com/public-facing/api/quantum",
-  apiKey: runtimeApiKey,
 });`}
         />
+        <Paragraph>
+          This client can make public calls such as Health Check. For protected
+          calls in trusted server code, also pass a server-only API key. In a
+          public app, use your backend proxy and do not bundle the key.
+        </Paragraph>
       </DocsSection>
       <DocsSection title="First call: Health Check">
         <CodeBlock
@@ -669,16 +682,16 @@ console.log(gate.measurement);`}
           rows={[
             { name: "Public", meaning: "Health and portfolio metadata do not require credentials." },
             { name: "API key", meaning: "Most runtime methods use X-API-Key. Pass apiKey when creating the client." },
-            { name: "Bearer token", meaning: "Account key management and IBM profile methods use the signed-in user's bearer token." },
             { name: "Per-call override", meaning: "Pass auth options to a method only when that call needs different credentials." },
           ]}
         />
       </DocsSection>
       <DocsSection title="IBM profiles and jobs">
         <Paragraph>
-          Use bearer-authenticated profile methods to create, verify, update, and
-          remove an IBM profile. Then submit a circuit, QASM, or random job with
-          the saved profile name and poll the job result.
+          Use an IBM profile already configured for your API key, or the
+          account default. Choose an available IBM backend, submit a circuit job, then
+          poll its status and fetch the result when it succeeds. Submission alone
+          does not mean hardware ran.
         </Paragraph>
         <Paragraph>
           IBM hardware jobs have to wait in a queue before starting; get started at{" "}
@@ -690,10 +703,15 @@ console.log(gate.measurement);`}
           .
         </Paragraph>
         <CodeBlock
-          value={`const job = await client.submitCircuitJob({
+          value={`const trustedClient = new QuantumApiClient({
+  baseUrl: "https://davidjgrimsley.com/public-facing/api/quantum",
+  apiKey: serverSecrets.quantumApiKey,
+});
+
+const job = await trustedClient.submitCircuitJob({
   provider: "ibm",
-  backend_name: "ibm_brisbane",
-  ibm_profile: "my-profile",
+  backend_name: "YOUR_AVAILABLE_IBM_BACKEND",
+  ibm_profile: "YOUR_EXISTING_PROFILE",
   shots: 1024,
   circuit: { num_qubits: 1, operations: [{ gate: "h", target: 0 }] },
 });`}
@@ -703,18 +721,16 @@ console.log(gate.measurement);`}
         <BulletList
           items={[
             "health, portfolio, echoTypes, runGate, runCircuit, transformText",
-            "listBackends, transpile, importQasm, exportQasm, runQasm",
-            "listKeys, createKey, revokeKey, rotateKey, deleteKey",
-            "listIbmProfiles, createIbmProfile, updateIbmProfile, verifyIbmProfile, deleteIbmProfile",
-            "submitCircuitJob, submitQasmJob, submitRandomJob, getCircuitJob, getCircuitJobResult, cancelCircuitJob",
+            "listBackends, transpile, importQasm, exportQasm",
+            "submitCircuitJob, getCircuitJob, getCircuitJobResult, cancelCircuitJob",
           ]}
         />
       </DocsSection>
       <DocsSection title="Troubleshooting">
         <BulletList
           items={[
-            "Catch QuantumApiError and inspect statusCode, code, requestId, and details.",
-            "If a runtime call returns 401, check the API key. If a profile call returns 401, check the bearer token.",
+            "Catch QuantumApiError and inspect status, code, requestId, and details.",
+            "If a protected runtime call returns 401, check the supplied API key or your backend proxy.",
             "Keep API keys and IBM tokens on a server when distributing an application to other people.",
           ]}
         />
@@ -736,22 +752,32 @@ function PythonGuide() {
       </DocsSection>
       <DocsSection title="Install">
         <CodeBlock value="pip install quantum-api-sdk" />
-        <Paragraph>The package requires Python 3.11 or later.</Paragraph>
+        <Paragraph>
+          Install the published package from{" "}
+          <Link href={"https://pypi.org/project/quantum-api-sdk/" as Href}>
+            <ThemedText className="text-tint underline">PyPI</ThemedText>
+          </Link>. It requires Python 3.11 or later.
+        </Paragraph>
       </DocsSection>
       <DocsSection title="Configure">
         <Paragraph>
-          The base URL is the web address the client sends requests to. You can
-          pass the mounted Quantum API address with or without <InlineToken>/v1</InlineToken>;
-          the client makes the final address consistent.
+          The published SDK requires a <InlineToken>base_url</InlineToken> when
+          creating the client. Use the Quantum API address shown below; the SDK
+          adds <InlineToken>/v1</InlineToken> for you.
         </Paragraph>
         <CodeBlock
-          value={`from quantum_api_sdk import QuantumApiClient
+          value={`import os
+from quantum_api_sdk import QuantumApiClient
 
 client = QuantumApiClient(
     base_url="https://davidjgrimsley.com/public-facing/api/quantum",
-    api_key="your-runtime-api-key",
+    api_key=os.environ.get("QUANTUM_API_KEY"),
 )`}
         />
+        <Paragraph>
+          Use an existing key in a trusted script or backend. The public Health
+          Check below works without a key.
+        </Paragraph>
       </DocsSection>
       <DocsSection title="First call: Health Check">
         <CodeBlock
@@ -769,9 +795,11 @@ with QuantumApiClient(
       </DocsSection>
       <DocsSection title="Run Gate example">
         <CodeBlock
-          value={`with QuantumApiClient(
+          value={`import os
+
+with QuantumApiClient(
     base_url="https://davidjgrimsley.com/public-facing/api/quantum",
-    api_key="your-runtime-api-key",
+    api_key=os.environ["QUANTUM_API_KEY"],
 ) as client:
     gate = client.run_gate({
         "gate_type": "rotation",
@@ -783,19 +811,18 @@ with QuantumApiClient(
       <DocsSection title="Auth modes">
         <FieldGrid
           rows={[
-            { name: "auto", meaning: "The default. Health and portfolio are public, profile and key routes use bearer auth, and runtime routes use an API key." },
+            { name: "auto", meaning: "The default. Health and portfolio are public; protected runtime methods use your supplied API key." },
             { name: "api_key", meaning: "Use X-API-Key for protected runtime methods." },
-            { name: "bearer", meaning: "Use a signed-in user's bearer token for keys and IBM profiles." },
             { name: "none", meaning: "Use only for public calls such as health." },
           ]}
         />
       </DocsSection>
       <DocsSection title="IBM profiles and jobs">
         <Paragraph>
-          Create and verify IBM profiles with a bearer token, then use the saved
-          <InlineToken>ibm_profile</InlineToken> name in backend, transpile, and
-          job requests. In a distributed app, keep the IBM profile lifecycle on
-          your server.
+          Use an existing <InlineToken>ibm_profile</InlineToken> name supplied by
+          the owner, or the account default. Choose an available backend before
+          submitting a job. Poll its status and fetch the result after success;
+          submission alone does not show that hardware ran.
         </Paragraph>
         <Paragraph>
           IBM hardware jobs have to wait in a queue before starting; get started at{" "}
@@ -812,9 +839,7 @@ with QuantumApiClient(
           items={[
             "health, portfolio, echo_types, run_gate, run_circuit, transform_text",
             "list_backends, transpile, import_qasm, export_qasm, run_qasm",
-            "list_keys, create_key, revoke_key, rotate_key, delete_key",
-            "list_ibm_profiles, create_ibm_profile, update_ibm_profile, verify_ibm_profile, delete_ibm_profile",
-            "submit_circuit_job, submit_qasm_job, submit_random_job, get_circuit_job, get_circuit_job_result, cancel_circuit_job",
+            "submit_circuit_job, submit_qasm_job, get_circuit_job, get_circuit_job_result, cancel_circuit_job",
           ]}
         />
       </DocsSection>
@@ -822,7 +847,7 @@ with QuantumApiClient(
         <BulletList
           items={[
             "Catch QuantumApiError so failures preserve a status code, normalized code, request ID, and details.",
-            "Use API-key auth for runtime calls and bearer auth for account/profile calls.",
+            "Use API-key auth for protected runtime calls.",
             "Keep credentials in environment variables or server-side secret storage, not in a shipped client.",
           ]}
         />
@@ -836,15 +861,27 @@ function GodotGuide() {
     <>
       <DocsSection title="What this addon is">
         <Paragraph>
-          The Godot addon is a reusable runtime client, not editor tooling. Add it
+          The Godot addon is a reusable runtime client with an optional editor
+          helper for Project Settings. Add it
           to a game when you need health checks, text transforms, gate calls,
           backend discovery, transpile, or IBM circuit jobs from Godot code.
         </Paragraph>
       </DocsSection>
       <DocsSection title="Install">
+        <Paragraph>
+          Get the full addon from the{" "}
+          <Link href={"https://store.godotengine.org/asset/david-grimsley/quantum-api/" as Href}>
+            <ThemedText className="text-tint underline">Godot Asset Store</ThemedText>
+          </Link>{" "}
+          or the{" "}
+          <Link href={"https://godotengine.org/asset-library/asset/5008" as Href}>
+            <ThemedText className="text-tint underline">Asset Library</ThemedText>
+          </Link>.
+        </Paragraph>
         <BulletList
           items={[
-            "Copy the addon into your project as addons/quantum_api_client/.",
+            "Install the entire addons/quantum_api_client folder. The runtime script alone omits the optional settings helper.",
+            "In Project → Project Settings → Plugins, enable Quantum API Client Settings to expose the fields under General → Quantum Api. You can also edit project.godot directly.",
             "Preload res://addons/quantum_api_client/quantum_api_client.gd from your game script.",
             "Create the client as a child node at runtime, then call apply_project_settings().",
           ]}
@@ -852,17 +889,22 @@ function GodotGuide() {
       </DocsSection>
       <DocsSection title="Configure project settings">
         <Paragraph>
-          The base URL is the web address the addon sends requests to. It accepts
-          the mounted Quantum API address with or without <InlineToken>/v1</InlineToken>
-          and normalizes the final request address.
+          The addon already points to the hosted Quantum API. For a local Health
+          Check, select direct mode; no API address needs to be entered.
         </Paragraph>
         <CodeBlock
           value={`[quantum_api]
-base_url="https://davidjgrimsley.com/public-facing/api/quantum/v1"
-backend_proxy_mode=true
+backend_proxy_mode=false
 direct_api_key=""
-default_ibm_profile=""`}
+default_ibm_profile=""
+request_timeout_seconds=10.0`}
         />
+        <Paragraph>
+          This starts with the hosted API for a local Health Check. A protected
+          call needs a developer key supplied at runtime. For a shipped game,
+          switch to backend proxy mode and set <InlineToken>base_url</InlineToken>{" "}
+          to your own server, which keeps the upstream key private.
+        </Paragraph>
       </DocsSection>
       <DocsSection title="First call: Health Check">
         <CodeBlock
@@ -879,28 +921,34 @@ func _ready() -> void:
         />
       </DocsSection>
       <DocsSection title="Run Gate example">
+        <Paragraph>
+          For this developer-only direct-mode call, read an existing key from the
+          process environment. Keep <InlineToken>direct_api_key</InlineToken> empty
+          in project files and exported games.
+        </Paragraph>
         <CodeBlock
-          value={`quantum_api_client.run_gate({
-    "gate_type": "rotation",
-    "rotation_angle_rad": PI / 2.0,
-}, func(success: bool, payload: Dictionary) -> void:
+          value={`var developer_key := OS.get_environment("QUANTUM_API_KEY")
+if developer_key.is_empty():
+    push_error("QUANTUM_API_KEY is required for Run Gate")
+    return
+quantum_api_client.set_api_key(developer_key)
+quantum_api_client.run_gate("rotation", func(success: bool, payload: Dictionary) -> void:
     print(success, payload)
-)`}
+, PI / 2.0)`}
         />
       </DocsSection>
       <DocsSection title="Backend proxy vs direct API key">
         <FieldGrid
           rows={[
             { name: "Backend proxy mode", meaning: "Keep this true for a shipped game. Your backend keeps the upstream API key out of the client." },
-            { name: "Direct API key", meaning: "Useful for local development, prototypes, and demos. Set it only after choosing to accept that the client can expose it." },
+            { name: "Direct API key", meaning: "For a developer-controlled local test. Read a short-lived key from the process environment; never save it in project.godot or an exported game." },
             { name: "Default IBM profile", meaning: "An optional saved profile name used by IBM runtime calls when one is not supplied for that call." },
           ]}
         />
       </DocsSection>
       <DocsSection title="IBM hardware jobs">
         <Paragraph>
-          Profile management stays on the Quantum API account site or your backend.
-          The addon consumes an existing profile name. Pass it for IBM calls or set
+          Use an existing IBM profile name. Pass it for IBM calls or set{" "}
           <InlineToken>default_ibm_profile</InlineToken> in project settings.
         </Paragraph>
         <Paragraph>
@@ -919,7 +967,7 @@ func _ready() -> void:
         />
       </DocsSection>
       <DocsSection title="Available calls">
-        <BulletList items={["health_check", "transform_text", "run_gate", "list_backends", "transpile", "submit_circuit_job"]} />
+        <BulletList items={["health_check, transform_text, run_gate", "list_backends, transpile, submit_circuit_job", "get_circuit_job and get_circuit_job_result for polling a submitted hardware job"]} />
       </DocsSection>
       <DocsSection title="Troubleshooting">
         <BulletList
@@ -939,52 +987,70 @@ function UnityGuide() {
     <>
       <DocsSection title="What this package is">
         <Paragraph>
-          This Unity runtime package is for gameplay code, not editor tooling. It
-          uses <InlineToken>UnityWebRequest</InlineToken> behind coroutine and Task
-          entry points, with structured errors for API failures.
+          This Unity 2021.3+ runtime package handles gameplay requests. Add one
+          {" "}
+          <InlineToken>QuantumApiManager</InlineToken> to a scene to configure the
+          connection in the Inspector. Your scripts then use its shared client,
+          with coroutine or Task calls and structured API errors.
         </Paragraph>
       </DocsSection>
       <DocsSection title="Install">
+        <Paragraph>
+          Download the{" "}
+          <Link href={"https://github.com/DavidJGrimsley/quantum-api/releases/tag/quantumapi-unity-v1.1.0" as Href}>
+            <ThemedText className="text-tint underline">Unity v1.1.0 package archive</ThemedText>
+          </Link>{" "}
+          and extract it. The source package is also available in the repository.
+        </Paragraph>
         <BulletList
           items={[
-            "Copy sdk/unity into your Unity project's Packages directory, or add it by local path in Unity Package Manager.",
-            "Use Unity 2021 LTS or later.",
-            "Create QuantumApiClient with your API address and keep BackendProxyMode enabled for shipped builds.",
+            "In Unity Package Manager, choose Add package from disk and select com.quantumapi.runtime/package.json from the extracted archive. For repository source, select sdk/unity/package.json instead.",
+            "Add QuantumApiManager to one GameObject in your first scene. Set its connection fields before entering Play Mode.",
+            "For a quick check in Play Mode, use the manager's Check Health context-menu action and read Unity's Console.",
           ]}
         />
       </DocsSection>
       <DocsSection title="Configure">
         <Paragraph>
-          The base URL is the web address the package sends requests to. It accepts
-          the mounted Quantum API address with or without <InlineToken>/v1</InlineToken>
-          and normalizes it before sending requests.
+          In the manager Inspector, choose <InlineToken>Direct API Key</InlineToken>{" "}
+          and enter an existing key for a local test. Direct mode uses the hosted
+          Quantum API address. For a distributed game, enable <InlineToken>Backend Proxy Mode</InlineToken>{" "}
+          and enter your own proxy URL. The proxy must expose the compatible API
+          and hold the upstream key on your server.
         </Paragraph>
-        <CodeBlock
-          value={`using QuantumApi.Unity;
-
-var client = new QuantumApiClient(new QuantumApiClientOptions
-{
-    BaseUrl = "https://davidjgrimsley.com/public-facing/api/quantum",
-    BackendProxyMode = true,
-    TimeoutSeconds = 15,
-});`}
-        />
+        <Paragraph>
+          The Inspector masks the key, but a key saved in a scene or distributed
+          build can be extracted. Leave it empty in committed scenes.
+        </Paragraph>
       </DocsSection>
       <DocsSection title="First call: Health Check">
         <CodeBlock
-          value={`private async void Start()
+          value={`using QuantumApi.Unity;
+using UnityEngine;
+
+public class QuantumApiFirstCall : MonoBehaviour
 {
-    var health = await client.HealthAsync();
-    Debug.Log($"Quantum API status: {health.status}");
+    private async void Start()
+    {
+        var client = QuantumApiManager.Instance.Client;
+        var health = await client.HealthAsync();
+        Debug.Log($"Quantum API status: {health.status}");
+    }
 }`}
         />
+        <Paragraph>
+          Health Check is public. A healthy response confirms connectivity; it
+          does not confirm that a protected call or IBM hardware is ready.
+        </Paragraph>
       </DocsSection>
       <DocsSection title="Run Gate example">
+        <Paragraph>Use this inside a MonoBehaviour method after the manager is active.</Paragraph>
         <CodeBlock
-          value={`StartCoroutine(client.RunGateCoroutine(
+          value={`StartCoroutine(QuantumApiManager.Instance.Client.RunGateCoroutine(
     new GateRunRequest
     {
         gate_type = "rotation",
+        sendRotationAngle = true,
         rotation_angle_rad = Mathf.PI / 2f,
     },
     response => Debug.Log($"Measurement: {response.measurement}"),
@@ -992,21 +1058,48 @@ var client = new QuantumApiClient(new QuantumApiClientOptions
 ));`}
         />
       </DocsSection>
+      <DocsSection title="Generate a local random integer">
+        <Paragraph>Use this inside an async method in the same scene.</Paragraph>
+        <CodeBlock
+          value={`var random = await QuantumApiManager.Instance.Client.RandomIntAsync(0, 1);
+Debug.Log($"Coin flip: {random.value} ({random.source})");`}
+        />
+        <Paragraph>
+          Both bounds are included. The result comes from the local simulator or
+          a classical fallback. It is neither an IBM hardware job nor a
+          cryptographic randomness guarantee.
+        </Paragraph>
+      </DocsSection>
       <DocsSection title="Auth modes">
         <FieldGrid
           rows={[
-            { name: "Backend proxy mode", meaning: "The default for shipped builds. Runtime calls go through your backend so the upstream key stays server-side." },
-            { name: "Direct API key", meaning: "For local development, demos, and prototypes. Protected runtime calls send X-API-Key." },
-            { name: "Bearer override", meaning: "Use a bearer token only when your own backend proxy expects it, or override a request's auth intentionally." },
+            { name: "Backend proxy mode", meaning: "Use for shipped builds. The client sends no API key or bearer header; your backend holds the upstream key." },
+            { name: "Direct API key", meaning: "Use for local development and demos. Protected calls send X-API-Key to the hosted API." },
           ]}
         />
       </DocsSection>
-      <DocsSection title="IBM profiles">
+      <DocsSection title="IBM hardware jobs">
         <Paragraph>
-          The current package wraps gameplay endpoints only. Manage IBM credential
-          profiles through your backend, then submit IBM jobs using the selected
-          profile name. Do not put IBM tokens in a distributed Unity build.
+          The package supports random hardware jobs. Supply an existing IBM
+          profile name and an available backend, or set their defaults on{" "}
+          <InlineToken>QuantumApiManager</InlineToken>. Submit a job, keep its
+          {" "}
+          <InlineToken>job_id</InlineToken>, poll <InlineToken>GetJobAsync</InlineToken>,
+          and fetch the result when status becomes <InlineToken>succeeded</InlineToken>.
         </Paragraph>
+        <CodeBlock
+          value={`var client = QuantumApiManager.Instance.Client;
+var job = await client.SubmitRandomJobAsync(new RandomJobSubmitRequest
+{
+    min = 0,
+    max = 1,
+    provider = "ibm",
+    backend_name = "YOUR_AVAILABLE_IBM_BACKEND",
+    ibm_profile = "YOUR_EXISTING_PROFILE",
+});
+
+// Poll client.GetJobAsync(job.job_id) before GetJobResultAsync(job.job_id).`}
+        />
         <Paragraph>
           IBM hardware jobs have to wait in a queue before starting; get started at{" "}
           <Link href={IBM_QUANTUM_URL as Href}>
@@ -1018,14 +1111,14 @@ var client = new QuantumApiClient(new QuantumApiClientOptions
         </Paragraph>
       </DocsSection>
       <DocsSection title="Available calls">
-        <BulletList items={["GET /v1/health", "GET /v1/echo-types", "POST /v1/gates/run", "POST /v1/text/transform"]} />
+        <BulletList items={["HealthAsync, GetEchoTypesAsync, RunGateAsync, TransformTextAsync", "RandomIntAsync for simulator or fallback integers", "SubmitRandomJobAsync, GetJobAsync, GetJobResultAsync, CancelJobAsync for IBM job flows"]} />
       </DocsSection>
       <DocsSection title="Troubleshooting">
         <BulletList
           items={[
-            "Call HealthAsync first to check that the API address is reachable.",
-            "Use BackendProxyMode for distributed builds so a runtime key is not embedded in game assets.",
-            "Treat the package as a runtime helper and smoke-test it inside a Unity project before relying on it in a release.",
+            "Use the manager's Check Health action in Play Mode and read Unity's Console before debugging a protected call.",
+            "If a protected call fails, check the selected auth mode, key or proxy URL, and whether the proxy provides upstream authentication.",
+            "If an IBM job queues, keep gameplay responsive while polling. Handle failed and cancelled terminal states before fetching a result.",
           ]}
         />
       </DocsSection>
@@ -1048,7 +1141,7 @@ const guideContent: Record<string, { sectionTitles: readonly string[]; content: 
     content: <GodotGuide />,
   },
   "unity-package": {
-    sectionTitles: ["What this package is", "Install", "Configure", "First call: Health Check", "Run Gate example", "Auth modes", "IBM profiles", "Available calls", "Troubleshooting"],
+    sectionTitles: ["What this package is", "Install", "Configure", "First call: Health Check", "Run Gate example", "Generate a local random integer", "Auth modes", "IBM hardware jobs", "Available calls", "Troubleshooting"],
     content: <UnityGuide />,
   },
 };
@@ -1124,12 +1217,12 @@ export function QuantumIntegrationDocs({ slug }: { slug: string | undefined }) {
     >
       <View className="gap-6">
         <View className="gap-4">
-          <View className="flex-row flex-wrap items-end gap-3">
+          <View className="flex-row flex-wrap items-end gap-3 pr-12 md:pr-0">
             <ThemedText
               type="title"
               headingLevel={1}
               visualHeadingLevel={1}
-              className="font-noto-serif-display text-tint"
+              className="min-w-0 shrink font-noto-serif-display text-tint"
             >
               {doc.title}
             </ThemedText>

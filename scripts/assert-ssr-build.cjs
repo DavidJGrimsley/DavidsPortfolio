@@ -9,13 +9,10 @@ const REQUIRED_PAGE_ROUTES = [
   'public-facing/mcp/[id].tsx',
 ];
 
-const REQUIRED_LOADER_ROUTES = [
-  'public-facing/api/[id].tsx',
-];
-
 const OPTIONAL_LOADER_ROUTES = [
-  // Expo SDK 57 currently omits this generated loader in the manifest even
-  // though server.js provides a matching runtime loader endpoint.
+  // Expo SDK 57 may omit these generated loaders. The production server
+  // provides runtime loader endpoints; deployment smoke checks verify pages.
+  'public-facing/api/[id].tsx',
   'public-facing/mcp/[id].tsx',
 ];
 
@@ -89,17 +86,10 @@ function assertSsrBuild(serverBuildDir) {
       throw new Error(`[SSR build] Generated routes manifest is missing page route for ${routeMarker}.`);
     }
   }
-  for (const routeMarker of REQUIRED_LOADER_ROUTES) {
-    const route = findHtmlRoute(routeMarker);
-    if (typeof route?.loader !== 'string' || !route.loader) {
-      throw new Error(`[SSR build] Generated routes manifest is missing loader for ${routeMarker}.`);
-    }
-    requireLoaderArtifact(route.loader, `loader module for ${routeMarker}`);
-  }
   for (const routeMarker of OPTIONAL_LOADER_ROUTES) {
     const route = findHtmlRoute(routeMarker);
     if (typeof route?.loader === 'string' && route.loader) {
-      requireModule(route.loader, `loader module for ${routeMarker}`);
+      requireLoaderArtifact(route.loader, `loader module for ${routeMarker}`);
     }
   }
 }

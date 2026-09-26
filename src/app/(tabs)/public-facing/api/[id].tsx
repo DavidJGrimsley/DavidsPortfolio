@@ -22,6 +22,7 @@ import { ExternalLink } from "@/components/UI/ExternalLink";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { StructuredDataScript } from "@/components/SEO/SeoHead";
 import { EndpointCard } from "~/src/components/PublicFacing/api/APIComponents";
+import { isQuantumJobCard, QUANTUM_JOB_CARD_NOTE } from "@/lib/quantum-job-card-policy";
 import {
   LLMS_TXT_PATH,
   QUANTUM_API_MARKDOWN_PATH,
@@ -809,6 +810,7 @@ function APIDetailContent() {
           endpoints.map((endpoint) => {
             const methodForCard = normalizeEndpointMethod(endpoint.method);
             const executionPath = getExecutablePath(endpoint);
+            const isJobCard = isQuantumJobCard(endpoint, isQuantumRoute);
 
             return (
               <EndpointCard
@@ -823,7 +825,8 @@ function APIDetailContent() {
                 requestBody={endpoint.requestBody}
                 responses={endpoint.responses}
                 baseUrl={apiBaseUrl}
-                liveDisabledReason={getEndpointDisabledReason(endpoint)}
+                liveDisabledReason={isJobCard ? QUANTUM_JOB_CARD_NOTE : getEndpointDisabledReason(endpoint)}
+                hideLiveTest={isJobCard}
                 requestExecutor={requestExecutor}
               />
             );

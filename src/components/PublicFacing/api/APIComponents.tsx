@@ -4,6 +4,7 @@ import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import { Picker } from '@react-native-picker/picker';
+import { buildListBackendsPath } from '@/lib/quantum-list-backends-query';
 
 interface EndpointCardProps {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -33,6 +34,7 @@ interface EndpointCardProps {
   auth?: 'public' | 'api_key' | 'bearer_jwt';
   extraHeaders?: Record<string, string>;
   liveDisabledReason?: string;
+  hideLiveTest?: boolean;
   requestExecutor?: (input: {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
     path: string;
@@ -128,6 +130,7 @@ export function EndpointCard({
   auth = 'public',
   extraHeaders,
   liveDisabledReason,
+  hideLiveTest = false,
   requestExecutor,
 }: EndpointCardProps) {
   const backgroundColor = useThemeColor({}, 'background');
@@ -144,6 +147,11 @@ export function EndpointCard({
   const [liveError, setLiveError] = useState<string | null>(null);
   const [isFetchingLive, setIsFetchingLive] = useState(false);
   const [angleInputUnit, setAngleInputUnit] = useState<'deg' | 'rad'>('deg');
+  const [backendProvider, setBackendProvider] = useState<'aer' | 'ibm'>('aer');
+  const [simulatorOnly, setSimulatorOnly] = useState(true);
+  const [minQubits, setMinQubits] = useState('');
+  const isBackendDiscovery =
+    method === 'GET' && /(?:^|\/)list_backends$/.test(path.split('?')[0]);
   const authLabel =
     auth === 'api_key'
       ? 'Requires API key'
@@ -308,11 +316,21 @@ export function EndpointCard({
     setTestResult(null);
 
     try {
+      const requestPath = isBackendDiscovery
+        ? buildListBackendsPath(path, {
+            provider: backendProvider,
+            simulatorOnly,
+            minQubits,
+          })
+        : path;
+      const requestHeaders = {
+        ...(extraHeaders ?? {}),
+      };
       const options: RequestInit = {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(extraHeaders ?? {}),
+          ...requestHeaders,
         },
       };
 
@@ -342,17 +360,17 @@ export function EndpointCard({
       if (requestExecutor) {
         const execution = await requestExecutor({
           method,
-          path,
+          path: requestPath,
           baseUrl,
           body: typedParams,
-          headers: extraHeaders,
+          headers: requestHeaders,
         });
 
         setTestResult(execution);
         return;
       }
 
-      const url = joinEndpointUrl(baseUrl, path);
+      const url = joinEndpointUrl(baseUrl, requestPath);
       const response = await fetch(url, options);
       const data = await parseJsonResponse(response);
       
@@ -371,14 +389,15 @@ export function EndpointCard({
   const handleExpand = async () => {
     const next = !isExpanded;
     setIsExpanded(next);
+    if (hideLiveTest) return;
     
     // Initialize testParams with default values from requestBody.example
     if (next && requestBody?.example && Object.keys(testParams).length === 0) {
       setTestParams(initializeTestParams(requestBody.example as Record<string, unknown>));
     }
     
-    // Auto-fetch live result for GET endpoints when expanding
-    if (next && method === 'GET') {
+    // Backend discovery waits for the visitor to choose filters and send the request.
+    if (next && method === 'GET' && !isBackendDiscovery) {
       if (shouldDisableLiveCalls) {
         setLiveError(liveDisabledReason ?? 'Authentication is required for this endpoint.');
         setLiveResponse(null);
@@ -498,6 +517,12 @@ export function EndpointCard({
             </View>
           )}
 
+          {hideLiveTest && liveDisabledReason && (
+            <ThemedText style={{ fontSize: 15, color: secondaryColor }}>
+              {liveDisabledReason}
+            </ThemedText>
+          )}
+
           {/* Parameters */}
           {parameters && parameters.length > 0 && (
             <View>
@@ -599,11 +624,11 @@ export function EndpointCard({
 
           {/* Responses */}
           <View>
-            {method !== 'GET' && <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 8 }}>
+            {(method !== 'GET' || hideLiveTest || isBackendDiscovery) && responses && responses.length > 0 && <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 8 }}>
               Example Responses
             </ThemedText>}
-            {/* For GET endpoints, show LIVE response instead of static example */}
-            {method === 'GET' ? (
+            {/* Other GET endpoints show a live response when expanded. */}
+            {method === 'GET' && !hideLiveTest && !isBackendDiscovery ? (
               <>
                 <ThemedText type="defaultSemiBold" style={{ fontSize: 18, marginBottom: 8 }}>
                   Live API Call Response
@@ -704,8 +729,8 @@ export function EndpointCard({
             )}
           </View>
 
-          {/* Interactive Testing Section for non-GET endpoints with request body */}
-          {requestBody && (
+          {/* Interactive testing for request bodies and backend discovery. */}
+          {!hideLiveTest && (requestBody || isBackendDiscovery) && (
             <View style={{
               backgroundColor: backgroundColor,
               padding: 16,
@@ -716,6 +741,12 @@ export function EndpointCard({
               <ThemedText type="defaultSemiBold" style={{ fontSize: 20, marginBottom: 12 }}>
                 🧪 Try It Out
               </ThemedText>
+
+              {isBackendDiscovery && (
+                <ThemedText style={{ marginBottom: 12 }}>
+                  Choose your filters, then select Send Request to discover backends.
+                </ThemedText>
+              )}
 
               {shouldDisableLiveCalls && (
                 <View
@@ -732,8 +763,43 @@ export function EndpointCard({
                 </View>
               )}
 
+              {isBackendDiscovery && (
+                <View style={{ gap: 12, marginBottom: 12 }}>
+                  <ThemedText>Provider</ThemedText>
+                  <Picker
+                    accessibilityLabel="Backend provider"
+                    selectedValue={backendProvider}
+                    onValueChange={(value) => setBackendProvider(value as 'aer' | 'ibm')}
+                    style={{ color: textColor, backgroundColor: accentColor }}
+                  >
+                    <Picker.Item label="Aer" value="aer" />
+                    <Picker.Item label="IBM" value="ibm" />
+                  </Picker>
+                  <ThemedText>Simulator only</ThemedText>
+                  <Picker
+                    accessibilityLabel="Simulator only"
+                    selectedValue={String(simulatorOnly)}
+                    onValueChange={(value) => setSimulatorOnly(value === 'true')}
+                    style={{ color: textColor, backgroundColor: accentColor }}
+                  >
+                    <Picker.Item label="True" value="true" />
+                    <Picker.Item label="False" value="false" />
+                  </Picker>
+                  <ThemedText>Minimum qubits (optional)</ThemedText>
+                  <TextInput
+                    accessibilityLabel="Minimum qubits"
+                    keyboardType="number-pad"
+                    value={minQubits}
+                    onChangeText={setMinQubits}
+                    placeholder="1 or greater"
+                    placeholderTextColor={textColor + '60'}
+                    style={{ color: textColor, backgroundColor: accentColor, padding: 12, borderRadius: 8 }}
+                  />
+                </View>
+              )}
+
               {/* Input fields when requestBody.example is provided */}
-              {requestBody.example && (
+              {requestBody?.example && (
                 <View>
                   {Object.keys(requestBody.example).map((key) => {
                     // Find parameter definition for this key

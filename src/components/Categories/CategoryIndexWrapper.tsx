@@ -1,6 +1,7 @@
 import React from "react";
 import { MyCards } from "@/components/Categories/MyCards";
 import { TabContainer } from "@/components/navigation/TabContainer";
+import { landingSeoProps, type LandingPath } from '@/constants/landing-seo';
 
 const categoryKeywords: Record<string, string[]> = {
   'mobile-apps': ['mobile app developer', 'React Native', 'Expo', 'iOS apps', 'Android apps'],
@@ -34,9 +35,9 @@ export function CategoryIndexWrapper({
       leadSubBody={introSubBody}
       contentClassName="py-5"
       seo={{
-        path: `/portfolio/${category}`,
         keywords: [...(categoryKeywords[category] ?? []), 'portfolio', 'David Grimsley'],
         type: 'website',
+        ...landingSeoProps(`/portfolio/${category}` as LandingPath),
       }}
     >
       <MyCards pageCategory={category} />

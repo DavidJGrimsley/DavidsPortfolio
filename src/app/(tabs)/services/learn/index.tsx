@@ -2,6 +2,20 @@ import { View, Pressable } from 'react-native';
 import { ThemedText } from "@/components/UI/ThemedText";
 import { type Href, router } from 'expo-router';
 import { TabContainer } from "@/components/navigation/TabContainer";
+import type { GenerateMetadataFunction } from 'expo-router/server';
+
+export const generateMetadata: GenerateMetadataFunction = () => ({
+  title: 'Tutoring: computer science, math, and game dev | David Grimsley',
+  description: 'One-on-one and group tutoring in computer science, web development, game development, and mathematics. Virtual sessions available.',
+  alternates: { canonical: 'https://davidjgrimsley.com/services/learn' },
+  openGraph: {
+    title: 'Tutoring: computer science, math, and game dev | David Grimsley',
+    description: 'One-on-one and group tutoring in computer science, web development, game development, and mathematics. Virtual sessions available.',
+    url: 'https://davidjgrimsley.com/services/learn',
+    siteName: 'David Grimsley',
+    type: 'website',
+  },
+});
 
 const Page = () => {
   return (
@@ -12,7 +26,7 @@ const Page = () => {
       seo={{
         title: 'Tutoring: computer science, math, and game dev',
         description:
-          'One-on-one and group tutoring in computer science, web development, game development, and mathematics. Virtual sessions available with flexible scheduling.',
+          'One-on-one and group tutoring in computer science, web development, game development, and mathematics. Virtual sessions available.',
         path: '/services/learn',
         keywords: [
           'tutoring',

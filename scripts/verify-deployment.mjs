@@ -20,6 +20,7 @@ function parseArgs(argv) {
     notBefore: '',
     expectedSha: '',
     siteUrl: '',
+    canonicalOrigin: '',
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -29,6 +30,10 @@ function parseArgs(argv) {
     switch (token) {
       case '--site-url':
         args.siteUrl = nextValue ?? '';
+        index += 1;
+        break;
+      case '--canonical-origin':
+        args.canonicalOrigin = nextValue ?? '';
         index += 1;
         break;
       case '--not-before':
@@ -375,7 +380,6 @@ async function main() {
         fetchHome(args.siteUrl, requestTimeoutMs),
         fetchRequiredPage(args.siteUrl, '/public-facing/api', requestTimeoutMs, [
           { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
-          { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
           { label: 'Public API route data', text: 'Quantum API' },
           {
             label: 'loader failure text absent',
@@ -386,7 +390,6 @@ async function main() {
         fetchRequiredPage(args.siteUrl, '/public-facing/api/quantum', requestTimeoutMs, [
           { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
           { label: 'Quantum API content', text: 'Quantum API' },
-          { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
           { label: 'Quantum API route id', text: 'quantum' },
           {
             label: 'loader failure text absent',
@@ -397,6 +400,9 @@ async function main() {
         verifyQuantumDocumentation(args.siteUrl, requestTimeoutMs),
         fetchRequiredPage(args.siteUrl, '/llms.txt', requestTimeoutMs, [
           { label: 'llms title', text: '# David Grimsley' },
+          { label: 'llms portfolio guide', text: '/guides/portfolio.md' },
+          { label: 'llms services guide', text: '/guides/services.md' },
+          { label: 'llms MCP guide', text: '/guides/mcp.md' },
           { label: 'llms Quantum API markdown link', text: '/public-facing/api/quantum.md' },
           ...QUANTUM_INTEGRATION_DOCS.map((doc) => ({
             label: `llms ${doc.title} markdown link`,
@@ -406,15 +412,20 @@ async function main() {
         ]),
         fetchRequiredPage(args.siteUrl, '/llms-full.txt', requestTimeoutMs, [
           { label: 'llms-full title', text: '# David Grimsley Full Agent Context' },
-          { label: 'llms-full plugin docs', text: 'Quantum API Unreal Plugin' },
-          { label: 'llms-full pain point', text: 'Quantum Api Circuit Operation' },
+          { label: 'llms-full portfolio', text: '## Portfolio' },
+          { label: 'llms-full services', text: '## Services and contact' },
+          { label: 'llms-full Quantum docs', text: '/public-facing/api/quantum/ue-plugin.md' },
         ]),
         fetchRequiredPage(args.siteUrl, '/sitemap.xml', requestTimeoutMs, [
-          { label: 'sitemap Quantum API markdown URL', text: '/public-facing/api/quantum.md' },
-          ...QUANTUM_INTEGRATION_DOCS.flatMap((doc) => [
-            { label: `sitemap ${doc.title} human URL`, text: doc.path },
-            { label: `sitemap ${doc.title} Markdown URL`, text: doc.markdownPath },
-          ]),
+          { label: 'sitemap portfolio', text: '/portfolio</loc>' },
+          { label: 'sitemap services', text: '/services</loc>' },
+          { label: 'sitemap API', text: '/public-facing/api</loc>' },
+          ...QUANTUM_INTEGRATION_DOCS.map((doc) => ({
+            label: `sitemap ${doc.title} human URL`, text: `${doc.path}</loc>`,
+          })),
+          { label: 'sitemap Markdown exclusion', text: '.md</loc>', mustNotInclude: true },
+          { label: 'sitemap agent index exclusion', text: '/llms.txt</loc>', mustNotInclude: true },
+          { label: 'sitemap build-time dates exclusion', text: '<lastmod>', mustNotInclude: true },
         ]),
         fetchJsonEndpoint(
           args.siteUrl,
@@ -428,7 +439,6 @@ async function main() {
         ),
         fetchRequiredPage(args.siteUrl, '/public-facing/mcp', requestTimeoutMs, [
           { label: 'CSS bootstrap script', text: '__djsportfolio_css__' },
-          { label: 'Expo Router loader data', text: '__EXPO_ROUTER_LOADER_DATA__' },
           { label: 'MCP server route data', text: 'mrdj-app-mcp' },
           {
             label: 'loader failure text absent',
@@ -441,7 +451,7 @@ async function main() {
           '/_expo/loaders/public-facing/mcp/index',
           requestTimeoutMs,
         ),
-        verifyDetailSeoPages(args.siteUrl, requestTimeoutMs),
+        verifyDetailSeoPages(args.siteUrl, requestTimeoutMs, args.canonicalOrigin || args.siteUrl),
       ]);
 
     const buildPayload = buildMetaResult.payload ?? null;

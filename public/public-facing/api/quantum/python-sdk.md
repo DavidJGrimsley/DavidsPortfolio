@@ -12,11 +12,11 @@ Human guide: `/public-facing/api/quantum/python-sdk`
 pip install quantum-api-sdk
 ```
 
-Python 3.11 or later is required.
+Get the published package on [PyPI](https://pypi.org/project/quantum-api-sdk/). Python 3.11 or later is required.
 
 ## Configure and call Health Check
 
-The base URL is the web address the client sends requests to. Pass the mounted Quantum API address with or without `/v1`; the SDK normalizes it.
+The published SDK requires `base_url` when creating the client. Use the Quantum API address shown below; the SDK adds `/v1` for you.
 
 ```python
 from quantum_api_sdk import QuantumApiClient, QuantumApiError
@@ -33,10 +33,14 @@ with QuantumApiClient(
 
 ## Run Gate example
 
+Use an existing key supplied to a trusted script or backend through the process environment.
+
 ```python
+import os
+
 with QuantumApiClient(
     base_url="https://davidjgrimsley.com/public-facing/api/quantum",
-    api_key="your-runtime-api-key",
+    api_key=os.environ["QUANTUM_API_KEY"],
 ) as client:
     gate = client.run_gate({
         "gate_type": "rotation",
@@ -47,14 +51,13 @@ with QuantumApiClient(
 
 ## Auth
 
-- `auto` is the default: health and portfolio are public, key/profile routes use bearer auth, and runtime routes use an API key.
+- `auto` is the default: health and portfolio are public; protected runtime methods use your supplied API key.
 - `api_key` sends `X-API-Key` for protected runtime calls.
-- `bearer` sends the signed-in user's token for API-key and IBM-profile management.
 - `none` is for public calls such as health.
 
 ## IBM profiles and jobs
 
-Create and verify IBM profiles with a bearer token, then pass the saved `ibm_profile` name in backend, transpile, and job requests. Keep IBM profile management and credentials on your backend for a distributed product.
+Use an existing `ibm_profile` name supplied by the API owner, or the account default. Choose an available backend before submitting a job. Poll its status and fetch the result after success; submission alone does not show that hardware ran.
 
 IBM hardware jobs have to wait in a queue before starting; get started at [quantum.cloud.ibm.com](https://quantum.cloud.ibm.com/).
 
@@ -62,9 +65,7 @@ IBM hardware jobs have to wait in a queue before starting; get started at [quant
 
 - Core: `health`, `portfolio`, `echo_types`, `run_gate`, `run_circuit`, `transform_text`
 - Runtime: `list_backends`, `transpile`, `import_qasm`, `export_qasm`, `run_qasm`
-- Accounts: `list_keys`, `create_key`, `revoke_key`, `rotate_key`, `delete_key`
-- IBM: `list_ibm_profiles`, `create_ibm_profile`, `update_ibm_profile`, `verify_ibm_profile`, `delete_ibm_profile`
-- Jobs: `submit_circuit_job`, `submit_qasm_job`, `submit_random_job`, `get_circuit_job`, `get_circuit_job_result`, `cancel_circuit_job`
+- Jobs: `submit_circuit_job`, `submit_qasm_job`, `get_circuit_job`, `get_circuit_job_result`, `cancel_circuit_job`
 
 ## Troubleshooting
 
