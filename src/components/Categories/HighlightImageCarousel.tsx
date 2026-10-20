@@ -1,54 +1,47 @@
 import React from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
+import { ThemedText } from '@/components/UI/ThemedText';
 
 type HighlightImageCarouselProps = {
     pictures?: string[];
+    descriptions?: string[];
+    title?: string;
 };
 
-export function HighlightImageCarousel({ pictures }: HighlightImageCarouselProps) {
+export function HighlightImageCarousel({ pictures, descriptions, title = 'Project screenshot' }: HighlightImageCarouselProps) {
     const [currentIndex, setCurrentIndex] = React.useState(0);
-    const screenWidth = Dimensions.get('window').width;
-    const screenHeight = Dimensions.get('window').height;
-    const imageWidth = screenWidth * 0.9;
-    const imageHeight = Math.min(screenHeight * 0.5, imageWidth * 1.2);
-
-    React.useEffect(() => {
-        if (!pictures || !Array.isArray(pictures) || pictures.length <= 1) return;
-
-        const interval = setInterval(() => {
-            setCurrentIndex((prevIndex) => (prevIndex + 1) % pictures.length);
-        }, 2000);
-
-        return () => clearInterval(interval);
-    }, [pictures]);
 
     if (!pictures || !Array.isArray(pictures) || pictures.length === 0) return null;
 
+    const index = Math.min(currentIndex, pictures.length - 1);
+    const description = descriptions?.[index] ?? `${title}, image ${index + 1} of ${pictures.length}`;
     return (
-        <View style={{ width: '100%', alignItems: 'center', marginVertical: 4 }}>
+        <View style={{ width: '100%', maxWidth: 1100, alignItems: 'center', marginVertical: 12 }}>
             <Image 
-                source={{ uri: pictures[currentIndex] }} 
-                style={{ width: imageWidth, height: imageHeight, resizeMode: 'contain' }}
+                source={{ uri: pictures[index] }}
+                accessibilityLabel={description}
+                style={{ width: '100%', aspectRatio: 1.6, maxHeight: 560 }}
                 contentFit="contain"
                 transition={300}
             />
             {pictures.length > 1 && (
-                <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
+                <View className="flex-row flex-wrap justify-center gap-2 mt-3">
                     {pictures.map((_, idx) => (
-                        <View
+                        <Pressable
                             key={idx}
-                            style={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: 2,
-                                backgroundColor: idx === currentIndex ? '#007bff' : '#ccc',
-                                marginHorizontal: 4,
-                            }}
-                        />
+                            accessibilityRole="button"
+                            accessibilityLabel={`Show ${title} image ${idx + 1}`}
+                            accessibilityState={{ selected: idx === index }}
+                            onPress={() => setCurrentIndex(idx)}
+                            className={idx === index ? 'bg-tint rounded-lg px-4 py-3' : 'bg-themed rounded-lg px-4 py-3'}
+                        >
+                            <ThemedText inverse={idx === index}>{idx + 1}</ThemedText>
+                        </Pressable>
                     ))}
                 </View>
             )}
+            {descriptions?.[index] ? <ThemedText className="text-sm text-center mt-2 opacity-85">{description}</ThemedText> : null}
         </View>
     );
 }

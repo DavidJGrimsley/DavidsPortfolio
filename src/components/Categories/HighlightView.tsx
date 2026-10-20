@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Dimensions } from 'react-native';
-import YoutubePlayer from "react-native-youtube-iframe";
+import { View, useWindowDimensions } from 'react-native';
+import { PortfolioVideo } from './PortfolioVideo';
 import { Highlight } from '@/types/portfolio';
 import { HighlightImageCarousel } from './HighlightImageCarousel';
 import { ThemedText } from '@/components/UI/ThemedText';
@@ -10,14 +10,16 @@ type HighlightViewProps = {
 };
 
 export function HighlightView({ highlights }: HighlightViewProps) {
+    const { width } = useWindowDimensions();
+    const videoWidth = Math.min(960, Math.max(160, width * 0.8 - 48));
     return (
         <View>
             {highlights.map((highlight, index) => (
                 <View key={index} className="highlight-view">
-                    <ThemedText headingLevel={3} className="highlight-title">{highlight.highlightTitle}</ThemedText>
+                    <ThemedText headingLevel={2} className="highlight-title">{highlight.highlightTitle}</ThemedText>
                     <View className="flex items-center justify-center flex-row flex-wrap">
                         {highlight.highlightPictures && Array.isArray(highlight.highlightPictures) && highlight.highlightPictures.length > 0 && (
-                            <HighlightImageCarousel pictures={highlight.highlightPictures} />
+                            <HighlightImageCarousel pictures={highlight.highlightPictures} descriptions={highlight.highlightPictureDescriptions} title={highlight.highlightTitle} />
                         )}
                         {highlight.highlightCaption && (
                             <ThemedText className="highlight-caption">{highlight.highlightCaption}</ThemedText>
@@ -25,11 +27,11 @@ export function HighlightView({ highlights }: HighlightViewProps) {
                     </View>
                     <ThemedText className="highlight-description">{highlight.description}</ThemedText>
                     {highlight.video && (
-                        <YoutubePlayer
-                            height={Dimensions.get('window').width * 0.5 * 0.5625}
-                            width={Dimensions.get('window').width * 0.5}
-                            play={false}
+                        <PortfolioVideo
+                            height={videoWidth * 0.5625}
+                            width={videoWidth}
                             videoId={highlight.video}
+                            title={highlight.highlightTitle}
                         />
                     )}
                     {highlight.code && (

@@ -1,6 +1,330 @@
 {
     "mobile-apps": [
         {
+            "title": "time2pay",
+            "displayTitle": "Time2Pay",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "From tracking a work session to sending an invoice: a self-hostable app for freelancers and small teams.",
+            "picture": "/img/recent-projects/time2pay-sessions.webp",
+            "pictureDescription": "Time2Pay tour mode showing demo work sessions grouped by week, with customer and project filters.",
+            "gif": "/img/recent-projects/time2pay-logo.webp",
+            "breakdown": "I built Time2Pay to connect the small pieces of freelance work: customers, projects, tasks, time, and invoices. A session can be timed or entered manually, reviewed alongside the rest of a project, and included in an invoice. Milestone checklists keep the work itself visible alongside its billing.\n\nThe same application supports a local data mode and a hosted account mode. It is published at time2pay.app as an installable web app, with an anonymous tour that lets visitors explore demo data before signing in. The source is available for self-hosting.",
+            "skillsUsed": [
+                "React Native",
+                "Expo Router",
+                "TypeScript",
+                "SQLite",
+                "Supabase",
+                "PostgreSQL",
+                "Drizzle ORM",
+                "API routes",
+                "Mercury API",
+                "PWA"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Keep time connected to the work",
+                    "description": "I organized the tracking flow around customer, project, and task selections. The session timer and manual entries feed a weekly session history, while project milestones provide a lightweight checklist for what still needs to be done. This keeps time records attached to their context instead of turning them into a separate spreadsheet.",
+                    "highlightPictures": [
+                        "/img/recent-projects/time2pay-milestones.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Time2Pay session setup and a project milestone checklist using demo data."
+                    ]
+                },
+                {
+                    "highlightTitle": "One application, local or hosted",
+                    "description": "A shared database interface lets the app use SQLite locally or Supabase and Postgres in hosted mode. Hosted reads use user-scoped access, and writes pass through validated API routes. Tour mode uses an in-memory demo provider, so trying the app does not require creating an account.",
+                    "highlightPictures": [
+                        "/img/recent-projects/time2pay-sessions.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The tour-mode banner and demo sessions show the application before sign-in."
+                    ]
+                },
+                {
+                    "highlightTitle": "Turn recorded work into invoices",
+                    "description": "Tracked sessions can be grouped into invoices and exported as PDFs. I integrated Mercury through server-side routes for invoice and payment workflows, keeping provider credentials out of client-side requests. The web build also includes install and update support for use as a PWA.",
+                    "highlightCaption": "Time tracking, invoice output, and payment integration in one workflow."
+                }
+            ],
+            "links": [
+                {
+                    "label": "Open Time2Pay",
+                    "url": "https://time2pay.app"
+                },
+                {
+                    "label": "View source on GitHub",
+                    "url": "https://github.com/DavidJGrimsley/time2pay"
+                }
+            ],
+            "otherSections": []
+        },
+        {
+            "title": "xr-showcase",
+            "displayTitle": "XR Showcase",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "One iOS-first AR app for robot boxing, medical anatomy, and quantum exploration.",
+            "picture": "/img/recent-projects/neo-ar.webp",
+            "pictureDescription": "Two robot fighters in a tabletop arena, one of the three experiences in XR Showcase.",
+            "gif": "",
+            "breakdown": "I built XR Showcase for the Ctrl+Space hackathon by Expo and ReactVision. It brings three experiences into one app: Neo Rock ’Em Sock ’Em Robots, Medimagen, and Guess the Qubit. Each explores a different reason to put an interactive object into the space around you.\n\nThe common foundation uses Expo, React Native, and ViroReact. I used Mr. DJ’s Dev Suite to generate and organize the project, then developed the placement, controls, native AR lifecycle, and individual experiences. The shared repository and TestFlight build currently provide access to all three.",
+            "skillsUsed": [
+                "Expo",
+                "React Native",
+                "TypeScript",
+                "ViroReact",
+                "ReactVision",
+                "AR",
+                "Zustand",
+                "MDS",
+                "EAS"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Three experiences with different purposes",
+                    "description": "The robot arena turns a table into a multiplayer fighting space. Medimagen puts scan-derived anatomy and CT/MRI slices into that space. Guess the Qubit adapts my Unreal learning game into a Bloch sphere you can walk around. Their individual case studies explain the work behind each experience.",
+                    "highlightPictures": [
+                        "/img/recent-projects/neo-ar.webp",
+                        "/img/recent-projects/medimagen-ar.webp",
+                        "/img/recent-projects/qubit-ar.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Neo Rock ’Em Sock ’Em Robots running in tabletop AR.",
+                        "Medimagen demo showing a medical scan slice in the AR app.",
+                        "Guess the Qubit demo showing a placed Bloch sphere and hardware-job feedback."
+                    ]
+                },
+                {
+                    "highlightTitle": "Share the AR foundation",
+                    "description": "I kept camera-session ownership and cleanup separate from the individual scenes. Surface placement, scaling, rotation, repositioning, and recoverable status feedback form a common foundation. Returning Home tears down the active experience, so switching scenes does not leave competing camera sessions or unfinished UI work."
+                },
+                {
+                    "highlightTitle": "Build with the tooling I develop",
+                    "description": "XR Showcase gave me a practical application for the MDS project generator, onboarding, project memory, and Doctor checks. That connection is part of the story of iSquared: tools are useful when they help produce and verify a real application, not just a starter screen.",
+                    "highlightPictures": [
+                        "/img/recent-projects/neo-menu.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The implemented robot-arena menu inside XR Showcase."
+                    ]
+                }
+            ],
+            "links": [
+                {
+                    "label": "View source on GitHub",
+                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
+                },
+                {
+                    "label": "Try XR Showcase on TestFlight",
+                    "url": "https://testflight.apple.com/join/4UugyD8Y"
+                },
+                {
+                    "label": "View the Ctrl+Space gallery",
+                    "url": "https://separated-cornet-eaf.notion.site/fcc70ea37156823b9026015194acaf43?v=37670ea37156826f9686882e2e3624fd"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "software-development",
+                    "title": "isquared",
+                    "caption": "See the MDS tools behind XR Showcase",
+                    "href": "/portfolio/software-development/isquared"
+                },
+                {
+                    "category": "game-design",
+                    "title": "neo-rock-em-sock-em-robots",
+                    "caption": "Step into the robot arena",
+                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
+                },
+                {
+                    "category": "mobile-apps",
+                    "title": "medimagen",
+                    "caption": "Explore Medimagen",
+                    "href": "/portfolio/mobile-apps/medimagen"
+                },
+                {
+                    "category": "mobile-apps",
+                    "title": "guess-the-qubit-ar",
+                    "caption": "Walk around the AR version of Guess the Qubit",
+                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                },
+                {
+                    "category": "game-design",
+                    "title": "football-game",
+                    "caption": "See my separate no-code hackathon entry",
+                    "href": "/portfolio/game-design/football-game"
+                }
+            ]
+        },
+        {
+            "title": "medimagen",
+            "displayTitle": "Medimagen",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "Explore scan-derived anatomy and CT/MRI slices in tabletop AR. A Ctrl+Space finalist.",
+            "picture": "/img/recent-projects/medimagen-anatomy.webp",
+            "pictureDescription": "Prepared half-skull and brain meshes aligned together for Medimagen.",
+            "gif": "",
+            "breakdown": "Medical scans are usually viewed as flat slices. I built Medimagen to let people explore the relationship between those slices and a three-dimensional model placed on a real surface. The experience includes skull and brain meshes, anatomical labels, registered CT/MRI slices, and a stacked-slice preview.\n\nA substantial part of the work happened before the AR scene: preparing anatomy in 3D Slicer, cleaning geometry, aligning data, and exporting assets that could stay registered in the app. Medimagen was a finalist in the Expo × ReactVision Ctrl+Space hackathon and currently lives inside XR Showcase.",
+            "skillsUsed": [
+                "ViroReact",
+                "Expo",
+                "React Native",
+                "3D Slicer",
+                "Python",
+                "NumPy",
+                "VTK",
+                "CT/MRI registration",
+                "GLB assets"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Prepare anatomy for a phone",
+                    "description": "I used 3D Slicer to work with scan-derived skull and brain geometry, inspect surfaces, and prepare the models for export. The goal was to retain useful anatomical structure while producing assets that could be positioned and explored in a mobile AR scene.",
+                    "highlightPictures": [
+                        "/img/recent-projects/medimagen-skull-preparation.webp",
+                        "/img/recent-projects/medimagen-brain-preparation.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Inspecting the inner skull surface during cleanup in 3D Slicer.",
+                        "Brain segmentation and scan planes in the 3D Slicer preparation workspace."
+                    ]
+                },
+                {
+                    "highlightTitle": "Keep models and slices in alignment",
+                    "description": "The skull, brain, and slice views need to describe the same space. I worked through CT/MRI registration and used a consistent coordinate transform when exporting the model assets. In the app, the model pair moves together rather than giving each child a different placement transform.",
+                    "highlightPictures": [
+                        "/img/recent-projects/medimagen-alignment.webp",
+                        "/img/recent-projects/medimagen-anatomy.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "CT and aligned MRI overlaid in a sagittal slice in 3D Slicer.",
+                        "The prepared half-skull and brain aligned in a model preview."
+                    ]
+                },
+                {
+                    "highlightTitle": "Explore in AR, and show the limits",
+                    "description": "Users can place, scale, rotate, and inspect the anatomy, then switch to scan slices and stacked-slice visualization. An experimental GPU volume-rendering path is also part of the investigation, but it remains unverified on iPhone. The case study distinguishes that work from the implemented anatomy and slice views.",
+                    "highlightCaption": "Educational visualization prototype; the experimental volume renderer is still under investigation.",
+                    "highlightPictures": [
+                        "/img/recent-projects/medimagen-ar.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "A frame from the Medimagen hackathon demo showing scan-slice controls."
+                    ]
+                }
+            ],
+            "links": [
+                {
+                    "label": "View the shared XR Showcase source",
+                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
+                },
+                {
+                    "label": "Try XR Showcase on TestFlight",
+                    "url": "https://testflight.apple.com/join/4UugyD8Y"
+                },
+                {
+                    "label": "Watch the Medimagen demo",
+                    "url": "https://www.youtube.com/shorts/TQKk3C_ra0Q"
+                },
+                {
+                    "label": "View the finalist entry",
+                    "url": "https://separated-cornet-eaf.notion.site/Medimagen-24470ea3715683e4aff301d0a34edf21"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "mobile-apps",
+                    "title": "xr-showcase",
+                    "caption": "Explore the shared XR Showcase app",
+                    "href": "/portfolio/mobile-apps/xr-showcase"
+                }
+            ],
+            "youtubeID": "TQKk3C_ra0Q"
+        },
+        {
+            "title": "guess-the-qubit-ar",
+            "displayTitle": "Guess the Qubit — AR",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "A Bloch sphere you can walk around, with simulator measurements and queued quantum hardware jobs. A Ctrl+Space finalist.",
+            "picture": "/img/recent-projects/qubit-ar.webp",
+            "pictureDescription": "The AR Guess the Qubit demo with a Bloch sphere placed in the room and a queued hardware-job message.",
+            "gif": "",
+            "breakdown": "I adapted my Unreal Guess the Qubit prototype into an AR learning experience for XR Showcase. The same visual question remains: choose 0 or 1, watch a gate act on the qubit, and see which measurement comes back. In AR, the sphere becomes an object that can be placed, resized, and viewed from different angles.\n\nThe app uses my Quantum API through its TypeScript SDK. Simulator results and asynchronous hardware jobs share the interaction, while the interface makes the waiting state visible. This version was a Ctrl+Space finalist and is distributed through the shared XR Showcase TestFlight build.",
+            "skillsUsed": [
+                "Expo",
+                "ViroReact",
+                "TypeScript",
+                "Quantum API SDK",
+                "AR interaction",
+                "State machines",
+                "Request cancellation"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Translate the Unreal visual language",
+                    "description": "I rebuilt the cyan shell, axis rings, labeled basis states, and magenta state vector with Viro primitives. The AR placement and transform controls let the user choose the viewpoint, while retaining the original gate-intro and measurement-collapse sequence.",
+                    "highlightPictures": [
+                        "/img/recent-projects/qubit-ar.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The spatial Bloch sphere in the AR demo."
+                    ]
+                },
+                {
+                    "highlightTitle": "Wait for a measurement honestly",
+                    "description": "A round waits for both its introductory animation and a valid measurement before collapsing the state vector. Simulator mode requests a rotation measurement. Hardware mode submits a one-qubit circuit and polls for its result, with queued and running feedback rather than a made-up instant response."
+                },
+                {
+                    "highlightTitle": "Handle leaving, resetting, and retrying",
+                    "description": "The round controller tracks which session and round own a response. Reset and exit stop local requests and timers, attempt to cancel known unfinished jobs, and ignore stale results. Recoverable errors let users retry without treating a failed request as a measurement."
+                }
+            ],
+            "links": [
+                {
+                    "label": "View the AR source in XR Showcase",
+                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
+                },
+                {
+                    "label": "Try XR Showcase on TestFlight",
+                    "url": "https://testflight.apple.com/join/4UugyD8Y"
+                },
+                {
+                    "label": "Watch the AR demo",
+                    "url": "https://www.youtube.com/shorts/vVACYtnPqNc"
+                },
+                {
+                    "label": "View the finalist entry",
+                    "url": "https://separated-cornet-eaf.notion.site/Guess-the-Qubit-f1670ea3715683088c3e01f7901276c5"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "game-design",
+                    "title": "guess-the-qubit-unreal",
+                    "caption": "See the original Unreal version of Guess the Qubit",
+                    "href": "/portfolio/game-design/guess-the-qubit-unreal"
+                },
+                {
+                    "category": "mobile-apps",
+                    "title": "xr-showcase",
+                    "caption": "Explore the shared XR Showcase app",
+                    "href": "/portfolio/mobile-apps/xr-showcase"
+                },
+                {
+                    "category": "public-facing/api",
+                    "title": "quantum",
+                    "caption": "Explore my Quantum API and its engine integrations",
+                    "href": "/public-facing/api/quantum"
+                }
+            ],
+            "youtubeID": "vVACYtnPqNc"
+        },
+        {
             "title": "star-wars-galaxies",
             "displayTitle": "Star Wars Galaxies",
             "isFeatured": false,
@@ -62,7 +386,7 @@
         {
           "title": "pokepages-reboot",
           "displayTitle": "PokePages (Reboot)",
-          "isFeatured": true,
+          "isFeatured": false,
           "inProgress": true,
           "caption": "The ultimate Pokémon companion app.",
           "picture": "/img/PokePagesReboot/PP_Logo.gif",
@@ -175,6 +499,324 @@
     ],  
     "game-design": [
         {
+            "title": "quasicombo",
+            "displayTitle": "Quasicombo",
+            "isFeatured": true,
+            "inProgress": false,
+            "caption": "A 2.5D beat-’em-up where the path you choose becomes a quantum braid that changes the boss fight.",
+            "picture": "/img/recent-projects/quasicombo-menu.webp",
+            "pictureDescription": "Quasicombo title menu with the playable robot in a jungle environment.",
+            "gif": "/img/recent-projects/quasicombo-card.webp",
+            "breakdown": "I developed Quasicombo as a short Unreal Engine action game for Global Quantum Game Jam 2026. Combat and combos carry the player through branching routes; the order of those crossings forms a quantum braid. My Quantum API evaluates that braid and feeds its result back into the boss encounter, tying an abstract quantum operation to a choice the player can see.\n\nThe project also became a Moth Hack submission, using Moth’s Blur engine for processed versions of Yoshi’s piano music. Alongside the quantum integration, I worked on the combat systems, boss evolution, QTEs, menus, customization, and playable Windows build. Narrative, graphics, music, sound, and quantum consultation came from the collaborators credited below.",
+            "skillsUsed": [
+                "Unreal Engine",
+                "C++",
+                "Blueprints",
+                "Quantum API",
+                "Quantum braiding",
+                "Gameplay systems",
+                "Animation",
+                "Adaptive audio",
+                "Moth Atlas"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Make the route part of the mechanic",
+                    "description": "Three routes act as braid strands. Choosing a crossing records an ordered operation, so taking the same crossings in a different order can change the evaluated state. Ordinary combat stays immediate: clear enemies, build a combo, and reach the next junction. The visible braid HUD connects those route choices to the eventual readout.",
+                    "highlightPictures": [
+                        "/img/recent-projects/quasicombo-gameplay.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Gameplay capture with the robot, combo display, and three-strand braid history."
+                    ]
+                },
+                {
+                    "highlightTitle": "Bring the quantum result into the boss fight",
+                    "description": "At encounter readout points, the Unreal integration sends the braid history to my Quantum API. The evaluated state contributes to the boss setup and QTE behavior, while a time-evolution operation supports changes during combat. A local fallback keeps a service interruption from stopping the game. Player execution still determines the payoff of a QTE.",
+                    "highlightPictures": [
+                        "/img/recent-projects/quasicombo-boss.webp",
+                        "/img/recent-projects/quasicombo-qte.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The player robot facing the evolved boss in the jungle arena.",
+                        "A controller-button QTE prompt during the boss encounter."
+                    ]
+                },
+                {
+                    "highlightTitle": "Let the music follow the route",
+                    "description": "I prepared route-dependent versions of Yoshi’s piano music using the quantum jazz effect from Moth’s Blur engine. The music controller changes tracks with route and encounter state, carries playback position across route changes, and ducks music for QTEs. Exploration ambience continues independently.",
+                    "highlightCaption": "Submitted to Moth Hack’s Intermediate 2: Quantum game challenge.",
+                    "highlightPictures": [
+                        "/img/recent-projects/quasicombo-gameplay.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The route and braid display provides context for the route-dependent music."
+                    ]
+                },
+                {
+                    "highlightTitle": "Make the prototype approachable",
+                    "description": "Menus explain the controls and provide settings, restart, and quit behavior. The customization screen lets players change the robot’s body and light colors. These supporting systems make the packaged demo easier to explore without needing the editor.",
+                    "highlightPictures": [
+                        "/img/recent-projects/quasicombo-menu.webp",
+                        "/img/recent-projects/quasicombo-customization.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The Quasicombo main menu.",
+                        "Robot body and light color controls with preset swatches and RGB sliders."
+                    ]
+                },
+                {
+                    "highlightTitle": "A collaborative game-jam project",
+                    "description": "Game development: David “Mr. DJ” Grimsley. Narrative design and graphics: Toka Abdelaziz (Taika Iltiqat). Background music: Yoshi. Sound effects: s1gnal. Quantum computing consultation: Maja. The project uses licensed environment, character, animation, and audio assets; the public source repository intentionally excludes licensed editable content. The Windows release contains the playable runtime.",
+                    "highlightCaption": "Global Quantum Game Jam 2026 and Moth Hack, September 2026."
+                }
+            ],
+            "links": [
+                {
+                    "label": "Get Quasicombo on itch.io",
+                    "url": "https://mrdj2u.itch.io/quasicombo"
+                },
+                {
+                    "label": "View source on GitHub",
+                    "url": "https://github.com/DavidJGrimsley/Quasicombo"
+                },
+                {
+                    "label": "Download the Windows release",
+                    "url": "https://github.com/DavidJGrimsley/Quasicombo/releases/tag/release-2026-10-10"
+                },
+                {
+                    "label": "View the Quantum Game Jam entry",
+                    "url": "https://itch.io/jam/quantum-game-jam-2026/rate/5061244"
+                },
+                {
+                    "label": "View the Moth Hack entry",
+                    "url": "https://airtable.com/appfaqE6MpACGX3LN/shrKxNCu6BKEnDRVs?bEHV2=allRecords&detail=eyJwYWdlSWQiOiJwYWdoWnN1YzFERmRxeVFweiIsInJvd0lkIjoicmVjcU42WXlZVlBUNVJOWjEiLCJzaG93Q29tbWVudHMiOmZhbHNlLCJxdWVyeU9yaWdpbkhpbnQiOnsidHlwZSI6InBhZ2VFbGVtZW50IiwiZWxlbWVudElkIjoicGVsQ0pZYlE0ZGhBTmJqZ0wiLCJxdWVyeUNvbnRhaW5lcklkIjoicGVsNEVPbWVZZFhDYkVIVjIifX0"
+                },
+                {
+                    "label": "Watch the Moth Hack demo",
+                    "url": "https://youtu.be/EUcPGIPwvgI"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "public-facing/api",
+                    "title": "quantum",
+                    "caption": "Explore my Quantum API and its engine integrations",
+                    "href": "/public-facing/api/quantum"
+                }
+            ],
+            "youtubeID": "EUcPGIPwvgI"
+        },
+        {
+            "title": "neo-rock-em-sock-em-robots",
+            "displayTitle": "Neo Rock ’Em Sock ’Em Robots",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "Tabletop robot boxing with shared-space and remote multiplayer. Second place at Ctrl+Space.",
+            "picture": "/img/recent-projects/neo-menu.webp",
+            "pictureDescription": "Neo Rock ’Em Sock ’Em Robots menu with one-player and two-player options.",
+            "gif": "",
+            "breakdown": "I rebuilt a childhood robot-boxing idea as a tabletop AR fighter. Place an arena on a real surface, choose solo or multiplayer, and control a robot with movement, attacks, defense, and a deliberately playful finishing uppercut. The game placed second in the Expo × ReactVision Ctrl+Space hackathon.\n\nThe work spans adapting 3D assets for ViroReact, implementing combat and collision behavior, making touch controls usable in landscape, and coordinating two players. It currently lives inside XR Showcase, so its source and TestFlight links are shared with the other experiences.",
+            "skillsUsed": [
+                "ViroReact",
+                "Expo",
+                "TypeScript",
+                "GLB animation",
+                "Combat systems",
+                "Cloud anchors",
+                "ViroSharedFrame",
+                "Multiplayer",
+                "Expo Audio"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Adapt the assets to the runtime",
+                    "description": "I prepared the arena and robot assets for the Viro scene, worked through materials and animation clips, and connected them to the combat presentation. The preparation view shows the model setup; the finished demo places the ring on a real table.",
+                    "highlightPictures": [
+                        "/img/recent-projects/neo-assets.webp",
+                        "/img/recent-projects/neo-ar.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Preparing the ring, robot model, and animation setup for ReactVision.",
+                        "Two robot fighters inside the placed tabletop arena."
+                    ]
+                },
+                {
+                    "highlightTitle": "Make the controls part of the game",
+                    "description": "The combat implementation tracks health, contact, movement, attacks, and defensive actions, with a CPU opponent for solo play. The landscape interface keeps the combat controls near the hands, and audio and reaction animation help communicate contact and the outcome of a round.",
+                    "highlightPictures": [
+                        "/img/recent-projects/neo-menu.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The arena menu introduces solo and two-player play."
+                    ]
+                },
+                {
+                    "highlightTitle": "Share one arena across two phones",
+                    "description": "Same-table play uses ReactVision cloud anchors and ViroSharedFrame to align both phones to the same arena. A relay supports remote play, and QR invitations help connect players. Placement, tracking, and connection state are handled separately from the fight so the interface can explain what is still needed.",
+                    "highlightCaption": "Second place, Ctrl+Space — Expo × ReactVision AR/VR hackathon.",
+                    "highlightPictures": [
+                        "/img/recent-projects/neo-ar.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The shared tabletop arena shown in the Ctrl+Space demo."
+                    ]
+                }
+            ],
+            "links": [
+                {
+                    "label": "View the shared XR Showcase source",
+                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
+                },
+                {
+                    "label": "Try XR Showcase on TestFlight",
+                    "url": "https://testflight.apple.com/join/4UugyD8Y"
+                },
+                {
+                    "label": "Watch the robot boxing demo",
+                    "url": "https://youtu.be/eoelgVtbo08"
+                },
+                {
+                    "label": "View the second-place entry",
+                    "url": "https://separated-cornet-eaf.notion.site/Neo-Rock-Em-Sock-Em-Robots-3df70ea37156832d901f81a25e851ad5"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "mobile-apps",
+                    "title": "xr-showcase",
+                    "caption": "Explore the shared XR Showcase app",
+                    "href": "/portfolio/mobile-apps/xr-showcase"
+                }
+            ],
+            "youtubeID": "eoelgVtbo08"
+        },
+        {
+            "title": "guess-the-qubit-unreal",
+            "displayTitle": "Guess the Qubit — Unreal",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "Build intuition for qubits by predicting a measurement on a playable Bloch sphere.",
+            "picture": "/img/recent-projects/qubit-unreal.webp",
+            "pictureDescription": "The Unreal Guess the Qubit screen with a cyan Bloch sphere, labeled basis states, guess buttons, and hardware-job controls.",
+            "gif": "",
+            "breakdown": "I built Guess the Qubit as an educational Unreal prototype and a practical example of my Quantum API plugin. Instead of beginning with a page of notation, it begins with an object: a luminous Bloch sphere, a state vector, and a choice between two possible measurement results.\n\nThe current game lets the player guess, watch a gate animation, and see the state collapse to 0 or 1. It includes simulator integration and an optional asynchronous hardware-job path. The public Windows demo and source are available; a longer sequence of guided lessons remains a future direction.",
+            "skillsUsed": [
+                "Unreal Engine",
+                "Blueprints",
+                "Quantum API Unreal plugin",
+                "Bloch sphere",
+                "Educational games",
+                "Asynchronous jobs"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Give an abstract state a visible form",
+                    "description": "The cyan shell and rings establish the sphere, while the magenta vector and labeled basis states show its orientation. I built the interaction around a rotation followed by a measurement, so the visual transition has a clear beginning and outcome.",
+                    "highlightPictures": [
+                        "/img/recent-projects/qubit-unreal.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The labeled Bloch sphere and guess controls in the Unreal demo."
+                    ]
+                },
+                {
+                    "highlightTitle": "Guess, measure, and try again",
+                    "description": "Players choose 0 or 1 before seeing the result. The rotation animation and collapse make each round observable, while win/loss feedback encourages another attempt. This prototype focuses on that small loop; broader lessons on gates and superposition are planned."
+                },
+                {
+                    "highlightTitle": "Exercise the Quantum API plugin",
+                    "description": "The game uses the project’s Quantum API Unreal plugin for simulated gate calls and optional queued hardware jobs. The repository leaves credentials blank, and hardware access depends on an external service profile. This makes the source a concrete integration example as well as a learning prototype."
+                }
+            ],
+            "links": [
+                {
+                    "label": "View source on GitHub",
+                    "url": "https://github.com/DavidJGrimsley/guess-the-qubit"
+                },
+                {
+                    "label": "Download the Windows demo",
+                    "url": "https://github.com/DavidJGrimsley/guess-the-qubit/releases/tag/v0.1.0-demo"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "mobile-apps",
+                    "title": "guess-the-qubit-ar",
+                    "caption": "Walk around the AR version of Guess the Qubit",
+                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                },
+                {
+                    "category": "public-facing/api",
+                    "title": "quantum",
+                    "caption": "Explore my Quantum API and its engine integrations",
+                    "href": "/public-facing/api/quantum"
+                }
+            ]
+        },
+        {
+            "title": "football-game",
+            "displayTitle": "Football Game",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "A no-code tabletop AR football simulation. Best No-Code (Studio) at Ctrl+Space.",
+            "picture": "/img/recent-projects/football-ar.webp",
+            "pictureDescription": "The Football Game demo showing a miniature football field placed on a table.",
+            "gif": "",
+            "breakdown": "I made this separate Ctrl+Space entry entirely in ReactVision Studio, using its built-in assistant to guide much of the setup. The result is a tabletop AR football simulation that can be viewed through StudioGo. It received the hackathon’s Best No-Code (Studio) category award.\n\nThis was an exploration of what the visual authoring workflow could produce without writing application code. It shares the hackathon context with XR Showcase, but it is a separate Studio scene and is not one of the three experiences bundled into that app.",
+            "skillsUsed": [
+                "ReactVision Studio",
+                "StudioGo",
+                "No-code authoring",
+                "AR scene design",
+                "Prototyping"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Author directly in ReactVision Studio",
+                    "description": "I used the Studio editor and its assistant to assemble the football simulation. The process let me explore the scene and interaction as a visual authoring task rather than starting with a new codebase.",
+                    "highlightPictures": [
+                        "/img/recent-projects/football-ar.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The Studio-authored football field shown in the demo."
+                    ]
+                },
+                {
+                    "highlightTitle": "Put the field on a real table",
+                    "description": "The tabletop scale makes the simulation into an object in the room. StudioGo provides the viewing path for the authored scene; the linked demo shows the result in AR."
+                },
+                {
+                    "highlightTitle": "A separate hackathon experiment",
+                    "description": "The entry was a Ctrl+Space finalist and received Best No-Code (Studio). Its Studio scene and video are linked here. Unlike the coded robot arena, Medimagen, and AR Qubit, it does not use the shared XR Showcase source or TestFlight distribution.",
+                    "highlightCaption": "Best No-Code (Studio), Ctrl+Space — Expo × ReactVision."
+                }
+            ],
+            "links": [
+                {
+                    "label": "Watch the Football Game demo",
+                    "url": "https://youtu.be/f1O2cW_A6hY"
+                },
+                {
+                    "label": "Open the ReactVision Studio scene",
+                    "url": "https://studio.reactvision.xyz/scene/0f433f69-2f26-4b13-ba18-1c715406e47e"
+                },
+                {
+                    "label": "View the award entry",
+                    "url": "https://separated-cornet-eaf.notion.site/Football-Game-d6f70ea3715683cd864401c4feb623b2"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "mobile-apps",
+                    "title": "xr-showcase",
+                    "caption": "See my other Ctrl+Space work in XR Showcase",
+                    "href": "/portfolio/mobile-apps/xr-showcase"
+                }
+            ],
+            "youtubeID": "f1O2cW_A6hY"
+        },
+        {
             "title": "quantum-jam-2025-echoes-of-light",
             "displayTitle": "Quantum Jam 2025: Echoes of Light",
             "isFeatured": false,
@@ -188,12 +830,12 @@
             "skillsLearned": ["Godot HTTPRequest Node", "GDScript Signals & Callbacks", "Network Error Fallbacks", "Dialogue System Integration", "Cross-Platform API Communication"],
             "otherSections": [
                 {
-                    "category": "SoftwareDevelopment",
-                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "category": "software-development",
+                    "title": "quantum-jam-2025-echoes-of-light",
                     "caption": "See how I built the Python quantum server"
                 },
                 {
-                    "category": "WebDev",
+                    "category": "website-development",
                     "title": "Quantum Jam 2025: Echoes of Light",
                     "caption": "See the React Native website with quantum animations"
                 }
@@ -352,13 +994,13 @@
             "skillsLearned": ["React Native Reanimated 4", "NativeWind Configuration", "Expo Web Deployment", "Multi-Layer Parallax Effects", "Quantum-Driven UI", "Collapsible Animated Components", "Cross-Platform Web/Mobile Development"],
             "otherSections": [
                 {
-                    "category": "SoftwareDevelopment",
-                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "category": "software-development",
+                    "title": "quantum-jam-2025-echoes-of-light",
                     "caption": "See how I built the Python quantum server that powers these animations"
                 },
                 {
-                    "category": "GameDesign",
-                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "category": "game-design",
+                    "title": "quantum-jam-2025-echoes-of-light",
                     "caption": "See how I integrated the quantum API into the Godot game"
                 }
             ],
@@ -367,7 +1009,7 @@
                     "highlightTitle": "React Native Reanimated 4 Animations",
                     "highlightCaption": "60fps animations running on UI thread with shared values",
                     "description": "I implemented sophisticated animations using React Native Reanimated 4, leveraging shared values and worklets to run animations on the UI thread at 60fps without blocking JavaScript. The quantum icon component features dynamic rotation patterns that cycle between orbital (360° loops) and oscillation (back-and-forth) motions. I used withRepeat, withSequence, and withTiming to create complex animation chains with configurable durations and cycle counts. The animations are triggered by external API calls that return measurement values, which I map to rotation intensity (20-60°) and repetition counts (15-30 cycles). The implementation demonstrates advanced React Native performance optimization—all animation logic runs natively using worklets, avoiding the JavaScript bridge overhead that typically causes janky animations.",
-                    "code": "import Animated, { useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';\n\nconst QuantumIcon = () => {\n  const rotation = useSharedValue(0);\n  const [icon, setIcon] = useState('⚛️');\n\n  const startAnimation = async () => {\n    try {\n      const response = await fetch('API_URL', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ gate_type: 'rotation', rotation_angle: Math.random() * Math.PI })\n      });\n      \n      const { measurement, superposition_strength } = await response.json();\n      \n      // Map quantum values to animation parameters\n      const intensity = 20 + (superposition_strength * 40); // 20° to 60°\n      const cycles = Math.floor(15 + (superposition_strength * 15)); // 15-30\n      \n      if (measurement === 0) {\n        // Orbital pattern\n        rotation.value = withRepeat(\n          withSequence(\n            withTiming(360, { duration: 2000 }),\n            withTiming(0, { duration: 0 })\n          ),\n          cycles\n        );\n        setIcon('⭐');\n      } else {\n        // Oscillation pattern\n        rotation.value = withRepeat(\n          withSequence(\n            withTiming(intensity, { duration: 1000 }),\n            withTiming(-intensity, { duration: 1000 })\n          ),\n          cycles\n        );\n        setIcon('🌌');\n      }\n    } catch (error) {\n      console.error('API error:', error);\n    }\n  };\n\n  return (\n    <Animated.View style={{ transform: [{ rotate: \`\${rotation.value}deg\` }] }}>\n      <Text style={{ fontSize: 48 }}>{icon}</Text>\n    </Animated.View>\n  );\n};"
+                    "code": "import Animated, { useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';\n\nconst QuantumIcon = () => {\n  const rotation = useSharedValue(0);\n  const [icon, setIcon] = useState('⚛️');\n\n  const startAnimation = async () => {\n    try {\n      const response = await fetch('API_URL', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ gate_type: 'rotation', rotation_angle: Math.random() * Math.PI })\n      });\n      \n      const { measurement, superposition_strength } = await response.json();\n      \n      // Map quantum values to animation parameters\n      const intensity = 20 + (superposition_strength * 40); // 20° to 60°\n      const cycles = Math.floor(15 + (superposition_strength * 15)); // 15-30\n      \n      if (measurement === 0) {\n        // Orbital pattern\n        rotation.value = withRepeat(\n          withSequence(\n            withTiming(360, { duration: 2000 }),\n            withTiming(0, { duration: 0 })\n          ),\n          cycles\n        );\n        setIcon('⭐');\n      } else {\n        // Oscillation pattern\n        rotation.value = withRepeat(\n          withSequence(\n            withTiming(intensity, { duration: 1000 }),\n            withTiming(-intensity, { duration: 1000 })\n          ),\n          cycles\n        );\n        setIcon('🌌');\n      }\n    } catch (error) {\n      console.error('API error:', error);\n    }\n  };\n\n  return (\n    <Animated.View style={{ transform: [{ rotate: `${rotation.value}deg` }] }}>\n      <Text style={{ fontSize: 48 }}>{icon}</Text>\n    </Animated.View>\n  );\n};"
                 },
                 {
                     "highlightTitle": "Custom Parallax Scrolling System",
@@ -394,9 +1036,83 @@
     ],
     "software-development": [
         {
+            "title": "isquared",
+            "displayTitle": "iSquared (name pending)",
+            "isFeatured": false,
+            "inProgress": false,
+            "caption": "Developer tools today, growing toward an environment for people and agents to build and verify software together.",
+            "picture": "/img/recent-projects/isquared-home.webp",
+            "pictureDescription": "iSquared Home design prototype showing project attention, sessions, and Infie. The displayed project data is illustrative.",
+            "gif": "",
+            "breakdown": "iSquared is the working name for the broader development environment I am building from Mr. DJ’s Dev Suite. The delivered MDS foundation includes a CLI, Doctor checks, project generation, onboarding, knowledge resources, MCP integration, and workflows for keeping project context alongside the work.\n\nThe next direction brings those capabilities into a coordinated environment with project awareness, isolated sessions, review, and human attention. The screens on this page are design prototypes of that direction, not evidence that the full desktop IDE or cross-device system has shipped. Existing repositories, packages, and commands still use MDS while the name is being decided.",
+            "skillsUsed": [
+                "TypeScript",
+                "CLI design",
+                "MCP",
+                "Developer tooling",
+                "Expo project generation",
+                "Workspace workflows",
+                "Agent coordination",
+                "Product prototyping"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Start with tools that do useful work",
+                    "description": "MDS provides project generation and onboarding, a searchable knowledge library, MCP tools, and Doctor checks for application readiness. The CLI and agent integrations make those capabilities available in development workflows. They form the delivered foundation beneath the broader iSquared idea.",
+                    "highlightCaption": "Delivered foundation: Mr. DJ’s Dev Suite (MDS)."
+                },
+                {
+                    "highlightTitle": "Use the foundation to build XR Showcase",
+                    "description": "I used MDS while creating XR Showcase’s Expo foundation and project structure. Its project memory and validation workflows gave me a place to organize decisions and check the application as its three AR experiences developed. XR Showcase is a concrete example of the tooling being used on another project."
+                },
+                {
+                    "highlightTitle": "Design around projects and sessions",
+                    "description": "The proposed environment moves from a cross-project Home into Project Home, then a session, review, and completion. The prototypes explore what needs human attention, what an agent is working on, and what evidence is ready for review. Their example projects, progress indicators, and agent activity are illustrative.",
+                    "highlightCaption": "Design exploration — the broader environment is under development.",
+                    "highlightPictures": [
+                        "/img/recent-projects/isquared-project.webp",
+                        "/img/recent-projects/isquared-session.webp",
+                        "/img/recent-projects/isquared-mobile.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Design prototype: Project Home with illustrative sessions, human tasks, reviews, and project memory.",
+                        "Design prototype: an application-focused session view in the proposed iSquared environment.",
+                        "Design prototype: the iSquared Home concept adapted for a mobile companion surface."
+                    ]
+                },
+                {
+                    "highlightTitle": "Give coordination a recognizable face",
+                    "description": "Infie is the coordinator concept: help people notice the right work, route it into sessions, and follow it through review. The character artwork explores that role visually. The planned Code-OSS host, iSquared Core service, and companion surfaces remain distinct from the delivered MDS CLI and tooling.",
+                    "highlightCaption": "Infie artwork and interface prototypes for a product in development.",
+                    "highlightPictures": [
+                        "/img/recent-projects/infie.webp",
+                        "/img/recent-projects/isquared-home.webp"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Infie character artwork for the coordinator concept.",
+                        "Design prototype: iSquared Home and its illustrative attention queue."
+                    ]
+                }
+            ],
+            "links": [
+                {
+                    "label": "Explore Mr. DJ’s Dev Suite on GitHub",
+                    "url": "https://github.com/DavidJGrimsley/mrdj-dev-suite"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "mobile-apps",
+                    "title": "xr-showcase",
+                    "caption": "See XR Showcase, built using the MDS foundation",
+                    "href": "/portfolio/mobile-apps/xr-showcase"
+                }
+            ]
+        },
+        {
             "title": "quantum-jam-2025-echoes-of-light",
             "displayTitle": "Quantum Jam 2025: Echoes of Light",
-            "isFeatured": true,
+            "isFeatured": false,
             "inProgress": false,
             "caption": "Quantum backend project: Python Qiskit server with VPS deployment.",
             "picture": "/img/QuantumEcho/main-echo.png",
@@ -408,13 +1124,13 @@
             "skillsLearned": ["IBM Qiskit Quantum Circuits", "Quantum Gate Operations", "Statevector Simulation", "Quantum Measurement & Collapse", "Flask-CORS Configuration", "VPS systemd Service Setup", "API Error Handling", "Logging & Observability"],
             "otherSections": [
                 {
-                    "category": "WebDev",
+                    "category": "website-development",
                     "title": "Quantum Jam 2025: Echoes of Light",
                     "caption": "See the React Native website I built with quantum animations"
                 },
                 {
-                    "category": "GameDesign",
-                    "title": "Quantum Jam 2025: Echoes of Light",
+                    "category": "game-design",
+                    "title": "quantum-jam-2025-echoes-of-light",
                     "caption": "See how I integrated this quantum server into the Godot game"
                 }
             ],

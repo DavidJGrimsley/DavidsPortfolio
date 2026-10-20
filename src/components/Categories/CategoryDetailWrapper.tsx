@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, ScrollView, Image, Alert, Dimensions } from 'react-native';
+import { View, ScrollView, Image, Alert, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { BackgroundGradient } from '@/components/Gradients';
 import { InProgress } from '@/components/Categories/InProgress';
@@ -9,7 +9,7 @@ import { OtherSectionsLinks } from '@/components/Categories/OtherSectionsLinks';
 import { SeoHead } from '@/components/SEO/SeoHead';
 import { Piece, Pieces, normalizePieces } from '@/types/portfolio';
 import { FlashList } from '@shopify/flash-list';
-import YoutubePlayer from 'react-native-youtube-iframe';
+import { PortfolioVideo } from './PortfolioVideo';
 import rawPieces from '@json/pieces.json';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { toAbsoluteUrl } from '@/constants/seo';
@@ -28,6 +28,8 @@ export function CategoryDetailWrapper({
     enableScrollTracking = false 
 }: CategoryDetailWrapperProps) {
     const { title } = useLocalSearchParams<{ title?: string | string[] }>();
+    const { width } = useWindowDimensions();
+    const videoWidth = Math.min(960, Math.max(160, width * 0.9 - 48));
     const [, setPlaying] = useState(false);
     const [, setScrollY] = useState(0);
     const [, setNavVisible] = useState(true);
@@ -97,7 +99,7 @@ export function CategoryDetailWrapper({
                 scrollEventThrottle={enableScrollTracking ? 20 : undefined}
             >
                 <BackgroundGradient />
-                <View className="w-full max-w-[90%] self-center bg-transparent px-6 py-9 pb-12">
+                <View className="w-full max-w-[90%] self-center bg-transparent px-3 md:px-6 pt-20 md:pt-9 pb-12" style={{ maxWidth: 1200 }}>
                     {piece ? (
                         <View>
                             <ThemedText
@@ -109,8 +111,8 @@ export function CategoryDetailWrapper({
                                 {piece.displayTitle || piece.title}
                             </ThemedText>
                             <ThemedText className="detail-caption">{piece.caption}</ThemedText>
-                            <View className="detail-image-container">
-                                <Image source={{ uri: piece.picture }} className="w-full h-full" resizeMode="contain" />
+                            <View className="w-full my-6" style={{ aspectRatio: 16 / 9, maxHeight: 600 }}>
+                                <Image source={{ uri: piece.picture }} accessibilityLabel={piece.pictureDescription ?? `${seoTitle} screenshot`} className="w-full h-full" resizeMode="contain" />
                             </View>
 
                             {renderExtraContent ? renderExtraContent(piece) : null}
@@ -120,11 +122,11 @@ export function CategoryDetailWrapper({
 
                             <View className="justify-center items-center my-[2.5%]">
                                 {piece.youtubeID ? (
-                                    <YoutubePlayer
-                                        height={Dimensions.get('window').width * 0.7 * 0.5625}
-                                        width={Dimensions.get('window').width * 0.7}
-                                        play={false}
+                                    <PortfolioVideo
+                                        height={videoWidth * 0.5625}
+                                        width={videoWidth}
                                         videoId={piece.youtubeID}
+                                        title={seoTitle}
                                         onChangeState={onStateChange}
                                     />
                                 ) : null}
@@ -137,7 +139,7 @@ export function CategoryDetailWrapper({
                                         ListHeaderComponent={<ThemedText headingLevel={2} className="detail-section-header">Skills Used:</ThemedText>}
                                         renderItem={({ item }) => <ThemedText className="detail-skill-item">{item}</ThemedText>}
                                         horizontal={false}
-                                        numColumns={3}
+                                        numColumns={width < 640 ? 2 : 3}
                                         showsHorizontalScrollIndicator={false}
                                     />
                                 ) : null}
@@ -148,14 +150,14 @@ export function CategoryDetailWrapper({
                                         ListHeaderComponent={<ThemedText headingLevel={2} className="detail-section-header">Skills Learned:</ThemedText>}
                                         renderItem={({ item }) => <ThemedText className="detail-skill-item">{item}</ThemedText>}
                                         horizontal={false}
-                                        numColumns={3}
+                                        numColumns={width < 640 ? 2 : 3}
                                         showsHorizontalScrollIndicator={false}
                                     />
                                 ) : null}
                             </View>
 
-                            {(piece.github || piece.site || piece.steam) ? (
-                                <HorizontalLinks github={piece.github} site={piece.site} steam={piece.steam} />
+                            {(piece.github || piece.site || piece.steam || piece.links?.length) ? (
+                                <HorizontalLinks github={piece.github} site={piece.site} steam={piece.steam} links={piece.links} />
                             ) : null}
 
                             {piece.highlights ? <HighlightView highlights={piece.highlights} /> : null}
