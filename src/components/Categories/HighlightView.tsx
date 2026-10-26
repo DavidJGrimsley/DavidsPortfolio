@@ -17,7 +17,7 @@ export function HighlightView({ highlights }: HighlightViewProps) {
             {highlights.map((highlight, index) => (
                 <View key={index} className="highlight-view">
                     <ThemedText headingLevel={2} className="highlight-title">{highlight.highlightTitle}</ThemedText>
-                    <View className="flex items-center justify-center flex-row flex-wrap">
+                    <View className="w-full flex items-center justify-center flex-row flex-wrap">
                         {highlight.highlightPictures && Array.isArray(highlight.highlightPictures) && highlight.highlightPictures.length > 0 && (
                             <HighlightImageCarousel pictures={highlight.highlightPictures} descriptions={highlight.highlightPictureDescriptions} title={highlight.highlightTitle} />
                         )}

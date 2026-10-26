@@ -10,6 +10,7 @@ import { SeoHead } from '@/components/SEO/SeoHead';
 import { Piece, Pieces, normalizePieces } from '@/types/portfolio';
 import { FlashList } from '@shopify/flash-list';
 import { PortfolioVideo } from './PortfolioVideo';
+import { portfolioImageFrame } from './portfolio-image-frame';
 import rawPieces from '@json/pieces.json';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { toAbsoluteUrl } from '@/constants/seo';
@@ -111,8 +112,8 @@ export function CategoryDetailWrapper({
                                 {piece.displayTitle || piece.title}
                             </ThemedText>
                             <ThemedText className="detail-caption">{piece.caption}</ThemedText>
-                            <View className="w-full my-6" style={{ aspectRatio: 16 / 9, maxHeight: 600 }}>
-                                <Image source={{ uri: piece.picture }} accessibilityLabel={piece.pictureDescription ?? `${seoTitle} screenshot`} className="w-full h-full" resizeMode="contain" />
+                            <View className="my-6" style={portfolioImageFrame}>
+                                <Image source={{ uri: piece.picture }} accessibilityLabel={piece.pictureDescription ?? `${seoTitle} screenshot`} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="contain" />
                             </View>
 
                             {renderExtraContent ? renderExtraContent(piece) : null}

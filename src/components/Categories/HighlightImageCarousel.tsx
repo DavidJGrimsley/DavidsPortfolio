@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/UI/ThemedText';
+import { portfolioImageFrame } from './portfolio-image-frame';
 
 type HighlightImageCarouselProps = {
     pictures?: string[];
@@ -18,13 +19,15 @@ export function HighlightImageCarousel({ pictures, descriptions, title = 'Projec
     const description = descriptions?.[index] ?? `${title}, image ${index + 1} of ${pictures.length}`;
     return (
         <View style={{ width: '100%', maxWidth: 1100, alignItems: 'center', marginVertical: 12 }}>
-            <Image 
-                source={{ uri: pictures[index] }}
-                accessibilityLabel={description}
-                style={{ width: '100%', aspectRatio: 1.6, maxHeight: 560 }}
-                contentFit="contain"
-                transition={300}
-            />
+            <View style={portfolioImageFrame}>
+                <Image
+                    source={{ uri: pictures[index] }}
+                    accessibilityLabel={description}
+                    style={{ position: 'absolute', width: '100%', height: '100%' }}
+                    contentFit="contain"
+                    transition={300}
+                />
+            </View>
             {pictures.length > 1 && (
                 <View className="flex-row flex-wrap justify-center gap-2 mt-3">
                     {pictures.map((_, idx) => (
