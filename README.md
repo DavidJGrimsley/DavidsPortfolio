@@ -110,7 +110,12 @@ npm run typecheck
 npm test -- --runInBand
 npm run doctor
 npm run build:web:deploy
+npm run verify:web -- http://localhost:8081
 ```
+
+`npm start` and `npm run web` give the Expo server renderer a 2 MB JavaScript call stack. The default V8 stack can overflow inside React's HTML escaping with this navigation tree in development. The export command uses the same stack budget and Node executable. Keep this setting when launching Expo directly.
+
+After starting a development or production server, `npm run verify:web -- <origin>` checks the homepage and every portfolio case study for server-rendered headings/content and React rendering failures. It rejects client-rendering fallbacks even when the server returns HTTP 200.
 
 ## CI + Deploy Flow
 

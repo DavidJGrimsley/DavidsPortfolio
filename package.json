@@ -7,11 +7,11 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "node --stack-size=2048 node_modules/expo/bin/cli start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
+    "web": "node --stack-size=2048 node_modules/expo/bin/cli start --web",
     "build": "npm run build:web",
     "build:web": "node scripts/export-web.mjs && node scripts/generate-sitemap.mjs",
     "build:web:deploy": "npm run build:web && node scripts/write-build-marker.mjs",
@@ -25,6 +25,7 @@
     "test:ci": "jest --ci",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
+    "verify:web": "node scripts/verify-web-rendering.mjs",
     "doctor": "npx expo-doctor",
     "server": "node server.js",
     "server:dev": "nodemon server.js"

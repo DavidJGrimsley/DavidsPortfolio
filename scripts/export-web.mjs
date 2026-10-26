@@ -9,9 +9,10 @@ const { assertSsrBuild } = require('./assert-ssr-build.cjs');
 const repoRoot = path.resolve(process.cwd());
 
 function runExpoExport(resolvedEnv) {
-  const isWindows = process.platform === 'win32';
-  const command = isWindows ? 'cmd.exe' : 'npx';
-  const args = isWindows ? ['/d', '/s', '/c', 'npx expo export -p web'] : ['expo', 'export', '-p', 'web'];
+  // Match the development commands: this navigation tree exceeds V8's
+  // default 984 KB stack during SSR, before React can recover the render.
+  const command = process.execPath;
+  const args = ['--stack-size=2048', require.resolve('expo/bin/cli'), 'export', '-p', 'web'];
 
   const child = spawn(command, args, {
     cwd: repoRoot,

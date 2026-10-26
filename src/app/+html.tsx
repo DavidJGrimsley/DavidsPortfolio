@@ -28,7 +28,8 @@ export default function Root({ children }: PropsWithChildren) {
         
         {/* Theme Color */}
         <meta name="theme-color" content="#20182D" />
-        <script src="/__djsportfolio_css__" />
+        {/* Metro injects development CSS; this endpoint belongs to server.js. */}
+        {process.env.NODE_ENV === 'production' ? <script src="/__djsportfolio_css__" /> : null}
         <script src="/__djsportfolio_runtime_config__" />
         <script
           dangerouslySetInnerHTML={{

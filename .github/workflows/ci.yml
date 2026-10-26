@@ -150,6 +150,7 @@ jobs:
               require_header "staging cache reset header" "^clear-site-data:[[:space:]]*\"cache\"[[:space:]]*$" /tmp/djsportfolio-staging-host.headers
 
               node ./scripts/verify-detail-seo.mjs "http://127.0.0.1:${PORT}"
+              node ./scripts/verify-web-rendering.mjs "http://127.0.0.1:${PORT}"
 
               if grep -q 'Failed to load loader data' /tmp/djsportfolio-api-index.html /tmp/djsportfolio-api-quantum.html /tmp/djsportfolio-mcp.html; then
                 echo "SSR route smoke found loader failure text"
