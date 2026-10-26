@@ -567,7 +567,14 @@
                 },
                 {
                     "highlightTitle": "A collaborative game-jam project",
-                    "description": "Game development: David “Mr. DJ” Grimsley. Narrative design and graphics: Toka Abdelaziz (Taika Iltiqat). Background music: Yoshi. Sound effects: s1gnal. Quantum computing consultation: Maja. The project uses licensed environment, character, animation, and audio assets; the public source repository intentionally excludes licensed editable content. The Windows release contains the playable runtime.",
+                    "credits": [
+                        { "role": "Game development", "name": "David “Mr. DJ” Grimsley" },
+                        { "role": "Narrative design and graphics", "name": "Toka Abdelaziz (Taika Iltiqat)" },
+                        { "role": "Background music", "name": "Yoshi" },
+                        { "role": "Sound effects", "name": "s1gnal" },
+                        { "role": "Quantum computing consultation", "name": "Maja" }
+                    ],
+                    "description": "The project uses licensed environment, character, animation, and audio assets; the public source repository intentionally excludes licensed editable content. The Windows release contains the playable runtime.",
                     "highlightCaption": "Global Quantum Game Jam 2026 and Moth Hack, September 2026."
                 }
             ],

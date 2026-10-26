@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View, Text, useWindowDimensions } from 'react-native';
 import { PortfolioVideo } from './PortfolioVideo';
 import { Highlight } from '@/types/portfolio';
 import { HighlightImageCarousel } from './HighlightImageCarousel';
@@ -25,6 +25,18 @@ export function HighlightView({ highlights }: HighlightViewProps) {
                             <ThemedText className="highlight-caption">{highlight.highlightCaption}</ThemedText>
                         )}
                     </View>
+                    {highlight.credits?.length ? (
+                        <View role="list" className="w-full max-w-200 self-center gap-2 my-3 px-3">
+                            {highlight.credits.map((credit) => (
+                                <View key={`${credit.role}-${credit.name}`} role="listitem" className="flex-row items-start gap-2">
+                                    <ThemedText className="text-base md:text-lg">•</ThemedText>
+                                    <ThemedText className="highlight-description flex-1" style={{ textAlign: 'left', fontWeight: '400' }}>
+                                        {credit.role}: <Text style={{ fontWeight: '700' }}>{credit.name}</Text>
+                                    </ThemedText>
+                                </View>
+                            ))}
+                        </View>
+                    ) : null}
                     <ThemedText className="highlight-description">{highlight.description}</ThemedText>
                     {highlight.video && (
                         <PortfolioVideo
