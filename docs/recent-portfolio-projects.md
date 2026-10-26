@@ -100,35 +100,35 @@ Portfolio route: `/portfolio/software-development/isquared`.
 
 ## Image provenance
 
-All delivered media is local WebP under `public/img/recent-projects/`. Original owner files remain intact. Images were resized without enlargement and window borders were cropped where appropriate. The logo recording is represented by a still; galleries advance through explicit, keyboard-accessible image buttons.
+All delivered media is local WebP in per-project folders under `public/img/`, following the existing asset layout. XR Showcase reuses the images in each experience’s project folder. Original owner files remain intact. Images were resized without enlargement and window borders were cropped where appropriate. The logo recording is represented by a still; galleries advance through explicit, keyboard-accessible image buttons.
 
 | Delivered image | Source |
 | --- | --- |
-| quasicombo-menu.webp | Local Unreal capture: `Quasicombo-HUD/Saved/MenuValidation/home-1080p.png` (window border cropped) |
-| quasicombo-customization.webp | Local Unreal capture: `Quasicombo-HUD/Saved/MenuValidation/customize-swatches-1080p.png` (window border cropped) |
-| quasicombo-gameplay.webp | Local Unreal capture: `Quasicombo-time-evolution/Saved/BossApproachValidation/RouteTimestamp/Rendered/clean_gameplay_hud.png` (window border cropped) |
-| quasicombo-boss.webp | Local Unreal capture: `Quasicombo-time-evolution/Saved/BossApproachValidation/Rendered/transformation_finished.png` |
-| quasicombo-qte.webp | Local Unreal capture: `Quasicombo-level-design/Saved/BossFixValidation/NormalViewport.png` (window border cropped) |
-| time2pay-sessions.webp | Owner supplied: `temp/Pics/Time2pay/Screenshot 2026-10-20 135132.png` |
-| time2pay-milestones.webp | Owner supplied: `temp/Pics/Time2pay/Screenshot 2026-10-20 135418.png` |
-| time2pay-logo.webp | Owner supplied: `temp/Pics/Time2pay/Recording 2026-10-20 135236.gif` |
-| qubit-unreal.webp | Owner supplied: `temp/Pics/GuessTheQubit/UnrealEngineQubit.png` |
-| medimagen-alignment.webp | Owner supplied: `temp/Pics/Medimagen/AligningIn3dSlicer.png` |
-| medimagen-brain-preparation.webp | Owner supplied: `temp/Pics/Medimagen/BrainIn3dSlicer.png` |
-| medimagen-skull-preparation.webp | Owner supplied: `temp/Pics/Medimagen/CleaningUpSkull3dSlicer.png` |
-| medimagen-anatomy.webp | Local XR workspace: `temp/medical-brain-both-preview.png` (prepared-model preview) |
-| neo-assets.webp | Owner supplied: `temp/Pics/rockemSockem/AppropriatingAssetsAndAnimationsToWorkWithReactVision.png` |
-| neo-menu.webp | Owner supplied: `temp/Pics/rockemSockem/StarMenu.png` |
-| isquared-home.webp | Local MDS workspace: `i2-phase1-home-desktop.png` (design prototype / artwork) |
-| isquared-project.webp | Local MDS workspace: `i2-phase1-project-desktop.png` (design prototype / artwork) |
-| isquared-session.webp | Local MDS workspace: `i2-phase1-session-app-desktop.png` (design prototype / artwork) |
-| isquared-mobile.webp | Local MDS workspace: `i2-phase1-home-mobile.png` (design prototype / artwork) |
-| infie.webp | Local MDS workspace: `generated/infie-prototype/renders/infie-hero.png` (design prototype / artwork) |
-| neo-ar.webp | Published demo [thumbnail](https://i.ytimg.com/vi/eoelgVtbo08/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=eoelgVtbo08). |
-| medimagen-ar.webp | Published demo [thumbnail](https://i.ytimg.com/vi/TQKk3C_ra0Q/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=TQKk3C_ra0Q). |
-| qubit-ar.webp | Published demo [thumbnail](https://i.ytimg.com/vi/vVACYtnPqNc/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=vVACYtnPqNc). |
-| football-ar.webp | Published demo [thumbnail](https://i.ytimg.com/vi/f1O2cW_A6hY/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=f1O2cW_A6hY). |
-| quasicombo-card.webp | Square crop of the locally captured `transformation_finished.png` for the featured/category card. |
+| `Quasicombo/quasicombo-menu.webp` | Local Unreal capture: `Quasicombo-HUD/Saved/MenuValidation/home-1080p.png` (window border cropped) |
+| `Quasicombo/quasicombo-customization.webp` | Local Unreal capture: `Quasicombo-HUD/Saved/MenuValidation/customize-swatches-1080p.png` (window border cropped) |
+| `Quasicombo/quasicombo-gameplay.webp` | Local Unreal capture: `Quasicombo-time-evolution/Saved/BossApproachValidation/RouteTimestamp/Rendered/clean_gameplay_hud.png` (window border cropped) |
+| `Quasicombo/quasicombo-boss.webp` | Local Unreal capture: `Quasicombo-time-evolution/Saved/BossApproachValidation/Rendered/transformation_finished.png` |
+| `Quasicombo/quasicombo-qte.webp` | Local Unreal capture: `Quasicombo-level-design/Saved/BossFixValidation/NormalViewport.png` (window border cropped) |
+| `Time2Pay/time2pay-sessions.webp` | Owner supplied: `temp/Pics/Time2pay/Screenshot 2026-10-20 135132.png` |
+| `Time2Pay/time2pay-milestones.webp` | Owner supplied: `temp/Pics/Time2pay/Screenshot 2026-10-20 135418.png` |
+| `Time2Pay/time2pay-logo.webp` | Owner supplied: `temp/Pics/Time2pay/Recording 2026-10-20 135236.gif` |
+| `GuessTheQubit/qubit-unreal.webp` | Owner supplied: `temp/Pics/GuessTheQubit/UnrealEngineQubit.png` |
+| `Medimagen/medimagen-alignment.webp` | Owner supplied: `temp/Pics/Medimagen/AligningIn3dSlicer.png` |
+| `Medimagen/medimagen-brain-preparation.webp` | Owner supplied: `temp/Pics/Medimagen/BrainIn3dSlicer.png` |
+| `Medimagen/medimagen-skull-preparation.webp` | Owner supplied: `temp/Pics/Medimagen/CleaningUpSkull3dSlicer.png` |
+| `Medimagen/medimagen-anatomy.webp` | Local XR workspace: `temp/medical-brain-both-preview.png` (prepared-model preview) |
+| `NeoRockEmSockEmRobots/neo-assets.webp` | Owner supplied: `temp/Pics/rockemSockem/AppropriatingAssetsAndAnimationsToWorkWithReactVision.png` |
+| `NeoRockEmSockEmRobots/neo-menu.webp` | Owner supplied: `temp/Pics/rockemSockem/StarMenu.png` |
+| `iSquared/isquared-home.webp` | Local MDS workspace: `i2-phase1-home-desktop.png` (design prototype / artwork) |
+| `iSquared/isquared-project.webp` | Local MDS workspace: `i2-phase1-project-desktop.png` (design prototype / artwork) |
+| `iSquared/isquared-session.webp` | Local MDS workspace: `i2-phase1-session-app-desktop.png` (design prototype / artwork) |
+| `iSquared/isquared-mobile.webp` | Local MDS workspace: `i2-phase1-home-mobile.png` (design prototype / artwork) |
+| `iSquared/infie.webp` | Local MDS workspace: `generated/infie-prototype/renders/infie-hero.png` (design prototype / artwork) |
+| `NeoRockEmSockEmRobots/neo-ar.webp` | Published demo [thumbnail](https://i.ytimg.com/vi/eoelgVtbo08/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=eoelgVtbo08). |
+| `Medimagen/medimagen-ar.webp` | Published demo [thumbnail](https://i.ytimg.com/vi/TQKk3C_ra0Q/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=TQKk3C_ra0Q). |
+| `GuessTheQubit/qubit-ar.webp` | Published demo [thumbnail](https://i.ytimg.com/vi/vVACYtnPqNc/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=vVACYtnPqNc). |
+| `FootballGame/football-ar.webp` | Published demo [thumbnail](https://i.ytimg.com/vi/f1O2cW_A6hY/maxresdefault.jpg), [video](https://www.youtube.com/watch?v=f1O2cW_A6hY). |
+| `Quasicombo/quasicombo-card.webp` | Square crop of the locally captured `transformation_finished.png` for the featured/category card. |
 
 ## Validation
 

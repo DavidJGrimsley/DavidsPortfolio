@@ -6,9 +6,9 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "From tracking a work session to sending an invoice: a self-hostable app for freelancers and small teams.",
-            "picture": "/img/recent-projects/time2pay-sessions.webp",
+            "picture": "/img/Time2Pay/time2pay-sessions.webp",
             "pictureDescription": "Time2Pay tour mode showing demo work sessions grouped by week, with customer and project filters.",
-            "gif": "/img/recent-projects/time2pay-logo.webp",
+            "gif": "/img/Time2Pay/time2pay-logo.webp",
             "breakdown": "I built Time2Pay to connect the small pieces of freelance work: customers, projects, tasks, time, and invoices. A session can be timed or entered manually, reviewed alongside the rest of a project, and included in an invoice. Milestone checklists keep the work itself visible alongside its billing.\n\nThe same application supports a local data mode and a hosted account mode. It is published at time2pay.app as an installable web app, with an anonymous tour that lets visitors explore demo data before signing in. The source is available for self-hosting.",
             "skillsUsed": [
                 "React Native",
@@ -27,7 +27,7 @@
                     "highlightTitle": "Keep time connected to the work",
                     "description": "I organized the tracking flow around customer, project, and task selections. The session timer and manual entries feed a weekly session history, while project milestones provide a lightweight checklist for what still needs to be done. This keeps time records attached to their context instead of turning them into a separate spreadsheet.",
                     "highlightPictures": [
-                        "/img/recent-projects/time2pay-milestones.webp"
+                        "/img/Time2Pay/time2pay-milestones.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Time2Pay session setup and a project milestone checklist using demo data."
@@ -37,7 +37,7 @@
                     "highlightTitle": "One application, local or hosted",
                     "description": "A shared database interface lets the app use SQLite locally or Supabase and Postgres in hosted mode. Hosted reads use user-scoped access, and writes pass through validated API routes. Tour mode uses an in-memory demo provider, so trying the app does not require creating an account.",
                     "highlightPictures": [
-                        "/img/recent-projects/time2pay-sessions.webp"
+                        "/img/Time2Pay/time2pay-sessions.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The tour-mode banner and demo sessions show the application before sign-in."
@@ -67,7 +67,7 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "One iOS-first AR app for robot boxing, medical anatomy, and quantum exploration.",
-            "picture": "/img/recent-projects/neo-ar.webp",
+            "picture": "/img/NeoRockEmSockEmRobots/neo-ar.webp",
             "pictureDescription": "Two robot fighters in a tabletop arena, one of the three experiences in XR Showcase.",
             "gif": "",
             "breakdown": "I built XR Showcase for the Ctrl+Space hackathon by Expo and ReactVision. It brings three experiences into one app: Neo Rock ’Em Sock ’Em Robots, Medimagen, and Guess the Qubit. Each explores a different reason to put an interactive object into the space around you.\n\nThe common foundation uses Expo, React Native, and ViroReact. I used Mr. DJ’s Dev Suite to generate and organize the project, then developed the placement, controls, native AR lifecycle, and individual experiences. The shared repository and TestFlight build currently provide access to all three.",
@@ -87,9 +87,9 @@
                     "highlightTitle": "Three experiences with different purposes",
                     "description": "The robot arena turns a table into a multiplayer fighting space. Medimagen puts scan-derived anatomy and CT/MRI slices into that space. Guess the Qubit adapts my Unreal learning game into a Bloch sphere you can walk around. Their individual case studies explain the work behind each experience.",
                     "highlightPictures": [
-                        "/img/recent-projects/neo-ar.webp",
-                        "/img/recent-projects/medimagen-ar.webp",
-                        "/img/recent-projects/qubit-ar.webp"
+                        "/img/NeoRockEmSockEmRobots/neo-ar.webp",
+                        "/img/Medimagen/medimagen-ar.webp",
+                        "/img/GuessTheQubit/qubit-ar.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Neo Rock ’Em Sock ’Em Robots running in tabletop AR.",
@@ -105,7 +105,7 @@
                     "highlightTitle": "Build with the tooling I develop",
                     "description": "XR Showcase gave me a practical application for the MDS project generator, onboarding, project memory, and Doctor checks. That connection is part of the story of iSquared: tools are useful when they help produce and verify a real application, not just a starter screen.",
                     "highlightPictures": [
-                        "/img/recent-projects/neo-menu.webp"
+                        "/img/NeoRockEmSockEmRobots/neo-menu.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The implemented robot-arena menu inside XR Showcase."
@@ -165,7 +165,7 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "Explore scan-derived anatomy and CT/MRI slices in tabletop AR. A Ctrl+Space finalist.",
-            "picture": "/img/recent-projects/medimagen-anatomy.webp",
+            "picture": "/img/Medimagen/medimagen-anatomy.webp",
             "pictureDescription": "Prepared half-skull and brain meshes aligned together for Medimagen.",
             "gif": "",
             "breakdown": "Medical scans are usually viewed as flat slices. I built Medimagen to let people explore the relationship between those slices and a three-dimensional model placed on a real surface. The experience includes skull and brain meshes, anatomical labels, registered CT/MRI slices, and a stacked-slice preview.\n\nA substantial part of the work happened before the AR scene: preparing anatomy in 3D Slicer, cleaning geometry, aligning data, and exporting assets that could stay registered in the app. Medimagen was a finalist in the Expo × ReactVision Ctrl+Space hackathon and currently lives inside XR Showcase.",
@@ -185,8 +185,8 @@
                     "highlightTitle": "Prepare anatomy for a phone",
                     "description": "I used 3D Slicer to work with scan-derived skull and brain geometry, inspect surfaces, and prepare the models for export. The goal was to retain useful anatomical structure while producing assets that could be positioned and explored in a mobile AR scene.",
                     "highlightPictures": [
-                        "/img/recent-projects/medimagen-skull-preparation.webp",
-                        "/img/recent-projects/medimagen-brain-preparation.webp"
+                        "/img/Medimagen/medimagen-skull-preparation.webp",
+                        "/img/Medimagen/medimagen-brain-preparation.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Inspecting the inner skull surface during cleanup in 3D Slicer.",
@@ -197,8 +197,8 @@
                     "highlightTitle": "Keep models and slices in alignment",
                     "description": "The skull, brain, and slice views need to describe the same space. I worked through CT/MRI registration and used a consistent coordinate transform when exporting the model assets. In the app, the model pair moves together rather than giving each child a different placement transform.",
                     "highlightPictures": [
-                        "/img/recent-projects/medimagen-alignment.webp",
-                        "/img/recent-projects/medimagen-anatomy.webp"
+                        "/img/Medimagen/medimagen-alignment.webp",
+                        "/img/Medimagen/medimagen-anatomy.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "CT and aligned MRI overlaid in a sagittal slice in 3D Slicer.",
@@ -210,7 +210,7 @@
                     "description": "Users can place, scale, rotate, and inspect the anatomy, then switch to scan slices and stacked-slice visualization. An experimental GPU volume-rendering path is also part of the investigation, but it remains unverified on iPhone. The case study distinguishes that work from the implemented anatomy and slice views.",
                     "highlightCaption": "Educational visualization prototype; the experimental volume renderer is still under investigation.",
                     "highlightPictures": [
-                        "/img/recent-projects/medimagen-ar.webp"
+                        "/img/Medimagen/medimagen-ar.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "A frame from the Medimagen hackathon demo showing scan-slice controls."
@@ -251,7 +251,7 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "A Bloch sphere you can walk around, with simulator measurements and queued quantum hardware jobs. A Ctrl+Space finalist.",
-            "picture": "/img/recent-projects/qubit-ar.webp",
+            "picture": "/img/GuessTheQubit/qubit-ar.webp",
             "pictureDescription": "The AR Guess the Qubit demo with a Bloch sphere placed in the room and a queued hardware-job message.",
             "gif": "",
             "breakdown": "I adapted my Unreal Guess the Qubit prototype into an AR learning experience for XR Showcase. The same visual question remains: choose 0 or 1, watch a gate act on the qubit, and see which measurement comes back. In AR, the sphere becomes an object that can be placed, resized, and viewed from different angles.\n\nThe app uses my Quantum API through its TypeScript SDK. Simulator results and asynchronous hardware jobs share the interaction, while the interface makes the waiting state visible. This version was a Ctrl+Space finalist and is distributed through the shared XR Showcase TestFlight build.",
@@ -269,7 +269,7 @@
                     "highlightTitle": "Translate the Unreal visual language",
                     "description": "I rebuilt the cyan shell, axis rings, labeled basis states, and magenta state vector with Viro primitives. The AR placement and transform controls let the user choose the viewpoint, while retaining the original gate-intro and measurement-collapse sequence.",
                     "highlightPictures": [
-                        "/img/recent-projects/qubit-ar.webp"
+                        "/img/GuessTheQubit/qubit-ar.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The spatial Bloch sphere in the AR demo."
@@ -504,9 +504,9 @@
             "isFeatured": true,
             "inProgress": false,
             "caption": "A 2.5D beat-’em-up where the path you choose becomes a quantum braid that changes the boss fight.",
-            "picture": "/img/recent-projects/quasicombo-menu.webp",
+            "picture": "/img/Quasicombo/quasicombo-menu.webp",
             "pictureDescription": "Quasicombo title menu with the playable robot in a jungle environment.",
-            "gif": "/img/recent-projects/quasicombo-card.webp",
+            "gif": "/img/Quasicombo/quasicombo-card.webp",
             "breakdown": "I developed Quasicombo as a short Unreal Engine action game for Global Quantum Game Jam 2026. Combat and combos carry the player through branching routes; the order of those crossings forms a quantum braid. My Quantum API evaluates that braid and feeds its result back into the boss encounter, tying an abstract quantum operation to a choice the player can see.\n\nThe project also became a Moth Hack submission, using Moth’s Blur engine for processed versions of Yoshi’s piano music. Alongside the quantum integration, I worked on the combat systems, boss evolution, QTEs, menus, customization, and playable Windows build. Narrative, graphics, music, sound, and quantum consultation came from the collaborators credited below.",
             "skillsUsed": [
                 "Unreal Engine",
@@ -524,7 +524,7 @@
                     "highlightTitle": "Make the route part of the mechanic",
                     "description": "Three routes act as braid strands. Choosing a crossing records an ordered operation, so taking the same crossings in a different order can change the evaluated state. Ordinary combat stays immediate: clear enemies, build a combo, and reach the next junction. The visible braid HUD connects those route choices to the eventual readout.",
                     "highlightPictures": [
-                        "/img/recent-projects/quasicombo-gameplay.webp"
+                        "/img/Quasicombo/quasicombo-gameplay.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Gameplay capture with the robot, combo display, and three-strand braid history."
@@ -534,8 +534,8 @@
                     "highlightTitle": "Bring the quantum result into the boss fight",
                     "description": "At encounter readout points, the Unreal integration sends the braid history to my Quantum API. The evaluated state contributes to the boss setup and QTE behavior, while a time-evolution operation supports changes during combat. A local fallback keeps a service interruption from stopping the game. Player execution still determines the payoff of a QTE.",
                     "highlightPictures": [
-                        "/img/recent-projects/quasicombo-boss.webp",
-                        "/img/recent-projects/quasicombo-qte.webp"
+                        "/img/Quasicombo/quasicombo-boss.webp",
+                        "/img/Quasicombo/quasicombo-qte.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The player robot facing the evolved boss in the jungle arena.",
@@ -547,7 +547,7 @@
                     "description": "I prepared route-dependent versions of Yoshi’s piano music using the quantum jazz effect from Moth’s Blur engine. The music controller changes tracks with route and encounter state, carries playback position across route changes, and ducks music for QTEs. Exploration ambience continues independently.",
                     "highlightCaption": "Submitted to Moth Hack’s Intermediate 2: Quantum game challenge.",
                     "highlightPictures": [
-                        "/img/recent-projects/quasicombo-gameplay.webp"
+                        "/img/Quasicombo/quasicombo-gameplay.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The route and braid display provides context for the route-dependent music."
@@ -557,8 +557,8 @@
                     "highlightTitle": "Make the prototype approachable",
                     "description": "Menus explain the controls and provide settings, restart, and quit behavior. The customization screen lets players change the robot’s body and light colors. These supporting systems make the packaged demo easier to explore without needing the editor.",
                     "highlightPictures": [
-                        "/img/recent-projects/quasicombo-menu.webp",
-                        "/img/recent-projects/quasicombo-customization.webp"
+                        "/img/Quasicombo/quasicombo-menu.webp",
+                        "/img/Quasicombo/quasicombo-customization.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The Quasicombo main menu.",
@@ -620,7 +620,7 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "Tabletop robot boxing with shared-space and remote multiplayer. Second place at Ctrl+Space.",
-            "picture": "/img/recent-projects/neo-menu.webp",
+            "picture": "/img/NeoRockEmSockEmRobots/neo-menu.webp",
             "pictureDescription": "Neo Rock ’Em Sock ’Em Robots menu with one-player and two-player options.",
             "gif": "",
             "breakdown": "I rebuilt a childhood robot-boxing idea as a tabletop AR fighter. Place an arena on a real surface, choose solo or multiplayer, and control a robot with movement, attacks, defense, and a deliberately playful finishing uppercut. The game placed second in the Expo × ReactVision Ctrl+Space hackathon.\n\nThe work spans adapting 3D assets for ViroReact, implementing combat and collision behavior, making touch controls usable in landscape, and coordinating two players. It currently lives inside XR Showcase, so its source and TestFlight links are shared with the other experiences.",
@@ -640,8 +640,8 @@
                     "highlightTitle": "Adapt the assets to the runtime",
                     "description": "I prepared the arena and robot assets for the Viro scene, worked through materials and animation clips, and connected them to the combat presentation. The preparation view shows the model setup; the finished demo places the ring on a real table.",
                     "highlightPictures": [
-                        "/img/recent-projects/neo-assets.webp",
-                        "/img/recent-projects/neo-ar.webp"
+                        "/img/NeoRockEmSockEmRobots/neo-assets.webp",
+                        "/img/NeoRockEmSockEmRobots/neo-ar.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Preparing the ring, robot model, and animation setup for ReactVision.",
@@ -652,7 +652,7 @@
                     "highlightTitle": "Make the controls part of the game",
                     "description": "The combat implementation tracks health, contact, movement, attacks, and defensive actions, with a CPU opponent for solo play. The landscape interface keeps the combat controls near the hands, and audio and reaction animation help communicate contact and the outcome of a round.",
                     "highlightPictures": [
-                        "/img/recent-projects/neo-menu.webp"
+                        "/img/NeoRockEmSockEmRobots/neo-menu.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The arena menu introduces solo and two-player play."
@@ -663,7 +663,7 @@
                     "description": "Same-table play uses ReactVision cloud anchors and ViroSharedFrame to align both phones to the same arena. A relay supports remote play, and QR invitations help connect players. Placement, tracking, and connection state are handled separately from the fight so the interface can explain what is still needed.",
                     "highlightCaption": "Second place, Ctrl+Space — Expo × ReactVision AR/VR hackathon.",
                     "highlightPictures": [
-                        "/img/recent-projects/neo-ar.webp"
+                        "/img/NeoRockEmSockEmRobots/neo-ar.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The shared tabletop arena shown in the Ctrl+Space demo."
@@ -704,7 +704,7 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "Build intuition for qubits by predicting a measurement on a playable Bloch sphere.",
-            "picture": "/img/recent-projects/qubit-unreal.webp",
+            "picture": "/img/GuessTheQubit/qubit-unreal.webp",
             "pictureDescription": "The Unreal Guess the Qubit screen with a cyan Bloch sphere, labeled basis states, guess buttons, and hardware-job controls.",
             "gif": "",
             "breakdown": "I built Guess the Qubit as an educational Unreal prototype and a practical example of my Quantum API plugin. Instead of beginning with a page of notation, it begins with an object: a luminous Bloch sphere, a state vector, and a choice between two possible measurement results.\n\nThe current game lets the player guess, watch a gate animation, and see the state collapse to 0 or 1. It includes simulator integration and an optional asynchronous hardware-job path. The public Windows demo and source are available; a longer sequence of guided lessons remains a future direction.",
@@ -721,7 +721,7 @@
                     "highlightTitle": "Give an abstract state a visible form",
                     "description": "The cyan shell and rings establish the sphere, while the magenta vector and labeled basis states show its orientation. I built the interaction around a rotation followed by a measurement, so the visual transition has a clear beginning and outcome.",
                     "highlightPictures": [
-                        "/img/recent-projects/qubit-unreal.webp"
+                        "/img/GuessTheQubit/qubit-unreal.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The labeled Bloch sphere and guess controls in the Unreal demo."
@@ -767,7 +767,7 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "A no-code tabletop AR football simulation. Best No-Code (Studio) at Ctrl+Space.",
-            "picture": "/img/recent-projects/football-ar.webp",
+            "picture": "/img/FootballGame/football-ar.webp",
             "pictureDescription": "The Football Game demo showing a miniature football field placed on a table.",
             "gif": "",
             "breakdown": "I made this separate Ctrl+Space entry entirely in ReactVision Studio, using its built-in assistant to guide much of the setup. The result is a tabletop AR football simulation that can be viewed through StudioGo. It received the hackathon’s Best No-Code (Studio) category award.\n\nThis was an exploration of what the visual authoring workflow could produce without writing application code. It shares the hackathon context with XR Showcase, but it is a separate Studio scene and is not one of the three experiences bundled into that app.",
@@ -783,7 +783,7 @@
                     "highlightTitle": "Author directly in ReactVision Studio",
                     "description": "I used the Studio editor and its assistant to assemble the football simulation. The process let me explore the scene and interaction as a visual authoring task rather than starting with a new codebase.",
                     "highlightPictures": [
-                        "/img/recent-projects/football-ar.webp"
+                        "/img/FootballGame/football-ar.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "The Studio-authored football field shown in the demo."
@@ -1048,7 +1048,7 @@
             "isFeatured": false,
             "inProgress": false,
             "caption": "Developer tools today, growing toward an environment for people and agents to build and verify software together.",
-            "picture": "/img/recent-projects/isquared-home.webp",
+            "picture": "/img/iSquared/isquared-home.webp",
             "pictureDescription": "iSquared Home design prototype showing project attention, sessions, and Infie. The displayed project data is illustrative.",
             "gif": "",
             "breakdown": "iSquared is the working name for the broader development environment I am building from Mr. DJ’s Dev Suite. The delivered MDS foundation includes a CLI, Doctor checks, project generation, onboarding, knowledge resources, MCP integration, and workflows for keeping project context alongside the work.\n\nThe next direction brings those capabilities into a coordinated environment with project awareness, isolated sessions, review, and human attention. The screens on this page are design prototypes of that direction, not evidence that the full desktop IDE or cross-device system has shipped. Existing repositories, packages, and commands still use MDS while the name is being decided.",
@@ -1077,9 +1077,9 @@
                     "description": "The proposed environment moves from a cross-project Home into Project Home, then a session, review, and completion. The prototypes explore what needs human attention, what an agent is working on, and what evidence is ready for review. Their example projects, progress indicators, and agent activity are illustrative.",
                     "highlightCaption": "Design exploration — the broader environment is under development.",
                     "highlightPictures": [
-                        "/img/recent-projects/isquared-project.webp",
-                        "/img/recent-projects/isquared-session.webp",
-                        "/img/recent-projects/isquared-mobile.webp"
+                        "/img/iSquared/isquared-project.webp",
+                        "/img/iSquared/isquared-session.webp",
+                        "/img/iSquared/isquared-mobile.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Design prototype: Project Home with illustrative sessions, human tasks, reviews, and project memory.",
@@ -1092,8 +1092,8 @@
                     "description": "Infie is the coordinator concept: help people notice the right work, route it into sessions, and follow it through review. The character artwork explores that role visually. The planned Code-OSS host, iSquared Core service, and companion surfaces remain distinct from the delivered MDS CLI and tooling.",
                     "highlightCaption": "Infie artwork and interface prototypes for a product in development.",
                     "highlightPictures": [
-                        "/img/recent-projects/infie.webp",
-                        "/img/recent-projects/isquared-home.webp"
+                        "/img/iSquared/infie.webp",
+                        "/img/iSquared/isquared-home.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Infie character artwork for the coordinator concept.",
