@@ -1,31 +1,25 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
+import { ExternalLink } from '@/components/UI/ExternalLink';
+import type { PortfolioLink } from '@/types/portfolio';
+import { portfolioExternalLinks } from '@/lib/portfolio-links';
 
 type HorizontalLinksProps = {
     github?: string;
     site?: string;
     steam?: string;
+    links?: PortfolioLink[];
 };
 
-export function HorizontalLinks({ github, site, steam }: HorizontalLinksProps) {
+export function HorizontalLinks(props: HorizontalLinksProps) {
     return (
-        <View className="flex-row justify-center items-center my-2.5">
-            {github && (
-                <Pressable className="btn-primary" onPress={() => window.open(github)}>
-                    <ThemedText inverse className="btn-primary-text">Github</ThemedText>
-                </Pressable>
-            )}
-            {site && (
-                <Pressable className="btn-primary" onPress={() => window.open(site)}>
-                    <ThemedText inverse className="btn-primary-text">Info Website</ThemedText>
-                </Pressable>
-            )}
-            {steam && (
-                <Pressable className="btn-primary" onPress={() => window.open(steam)}>
-                    <ThemedText inverse className="btn-primary-text">See it here!</ThemedText>
-                </Pressable>
-            )}
+        <View className="flex-row flex-wrap justify-center items-center gap-3 my-4">
+            {portfolioExternalLinks(props).map(({ label, url }) => (
+                <ExternalLink key={`${label}-${url}`} href={url} className="bg-accent rounded-lg px-5 py-3 w-full sm:w-auto max-w-full" accessibilityLabel={label}>
+                    <ThemedText className="text-center text-base md:text-lg" style={{ color: '#fff' }}>{label}</ThemedText>
+                </ExternalLink>
+            ))}
         </View>
     );
 }

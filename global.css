@@ -308,7 +308,7 @@ Colors
   }
 
   .main-title-shadow {
-    @apply absolute top-1/2 left-0 -z-10 text-(--color-accent) opacity-15 font-extrabold text-8xl;
+    @apply absolute top-1/2 left-0 right-0 -z-10 text-(--color-accent) opacity-15 font-extrabold text-8xl;
   }
 
   @media (prefers-color-scheme: dark) {

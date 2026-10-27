@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Dimensions } from 'react-native';
-import YoutubePlayer from "react-native-youtube-iframe";
+import { View, Text, useWindowDimensions } from 'react-native';
+import { PortfolioVideo } from './PortfolioVideo';
 import { Highlight } from '@/types/portfolio';
 import { HighlightImageCarousel } from './HighlightImageCarousel';
 import { ThemedText } from '@/components/UI/ThemedText';
@@ -10,26 +10,40 @@ type HighlightViewProps = {
 };
 
 export function HighlightView({ highlights }: HighlightViewProps) {
+    const { width } = useWindowDimensions();
+    const videoWidth = Math.min(960, Math.max(160, width * 0.8 - 48));
     return (
         <View>
             {highlights.map((highlight, index) => (
                 <View key={index} className="highlight-view">
-                    <ThemedText headingLevel={3} className="highlight-title">{highlight.highlightTitle}</ThemedText>
-                    <View className="flex items-center justify-center flex-row flex-wrap">
+                    <ThemedText headingLevel={2} className="highlight-title">{highlight.highlightTitle}</ThemedText>
+                    <View className="w-full flex items-center justify-center flex-row flex-wrap">
                         {highlight.highlightPictures && Array.isArray(highlight.highlightPictures) && highlight.highlightPictures.length > 0 && (
-                            <HighlightImageCarousel pictures={highlight.highlightPictures} />
+                            <HighlightImageCarousel pictures={highlight.highlightPictures} descriptions={highlight.highlightPictureDescriptions} title={highlight.highlightTitle} />
                         )}
                         {highlight.highlightCaption && (
                             <ThemedText className="highlight-caption">{highlight.highlightCaption}</ThemedText>
                         )}
                     </View>
+                    {highlight.credits?.length ? (
+                        <View role="list" className="w-full max-w-200 self-center gap-2 my-3 px-3">
+                            {highlight.credits.map((credit) => (
+                                <View key={`${credit.role}-${credit.name}`} role="listitem" className="flex-row items-start gap-2">
+                                    <ThemedText className="text-base md:text-lg">•</ThemedText>
+                                    <ThemedText className="highlight-description flex-1" style={{ textAlign: 'left', fontWeight: '400' }}>
+                                        {credit.role}: <Text style={{ fontWeight: '700' }}>{credit.name}</Text>
+                                    </ThemedText>
+                                </View>
+                            ))}
+                        </View>
+                    ) : null}
                     <ThemedText className="highlight-description">{highlight.description}</ThemedText>
                     {highlight.video && (
-                        <YoutubePlayer
-                            height={Dimensions.get('window').width * 0.5 * 0.5625}
-                            width={Dimensions.get('window').width * 0.5}
-                            play={false}
+                        <PortfolioVideo
+                            height={videoWidth * 0.5625}
+                            width={videoWidth}
                             videoId={highlight.video}
+                            title={highlight.highlightTitle}
                         />
                     )}
                     {highlight.code && (

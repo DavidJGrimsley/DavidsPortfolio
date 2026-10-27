@@ -30,8 +30,7 @@ export function FeaturedCard() {
     }, []);
 
     return (
-        <View className="w-full items-center">
-            <View className="flex flex-row flex-wrap justify-center gap-x-[3%] gap-y-[4%] w-full">
+        <View className="w-full items-center flex flex-row flex-wrap justify-center gap-x-[3%] gap-y-[4%]">
                 {featured.map((item) => {
                     const imageSource = item.gif || item.picture;
 
@@ -48,7 +47,6 @@ export function FeaturedCard() {
                         />
                     );
                 })}
-            </View>
         </View>
     );
 }
