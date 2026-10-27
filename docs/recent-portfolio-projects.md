@@ -4,9 +4,9 @@ Research and validation recorded October 20, 2026. Changes are in the prepared `
 
 ## Editorial decisions
 
-- Nine focused case studies use the existing category/detail layout. Quasicombo is the only homepage feature; the two previous featured entries remain in the portfolio.
-- The Unreal and AR Qubit versions have separate pages and correct source/download links. XR Showcase, Medimagen, Neo, and AR Qubit currently share the XR repository and TestFlight build.
-- Football Game is a separate ReactVision Studio scene. Its page does not claim it is in XR Showcase or link it to the shared TestFlight build.
+- Eight focused case studies use the existing category/detail layout. Quasicombo is the only homepage feature; the two previous featured entries remain in the portfolio.
+- The Unreal and AR Qubit versions have separate pages and correct source/download links. Medimagen, Neo, and AR Qubit were prototyped in the xr-showcase workspace and share source and TestFlight links. XR Showcase is a prototyping workspace, not a separate portfolio app.
+- Football Game is a separate ReactVision Studio scene. Its page links directly to the individual AR apps as related hackathon work and retains its own Studio viewing link.
 - iSquared (name pending) covers the delivered MDS tools and clearly labels broader environment screenshots as design prototypes. Example project metrics and sessions in those screenshots are illustrative.
 - Medimagen describes anatomy and scan-slice work separately from the experimental GPU volume renderer, which remains unverified on iPhone.
 - New case studies do not show the legacy unfinished-portfolio-page banner. Product prototype/development status is explained in their narratives. Existing entries retain their original progress flags.
@@ -31,20 +31,12 @@ Portfolio route: `/portfolio/mobile-apps/time2pay`.
 - [Open Time2Pay](https://time2pay.app) — CERT_HAS_EXPIRED.
 - [View source on GitHub](https://github.com/DavidJGrimsley/time2pay) — HTTP 200.
 
-### XR Showcase
-
-Portfolio route: `/portfolio/mobile-apps/xr-showcase`.
-
-- [View source on GitHub](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
-- [Try XR Showcase on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
-- [View the Ctrl+Space gallery](https://separated-cornet-eaf.notion.site/fcc70ea37156823b9026015194acaf43?v=37670ea37156826f9686882e2e3624fd) — HTTP 200.
-
 ### Medimagen
 
 Portfolio route: `/portfolio/mobile-apps/medimagen`.
 
-- [View the shared XR Showcase source](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
-- [Try XR Showcase on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
+- [View the shared AR prototype source](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
+- [Try the prototype on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
 - [Watch the Medimagen demo](https://www.youtube.com/shorts/TQKk3C_ra0Q) — HTTP 200.
 - [View the finalist entry](https://separated-cornet-eaf.notion.site/Medimagen-24470ea3715683e4aff301d0a34edf21) — HTTP 200.
 
@@ -52,8 +44,8 @@ Portfolio route: `/portfolio/mobile-apps/medimagen`.
 
 Portfolio route: `/portfolio/mobile-apps/guess-the-qubit-ar`.
 
-- [View the AR source in XR Showcase](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
-- [Try XR Showcase on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
+- [View the shared AR prototype source](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
+- [Try the prototype on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
 - [Watch the AR demo](https://www.youtube.com/shorts/vVACYtnPqNc) — HTTP 200.
 - [View the finalist entry](https://separated-cornet-eaf.notion.site/Guess-the-Qubit-f1670ea3715683088c3e01f7901276c5) — HTTP 200.
 
@@ -72,8 +64,8 @@ Portfolio route: `/portfolio/game-design/quasicombo`.
 
 Portfolio route: `/portfolio/game-design/neo-rock-em-sock-em-robots`.
 
-- [View the shared XR Showcase source](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
-- [Try XR Showcase on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
+- [View the shared AR prototype source](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
+- [Try the prototype on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
 - [Watch the robot boxing demo](https://youtu.be/eoelgVtbo08) — HTTP 200.
 - [View the second-place entry](https://separated-cornet-eaf.notion.site/Neo-Rock-Em-Sock-Em-Robots-3df70ea37156832d901f81a25e851ad5) — HTTP 200.
 
@@ -100,7 +92,7 @@ Portfolio route: `/portfolio/software-development/isquared`.
 
 ## Image provenance
 
-All delivered media is local WebP in per-project folders under `public/img/`, following the existing asset layout. XR Showcase reuses the images in each experience’s project folder. Original owner files remain intact. Images were resized without enlargement and window borders were cropped where appropriate. The logo recording is represented by a still; galleries advance through explicit, keyboard-accessible image buttons.
+All delivered media is local WebP in per-project folders under `public/img/`, following the existing asset layout. Each project uses its own image folder. Original owner files remain intact. Images were resized without enlargement and window borders were cropped where appropriate. The logo recording is represented by a still; galleries advance through explicit, keyboard-accessible image buttons.
 
 | Delivered image | Source |
 | --- | --- |
@@ -134,11 +126,12 @@ All delivered media is local WebP in per-project folders under `public/img/`, fo
 
 - `npm ci`: passed with the existing lockfile. npm reported 82 dependency advisories (2 low, 18 moderate, 60 high, 2 critical); dependency upgrades are outside this content change.
 - `npm run lint` and `npm run typecheck`: passed.
-- `npm run test:ci -- --runInBand`: 27 suites, 146 tests passed. Coverage includes new link labels, canonical/explicit related destinations, image selection, web embeds, all nine entries, assets, and homepage selection.
+- `npm run test:ci -- --runInBand`: 29 suites, 156 tests passed. Coverage includes new link labels, canonical/explicit related destinations, image selection, web embeds, all eight entries, assets, homepage selection, and the three AR apps' individual categories and links.
 - `npx expo-doctor`: 20/21 checks passed. Its existing SDK patch-version check expects expo ~57.0.30 (installed 57.0.25), expo-constants ~57.0.22 (57.0.19), expo-linking ~57.0.13 (57.0.11), expo-router ~57.0.28 (57.0.23), expo-splash-screen ~57.0.10 (57.0.9), and jest-expo ~57.0.6 (57.0.5). No dependency changes were made.
 - `npm run build:web:deploy`: passed using process-only public configuration: `EXPO_PUBLIC_QUANTUM_API_BASE_URL=https://davidjgrimsley.com/public-facing/api/quantum/v1` and `EXPO_PUBLIC_SITE_ORIGIN=https://davidjgrimsley.com`. The first attempt without the required public API setting failed; no private env file was created or read.
-- Generated sitemap contains all nine new routes (42 URLs total).
-- Production preview: all nine details, homepage, and three affected category indexes returned HTTP 200 at 1440×1000 and 390×844, with one H1 per page, correct canonical/OG metadata, no horizontal scrolling, and no application JavaScript errors.
+- Generated sitemap contains all eight new routes (41 URLs total).
+- October 27 rendering check: all 21 remaining portfolio pages passed `verify:web`. A production export passed with bundled Node 24.22.1; the installed Windows Node 24.16.0 process exited with a native access violation during export. No runtime or dependency changes are included in this content correction.
+- Production preview: all eight details, homepage, and three affected category indexes returned HTTP 200 at 1440×1000 and 390×844, with one H1 per page, correct canonical/OG metadata, no horizontal scrolling, and no application JavaScript errors.
 - Real keyboard checks: Tab advances through labeled external links; Enter follows related Quantum API and iSquared links. Gallery selection changes the displayed image and its accessible description.
 - Visual checks covered supplied screenshots, optimized images, responsive titles, readable stacked mobile buttons, and web video sizing. The browser video path now uses a titled responsive YouTube embed rather than a native message-bridge wrapper.
 - `git diff --check`: passed. Existing case-study fields were compared to the baseline; only requested featured flags, related-link repairs, and invalid JSON escapes changed in those entries.

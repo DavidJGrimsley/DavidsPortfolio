@@ -30,7 +30,7 @@ it('keeps legacy links and exposes labeled TestFlight, download, and submission 
   let tree!: renderer.ReactTestRenderer;
   act(() => {
     tree = renderer.create(<HorizontalLinks github="https://github.com/DavidJGrimsley/xr-showcase" site="https://example.com/info" steam="https://example.com/play" links={[
-      { label: 'Try XR Showcase on TestFlight', url: 'https://testflight.apple.com/join/4UugyD8Y' },
+      { label: 'Try the prototype on TestFlight', url: 'https://testflight.apple.com/join/4UugyD8Y' },
       { label: 'Download Windows demo', url: 'https://example.com/demo.zip' },
     ]} />);
   });
@@ -39,7 +39,7 @@ it('keeps legacy links and exposes labeled TestFlight, download, and submission 
     ['GitHub', 'https://github.com/DavidJGrimsley/xr-showcase'],
     ['Info Website', 'https://example.com/info'],
     ['See it here!', 'https://example.com/play'],
-    ['Try XR Showcase on TestFlight', 'https://testflight.apple.com/join/4UugyD8Y'],
+    ['Try the prototype on TestFlight', 'https://testflight.apple.com/join/4UugyD8Y'],
     ['Download Windows demo', 'https://example.com/demo.zip'],
   ]);
   expect(links.every(node => node.props.children.props.children === node.props.accessibilityLabel)).toBe(true);

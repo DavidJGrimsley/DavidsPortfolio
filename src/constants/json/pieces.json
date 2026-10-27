@@ -62,104 +62,6 @@
             "otherSections": []
         },
         {
-            "title": "xr-showcase",
-            "displayTitle": "XR Showcase",
-            "isFeatured": false,
-            "inProgress": false,
-            "caption": "One iOS-first AR app for robot boxing, medical anatomy, and quantum exploration.",
-            "picture": "/img/NeoRockEmSockEmRobots/neo-ar.webp",
-            "pictureDescription": "Two robot fighters in a tabletop arena, one of the three experiences in XR Showcase.",
-            "gif": "",
-            "breakdown": "I built XR Showcase for the Ctrl+Space hackathon by Expo and ReactVision. It brings three experiences into one app: Neo Rock ’Em Sock ’Em Robots, Medimagen, and Guess the Qubit. Each explores a different reason to put an interactive object into the space around you.\n\nThe common foundation uses Expo, React Native, and ViroReact. I used Mr. DJ’s Dev Suite to generate and organize the project, then developed the placement, controls, native AR lifecycle, and individual experiences. The shared repository and TestFlight build currently provide access to all three.",
-            "skillsUsed": [
-                "Expo",
-                "React Native",
-                "TypeScript",
-                "ViroReact",
-                "ReactVision",
-                "AR",
-                "Zustand",
-                "MDS",
-                "EAS"
-            ],
-            "highlights": [
-                {
-                    "highlightTitle": "Three experiences with different purposes",
-                    "description": "The robot arena turns a table into a multiplayer fighting space. Medimagen puts scan-derived anatomy and CT/MRI slices into that space. Guess the Qubit adapts my Unreal learning game into a Bloch sphere you can walk around. Their individual case studies explain the work behind each experience.",
-                    "highlightPictures": [
-                        "/img/NeoRockEmSockEmRobots/neo-ar.webp",
-                        "/img/Medimagen/medimagen-ar.webp",
-                        "/img/GuessTheQubit/qubit-ar.webp"
-                    ],
-                    "highlightPictureDescriptions": [
-                        "Neo Rock ’Em Sock ’Em Robots running in tabletop AR.",
-                        "Medimagen demo showing a medical scan slice in the AR app.",
-                        "Guess the Qubit demo showing a placed Bloch sphere and hardware-job feedback."
-                    ]
-                },
-                {
-                    "highlightTitle": "Share the AR foundation",
-                    "description": "I kept camera-session ownership and cleanup separate from the individual scenes. Surface placement, scaling, rotation, repositioning, and recoverable status feedback form a common foundation. Returning Home tears down the active experience, so switching scenes does not leave competing camera sessions or unfinished UI work."
-                },
-                {
-                    "highlightTitle": "Build with the tooling I develop",
-                    "description": "XR Showcase gave me a practical application for the MDS project generator, onboarding, project memory, and Doctor checks. That connection is part of the story of iSquared: tools are useful when they help produce and verify a real application, not just a starter screen.",
-                    "highlightPictures": [
-                        "/img/NeoRockEmSockEmRobots/neo-menu.webp"
-                    ],
-                    "highlightPictureDescriptions": [
-                        "The implemented robot-arena menu inside XR Showcase."
-                    ]
-                }
-            ],
-            "links": [
-                {
-                    "label": "View source on GitHub",
-                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
-                },
-                {
-                    "label": "Try XR Showcase on TestFlight",
-                    "url": "https://testflight.apple.com/join/4UugyD8Y"
-                },
-                {
-                    "label": "View the Ctrl+Space gallery",
-                    "url": "https://separated-cornet-eaf.notion.site/fcc70ea37156823b9026015194acaf43?v=37670ea37156826f9686882e2e3624fd"
-                }
-            ],
-            "otherSections": [
-                {
-                    "category": "software-development",
-                    "title": "isquared",
-                    "caption": "See the MDS tools behind XR Showcase",
-                    "href": "/portfolio/software-development/isquared"
-                },
-                {
-                    "category": "game-design",
-                    "title": "neo-rock-em-sock-em-robots",
-                    "caption": "Step into the robot arena",
-                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
-                },
-                {
-                    "category": "mobile-apps",
-                    "title": "medimagen",
-                    "caption": "Explore Medimagen",
-                    "href": "/portfolio/mobile-apps/medimagen"
-                },
-                {
-                    "category": "mobile-apps",
-                    "title": "guess-the-qubit-ar",
-                    "caption": "Walk around the AR version of Guess the Qubit",
-                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
-                },
-                {
-                    "category": "game-design",
-                    "title": "football-game",
-                    "caption": "See my separate no-code hackathon entry",
-                    "href": "/portfolio/game-design/football-game"
-                }
-            ]
-        },
-        {
             "title": "medimagen",
             "displayTitle": "Medimagen",
             "isFeatured": false,
@@ -168,7 +70,7 @@
             "picture": "/img/Medimagen/medimagen-anatomy.webp",
             "pictureDescription": "Prepared half-skull and brain meshes aligned together for Medimagen.",
             "gif": "",
-            "breakdown": "Medical scans are usually viewed as flat slices. I built Medimagen to let people explore the relationship between those slices and a three-dimensional model placed on a real surface. The experience includes skull and brain meshes, anatomical labels, registered CT/MRI slices, and a stacked-slice preview.\n\nA substantial part of the work happened before the AR scene: preparing anatomy in 3D Slicer, cleaning geometry, aligning data, and exporting assets that could stay registered in the app. Medimagen was a finalist in the Expo × ReactVision Ctrl+Space hackathon and currently lives inside XR Showcase.",
+            "breakdown": "Medical scans are usually viewed as flat slices. I built Medimagen to let people explore the relationship between those slices and a three-dimensional model placed on a real surface. The experience includes skull and brain meshes, anatomical labels, registered CT/MRI slices, and a stacked-slice preview.\n\nA substantial part of the work happened before the AR scene: preparing anatomy in 3D Slicer, cleaning geometry, aligning data, and exporting assets that could stay registered in the app. Medimagen was a finalist in the Expo × ReactVision Ctrl+Space hackathon and was prototyped in a shared AR workspace alongside Neo Rock ’Em Sock ’Em Robots and Guess the Qubit.",
             "skillsUsed": [
                 "ViroReact",
                 "Expo",
@@ -219,11 +121,11 @@
             ],
             "links": [
                 {
-                    "label": "View the shared XR Showcase source",
+                    "label": "View the shared AR prototype source",
                     "url": "https://github.com/DavidJGrimsley/xr-showcase"
                 },
                 {
-                    "label": "Try XR Showcase on TestFlight",
+                    "label": "Try the prototype on TestFlight",
                     "url": "https://testflight.apple.com/join/4UugyD8Y"
                 },
                 {
@@ -237,10 +139,22 @@
             ],
             "otherSections": [
                 {
+                    "category": "game-design",
+                    "title": "neo-rock-em-sock-em-robots",
+                    "caption": "Explore Neo Rock ’Em Sock ’Em Robots",
+                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
+                },
+                {
                     "category": "mobile-apps",
-                    "title": "xr-showcase",
-                    "caption": "Explore the shared XR Showcase app",
-                    "href": "/portfolio/mobile-apps/xr-showcase"
+                    "title": "guess-the-qubit-ar",
+                    "caption": "Explore Guess the Qubit — AR",
+                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                },
+                {
+                    "category": "software-development",
+                    "title": "isquared",
+                    "caption": "See the MDS tools used to prototype these AR apps",
+                    "href": "/portfolio/software-development/isquared"
                 }
             ],
             "youtubeID": "TQKk3C_ra0Q"
@@ -254,7 +168,7 @@
             "picture": "/img/GuessTheQubit/qubit-ar.webp",
             "pictureDescription": "The AR Guess the Qubit demo with a Bloch sphere placed in the room and a queued hardware-job message.",
             "gif": "",
-            "breakdown": "I adapted my Unreal Guess the Qubit prototype into an AR learning experience for XR Showcase. The same visual question remains: choose 0 or 1, watch a gate act on the qubit, and see which measurement comes back. In AR, the sphere becomes an object that can be placed, resized, and viewed from different angles.\n\nThe app uses my Quantum API through its TypeScript SDK. Simulator results and asynchronous hardware jobs share the interaction, while the interface makes the waiting state visible. This version was a Ctrl+Space finalist and is distributed through the shared XR Showcase TestFlight build.",
+            "breakdown": "I adapted my Unreal Guess the Qubit prototype into an AR learning app. The same visual question remains: choose 0 or 1, watch a gate act on the qubit, and see which measurement comes back. In AR, the sphere becomes an object that can be placed, resized, and viewed from different angles.\n\nThe app uses my Quantum API through its TypeScript SDK. Simulator results and asynchronous hardware jobs share the interaction, while the interface makes the waiting state visible. This version was a Ctrl+Space finalist with prototype source and a TestFlight build linked below.",
             "skillsUsed": [
                 "Expo",
                 "ViroReact",
@@ -286,11 +200,11 @@
             ],
             "links": [
                 {
-                    "label": "View the AR source in XR Showcase",
+                    "label": "View the shared AR prototype source",
                     "url": "https://github.com/DavidJGrimsley/xr-showcase"
                 },
                 {
-                    "label": "Try XR Showcase on TestFlight",
+                    "label": "Try the prototype on TestFlight",
                     "url": "https://testflight.apple.com/join/4UugyD8Y"
                 },
                 {
@@ -311,9 +225,21 @@
                 },
                 {
                     "category": "mobile-apps",
-                    "title": "xr-showcase",
-                    "caption": "Explore the shared XR Showcase app",
-                    "href": "/portfolio/mobile-apps/xr-showcase"
+                    "title": "medimagen",
+                    "caption": "Explore Medimagen",
+                    "href": "/portfolio/mobile-apps/medimagen"
+                },
+                {
+                    "category": "game-design",
+                    "title": "neo-rock-em-sock-em-robots",
+                    "caption": "Explore Neo Rock ’Em Sock ’Em Robots",
+                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
+                },
+                {
+                    "category": "software-development",
+                    "title": "isquared",
+                    "caption": "See the MDS tools used to prototype these AR apps",
+                    "href": "/portfolio/software-development/isquared"
                 },
                 {
                     "category": "public-facing/api",
@@ -623,7 +549,7 @@
             "picture": "/img/NeoRockEmSockEmRobots/neo-menu.webp",
             "pictureDescription": "Neo Rock ’Em Sock ’Em Robots menu with one-player and two-player options.",
             "gif": "",
-            "breakdown": "I rebuilt a childhood robot-boxing idea as a tabletop AR fighter. Place an arena on a real surface, choose solo or multiplayer, and control a robot with movement, attacks, defense, and a deliberately playful finishing uppercut. The game placed second in the Expo × ReactVision Ctrl+Space hackathon.\n\nThe work spans adapting 3D assets for ViroReact, implementing combat and collision behavior, making touch controls usable in landscape, and coordinating two players. It currently lives inside XR Showcase, so its source and TestFlight links are shared with the other experiences.",
+            "breakdown": "I rebuilt a childhood robot-boxing idea as a tabletop AR fighter. Place an arena on a real surface, choose solo or multiplayer, and control a robot with movement, attacks, defense, and a deliberately playful finishing uppercut. The game placed second in the Expo × ReactVision Ctrl+Space hackathon.\n\nThe work spans adapting 3D assets for ViroReact, implementing combat and collision behavior, making touch controls usable in landscape, and coordinating two players. I prototyped the game in the same AR workspace as Medimagen and Guess the Qubit. The source repository and TestFlight build are shared.",
             "skillsUsed": [
                 "ViroReact",
                 "Expo",
@@ -672,11 +598,11 @@
             ],
             "links": [
                 {
-                    "label": "View the shared XR Showcase source",
+                    "label": "View the shared AR prototype source",
                     "url": "https://github.com/DavidJGrimsley/xr-showcase"
                 },
                 {
-                    "label": "Try XR Showcase on TestFlight",
+                    "label": "Try the prototype on TestFlight",
                     "url": "https://testflight.apple.com/join/4UugyD8Y"
                 },
                 {
@@ -691,9 +617,21 @@
             "otherSections": [
                 {
                     "category": "mobile-apps",
-                    "title": "xr-showcase",
-                    "caption": "Explore the shared XR Showcase app",
-                    "href": "/portfolio/mobile-apps/xr-showcase"
+                    "title": "medimagen",
+                    "caption": "Explore Medimagen",
+                    "href": "/portfolio/mobile-apps/medimagen"
+                },
+                {
+                    "category": "mobile-apps",
+                    "title": "guess-the-qubit-ar",
+                    "caption": "Explore Guess the Qubit — AR",
+                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                },
+                {
+                    "category": "software-development",
+                    "title": "isquared",
+                    "caption": "See the MDS tools used to prototype these AR apps",
+                    "href": "/portfolio/software-development/isquared"
                 }
             ],
             "youtubeID": "eoelgVtbo08"
@@ -770,7 +708,7 @@
             "picture": "/img/FootballGame/football-ar.webp",
             "pictureDescription": "The Football Game demo showing a miniature football field placed on a table.",
             "gif": "",
-            "breakdown": "I made this separate Ctrl+Space entry entirely in ReactVision Studio, using its built-in assistant to guide much of the setup. The result is a tabletop AR football simulation that can be viewed through StudioGo. It received the hackathon’s Best No-Code (Studio) category award.\n\nThis was an exploration of what the visual authoring workflow could produce without writing application code. It shares the hackathon context with XR Showcase, but it is a separate Studio scene and is not one of the three experiences bundled into that app.",
+            "breakdown": "I made this separate Ctrl+Space entry entirely in ReactVision Studio, using its built-in assistant to guide much of the setup. The result is a tabletop AR football simulation that can be viewed through StudioGo. It received the hackathon’s Best No-Code (Studio) category award.\n\nThis was an exploration of what the visual authoring workflow could produce without writing application code. Related Ctrl+Space projects include Neo Rock ’Em Sock ’Em Robots, Medimagen, and Guess the Qubit. Football Game was authored as its own Studio scene.",
             "skillsUsed": [
                 "ReactVision Studio",
                 "StudioGo",
@@ -795,7 +733,7 @@
                 },
                 {
                     "highlightTitle": "A separate hackathon experiment",
-                    "description": "The entry was a Ctrl+Space finalist and received Best No-Code (Studio). Its Studio scene and video are linked here. Unlike the coded robot arena, Medimagen, and AR Qubit, it does not use the shared XR Showcase source or TestFlight distribution.",
+                    "description": "The entry was a Ctrl+Space finalist and received Best No-Code (Studio). Its Studio scene and video are linked here. The linked Studio scene provides access to this no-code project; the robot arena, Medimagen, and AR Qubit have their own case studies.",
                     "highlightCaption": "Best No-Code (Studio), Ctrl+Space — Expo × ReactVision."
                 }
             ],
@@ -815,10 +753,22 @@
             ],
             "otherSections": [
                 {
+                    "category": "game-design",
+                    "title": "neo-rock-em-sock-em-robots",
+                    "caption": "Explore Neo Rock ’Em Sock ’Em Robots",
+                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
+                },
+                {
                     "category": "mobile-apps",
-                    "title": "xr-showcase",
-                    "caption": "See my other Ctrl+Space work in XR Showcase",
-                    "href": "/portfolio/mobile-apps/xr-showcase"
+                    "title": "medimagen",
+                    "caption": "Explore Medimagen",
+                    "href": "/portfolio/mobile-apps/medimagen"
+                },
+                {
+                    "category": "mobile-apps",
+                    "title": "guess-the-qubit-ar",
+                    "caption": "Explore Guess the Qubit — AR",
+                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
                 }
             ],
             "youtubeID": "f1O2cW_A6hY"
@@ -1069,8 +1019,8 @@
                     "highlightCaption": "Delivered foundation: Mr. DJ’s Dev Suite (MDS)."
                 },
                 {
-                    "highlightTitle": "Use the foundation to build XR Showcase",
-                    "description": "I used MDS while creating XR Showcase’s Expo foundation and project structure. Its project memory and validation workflows gave me a place to organize decisions and check the application as its three AR experiences developed. XR Showcase is a concrete example of the tooling being used on another project."
+                    "highlightTitle": "Use the foundation to prototype AR apps",
+                    "description": "I used MDS to set up the shared AR prototyping workspace for Neo Rock ’Em Sock ’Em Robots, Medimagen, and Guess the Qubit. Its project memory and validation workflows helped me organize decisions and check the prototypes as the three apps developed."
                 },
                 {
                     "highlightTitle": "Design around projects and sessions",
@@ -1109,10 +1059,22 @@
             ],
             "otherSections": [
                 {
+                    "category": "game-design",
+                    "title": "neo-rock-em-sock-em-robots",
+                    "caption": "Explore Neo Rock ’Em Sock ’Em Robots",
+                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
+                },
+                {
                     "category": "mobile-apps",
-                    "title": "xr-showcase",
-                    "caption": "See XR Showcase, built using the MDS foundation",
-                    "href": "/portfolio/mobile-apps/xr-showcase"
+                    "title": "medimagen",
+                    "caption": "Explore Medimagen",
+                    "href": "/portfolio/mobile-apps/medimagen"
+                },
+                {
+                    "category": "mobile-apps",
+                    "title": "guess-the-qubit-ar",
+                    "caption": "Explore Guess the Qubit — AR",
+                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
                 }
             ]
         },
