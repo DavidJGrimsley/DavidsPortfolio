@@ -54,8 +54,8 @@ const LANDING_PAGES = {
     guide: '/guides/production-apps.md',
   },
   '/services': {
-    title: 'Services: Websites, Apps, APIs, Tutoring, Games | David Grimsley',
-    description: 'Work with David Grimsley on a website, app, API, game, or online presence project. Explore services and start an inquiry.',
+    title: 'Services: Websites, Apps, Email Hosting, APIs, Tutoring, Games | David Grimsley',
+    description: 'Work with David Grimsley on a website, app, business email hosting, API, game, or online presence project. Explore services and start an inquiry.',
     guide: '/guides/services.md',
   },
   '/contact': {
