@@ -18,8 +18,12 @@ let failures = 0;
 for (const [pathname, expectedText] of pages) {
   try {
     const response = await fetch(new URL(pathname, origin), { signal: AbortSignal.timeout(60_000) });
-    if (!response.ok) throw new Error(`${pathname}: HTTP ${response.status}`);
-    assertWebRendering(await response.text(), pathname, expectedText);
+    const html = await response.text();
+    if (!response.ok) {
+      const missingModule = html.match(/Requiring unknown module[^\n<]{0,160}/)?.[0];
+      throw new Error(`${pathname}: HTTP ${response.status}${missingModule ? `: ${missingModule}` : ''}`);
+    }
+    assertWebRendering(html, pathname, expectedText);
     console.log(`[verify-web] PASS ${pathname}`);
   } catch (error) {
     failures += 1;

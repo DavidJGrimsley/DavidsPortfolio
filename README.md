@@ -113,7 +113,11 @@ npm run build:web:deploy
 npm run verify:web -- http://localhost:8081
 ```
 
-`npm start` and `npm run web` give the Expo server renderer a 2 MB JavaScript call stack. The default V8 stack can overflow inside React's HTML escaping with this navigation tree in development. The export command uses the same stack budget and Node executable. Keep this setting when launching Expo directly.
+The web app supports `npx expo start --web` and `npm run web`. The npm commands also give Expo a 2 MB JavaScript stack as a safeguard. Direct Expo startup was tested on Windows with Node 24.16.0. On that machine, Node 24.16.0 intermittently exits with a native access violation during export; a Node 24.22.1 export succeeded. Node 24.22.1 is the recommended local Node 24 runtime for this project. Use `--clear` when troubleshooting a stale Metro cache, not for every start.
+
+Expo SDK 57 has a [loader invalidation issue](https://github.com/expo/expo/issues/51871) that can produce `Requiring unknown module "<number>"` after a source edit. The number is an internal Metro module ID, not necessarily a missing npm package. If this occurs, stop and restart Expo; reinstalling dependencies or clearing the cache is not normally necessary. Server data loaders remain enabled.
+
+Web exports are staged and validated before they replace `dist`. An export refuses to run alongside another export or a local production preview; stop the preview, build, then restart it so its loaded server code and static files match. An interrupted export can leave `.expo/web-export.lock`; remove that file only after confirming no export process is running. Hosted deployment uses its existing Passenger restart workflow.
 
 After starting a development or production server, `npm run verify:web -- <origin>` checks the homepage and every portfolio case study for server-rendered headings/content and React rendering failures. It rejects client-rendering fallbacks even when the server returns HTTP 200.
 
