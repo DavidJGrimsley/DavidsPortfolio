@@ -1,5 +1,11 @@
 // Shared types for portfolio pieces
 
+export interface HighlightCredit {
+    role: string;
+    name: string;
+    url?: string;
+}
+
 export interface Highlight {
     highlightTitle: string;
     highlightCaption?: string;
@@ -7,7 +13,7 @@ export interface Highlight {
     highlightPictureDescriptions?: string[];
     video?: string;
     description: string;
-    credits?: { role: string; name: string }[];
+    credits?: HighlightCredit[];
     code?: string;
 }
 

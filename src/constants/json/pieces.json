@@ -2,7 +2,7 @@
     "mobile-apps": [
         {
             "title": "time2pay",
-            "displayTitle": "Time2Pay",
+            "displayTitle": "Time 2 Pay",
             "isFeatured": false,
             "inProgress": false,
             "caption": "From tracking a work session to sending an invoice: a self-hostable app for freelancers and small teams.",
@@ -27,7 +27,7 @@
                     "highlightTitle": "Keep time connected to the work",
                     "description": "I organized the tracking flow around customer, project, and task selections. The session timer and manual entries feed a weekly session history, while project milestones provide a lightweight checklist for what still needs to be done. This keeps time records attached to their context instead of turning them into a separate spreadsheet.",
                     "highlightPictures": [
-                        "/img/Time2Pay/time2pay-milestones.webp"
+                        "/img/Time2Pay/time2pay_Float.gif"
                     ],
                     "highlightPictureDescriptions": [
                         "Time2Pay session setup and a project milestone checklist using demo data."
@@ -430,7 +430,7 @@
             "isFeatured": true,
             "inProgress": false,
             "caption": "A 2.5D beat-’em-up where the path you choose becomes a quantum braid that changes the boss fight.",
-            "picture": "/img/Quasicombo/quasicombo-menu.webp",
+            "picture": "/img/Quasicombo/quasicombo-gameplay.png",
             "pictureDescription": "Quasicombo title menu with the playable robot in a jungle environment.",
             "gif": "/img/Quasicombo/quasicombo-card.webp",
             "breakdown": "I developed Quasicombo as a short Unreal Engine action game for Global Quantum Game Jam 2026. Combat and combos carry the player through branching routes; the order of those crossings forms a quantum braid. My Quantum API evaluates that braid and feeds its result back into the boss encounter, tying an abstract quantum operation to a choice the player can see.\n\nThe project also became a Moth Hack submission, using Moth’s Blur engine for processed versions of Yoshi’s piano music. Alongside the quantum integration, I worked on the combat systems, boss evolution, QTEs, menus, customization, and playable Windows build. Narrative, graphics, music, sound, and quantum consultation came from the collaborators credited below.",
@@ -446,16 +446,33 @@
                 "Moth Atlas"
             ],
             "highlights": [
+                              {
+                    "highlightTitle": "Let the music follow the route",
+                    "description": "I prepared route-dependent versions of Yoshi’s piano music using the quantum jazz effect from Moth’s Blur engine. The music controller changes tracks with route and encounter state, carries playback position across route changes, and ducks music for QTEs. Exploration ambience continues independently.",
+                    "highlightCaption": "Submitted to Moth Hack’s Intermediate 2: Quantum game challenge.",
+                    "highlightPictures": [
+                        "/img/Quasicombo/LevelBlockout.png",
+                        "/img/Quasicombo/LevelFront.png",
+                        "/img/Quasicombo/RouteA.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The routes during blockout.",
+                        "The routes during asset placement and set dressing.",
+                        "A jungle route with dense foliage and a twisted tree above the path."
+                    ]
+                },
                 {
                     "highlightTitle": "Make the route part of the mechanic",
                     "description": "Three routes act as braid strands. Choosing a crossing records an ordered operation, so taking the same crossings in a different order can change the evaluated state. Ordinary combat stays immediate: clear enemies, build a combo, and reach the next junction. The visible braid HUD connects those route choices to the eventual readout.",
                     "highlightPictures": [
-                        "/img/Quasicombo/quasicombo-gameplay.webp"
+                        "/img/Quasicombo/Braid1.png",
+                        "/img/Quasicombo/Braid2.png"
                     ],
                     "highlightPictureDescriptions": [
-                        "Gameplay capture with the robot, combo display, and three-strand braid history."
+                        "The player's braid choices are visualized in the HUD.",
+                        "The braid and it's result's are explained to the player at the end of each run of the level."
                     ]
-                },
+                  },
                 {
                     "highlightTitle": "Bring the quantum result into the boss fight",
                     "description": "At encounter readout points, the Unreal integration sends the braid history to my Quantum API. The evaluated state contributes to the boss setup and QTE behavior, while a time-evolution operation supports changes during combat. A local fallback keeps a service interruption from stopping the game. Player execution still determines the payoff of a QTE.",
@@ -469,19 +486,8 @@
                     ]
                 },
                 {
-                    "highlightTitle": "Let the music follow the route",
-                    "description": "I prepared route-dependent versions of Yoshi’s piano music using the quantum jazz effect from Moth’s Blur engine. The music controller changes tracks with route and encounter state, carries playback position across route changes, and ducks music for QTEs. Exploration ambience continues independently.",
-                    "highlightCaption": "Submitted to Moth Hack’s Intermediate 2: Quantum game challenge.",
-                    "highlightPictures": [
-                        "/img/Quasicombo/quasicombo-gameplay.webp"
-                    ],
-                    "highlightPictureDescriptions": [
-                        "The route and braid display provides context for the route-dependent music."
-                    ]
-                },
-                {
                     "highlightTitle": "Make the prototype approachable",
-                    "description": "Menus explain the controls and provide settings, restart, and quit behavior. The customization screen lets players change the robot’s body and light colors. These supporting systems make the packaged demo easier to explore without needing the editor.",
+                    "description": "Menus explain the controls and provide settings, restart, and quit behavior. The customization screen lets players change the robot’s body and light colors.",
                     "highlightPictures": [
                         "/img/Quasicombo/quasicombo-menu.webp",
                         "/img/Quasicombo/quasicombo-customization.webp"
@@ -494,13 +500,13 @@
                 {
                     "highlightTitle": "A collaborative game-jam project",
                     "credits": [
-                        { "role": "Game development", "name": "David “Mr. DJ” Grimsley" },
-                        { "role": "Narrative design and graphics", "name": "Toka Abdelaziz (Taika Iltiqat)" },
+                        { "role": "Game development", "name": "David “Mr. DJ” Grimsley", "url": "https://DavidJGrimsley.com" },
+                        { "role": "Narrative design and graphics", "name": "Toka Abdelaziz (Taika Iltiqat)", "url": "https://toka-abdelaziz.carrd.co/" },
                         { "role": "Background music", "name": "Yoshi" },
-                        { "role": "Sound effects", "name": "s1gnal" },
-                        { "role": "Quantum computing consultation", "name": "Maja" }
+                        { "role": "Sound effects", "name": "s1gnal", "url": "https://www.artstation.com/s1gnal_streams" },
+                        { "role": "Quantum computing consultation", "name": "Maja", "url": "https://itch.io/profile/majaq" }
                     ],
-                    "description": "The project uses licensed environment, character, animation, and audio assets; the public source repository intentionally excludes licensed editable content. The Windows release contains the playable runtime.",
+                    "description": "While I did all of the programming and in-engine work myself, it was a pleasure collaborating with this team. The music and sound effects fit very well and the narrative provided the glue to make the assets work together. The assets from Fab were easy to integrate to make a professional-looking game without a full team of 3D artists.",
                     "highlightCaption": "Global Quantum Game Jam 2026 and Moth Hack, September 2026."
                 }
             ],
@@ -524,10 +530,6 @@
                 {
                     "label": "View the Moth Hack entry",
                     "url": "https://airtable.com/appfaqE6MpACGX3LN/shrKxNCu6BKEnDRVs?bEHV2=allRecords&detail=eyJwYWdlSWQiOiJwYWdoWnN1YzFERmRxeVFweiIsInJvd0lkIjoicmVjcU42WXlZVlBUNVJOWjEiLCJzaG93Q29tbWVudHMiOmZhbHNlLCJxdWVyeU9yaWdpbkhpbnQiOnsidHlwZSI6InBhZ2VFbGVtZW50IiwiZWxlbWVudElkIjoicGVsQ0pZYlE0ZGhBTmJqZ0wiLCJxdWVyeUNvbnRhaW5lcklkIjoicGVsNEVPbWVZZFhDYkVIVjIifX0"
-                },
-                {
-                    "label": "Watch the Moth Hack demo",
-                    "url": "https://youtu.be/EUcPGIPwvgI"
                 }
             ],
             "otherSections": [

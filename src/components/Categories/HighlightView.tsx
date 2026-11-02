@@ -4,6 +4,7 @@ import { PortfolioVideo } from './PortfolioVideo';
 import { Highlight } from '@/types/portfolio';
 import { HighlightImageCarousel } from './HighlightImageCarousel';
 import { ThemedText } from '@/components/UI/ThemedText';
+import { ExternalLink } from '../UI/ExternalLink';
 
 type HighlightViewProps = {
     highlights: Highlight[];
@@ -18,11 +19,11 @@ export function HighlightView({ highlights }: HighlightViewProps) {
                 <View key={index} className="highlight-view">
                     <ThemedText headingLevel={2} className="highlight-title">{highlight.highlightTitle}</ThemedText>
                     <View className="w-full flex items-center justify-center flex-row flex-wrap">
+                      {highlight.highlightCaption && (
+                          <ThemedText className="highlight-caption">{highlight.highlightCaption}</ThemedText>
+                      )}
                         {highlight.highlightPictures && Array.isArray(highlight.highlightPictures) && highlight.highlightPictures.length > 0 && (
                             <HighlightImageCarousel pictures={highlight.highlightPictures} descriptions={highlight.highlightPictureDescriptions} title={highlight.highlightTitle} />
-                        )}
-                        {highlight.highlightCaption && (
-                            <ThemedText className="highlight-caption">{highlight.highlightCaption}</ThemedText>
                         )}
                     </View>
                     {highlight.credits?.length ? (
@@ -31,7 +32,16 @@ export function HighlightView({ highlights }: HighlightViewProps) {
                                 <View key={`${credit.role}-${credit.name}`} role="listitem" className="flex-row items-start gap-2">
                                     <ThemedText className="text-base md:text-lg">•</ThemedText>
                                     <ThemedText className="highlight-description flex-1" style={{ textAlign: 'left', fontWeight: '400' }}>
-                                        {credit.role}: <Text style={{ fontWeight: '700' }}>{credit.name}</Text>
+                                        {credit.role}:{' '}
+                                        {credit.url ? (
+                                            <ExternalLink href={credit.url} accessibilityLabel={`${credit.name}'s portfolio`}>
+                                                <ThemedText type="link" style={{ fontWeight: '700' }}>
+                                                    {credit.name}
+                                                </ThemedText>
+                                            </ExternalLink>
+                                        ) : (
+                                            <Text style={{ fontWeight: '700' }}>{credit.name}</Text>
+                                        )}
                                     </ThemedText>
                                 </View>
                             ))}

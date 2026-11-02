@@ -42,8 +42,10 @@ export function FeaturedCard() {
                             imageSource={imageSource}
                             onPress={() => router.push(`/portfolio/${item.category}/${item.title}` as any)}
                             squareImage
-                            maxWidth={320}
-                            className="w-[90%] sm:w-[48%] lg:w-[31%]"
+                            horizontalOnLargeScreens
+                            className="w-[90%] max-w-[320px] sm:w-[80%] sm:max-w-[440px] lg:w-[90%] lg:max-w-[760px] xl:max-w-[880px]"
+                            titleClassName="featured-card-title"
+                            captionClassName="featured-card-caption"
                         />
                     );
                 })}
