@@ -120,5 +120,15 @@
     "react-test-renderer": "^19.2.3",
     "typescript": "~6.0.3"
   },
+  "expo": {
+    "install": {
+      "exclude": [
+        "expo",
+        "expo-constants",
+        "expo-router",
+        "expo-splash-screen"
+      ]
+    }
+  },
   "private": true
 }
