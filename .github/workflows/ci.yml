@@ -33,10 +33,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node 23
+      - name: Setup Node 24
         uses: actions/setup-node@v6
         with:
-          node-version: 23
+          node-version: 24
           cache: npm
 
       - name: Setup npm
@@ -56,6 +56,31 @@ jobs:
 
       - name: Expo doctor
         run: npm run doctor
+
+      - name: Verify direct Expo development SSR
+        shell: bash
+        env:
+          CI: '1'
+          EXPO_PUBLIC_QUANTUM_API_BASE_URL: https://davidjgrimsley.com/public-facing/api/quantum/v1
+        run: |
+          npx expo start --web --port 4180 > expo-dev-smoke.log 2>&1 &
+          expo_pid=$!
+          cleanup() {
+            status=$?
+            kill "$expo_pid" 2>/dev/null || true
+            wait "$expo_pid" 2>/dev/null || true
+            if [ "$status" -ne 0 ]; then cat expo-dev-smoke.log; fi
+          }
+          trap cleanup EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:4180/ >/dev/null; then
+              node scripts/verify-web-rendering.mjs http://127.0.0.1:4180
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'Expo development server did not become ready.' >&2
+          exit 1
 
       - name: Build web deploy bundle
         env:
@@ -150,6 +175,7 @@ jobs:
               require_header "staging cache reset header" "^clear-site-data:[[:space:]]*\"cache\"[[:space:]]*$" /tmp/djsportfolio-staging-host.headers
 
               node ./scripts/verify-detail-seo.mjs "http://127.0.0.1:${PORT}"
+              node ./scripts/verify-web-rendering.mjs "http://127.0.0.1:${PORT}"
 
               if grep -q 'Failed to load loader data' /tmp/djsportfolio-api-index.html /tmp/djsportfolio-api-quantum.html /tmp/djsportfolio-mcp.html; then
                 echo "SSR route smoke found loader failure text"
@@ -201,10 +227,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node 23
+      - name: Setup Node 24
         uses: actions/setup-node@v6
         with:
-          node-version: 23
+          node-version: 24
 
       - name: Capture deploy start time
         run: |
@@ -266,10 +292,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node 23
+      - name: Setup Node 24
         uses: actions/setup-node@v6
         with:
-          node-version: 23
+          node-version: 24
 
       - name: Capture deploy start time
         run: |

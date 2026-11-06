@@ -4,20 +4,20 @@ import { View, Text, Pressable } from 'react-native';
 interface SquareProps {
   value: string | null;
   onSquareClick: () => void;
+  index: number;
 }
 
-function Square({ value, onSquareClick }: SquareProps) {
+function Square({ value, onSquareClick, index }: SquareProps) {
   return (
-    <View className="bg-accent flex justify-center items-center w-[9%] h-[9%] p-[1%] m-[0.5%] rounded-[0.5%]">
-      <Pressable className="bg-accent flex justify-center items-center w-[9%] h-[9%] p-[1%] m-[0.5%] rounded-[0.5%]" onPress={onSquareClick}>
-        <Text className="text-secondary text-2xl md:text-3xl">{value}</Text>
-      </Pressable>
-      {/* <Button 
-        title={value || ''} 
-        onPress={onSquareClick}
-        color={value === 'X' ? 'blue' : (value === 'O' ? 'red' : 'black')}
-        /> */}
-    </View>
+    <Pressable
+      testID={`square-${index}`}
+      className="bg-accent flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-md sm:rounded-lg active:opacity-75 focus:outline-none"
+      onPress={onSquareClick}
+      accessibilityRole="button"
+      accessibilityLabel={`Square ${index + 1}${value ? `, ${value}` : ', empty'}`}
+    >
+      <Text className="text-secondary text-3xl sm:text-4xl font-bold">{value}</Text>
+    </Pressable>
   );
 }
 
@@ -42,7 +42,7 @@ function Board({ xIsNext, squares, onPlay }: BoardProps) {
   }
 
   const winner = calculateWinner(squares);
-  let status;
+  let status: string;
   if (winner) {
     status = "Winner: " + winner;
   } else if (!squares.includes(null)) {
@@ -52,26 +52,28 @@ function Board({ xIsNext, squares, onPlay }: BoardProps) {
   }
 
   return (
-    <>
-      <Text className="detail-subheader text-center mb-[1%]">{status}</Text>
-      <View className="flex flex-col justify-center items-center p-[1%] rounded-[0.5%]">
-        <View className="bg-secondary flex flex-row justify-center items-center">
-          <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
-          <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
-          <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+    <View className="items-center">
+      <Text className="detail-subheader mb-3 text-themed" style={{ textAlign: 'center' }}>
+        {status}
+      </Text>
+      <View className="bg-secondary p-1.5 sm:p-2 rounded-xl flex flex-col gap-1.5 sm:gap-2 shadow-sm">
+        <View className="flex flex-row gap-1.5 sm:gap-2">
+          <Square value={squares[0]} onSquareClick={() => handleClick(0)} index={0} />
+          <Square value={squares[1]} onSquareClick={() => handleClick(1)} index={1} />
+          <Square value={squares[2]} onSquareClick={() => handleClick(2)} index={2} />
         </View>
-        <View className="bg-secondary flex flex-row justify-center items-center">
-          <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
-          <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
-          <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+        <View className="flex flex-row gap-1.5 sm:gap-2">
+          <Square value={squares[3]} onSquareClick={() => handleClick(3)} index={3} />
+          <Square value={squares[4]} onSquareClick={() => handleClick(4)} index={4} />
+          <Square value={squares[5]} onSquareClick={() => handleClick(5)} index={5} />
         </View>
-        <View className="bg-secondary flex flex-row justify-center items-center">
-          <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
-          <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
-          <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+        <View className="flex flex-row gap-1.5 sm:gap-2">
+          <Square value={squares[6]} onSquareClick={() => handleClick(6)} index={6} />
+          <Square value={squares[7]} onSquareClick={() => handleClick(7)} index={7} />
+          <Square value={squares[8]} onSquareClick={() => handleClick(8)} index={8} />
         </View>
       </View>
-    </>
+    </View>
   );
 }
 
@@ -114,20 +116,20 @@ export default function Game() {
   }
 
   const moves = history.map((squares, move) => {
-    let description;
+    let description: string;
     if (currentMove === move) {
       if (move === 0) {
         return (
-          <View key={move}>
-            <Text className="detail-body">Game start</Text>
+          <View key={move} className="my-1">
+            <Text className="detail-body text-center font-semibold text-themed">Game start</Text>
           </View>
-        )
+        );
       } else {
-      return (
-        <View key={move}>
-          <Text className="detail-body">Turn #{move}</Text>
-        </View>
-      )
+        return (
+          <View key={move} className="my-1">
+            <Text className="detail-body text-center font-semibold text-themed">Turn #{move}</Text>
+          </View>
+        );
       }
     } else if (move > 0) {
       description = 'Go to turn #' + move;
@@ -135,27 +137,23 @@ export default function Game() {
       description = 'Go to game start';
     }
     return (
-      <View key={move}>
-        <Pressable className="bg-themed text-themed p-[0.2%] m-[0.5%] rounded-[0.2%]" onPress={() => jumpTo(move)}>
-          <Text>{description}</Text>
+      <View key={move} className="my-1">
+        <Pressable
+          className="bg-themed px-3 py-1.5 rounded active:opacity-70 shadow-sm"
+          onPress={() => jumpTo(move)}
+          accessibilityRole="button"
+        >
+          <Text className="text-themed text-center text-sm font-medium">{description}</Text>
         </Pressable>
-        {/* <Button title={description} onPress={() => jumpTo(move)} /> */}
       </View>
     );
   });
-  
 
   return (
-    <View>
-      <View>
-        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
-      </View>
-      <View>
-        {moves.map((move, index) => (
-          <View className="items-center" key={index}>
-            <Text>{move}</Text>
-          </View>
-        ))}
+    <View className="flex flex-col items-center justify-center p-3 sm:p-4">
+      <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      <View className="flex flex-col items-center mt-3">
+        {moves}
       </View>
     </View>
   );

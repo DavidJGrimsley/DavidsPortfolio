@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { RFPercentage } from 'react-native-responsive-fontsize';
+import { responsiveFontSize } from '@/utils/responsive-font-size';
 
 type TagListProps = {
   tags: string[];
@@ -26,7 +26,7 @@ export function TagList({ tags }: TagListProps) {
           }}
         >
           <ThemedText style={{ 
-            fontSize: RFPercentage(1.3),
+            fontSize: responsiveFontSize(1.3),
             color: tintColor,
             fontWeight: '600'
           }}>

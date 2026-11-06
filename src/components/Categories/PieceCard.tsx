@@ -12,6 +12,9 @@ type PieceCardProps = {
   squareImage?: boolean;
   maxWidth?: number;
   className?: string;
+  titleClassName?: string;
+  captionClassName?: string;
+  horizontalOnLargeScreens?: boolean;
 };
 
 type PieceCardImageProps = {
@@ -44,6 +47,9 @@ export function PieceCard({
   squareImage = false,
   maxWidth,
   className,
+  titleClassName: customTitleClassName,
+  captionClassName: customCaptionClassName,
+  horizontalOnLargeScreens = false,
 }: PieceCardProps) {
   const colorScheme = useColorScheme();
   const [isHovered, setIsHovered] = useState(false);
@@ -55,9 +61,9 @@ export function PieceCard({
     setHasHydrated(true);
   }, []);
 
-  const containerClassName = `${showHoveredState ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${className ?? ""}`;
-  const titleClassName = `detail-title leading-tight ${showHoveredState ? "text-white-or-black" : "text-secondary"}`;
-  const captionClassName = `detail-body leading-relaxed mt-[1%] ${showHoveredState ? "text-white-or-black" : "text-themed"}`;
+  const containerClassName = `${showHoveredState ? "bg-accent" : "bg-themed"} rounded-[2%] p-[3%] shadow-md mb-[3%] ${horizontalOnLargeScreens ? "lg:flex-row lg:items-center" : ""} ${className ?? ""}`;
+  const titleClassName = `detail-title leading-tight ${showHoveredState ? "text-white-or-black" : "text-secondary"} ${customTitleClassName ?? ""}`;
+  const captionClassName = `detail-body leading-relaxed mt-[1%] ${showHoveredState ? "text-white-or-black" : "text-themed"} ${customCaptionClassName ?? ""}`;
   const imageContainerStyle = Platform.OS === "web" && imageSource
     ? {
         ...(squareImage ? { aspectRatio: 1 } : { height: 180 }),
@@ -90,13 +96,14 @@ export function PieceCard({
     >
       {imageSource ? (
         <View
-          className={`overflow-hidden rounded-[1.2%] ${showHoveredState ? "bg-themed" : "bg-accent"} mb-[2%]`}
+          className={`overflow-hidden rounded-[1.2%] ${showHoveredState ? "bg-themed" : "bg-accent"} mb-[2%] ${horizontalOnLargeScreens ? "lg:w-[38%] lg:mb-0" : ""}`}
           style={imageContainerStyle}
         >
           {Platform.OS === "web" ? null : <PieceCardImage source={imageSource} square={squareImage} />}
         </View>
       ) : null}
 
+      <View className={horizontalOnLargeScreens ? "lg:flex-1 lg:ml-[4%]" : ""}>
       {badgeText ? (
         <View className="self-start bg-tint px-[2%] py-[1%] rounded-[0.8%] mb-[1%]">
           <ThemedText inverse className="badge-text">{badgeText}</ThemedText>
@@ -105,6 +112,7 @@ export function PieceCard({
 
       <ThemedText className={titleClassName}>{title}</ThemedText>
       {caption ? <ThemedText className={captionClassName}>{caption}</ThemedText> : null}
+      </View>
     </Pressable>
   );
 }
