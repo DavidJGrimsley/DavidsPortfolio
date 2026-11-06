@@ -8,7 +8,7 @@
             "caption": "From tracking a work session to sending an invoice: a self-hostable app for freelancers and small teams.",
             "picture": "/img/Time2Pay/time2pay-sessions.webp",
             "pictureDescription": "Time2Pay tour mode showing demo work sessions grouped by week, with customer and project filters.",
-            "gif": "/img/Time2Pay/time2pay_Float.gif",
+            "gif": "/img/Time2Pay/time2Pay_Float.gif",
             "breakdown": "I built Time2Pay to connect the small pieces of freelance work: customers, projects, tasks, time, and invoices. A session can be timed or entered manually, reviewed alongside the rest of a project, and included in an invoice. Milestone checklists keep the work itself visible alongside its billing.\n\nThe same application supports a local data mode and a hosted account mode. It is published at time2pay.app as an installable web app, with an anonymous tour that lets visitors explore demo data before signing in. The source is available for self-hosting. It's a simple app that was just a free solution for myself that I decided to host. The connection to Github for developers and to Mercury for anyone do give it a bit of a unique edge.",
             "skillsUsed": [
                 "React Native",
