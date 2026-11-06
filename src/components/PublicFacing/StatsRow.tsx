@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { RFPercentage } from 'react-native-responsive-fontsize';
+import { responsiveFontSize } from '@/utils/responsive-font-size';
 
 type StatsRowProps = {
   stats: { emoji: string; label: string }[];
@@ -28,7 +28,7 @@ export function StatsRow({ stats }: StatsRowProps) {
             borderRadius: 8,
           }}
         >
-          <ThemedText style={{ fontSize: RFPercentage(1.4), opacity: 0.7 }}>
+          <ThemedText style={{ fontSize: responsiveFontSize(1.4), opacity: 0.7 }}>
             {stat.emoji} {stat.label}
           </ThemedText>
         </View>

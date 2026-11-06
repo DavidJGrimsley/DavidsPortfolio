@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { ThemedText } from '@/components/UI/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { RFPercentage } from 'react-native-responsive-fontsize';
+import { responsiveFontSize } from '@/utils/responsive-font-size';
 
 type ComingSoonCardProps = {
   title: string;
@@ -22,10 +22,10 @@ export function ComingSoonCard({ title, description }: ComingSoonCardProps) {
       borderColor: tintColor + '40',
       borderStyle: 'dashed',
     }}>
-      <ThemedText type="subtitle" style={{ fontSize: RFPercentage(2.5), marginBottom: 8 }}>
+      <ThemedText type="subtitle" style={{ fontSize: responsiveFontSize(2.5), marginBottom: 8 }}>
         {title}
       </ThemedText>
-      <ThemedText style={{ fontSize: RFPercentage(1.8), lineHeight: RFPercentage(2.5), opacity: 0.7 }}>
+      <ThemedText style={{ fontSize: responsiveFontSize(1.8), lineHeight: responsiveFontSize(2.5), opacity: 0.7 }}>
         {description}
       </ThemedText>
     </View>

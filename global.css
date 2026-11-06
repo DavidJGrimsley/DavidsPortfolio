@@ -308,7 +308,7 @@ Colors
   }
 
   .main-title-shadow {
-    @apply absolute top-1/2 left-0 -z-10 text-(--color-accent) opacity-15 font-extrabold text-8xl;
+    @apply absolute top-1/2 left-0 right-0 -z-10 text-(--color-accent) opacity-15 font-extrabold text-8xl;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -349,7 +349,7 @@ Colors
 
   /* Footer styles */
   .footer {
-    @apply border-[0.2%] min-h-[5%] m-[1%] p-[1.5%] rounded-[0.5%] items-center justify-center w-[90%] max-w-150 self-center;
+    @apply border-[0.2%] p-2 rounded-[0.5%] items-center justify-center w-[90%] max-w-150 self-center;
     border-color: var(--color-accent);
   }
 
@@ -457,6 +457,14 @@ Colors
   .detail-body {
     @apply text-base md:text-xl text-left text-(--color-text) leading-relaxed;
     font-family: "Noto Sans";
+  }
+
+  .featured-card-title {
+    @apply xl:text-[48px] 2xl:text-[63px];
+  }
+
+  .featured-card-caption {
+    @apply xl:text-[28px] 2xl:text-[35px];
   }
   
   .detail-subBody {

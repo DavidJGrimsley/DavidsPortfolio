@@ -184,6 +184,46 @@ export const intakeForms: Record<string, IntakeFormConfig> = {
       },
     ],
   },
+  'mail-hosting': {
+    id: 'mail-hosting',
+    title: 'Business Email Hosting Intake',
+    description: 'Tell me about your domain and email needs.',
+    fields: [
+      {
+        name: 'contactName',
+        label: 'Your name',
+        placeholder: 'Full name',
+        type: 'text',
+        required: true,
+      },
+      {
+        name: 'email',
+        label: 'Reply email',
+        placeholder: 'you@email.com',
+        type: 'email',
+        required: true,
+      },
+      {
+        name: 'domain',
+        label: 'Domain',
+        placeholder: 'yourdomain.com',
+        type: 'text',
+      },
+      {
+        name: 'mailboxCount',
+        label: 'Approximate mailbox count',
+        placeholder: 'How many mailboxes do you need?',
+        type: 'number',
+      },
+      {
+        name: 'requirements',
+        label: 'Email hosting needs',
+        placeholder: 'Describe the email setup you need',
+        type: 'textarea',
+        required: true,
+      },
+    ],
+  },
   'game-development': {
     id: 'game-development',
     title: 'Game Development Intake',

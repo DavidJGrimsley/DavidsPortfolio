@@ -363,14 +363,13 @@ export async function GET(request: Request, { id }: { id: string }) {
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`[API /portfolio/${id}] Error:`, error);
-
     const fallbackPortfolio = FALLBACK_PORTFOLIOS[routeId];
     const fallbackServer = FALLBACK_REGISTRY.find(
       (candidate) => normalizeRouteId(candidate.id) === routeId
     );
 
     if (fallbackPortfolio && fallbackServer) {
+      console.warn(`[API /portfolio/${id}] Upstream fetch failed (${error instanceof Error ? error.message : error}); using fallback portfolio data.`);
       const registryEntry = normalizeRegistryServer(fallbackServer, origin);
       return Response.json(
         {

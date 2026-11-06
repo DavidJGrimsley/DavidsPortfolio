@@ -111,7 +111,7 @@ const ServicesPage = () => {
     <TabContainer
       titleA="Whatcha"
       titleB="need?"
-      leadBody="Need a website, app, game, or custom software? Tell me what you're trying to achieve, and we'll find a practical way to build it."
+      leadBody="Need a website, app, business email hosting, game, or custom software? Tell me what you're trying to achieve, and we'll find a practical way to build it."
       leadSubBody="Explore the services below to start a project, or contact me with a question."
       seo={{
         keywords: [
@@ -121,6 +121,7 @@ const ServicesPage = () => {
           'small business website',
           'portfolio website',
           'app development',
+          'business email hosting',
           'React Native',
           'API development',
           'backend developer',
@@ -139,6 +140,7 @@ const ServicesPage = () => {
             'Website building',
             'Web development',
             'App development',
+            'Business email hosting',
             'API development',
             'Game development',
             'Tutoring',

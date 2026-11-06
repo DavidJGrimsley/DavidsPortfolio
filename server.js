@@ -10,6 +10,7 @@ const morgan = require('morgan');
 const { createRequestHandler } = require('expo-server/adapter/express');
 const { loadFirstEnvFile } = require('./scripts/env-loader.cjs');
 const { assertSsrBuild } = require('./scripts/assert-ssr-build.cjs');
+const { registerWebPreview } = require('./scripts/web-preview-lease.cjs');
 
 const loadedEnv = loadFirstEnvFile({ cwd: __dirname, prefix: '[startup]' });
 
@@ -888,6 +889,10 @@ app.use(express.static(CLIENT_BUILD_DIR, { maxAge: '1h', redirect: false }));
 app.all('/{*all}', createRequestHandler({
   build: SERVER_BUILD_DIR,
 }));
+
+// Hosted deploys have their own Passenger restart/rollback workflow. For local
+// previews, prevent an export from replacing files while this process serves them.
+if (!HOSTED_ENV_FILES.has(loadedEnv.sourceFile)) registerWebPreview(__dirname);
 
 app.listen(port, () => {
   console.log(`DJsPortfolio server listening on http://localhost:${port}`);

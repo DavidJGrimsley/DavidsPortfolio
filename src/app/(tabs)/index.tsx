@@ -38,7 +38,7 @@ export default function Index() {
         overlayIconDelayMs={4100}
         overlayIconEnterDurationMs={1800}
         overlayIconTranslateX={120}
-        leadBody="Hi, I'm David. I build websites, apps, games, and developer tools with care for the people who use them."
+        leadBody="Hi, I'm David. I build websites, apps, games, and developer tools with care."
         leadSubBody="Explore my projects, try a public tool, or get in touch about an idea."
         seo={{
           keywords: [
@@ -61,7 +61,7 @@ export default function Index() {
         }}
       >
         {/* <FireText text="DAVID GRIMSLEY" fontSize={48} /> */}
-        <View className="items-center p-[2%] my-[2%]">
+        <View className="items-center px-[2%]">
           <FeaturedCard></FeaturedCard>
         </View>
       </TabContainer>

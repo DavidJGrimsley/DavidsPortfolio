@@ -1,11 +1,19 @@
 // Shared types for portfolio pieces
 
+export interface HighlightCredit {
+    role: string;
+    name: string;
+    url?: string;
+}
+
 export interface Highlight {
     highlightTitle: string;
     highlightCaption?: string;
     highlightPictures?: string[];
+    highlightPictureDescriptions?: (string | null)[];
     video?: string;
     description: string;
+    credits?: HighlightCredit[];
     code?: string;
 }
 
@@ -13,6 +21,12 @@ export interface OtherSection {
     category: string;
     title: string;
     caption: string;
+    href?: string;
+}
+
+export interface PortfolioLink {
+    label: string;
+    url: string;
 }
 
 export interface Piece {
@@ -22,12 +36,14 @@ export interface Piece {
     inProgress: boolean;
     caption: string;
     picture: string;
+    pictureDescription?: string;
     gif: string;
     github?: string;
     breakdown: string;
     steam?: string;
     youtubeID?: string;
     site?: string;
+    links?: PortfolioLink[];
     skillsUsed?: string[];
     skillsLearned?: string[];
     highlights?: Highlight[];

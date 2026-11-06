@@ -203,7 +203,7 @@ export const TabContainer = ({
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={onScroll}
-          contentContainerClassName={`page-content flex flex-col pt-[8%] pb-[12%] ${contentClassName ?? ''}`.trim()}
+          contentContainerClassName={`page-content flex flex-col pt-[5.36%] pb-4 ${contentClassName ?? ''}`.trim()}
           contentContainerStyle={{
             paddingLeft: leftInset,
             paddingRight: 0,
@@ -219,20 +219,20 @@ export const TabContainer = ({
                 startDelayMs={titleDelayMs}
                 scrollY={scrollY}
               >
-                {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
+                {resolvedLead ? <View className="page-lead mt-[1%] mb-[2%]">{resolvedLead}</View> : null}
                 {children}
                 {showFooter ? (
-                  <View className="mt-[8%] pb-[6%] w-full">
+                  <View className="mt-[8%] w-full">
                     <Foot />
                   </View>
                 ) : null}
               </TitleOfPage>
             ) : (
               <>
-                {resolvedLead ? <View className="page-lead mt-[2%] mb-[4%]">{resolvedLead}</View> : null}
+                {resolvedLead ? <View className="page-lead mt-[1%] mb-[2%]">{resolvedLead}</View> : null}
                 {children}
                 {showFooter ? (
-                  <View className="mt-[8%] pb-[6%] w-full">
+                  <View className="mt-[8%] w-full">
                     <Foot />
                   </View>
                 ) : null}

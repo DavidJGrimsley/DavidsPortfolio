@@ -1,6 +1,6 @@
 import type { ServiceCard } from '@/types/content';
 
-export const CONTENT_VERSION = '2026-03-31.v1';
+export const CONTENT_VERSION = '2026-10-07.v1';
 
 export const services: ServiceCard[] = [
   {
@@ -34,6 +34,22 @@ export const services: ServiceCard[] = [
     primaryCtaId: 'website-building',
     intakeUrl: '/services/website-building',
     accent: '#0ea5e9',
+  },
+  {
+    id: 'mail-hosting',
+    title: 'Business Email Hosting',
+    tagline: 'Your domain. Your inbox. Professionally configured.',
+    description:
+      'Move beyond generic email addresses with secure, professional email using your own domain, configured from server to inbox.',
+    features: [
+      'Professional addresses like info@yourdomain.com',
+      'Secure sending, receiving, spam-authentication, and SSL',
+      'Webmail plus phone and computer setup',
+    ],
+    primaryCtaLabel: 'Start Email Hosting Intake',
+    primaryCtaId: 'mail-hosting',
+    intakeUrl: '/services/mail-hosting',
+    accent: '#14b8a6',
   },
   {
     id: 'game-development',

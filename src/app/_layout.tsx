@@ -1,10 +1,10 @@
-import { Stack } from 'expo-router';
+import { Slot, Stack } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Uniwind } from 'uniwind';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { CinzelDecorative_700Bold } from '@expo-google-fonts/cinzel-decorative';
@@ -18,11 +18,11 @@ import { NotoSerifDisplay_400Regular } from '@expo-google-fonts/noto-serif-displ
 import { PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 
 import StartupLoading from '@/components/StartupLoading';
+import { useWebStartupReady } from '@/hooks/use-web-startup-ready';
 import '~/global.css';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 const ROOT_BACKGROUND_COLOR = '#20182D';
-const WEB_READY_FALLBACK_MS = 3000;
 const loadingOverlayStyle = {
   backgroundColor: ROOT_BACKGROUND_COLOR,
   position: 'fixed',
@@ -51,6 +51,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
 }
 
 function AppStack() {
+  if (Platform.OS === 'web') return <Slot />;
   return (
     <Stack screenOptions={{ contentStyle: { backgroundColor: 'transparent' } }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -72,7 +73,6 @@ function LoadingOverlay() {
 }
 
 function RootLayoutContent() {
-  const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -195,7 +195,7 @@ function RootLayoutContent() {
   }, []);
 
   // Load fonts before revealing UI (native + web). This also preloads Ionicons.
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Rubik: require('../../assets/fonts/Rubik-VariableFont_wght.ttf'),
     'Rubik-Italic': require('../../assets/fonts/Rubik-Italic-VariableFont_wght.ttf'),
     Lora: require('../../assets/fonts/Lora-VariableFont_wght.ttf'),
@@ -214,51 +214,12 @@ function RootLayoutContent() {
     ...Ionicons.font,
     ...FontAwesome6.font,
   });
+  const webReady = useWebStartupReady(Platform.OS === 'web', fontsLoaded, fontError);
+  const appIsReady = Platform.OS === 'web' ? webReady : fontsLoaded;
 
   useEffect(() => {
     if (!fontsLoaded) return;
-
-    // Apply theme before revealing the app UI.
     Uniwind.setTheme('system');
-
-    if (Platform.OS === 'web') {
-      let cancelled = false;
-      const readyTimeout = window.setTimeout(() => {
-        if (!cancelled) {
-          setAppIsReady(true);
-        }
-      }, WEB_READY_FALLBACK_MS);
-
-      const fontsReady = (document as any).fonts?.ready;
-      if (!fontsReady) {
-        window.clearTimeout(readyTimeout);
-        setAppIsReady(true);
-        return () => {
-          cancelled = true;
-        };
-      }
-
-      fontsReady
-        .then(() => {
-          if (!cancelled) {
-            window.clearTimeout(readyTimeout);
-            setAppIsReady(true);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            window.clearTimeout(readyTimeout);
-            setAppIsReady(true);
-          }
-        });
-
-      return () => {
-        cancelled = true;
-        window.clearTimeout(readyTimeout);
-      };
-    }
-
-    setAppIsReady(true);
   }, [fontsLoaded]);
 
   const onLayoutRootView = useCallback(() => {
@@ -275,9 +236,7 @@ function RootLayoutContent() {
     // removing crawlable route content from the initial HTML.
     return (
       <View className="flex-1 bg-themed" style={styles.webViewport}>
-        <View className="flex-1 bg-themed" style={styles.webViewport}>
-          <AppStack />
-        </View>
+        <AppStack />
         {!appIsReady ? <LoadingOverlay /> : null}
       </View>
     );
