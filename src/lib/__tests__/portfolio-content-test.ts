@@ -5,13 +5,18 @@ import { relatedProjectHref } from '../portfolio-links';
 
 const root = path.resolve(__dirname, '../../..');
 const data: Pieces = JSON.parse(fs.readFileSync(path.join(root, 'src/constants/json/pieces.json'), 'utf8'));
-const newSlugs = ['time2pay', 'medimagen', 'guess-the-qubit-ar', 'quasicombo', 'neo-rock-em-sock-em-robots', 'guess-the-qubit-unreal', 'football-game', 'isquared'];
+const newSlugs = ['time2pay', 'medimagen', 'sunscorned', 'quasicombo', 'neo-rock-em-sock-em-robots', 'guess-the-qubit', 'football-game', 'isquared'];
 const all = Object.values(data).flat();
 const entries = all.filter(piece => newSlugs.includes(piece.title));
 
-it('publishes all eight case studies with Quasicombo as the only homepage feature', () => {
+it('publishes all eight case studies with four featured pieces for the homepage carousel', () => {
   expect(entries).toHaveLength(8);
-  expect(all.filter(piece => piece.isFeatured).map(piece => piece.title)).toEqual(['quasicombo']);
+  expect(all.filter(piece => piece.isFeatured).map(piece => piece.title)).toEqual([
+    'medimagen',
+    'sunscorned',
+    'quasicombo',
+    'neo-rock-em-sock-em-robots',
+  ]);
   for (const pieces of Object.values(data)) expect(new Set(pieces.map(piece => piece.title)).size).toBe(pieces.length);
 });
 
@@ -19,13 +24,13 @@ it('lists the three AR apps individually and treats XR Showcase only as their so
   expect(all.some(piece => piece.title === 'xr-showcase')).toBe(false);
   expect(data['game-design'].some(piece => piece.title === 'neo-rock-em-sock-em-robots')).toBe(true);
   expect(data['mobile-apps'].some(piece => piece.title === 'neo-rock-em-sock-em-robots')).toBe(false);
-  for (const slug of ['medimagen', 'guess-the-qubit-ar']) {
-    expect(data['mobile-apps'].some(piece => piece.title === slug)).toBe(true);
-  }
+  expect(data['game-design'].some(piece => piece.title === 'guess-the-qubit')).toBe(true);
+  expect(data['mobile-apps'].some(piece => piece.title === 'guess-the-qubit')).toBe(false);
+  expect(data['mobile-apps'].some(piece => piece.title === 'medimagen')).toBe(true);
   const tools = all.find(piece => piece.title === 'isquared')!;
-  for (const slug of ['medimagen', 'guess-the-qubit-ar', 'neo-rock-em-sock-em-robots']) {
+  for (const slug of ['medimagen', 'guess-the-qubit', 'neo-rock-em-sock-em-robots']) {
     const app = all.find(piece => piece.title === slug)!;
-    expect(app.links!.some(link => link.url === 'https://github.com/DavidJGrimsley/xr-showcase')).toBe(true);
+    expect(app.links!.some(link => link.url.startsWith('https://github.com/DavidJGrimsley/'))).toBe(true);
     expect(app.links!.map(link => link.label).join(' ')).not.toContain('XR Showcase');
     expect(app.otherSections!.some(section => section.title === 'isquared')).toBe(true);
     expect(tools.otherSections!.some(section => section.title === slug)).toBe(true);
@@ -57,8 +62,8 @@ it('ships descriptive, local media and labeled external links for each new case 
 
 it('keeps platform versions and the separate no-code entry distinct', () => {
   const find = (slug: string) => entries.find(piece => piece.title === slug)!;
-  expect(find('guess-the-qubit-unreal').links!.some(link => link.url.includes('guess-the-qubit/releases'))).toBe(true);
-  expect(find('guess-the-qubit-ar').links!.some(link => link.url.includes('testflight.apple.com'))).toBe(true);
+  expect(find('guess-the-qubit').links!.some(link => link.url.includes('guess-the-qubit/releases'))).toBe(true);
+  expect(find('guess-the-qubit').links!.some(link => link.url.includes('testflight.apple.com'))).toBe(true);
   expect(find('football-game').links!.some(link => link.url.includes('testflight.apple.com'))).toBe(false);
   expect(find('isquared').highlights!.some(highlight => highlight.highlightCaption?.includes('Design exploration'))).toBe(true);
 });

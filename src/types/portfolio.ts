@@ -10,7 +10,7 @@ export interface Highlight {
     highlightTitle: string;
     highlightCaption?: string;
     highlightPictures?: string[];
-    highlightPictureDescriptions?: string[];
+    highlightPictureDescriptions?: (string | null)[];
     video?: string;
     description: string;
     credits?: HighlightCredit[];

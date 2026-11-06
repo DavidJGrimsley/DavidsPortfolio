@@ -4,8 +4,8 @@ Research and validation recorded October 20, 2026. Changes are in the prepared `
 
 ## Editorial decisions
 
-- Eight focused case studies use the existing category/detail layout. Quasicombo is the only homepage feature; the two previous featured entries remain in the portfolio.
-- The Unreal and AR Qubit versions have separate pages and correct source/download links. Medimagen, Neo, and AR Qubit were prototyped in the xr-showcase workspace and share source and TestFlight links. XR Showcase is a prototyping workspace, not a separate portfolio app.
+- Eight focused case studies use the existing category/detail layout. Four case studies (Medimagen, Sunscorned, Quasicombo, and Neo Rock ’Em Sock ’Em Robots) rotate in the homepage featured carousel; the two previous featured entries remain in the portfolio.
+- Guess the Qubit is unified into a single case study under Game Design, backed by the DavidJGrimsley/guess-the-qubit monorepo containing both the Unreal Engine desktop application and Expo AR mobile application. Medimagen, Neo, and Guess the Qubit originated in a shared prototyping workspace before being separated into their own repositories with individual TestFlight/release links.
 - Football Game is a separate ReactVision Studio scene. Its page links directly to the individual AR apps as related hackathon work and retains its own Studio viewing link.
 - iSquared (name pending) covers the delivered MDS tools and clearly labels broader environment screenshots as design prototypes. Example project metrics and sessions in those screenshots are illustrative.
 - Medimagen describes anatomy and scan-slice work separately from the experimental GPU volume renderer, which remains unverified on iPhone.
@@ -40,14 +40,13 @@ Portfolio route: `/portfolio/mobile-apps/medimagen`.
 - [Watch the Medimagen demo](https://www.youtube.com/shorts/TQKk3C_ra0Q) — HTTP 200.
 - [View the finalist entry](https://separated-cornet-eaf.notion.site/Medimagen-24470ea3715683e4aff301d0a34edf21) — HTTP 200.
 
-### Guess the Qubit — AR
+### Sunscorned
 
-Portfolio route: `/portfolio/mobile-apps/guess-the-qubit-ar`.
+Portfolio route: `/portfolio/game-design/sunscorned`.
 
-- [View the shared AR prototype source](https://github.com/DavidJGrimsley/xr-showcase) — HTTP 200.
-- [Try the prototype on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
-- [Watch the AR demo](https://www.youtube.com/shorts/vVACYtnPqNc) — HTTP 200.
-- [View the finalist entry](https://separated-cornet-eaf.notion.site/Guess-the-Qubit-f1670ea3715683088c3e01f7901276c5) — HTTP 200.
+- [Play Sunscorned on itch.io](https://mrdj2u.itch.io/sunscorned) — HTTP 200.
+- [View the Vampire Horror Jam 3D Vol. 3 entry](https://itch.io/jam/vampire-horror-jam-3d-vol-3-halloween-edition/rate/5260421) — HTTP 200.
+- [Explore Vampire Horror Jam 3D Vol. 3](https://itch.io/jam/vampire-horror-jam-3d-vol-3-halloween-edition) — HTTP 200.
 
 ### Quasicombo
 
@@ -69,12 +68,15 @@ Portfolio route: `/portfolio/game-design/neo-rock-em-sock-em-robots`.
 - [Watch the robot boxing demo](https://youtu.be/eoelgVtbo08) — HTTP 200.
 - [View the second-place entry](https://separated-cornet-eaf.notion.site/Neo-Rock-Em-Sock-Em-Robots-3df70ea37156832d901f81a25e851ad5) — HTTP 200.
 
-### Guess the Qubit — Unreal
+### Guess the Qubit
 
-Portfolio route: `/portfolio/game-design/guess-the-qubit-unreal`.
+Portfolio route: `/portfolio/game-design/guess-the-qubit`.
 
 - [View source on GitHub](https://github.com/DavidJGrimsley/guess-the-qubit) — HTTP 200.
 - [Download the Windows demo](https://github.com/DavidJGrimsley/guess-the-qubit/releases/tag/v0.1.0-demo) — HTTP 200.
+- [Try the AR prototype on TestFlight](https://testflight.apple.com/join/4UugyD8Y) — HTTP 200.
+- [Watch the AR demo](https://www.youtube.com/shorts/vVACYtnPqNc) — HTTP 200.
+- [View the finalist entry](https://separated-cornet-eaf.notion.site/Guess-the-Qubit-f1670ea3715683088c3e01f7901276c5) — HTTP 200.
 
 ### Football Game
 

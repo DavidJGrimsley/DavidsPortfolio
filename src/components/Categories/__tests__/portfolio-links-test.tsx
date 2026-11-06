@@ -11,18 +11,18 @@ it('renders explicit Quantum API and canonical portfolio destinations as accessi
   let tree!: renderer.ReactTestRenderer;
   act(() => {
     tree = renderer.create(<OtherSectionsLinks otherSections={[
-      { category: 'mobile-apps', title: 'guess-the-qubit-ar', caption: 'Try the AR version' },
+      { category: 'game-design', title: 'guess-the-qubit', caption: 'Play Guess the Qubit' },
       { category: 'public-facing/api', title: 'quantum', caption: 'Explore Quantum API', href: '/public-facing/api/quantum' },
       { category: 'website-development', title: 'Quantum Jam 2025: Echoes of Light', caption: 'Visit the jam website' },
     ]} />);
   });
   const links = tree.root.findAllByType('PortfolioLink' as any);
   expect(links.map(node => node.props.href)).toEqual([
-    '/portfolio/mobile-apps/guess-the-qubit-ar',
+    '/portfolio/game-design/guess-the-qubit',
     '/public-facing/api/quantum',
     '/portfolio/website-development/Quantum%20Jam%202025%3A%20Echoes%20of%20Light',
   ]);
-  expect(links.map(node => node.props.accessibilityLabel)).toEqual(['Try the AR version', 'Explore Quantum API', 'Visit the jam website']);
+  expect(links.map(node => node.props.accessibilityLabel)).toEqual(['Play Guess the Qubit', 'Explore Quantum API', 'Visit the jam website']);
   act(() => tree.unmount());
 });
 

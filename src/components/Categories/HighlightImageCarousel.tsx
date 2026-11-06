@@ -6,7 +6,7 @@ import { portfolioImageFrame } from './portfolio-image-frame';
 
 type HighlightImageCarouselProps = {
     pictures?: string[];
-    descriptions?: string[];
+    descriptions?: (string | null)[];
     title?: string;
 };
 

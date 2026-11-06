@@ -8,8 +8,8 @@
             "caption": "From tracking a work session to sending an invoice: a self-hostable app for freelancers and small teams.",
             "picture": "/img/Time2Pay/time2pay-sessions.webp",
             "pictureDescription": "Time2Pay tour mode showing demo work sessions grouped by week, with customer and project filters.",
-            "gif": "/img/Time2Pay/time2pay-logo.webp",
-            "breakdown": "I built Time2Pay to connect the small pieces of freelance work: customers, projects, tasks, time, and invoices. A session can be timed or entered manually, reviewed alongside the rest of a project, and included in an invoice. Milestone checklists keep the work itself visible alongside its billing.\n\nThe same application supports a local data mode and a hosted account mode. It is published at time2pay.app as an installable web app, with an anonymous tour that lets visitors explore demo data before signing in. The source is available for self-hosting.",
+            "gif": "/img/Time2Pay/time2pay_Float.gif",
+            "breakdown": "I built Time2Pay to connect the small pieces of freelance work: customers, projects, tasks, time, and invoices. A session can be timed or entered manually, reviewed alongside the rest of a project, and included in an invoice. Milestone checklists keep the work itself visible alongside its billing.\n\nThe same application supports a local data mode and a hosted account mode. It is published at time2pay.app as an installable web app, with an anonymous tour that lets visitors explore demo data before signing in. The source is available for self-hosting. It's a simple app that was just a free solution for myself that I decided to host. The connection to Github for developers and to Mercury for anyone do give it a bit of a unique edge.",
             "skillsUsed": [
                 "React Native",
                 "Expo Router",
@@ -20,6 +20,9 @@
                 "Drizzle ORM",
                 "API routes",
                 "Mercury API",
+                "GitHub API",
+                "React Native Reanimated",
+                "React Native SVG",
                 "PWA"
             ],
             "highlights": [
@@ -27,7 +30,7 @@
                     "highlightTitle": "Keep time connected to the work",
                     "description": "I organized the tracking flow around customer, project, and task selections. The session timer and manual entries feed a weekly session history, while project milestones provide a lightweight checklist for what still needs to be done. This keeps time records attached to their context instead of turning them into a separate spreadsheet.",
                     "highlightPictures": [
-                        "/img/Time2Pay/time2pay_Float.gif"
+                        "/img/Time2Pay/time2pay-milestones.webp"
                     ],
                     "highlightPictureDescriptions": [
                         "Time2Pay session setup and a project milestone checklist using demo data."
@@ -44,9 +47,37 @@
                     ]
                 },
                 {
-                    "highlightTitle": "Turn recorded work into invoices",
-                    "description": "Tracked sessions can be grouped into invoices and exported as PDFs. I integrated Mercury through server-side routes for invoice and payment workflows, keeping provider credentials out of client-side requests. The web build also includes install and update support for use as a PWA.",
-                    "highlightCaption": "Time tracking, invoice output, and payment integration in one workflow."
+                    "highlightTitle": "Direct Mercury banking and invoicing integration",
+                    "description": "I integrated Mercury through server-side API routes to connect tracked work directly to banking and payments. Instead of re-entering billing info across separate tools, Time2Pay syncs Mercury customer contacts, displays real-time account balances alongside billing records, and generates official Mercury invoices that clients can pay in a single click. Sensitive bank credentials and tokens remain protected on the server, while an explicit review step ensures freelancers confirm destination accounts, line items, and delivery details before anything is sent.",
+                    "highlightCaption": "One-click invoice creation, client sync, and payment workflows directly through Mercury's API.",
+                    "highlightPictures": [
+                        "/img/Time2Pay/t2p-mercury.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Mercury account settings and API integration in Time2Pay."
+                    ]
+                },
+                {
+                    "highlightTitle": "Turn GitHub commits and pull requests into session notes",
+                    "description": "To eliminate the friction of manually logging work, I built a GitHub integration that maps repositories, branches, and PRs directly to client projects and tasks. When completing a work session, Time2Pay connects to GitHub's API to fetch recent commits and pull requests, allowing developers to pull commit messages and PR titles straight into their session notes—either appending or overwriting with a click. These records carry over as clickable commit SHAs and PR badges on session histories and invoice summaries, providing clients with transparent, verifiable proof of the exact code that shipped for every billed hour.",
+                    "highlightCaption": "Pull commit messages and pull request titles directly into session notes and client invoices.",
+                    "highlightPictures": [
+                        "/img/Time2Pay/t2p-github.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Connecting GitHub commits and pull requests to session notes in Time2Pay."
+                    ]
+                },
+                {
+                    "highlightTitle": "Multi-layer SVG logo and reactive status engine",
+                    "description": "I engineered the Time2Pay logo as a modular, multi-layer SVG driven by React Native Reanimated, turning brand artwork into a functional status indicator. The SVG is composed of decoupled layers: clock frame and ticks, independently rotating hour and minute hands, a dollar sign with an animated clip-path, a toupee layer, and dynamic status badges. The hands continuously calculate angles to display the live current time, while the dollar sign progressively fills with an accent color based on elapsed session time. Badge overlays indicate whether the user is clocked in, on break, clocked out, or encountering an error. Playful micro-animations—such as the toupee lifting and the body squashing on clock-in, the dollar sign ejecting upward on clock-out, and landing drop sequences—give the app distinct personality while serving as functional state feedback.",
+                    "highlightCaption": "An interactive SVG clock driven by React Native Reanimated that visualizes live time, session progress, and clock-in states.",
+                    "highlightPictures": [
+                        "/img/Time2Pay/t2pClockIn.gif"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The multi-layer Time2Pay animated logo displaying dynamic clock hands, dollar-fill progress, and status badges."
+                    ]
                 }
             ],
             "links": [
@@ -64,13 +95,13 @@
         {
             "title": "medimagen",
             "displayTitle": "Medimagen",
-            "isFeatured": false,
+            "isFeatured": true,
             "inProgress": false,
             "caption": "Explore scan-derived anatomy and CT/MRI slices in tabletop AR. A Ctrl+Space finalist.",
             "picture": "/img/Medimagen/medimagen-anatomy.webp",
             "pictureDescription": "Prepared half-skull and brain meshes aligned together for Medimagen.",
             "gif": "",
-            "breakdown": "Medical scans are usually viewed as flat slices. I built Medimagen to let people explore the relationship between those slices and a three-dimensional model placed on a real surface. The experience includes skull and brain meshes, anatomical labels, registered CT/MRI slices, and a stacked-slice preview.\n\nA substantial part of the work happened before the AR scene: preparing anatomy in 3D Slicer, cleaning geometry, aligning data, and exporting assets that could stay registered in the app. Medimagen was a finalist in the Expo × ReactVision Ctrl+Space hackathon and was prototyped in a shared AR workspace alongside Neo Rock ’Em Sock ’Em Robots and Guess the Qubit.",
+            "breakdown": "Medical scans are usually viewed as flat slices. I built Medimagen to let people explore the relationship between those slices and a three-dimensional model placed on a real surface. I was very excited to do this in AR because a 3D model on a 2D screen only goes so far. I'm eager to bring this into The experience includes skull and brain meshes, anatomical labels, registered CT/MRI slices, and a stacked-slice preview.\n\nA substantial part of the work happened before the AR scene: preparing anatomy in 3D Slicer, cleaning geometry, aligning data, and exporting assets that could stay registered in the app. Medimagen was a finalist in the Expo × ReactVision Ctrl+Space hackathon.\n\nMedimagen was first started during the Expo × ReactVision Ctrl+Space hackathon, where it was incubated alongside Neo Rock ’Em Sock ’Em Robots and Guess the Qubit within a shared AR prototyping workspace. While they originated together under a shared experimental codebase during the hackathon, each was built as its own distinct concept with plans to polish and publish each individually.",
             "skillsUsed": [
                 "ViroReact",
                 "Expo",
@@ -117,12 +148,26 @@
                     "highlightPictureDescriptions": [
                         "A frame from the Medimagen hackathon demo showing scan-slice controls."
                     ]
+                },
+                {
+                    "highlightTitle": "The challenges",
+                    "description": "The biggest limitation of the current app is the time that has to be spent in 3D Slicer preparing the scans. I converted the scans to a 3D model and the cleaned them up. I also had to align the CT and MRI scans so that they could be viewed together. The volume renderer is still under investigation, but it is a promising path for future work. This 3D volume render was not successfully implemented and a lesser-than fallback version is in the app now. The use of AI could potentially do the cleaning up of the scans and the alignment of the CT and MRI scans, but that is not implemented yet. The app is a prototype and is not intended for medical use but I'd love to continue working on this project if I could get funding to do so.",
+                    "highlightPictures": [
+                        "/img/Medimagen/firstAttempt.png",
+                        "/img/Medimagen/secondAttempt.png",
+                        "/img/Medimagen/thirdAttempt.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "First attempt at a volume render in the app, which was not successful.",
+                        "Second attempt at a volume render in the app, which was not successful.",
+                        "Third attempt at a volume render in the app, which is the fallback submitted."
+                    ]
                 }
             ],
             "links": [
                 {
                     "label": "View the shared AR prototype source",
-                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
+                    "url": "https://github.com/DavidJGrimsley/medical-viewer"
                 },
                 {
                     "label": "Try the prototype on TestFlight",
@@ -145,10 +190,10 @@
                     "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
                 },
                 {
-                    "category": "mobile-apps",
-                    "title": "guess-the-qubit-ar",
-                    "caption": "Explore Guess the Qubit — AR",
-                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                    "category": "game-design",
+                    "title": "guess-the-qubit",
+                    "caption": "Explore Guess the Qubit",
+                    "href": "/portfolio/game-design/guess-the-qubit"
                 },
                 {
                     "category": "software-development",
@@ -158,97 +203,6 @@
                 }
             ],
             "youtubeID": "TQKk3C_ra0Q"
-        },
-        {
-            "title": "guess-the-qubit-ar",
-            "displayTitle": "Guess the Qubit — AR",
-            "isFeatured": false,
-            "inProgress": false,
-            "caption": "A Bloch sphere you can walk around, with simulator measurements and queued quantum hardware jobs. A Ctrl+Space finalist.",
-            "picture": "/img/GuessTheQubit/qubit-ar.webp",
-            "pictureDescription": "The AR Guess the Qubit demo with a Bloch sphere placed in the room and a queued hardware-job message.",
-            "gif": "",
-            "breakdown": "I adapted my Unreal Guess the Qubit prototype into an AR learning app. The same visual question remains: choose 0 or 1, watch a gate act on the qubit, and see which measurement comes back. In AR, the sphere becomes an object that can be placed, resized, and viewed from different angles.\n\nThe app uses my Quantum API through its TypeScript SDK. Simulator results and asynchronous hardware jobs share the interaction, while the interface makes the waiting state visible. This version was a Ctrl+Space finalist with prototype source and a TestFlight build linked below.",
-            "skillsUsed": [
-                "Expo",
-                "ViroReact",
-                "TypeScript",
-                "Quantum API SDK",
-                "AR interaction",
-                "State machines",
-                "Request cancellation"
-            ],
-            "highlights": [
-                {
-                    "highlightTitle": "Translate the Unreal visual language",
-                    "description": "I rebuilt the cyan shell, axis rings, labeled basis states, and magenta state vector with Viro primitives. The AR placement and transform controls let the user choose the viewpoint, while retaining the original gate-intro and measurement-collapse sequence.",
-                    "highlightPictures": [
-                        "/img/GuessTheQubit/qubit-ar.webp"
-                    ],
-                    "highlightPictureDescriptions": [
-                        "The spatial Bloch sphere in the AR demo."
-                    ]
-                },
-                {
-                    "highlightTitle": "Wait for a measurement honestly",
-                    "description": "A round waits for both its introductory animation and a valid measurement before collapsing the state vector. Simulator mode requests a rotation measurement. Hardware mode submits a one-qubit circuit and polls for its result, with queued and running feedback rather than a made-up instant response."
-                },
-                {
-                    "highlightTitle": "Handle leaving, resetting, and retrying",
-                    "description": "The round controller tracks which session and round own a response. Reset and exit stop local requests and timers, attempt to cancel known unfinished jobs, and ignore stale results. Recoverable errors let users retry without treating a failed request as a measurement."
-                }
-            ],
-            "links": [
-                {
-                    "label": "View the shared AR prototype source",
-                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
-                },
-                {
-                    "label": "Try the prototype on TestFlight",
-                    "url": "https://testflight.apple.com/join/4UugyD8Y"
-                },
-                {
-                    "label": "Watch the AR demo",
-                    "url": "https://www.youtube.com/shorts/vVACYtnPqNc"
-                },
-                {
-                    "label": "View the finalist entry",
-                    "url": "https://separated-cornet-eaf.notion.site/Guess-the-Qubit-f1670ea3715683088c3e01f7901276c5"
-                }
-            ],
-            "otherSections": [
-                {
-                    "category": "game-design",
-                    "title": "guess-the-qubit-unreal",
-                    "caption": "See the original Unreal version of Guess the Qubit",
-                    "href": "/portfolio/game-design/guess-the-qubit-unreal"
-                },
-                {
-                    "category": "mobile-apps",
-                    "title": "medimagen",
-                    "caption": "Explore Medimagen",
-                    "href": "/portfolio/mobile-apps/medimagen"
-                },
-                {
-                    "category": "game-design",
-                    "title": "neo-rock-em-sock-em-robots",
-                    "caption": "Explore Neo Rock ’Em Sock ’Em Robots",
-                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
-                },
-                {
-                    "category": "software-development",
-                    "title": "isquared",
-                    "caption": "See the MDS tools used to prototype these AR apps",
-                    "href": "/portfolio/software-development/isquared"
-                },
-                {
-                    "category": "public-facing/api",
-                    "title": "quantum",
-                    "caption": "Explore my Quantum API and its engine integrations",
-                    "href": "/public-facing/api/quantum"
-                }
-            ],
-            "youtubeID": "vVACYtnPqNc"
         },
         {
             "title": "star-wars-galaxies",
@@ -425,6 +379,165 @@
     ],  
     "game-design": [
         {
+            "title": "sunscorned",
+            "displayTitle": "Sunscorned",
+            "isFeatured": true,
+            "inProgress": false,
+            "caption": "A top-down vampire horror action game where blood is both your health and the currency to unlock doors.",
+            "picture": "/img/Sunscorned/Thrall.png",
+            "pictureDescription": "A terrifying vampiric Thrall crouching in a stone dungeon corridor.",
+            "gif": "/img/Sunscorned/Splash.png",
+            "breakdown": "Built in Unreal Engine 5.6 for Vampire Horror Jam 3D Vol. 3: Halloween Edition, Sunscorned follows half-vampire Mattias as he fights through a cursed village, castle, and dungeon to destroy the Violet Sepulcher and restore the sun.\n\nI architected the custom Sunscorned C++ runtime and editor plugins (SunscornedGameplay and SunscornedEditor) alongside core gameplay systems: camera-relative locomotion and mouse steering, the three-stage Swift Strike sickle combo and stamina-backed guard/dash, lantern Flamesurge knockback, line-of-sight Fog of War with camera occlusion cutouts, blood-sacrifice door mechanics with lore journal persistence, and enemy AI encounters leading to the final boss Ozul.",
+            "skillsUsed": [
+                "Unreal Engine 5",
+                "C++",
+                "Blueprints",
+                "Gameplay Architecture",
+                "Combat Systems",
+                "AI Behavior Trees",
+                "Custom Editor Tools",
+                "Fog of War Shaders",
+                "FMOD Audio"
+            ],
+            "highlights": [
+                {
+                    "highlightTitle": "Blood doors & dungeon progression",
+                    "description": "Blood serves as both Mattias's health and the price to unseal castle doors and sacrifice for lore pages. I designed an extendable door architecture (BP_DoorBase) supporting plain doors, keyed doors, and blood doors with lethal payment protection. They also have an instance-editable attributes for having a checkpoint or level transport and a key with matching fields to configure them. Placed blood door triggers preview exact health deductions directly on the HUD's health bar before the player pays.",
+                    "highlightPictures": [
+                        "/img/Sunscorned/DoorAndProgressionLevels.png",
+                        "/img/Sunscorned/BP-BloodDoorTrigger.png",
+                        "/img/Sunscorned/BloodDoorExmpleForDesigners.png",
+                        "/img/Sunscorned/DoorIsExtendableAndMultiFuntctional.png",
+                        "/img/Sunscorned/Bloodpayment.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Level progression testing with keyed and blood-sealed doors.",
+                        "BP_BloodDoorTrigger volume setup for real-time health-bar cost previews.",
+                        "Blood door authoring workflow and visual prompt setup for designers.",
+                        "Class hierarchy showing BP_DoorBase extended into locked and blood door variants.",
+                        "Payment leaves your charcter with less health for the remaining level which can even result in death if the player's health isn't high enough."
+                    ]
+                },
+                {
+                    "highlightTitle": "Combat systems & testing grounds",
+                    "description": "Combat centers around a fluid three-stage sickle combo with stamina-governed sprinting, dodging, and blocking, paired with lantern Flamesurge to knock back swarming enemies. To tune contact windows, damage arcs, knockbacks, and enemy response times, I established dedicated combat testing grounds and tutorial prep levels for stress-testing AI encounters. Each enemy has their own special attacks and behaviors. I iterated over the movement and added VFX to get the desired feel that matched the enemy's body, attack, and desired feel of combat.",
+                    "highlightPictures": [
+                        "/img/Sunscorned/CombatTestingGrounds.png",
+                        "/img/Sunscorned/TutorialAreaPrep.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "The dedicated combat testing grounds arena with encounter zones and test dummies.",
+                        "The tutorial area preparation layout for teaching attacks, guards, and blood doors."
+                    ]
+                },
+                {
+                    "highlightTitle": "Attention to the details",
+                    "description": "I meticulously tuned socket attachments, translation offsets, and rotations for weapons—ensuring the sickle and lantern feel natural and weighted in-hand when actively drawn, and rest cleanly on Mattias's hip when holstered. I programmed seamless transitions in C++ and animation states to swap socket locations, orientation, and visibility during weapon cycling and locomotion.",
+                    "highlightPictures": [
+                        "/img/Sunscorned/SIckleInHand.png",
+                        "/img/Sunscorned/SickleOnHip.png",
+                        "/img/Sunscorned/LanternInHand.png",
+                        "/img/Sunscorned/LanternOnHip.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        "Sickle equipped and actively held in Mattias's right hand with custom socket rotation.",
+                        "Sickle holstered snugly on Mattias's right hip when inactive.",
+                        "Lantern drawn forward in hand to illuminate the dark and prepare Flamesurge.",
+                        "Lantern securely fastened to Mattias's left hip when inactive."
+                    ]
+                },
+                {
+                    "highlightTitle": "The challenges",
+                    "description": "Getting the VFX right on the sickle was a challenge for me. I first was applying them in the way they appeared in the preview as just a small effect when the sickle was in it's attack window. The designer told me they didn't look right and that it was supposed to follow the sword. That clarification and execution made all the difference. The VFX trailed through the air and shines against the dark background making the character's attack feel much more alive. Team communication was great for brainstorming and keeping each other updated but we lacked clarity on exact mechanics until it was time to implement. There were a lot of great ideas but midway through we had to narrow the scope and spend valuable time planning. I feel that a team of this size could have benefitted from someone playing the role of project manager to finalize decisions, push a clear vision, and keep everyone on track.",
+                    "highlightPictures": [
+                        "/img/Sunscorned/swift1.png",
+                        "/img/Sunscorned/swift2.png",
+                        "/img/Sunscorned/swiftInGame.png"
+                    ],
+                    "highlightPictureDescriptions": [
+                        null,
+                        null,
+                        null
+                    ]
+                },
+                {
+                    "highlightTitle": "A collaborative horror game-jam team",
+                    "highlightCaption": "Vampire Horror Jam 3D Vol. 3: Halloween Edition, October–November 2026.",
+                    "credits": [
+                        {
+                            "role": "Programming, Game Design, Combat, Architecture, Game systems, Custom plugins, Cutscenes",
+                            "name": "DJ Grimsley",
+                            "url": "https://mrdj2u.itch.io/"
+                        },
+                        {
+                            "role": "Animation curation, Concept Art, Environment Art, Game Design, Level Design, Lighting, Material Creation, Programming, Prop modeling, Project Manager, Rigging, VFX creation and curation",
+                            "name": "Sai Bellaire",
+                            "url": "https://saibellaire.artstation.com/"
+                        },
+                        {
+                            "role": "Audio Director, Sound Design, Music, Audio Implementation & Technical Sound Design, Programming, Version Control / Infrastructure",
+                            "name": "Bodo Lubig (Dire Black Audio)",
+                            "url": "https://www.direblackaudio.com/"
+                        },
+                        {
+                            "role": "3D Character Art, Level Design, Game Design",
+                            "name": "William Overbey",
+                            "url": "https://www.artstation.com/william_overbey"
+                        },
+                        {
+                            "role": "Environment Art, Level Design, Lighting, Prop Modeling",
+                            "name": "Esther Gan",
+                            "url": "https://www.artstation.com/estherg"
+                        },
+                        {
+                            "role": "Environment art, Game design, Prop art, Foliage Creation, Landscape Material Creation",
+                            "name": "Tessa Breland",
+                            "url": "https://www.artstation.com/tessabreland"
+                        },
+                        {
+                            "role": "Writing, Game Design, Narrative Design, Combat Design and Programming",
+                            "name": "Ariana Tranumn",
+                            "url": "https://arianatranumn.info/"
+                        },
+                        {
+                            "role": "3D Modeling, Character Design",
+                            "name": "Aiden Donegan",
+                            "url": "https://www.artstation.com/aidandonegan"
+                        },
+                        {
+                            "role": "Animation and rigging",
+                            "name": "Camila Paulino Galva",
+                            "url": "https://cpaulino.artstation.com/"
+                        },
+                        {
+                            "role": "HUD drawing",
+                            "name": "Kelsey Engelman",
+                            "url": "https://www.linkedin.com/in/kelsey-engelman/"
+                        }
+                    ],
+                    "description": "Created over a one-month Halloween game jam with a multidisciplinary ten-person team across programming, 3D character and environment art, level design, animation, narrative, HUD artwork, and custom audio. This was a great pleasure and honor to work with these individuals. Everyone collaborated well and compromised when necessary. Decisions were made with polls but the best gameplay path always took priority before personal ideas. Among the amazing team, there were a few members that went the extra mile. Sai was a powerhouse of a teammate. She was always active and helping out, regardless of if it was her specialty. Bodo also went above and beyond to host the team's GitHub repository through ForgeJo on his home computer and provide a custom audio implementation system that allowed us to easily implement and test audio in the game. Overall, this was a great experience and I learned a lot about working in a team environment."
+                }
+            ],
+            "links": [
+                {
+                    "label": "Play Sunscorned on itch.io",
+                    "url": "https://mrdj2u.itch.io/sunscorned"
+                },
+                {
+                    "label": "View the Vampire Horror Jam 3D Vol. 3 entry",
+                    "url": "https://itch.io/jam/vampire-horror-jam-3d-vol-3-halloween-edition/rate/5260421"
+                }
+            ],
+            "otherSections": [
+                {
+                    "category": "game-design",
+                    "title": "quasicombo",
+                    "caption": "Explore Quasicombo, an Unreal Engine quantum beat-'em-up",
+                    "href": "/portfolio/game-design/quasicombo"
+                }
+            ]
+        },
+        {
             "title": "quasicombo",
             "displayTitle": "Quasicombo",
             "isFeatured": true,
@@ -545,13 +658,13 @@
         {
             "title": "neo-rock-em-sock-em-robots",
             "displayTitle": "Neo Rock ’Em Sock ’Em Robots",
-            "isFeatured": false,
+            "isFeatured": true,
             "inProgress": false,
             "caption": "Tabletop robot boxing with shared-space and remote multiplayer. Second place at Ctrl+Space.",
             "picture": "/img/NeoRockEmSockEmRobots/neo-menu.webp",
             "pictureDescription": "Neo Rock ’Em Sock ’Em Robots menu with one-player and two-player options.",
-            "gif": "",
-            "breakdown": "I rebuilt a childhood robot-boxing idea as a tabletop AR fighter. Place an arena on a real surface, choose solo or multiplayer, and control a robot with movement, attacks, defense, and a deliberately playful finishing uppercut. The game placed second in the Expo × ReactVision Ctrl+Space hackathon.\n\nThe work spans adapting 3D assets for ViroReact, implementing combat and collision behavior, making touch controls usable in landscape, and coordinating two players. I prototyped the game in the same AR workspace as Medimagen and Guess the Qubit. The source repository and TestFlight build are shared.",
+            "gif": "/img/NeoRockEmSockEmRobots/neo-fight.gif",
+            "breakdown": "I rebuilt a childhood robot-boxing idea as a tabletop AR fighter. Place an arena on a real surface, choose solo or multiplayer, and control a robot with movement, attacks, defense, and a deliberately playful finishing uppercut. The game placed second in the Expo × ReactVision Ctrl+Space hackathon.\n\nThe work spans adapting 3D assets for ViroReact, implementing combat and collision behavior, making touch controls usable in landscape, and coordinating two players. The source repository and TestFlight build are shared.\n\nNeo Rock ’Em Sock ’Em Robots was first started during the Expo × ReactVision Ctrl+Space hackathon, where it was incubated alongside Medimagen and Guess the Qubit within a shared AR prototyping workspace. While they originated together under a shared experimental codebase during the hackathon, each experience was crafted around its own unique mechanics and architecture, with plans to publish each individually.",
             "skillsUsed": [
                 "ViroReact",
                 "Expo",
@@ -566,14 +679,12 @@
             "highlights": [
                 {
                     "highlightTitle": "Adapt the assets to the runtime",
-                    "description": "I prepared the arena and robot assets for the Viro scene, worked through materials and animation clips, and connected them to the combat presentation. The preparation view shows the model setup; the finished demo places the ring on a real table.",
+                    "description": "I prepared the arena and robot assets for the Viro scene, worked through materials and animation clips, and connected them to the combat presentation. I used the Viro ReactVision Studio to test the models out and after several iterations on altering the materials and properties, the robot appeared as expected and was ready to use in the app code. The studio really came in handy for this. This Radical Mike Robot asset was perfect and ready with it's own animations and different colors although I did author a couple of animations with the help of AI.",
                     "highlightPictures": [
-                        "/img/NeoRockEmSockEmRobots/neo-assets.webp",
-                        "/img/NeoRockEmSockEmRobots/neo-ar.webp"
+                        "/img/NeoRockEmSockEmRobots/neo-assets.webp"
                     ],
                     "highlightPictureDescriptions": [
-                        "Preparing the ring, robot model, and animation setup for ReactVision.",
-                        "Two robot fighters inside the placed tabletop arena."
+                        "Preparing the ring, robot model, and animation setup for ReactVision."
                     ]
                 },
                 {
@@ -588,7 +699,7 @@
                 },
                 {
                     "highlightTitle": "Share one arena across two phones",
-                    "description": "Same-table play uses ReactVision cloud anchors and ViroSharedFrame to align both phones to the same arena. A relay supports remote play, and QR invitations help connect players. Placement, tracking, and connection state are handled separately from the fight so the interface can explain what is still needed.",
+                    "description": "Same-table play uses ReactVision cloud anchors and ViroSharedFrame to align both phones to the same arena. A relay supports remote play, and QR invitations help connect players. Placement, tracking, and connection state are handled separately from the fight so the interface can explain what is still needed. The music and sound effects are handled uniquely when the two players are in the same space which I think adds to the immersion while not playing overlapping audio which is often a problem when playing the same game in the same room. The music and round announcements comes from the host's phone while the punching sound effects are played from the player's phone who was hit, and the win/lose announcement is played on both phones accurately.",
                     "highlightCaption": "Second place, Ctrl+Space — Expo × ReactVision AR/VR hackathon.",
                     "highlightPictures": [
                         "/img/NeoRockEmSockEmRobots/neo-ar.webp"
@@ -596,12 +707,17 @@
                     "highlightPictureDescriptions": [
                         "The shared tabletop arena shown in the Ctrl+Space demo."
                     ]
+                },
+                {
+                    "highlightTitle": "The challenges",
+                    "highlightCaption": "Good combat takes iteration",
+                    "description": "Getting the combat right was hard and it's still not perfect. Ensuring that the punch was recieved was especially difficult when I added the ability to spin around the arena. At first the robots started in the middle and only went back and forth but it felt like a wast of the AR space. I chose to make the robot circle around their opponent when going left and right which when paired with the jump back button, can open up the arena. I think I need to tweak the timing to make blocking easier and movement more fluid as well as making the uppercut easier to execute. I'm still learning and seeking to improve my combat-building abilities."
                 }
             ],
             "links": [
                 {
                     "label": "View the shared AR prototype source",
-                    "url": "https://github.com/DavidJGrimsley/xr-showcase"
+                    "url": "https://github.com/DavidJGrimsley/neo-rock-em-sock-em-robots"
                 },
                 {
                     "label": "Try the prototype on TestFlight",
@@ -624,10 +740,10 @@
                     "href": "/portfolio/mobile-apps/medimagen"
                 },
                 {
-                    "category": "mobile-apps",
-                    "title": "guess-the-qubit-ar",
-                    "caption": "Explore Guess the Qubit — AR",
-                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                    "category": "game-design",
+                    "title": "guess-the-qubit",
+                    "caption": "Explore Guess the Qubit",
+                    "href": "/portfolio/game-design/guess-the-qubit"
                 },
                 {
                     "category": "software-development",
@@ -639,41 +755,54 @@
             "youtubeID": "eoelgVtbo08"
         },
         {
-            "title": "guess-the-qubit-unreal",
-            "displayTitle": "Guess the Qubit — Unreal",
+            "title": "guess-the-qubit",
+            "displayTitle": "Guess the Qubit",
             "isFeatured": false,
             "inProgress": false,
-            "caption": "Build intuition for qubits by predicting a measurement on a playable Bloch sphere.",
+            "caption": "Build intuition for qubits by predicting measurements on a playable Bloch sphere — spanning an Unreal Engine desktop game and an AR mobile experience with real quantum hardware jobs.",
             "picture": "/img/GuessTheQubit/qubit-unreal.webp",
             "pictureDescription": "The Unreal Guess the Qubit screen with a cyan Bloch sphere, labeled basis states, guess buttons, and hardware-job controls.",
             "gif": "",
-            "breakdown": "I built Guess the Qubit as an educational Unreal prototype and a practical example of my Quantum API plugin. Instead of beginning with a page of notation, it begins with an object: a luminous Bloch sphere, a state vector, and a choice between two possible measurement results.\n\nThe current game lets the player guess, watch a gate animation, and see the state collapse to 0 or 1. It includes simulator integration and an optional asynchronous hardware-job path. The public Windows demo and source are available; a longer sequence of guided lessons remains a future direction.",
+            "breakdown": "I built Guess the Qubit as an educational quantum game and a practical implementation of my Quantum API integrations. Instead of beginning with dry mathematical notation, the experience begins with an object: a luminous Bloch sphere, a state vector, and a prediction challenge between two possible measurement results.\n\nThe project originated as an Unreal Engine prototype where players predict measurements, observe quantum gate transformations, and watch the state vector probabilistically collapse. During the Expo × ReactVision Ctrl+Space hackathon, I adapted this concept into a spatial AR learning application with React Native and ViroReact, allowing users to place the Bloch sphere into physical space, walk around it, and inspect the state vector from any angle. The AR version was named a finalist in the Ctrl+Space hackathon.\n\nI unified both platforms into a single monorepo (github.com/DavidJGrimsley/guess-the-qubit) managed with pnpm and Turborepo. Both apps connect to my Quantum API backend—Unreal using a dedicated C++/Blueprint plugin and the mobile AR app using the TypeScript SDK. Players can explore fast local simulator results or submit authentic single-qubit circuits to IBM Quantum hardware, complete with real-time queue polling, visual waiting states, and safe request cancellation.",
             "skillsUsed": [
                 "Unreal Engine",
                 "Blueprints",
-                "Quantum API Unreal plugin",
+                "Expo",
+                "React Native",
+                "ViroReact",
+                "TypeScript",
+                "Quantum API SDK",
                 "Bloch sphere",
+                "AR interaction",
                 "Educational games",
-                "Asynchronous jobs"
+                "Asynchronous jobs",
+                "Turborepo",
+                "pnpm"
             ],
             "highlights": [
                 {
-                    "highlightTitle": "Give an abstract state a visible form",
-                    "description": "The cyan shell and rings establish the sphere, while the magenta vector and labeled basis states show its orientation. I built the interaction around a rotation followed by a measurement, so the visual transition has a clear beginning and outcome.",
+                    "highlightTitle": "Dual-platform visualization: Unreal desktop & spatial AR",
+                    "description": "I built the visual identity around a cyan shell, coordinate axis rings, labeled basis states (|0⟩, |1⟩), and a magenta state vector across both platforms. On desktop, the Unreal Blueprint implementation delivers responsive on-screen interaction and immediate visual feedback. In mobile AR, Viro primitives place the sphere directly into the user's room with placement and scale controls so players can walk around and inspect superposition geometry in 3D space.",
                     "highlightPictures": [
-                        "/img/GuessTheQubit/qubit-unreal.webp"
+                        "/img/GuessTheQubit/qubit-unreal.webp",
+                        "/img/GuessTheQubit/qubit-ar.webp"
                     ],
                     "highlightPictureDescriptions": [
-                        "The labeled Bloch sphere and guess controls in the Unreal demo."
+                        "The labeled Bloch sphere and guess controls in the Unreal desktop demo.",
+                        "The spatial Bloch sphere placed in a room during the AR demo."
                     ]
                 },
                 {
-                    "highlightTitle": "Guess, measure, and try again",
-                    "description": "Players choose 0 or 1 before seeing the result. The rotation animation and collapse make each round observable, while win/loss feedback encourages another attempt. This prototype focuses on that small loop; broader lessons on gates and superposition are planned."
+                    "highlightTitle": "Observable game loop: guess, rotate, and collapse",
+                    "description": "Players select 0 or 1 before seeing the result. The gate rotation animation and collapse make each round observable, while win/loss feedback encourages another attempt. A round synchronizes its introductory animation with a valid measurement before collapsing the state vector according to Born rule probabilities. This core loop makes abstract quantum principles intuitive and hands-on."
                 },
                 {
-                    "highlightTitle": "Exercise the Quantum API plugin",
-                    "description": "The game uses the project’s Quantum API Unreal plugin for simulated gate calls and optional queued hardware jobs. The repository leaves credentials blank, and hardware access depends on an external service profile. This makes the source a concrete integration example as well as a learning prototype."
+                    "highlightTitle": "Real quantum computing with honest asynchronous feedback",
+                    "description": "The game exercises my Quantum API backend through the Unreal C++/Blueprint plugin and the TypeScript SDK in Expo. Simulator mode executes rotation measurements via Qiskit's Statevector. Hardware mode submits circuits to real IBM Quantum processors and polls for results, displaying pulsing visual indicators and queued/running feedback rather than instant fake responses. Session resets, exits, and retries cleanly cancel pending jobs to avoid wasting quantum hardware queue slots."
+                },
+                {
+                    "highlightTitle": "Unified monorepo architecture",
+                    "description": "I consolidated both applications into a single monorepo (github.com/DavidJGrimsley/guess-the-qubit) managed by pnpm and Turborepo. It isolates the Expo SDK 57 mobile AR app (apps/expo) and Unreal Engine 5.8 desktop project (apps/unreal), enforces LF line endings and dependency patches, includes an offline EAS ignore simulation to prevent shipping desktop assets with mobile builds, and automates CI test suites across both projects."
                 }
             ],
             "links": [
@@ -684,14 +813,38 @@
                 {
                     "label": "Download the Windows demo",
                     "url": "https://github.com/DavidJGrimsley/guess-the-qubit/releases/tag/v0.1.0-demo"
+                },
+                {
+                    "label": "Try the AR prototype on TestFlight",
+                    "url": "https://testflight.apple.com/join/4UugyD8Y"
+                },
+                {
+                    "label": "Watch the AR demo",
+                    "url": "https://www.youtube.com/shorts/vVACYtnPqNc"
+                },
+                {
+                    "label": "View the Ctrl+Space finalist entry",
+                    "url": "https://separated-cornet-eaf.notion.site/Guess-the-Qubit-f1670ea3715683088c3e01f7901276c5"
                 }
             ],
             "otherSections": [
                 {
+                    "category": "game-design",
+                    "title": "neo-rock-em-sock-em-robots",
+                    "caption": "Explore Neo Rock ’Em Sock ’Em Robots",
+                    "href": "/portfolio/game-design/neo-rock-em-sock-em-robots"
+                },
+                {
                     "category": "mobile-apps",
-                    "title": "guess-the-qubit-ar",
-                    "caption": "Walk around the AR version of Guess the Qubit",
-                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                    "title": "medimagen",
+                    "caption": "Explore Medimagen",
+                    "href": "/portfolio/mobile-apps/medimagen"
+                },
+                {
+                    "category": "software-development",
+                    "title": "isquared",
+                    "caption": "See the MDS tools used to prototype these AR apps",
+                    "href": "/portfolio/software-development/isquared"
                 },
                 {
                     "category": "public-facing/api",
@@ -699,7 +852,8 @@
                     "caption": "Explore my Quantum API and its engine integrations",
                     "href": "/public-facing/api/quantum"
                 }
-            ]
+            ],
+            "youtubeID": "vVACYtnPqNc"
         },
         {
             "title": "football-game",
@@ -767,10 +921,10 @@
                     "href": "/portfolio/mobile-apps/medimagen"
                 },
                 {
-                    "category": "mobile-apps",
-                    "title": "guess-the-qubit-ar",
-                    "caption": "Explore Guess the Qubit — AR",
-                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                    "category": "game-design",
+                    "title": "guess-the-qubit",
+                    "caption": "Explore Guess the Qubit",
+                    "href": "/portfolio/game-design/guess-the-qubit"
                 }
             ],
             "youtubeID": "f1O2cW_A6hY"
@@ -1073,10 +1227,10 @@
                     "href": "/portfolio/mobile-apps/medimagen"
                 },
                 {
-                    "category": "mobile-apps",
-                    "title": "guess-the-qubit-ar",
-                    "caption": "Explore Guess the Qubit — AR",
-                    "href": "/portfolio/mobile-apps/guess-the-qubit-ar"
+                    "category": "game-design",
+                    "title": "guess-the-qubit",
+                    "caption": "Explore Guess the Qubit",
+                    "href": "/portfolio/game-design/guess-the-qubit"
                 }
             ]
         },
