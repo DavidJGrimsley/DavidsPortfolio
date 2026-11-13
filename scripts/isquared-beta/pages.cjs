@@ -81,6 +81,7 @@ function renderLoginPage({ agreement, csrfToken }) {
           </ul>
         </div>
       </div>
+      <p class="imagination-caption">Use your imagination :)</p>
     </section>
     <section class="preview-section" aria-labelledby="repos-title">
       <h2 id="repos-title">Explore the code</h2>
