@@ -4,6 +4,8 @@ const { loadConfig } = require('./config.cjs');
 const { openDatabase } = require('./db.cjs');
 const { createBetaRouter } = require('./routes.cjs');
 const { createBetaService } = require('./service.cjs');
+const { createSimulatorProvider } = require('./simulator-provider.cjs');
+const { createSimulatorService } = require('./simulator-service.cjs');
 
 /** Opens the database and builds the service; shared by the HTTP router and the admin CLI. */
 function openBeta({ appRoot, env = process.env, now, config: provided } = {}) {
@@ -19,7 +21,11 @@ function openBeta({ appRoot, env = process.env, now, config: provided } = {}) {
   const { db, migration } = openDatabase(config.dbPath);
   const service = createBetaService({ db, config, agreement, now });
   service.registerAgreement();
-  return { config, db, migration, service, agreement, close: () => db.close() };
+
+  const provider = config.simulatorProviderInstance || createSimulatorProvider(config.simulator);
+  const simulatorService = createSimulatorService({ db, config, provider, now });
+
+  return { config, db, migration, service, simulatorService, provider, agreement, close: () => db.close() };
 }
 
 function failClosedRouter(message) {
@@ -49,12 +55,26 @@ function createIsquaredBeta({ appRoot, env = process.env, logger = console, now 
 
   try {
     const beta = openBeta({ appRoot, env, now, config });
-    const router = createBetaRouter({ service: beta.service, config, logger });
+    const router = createBetaRouter({
+      service: beta.service,
+      simulatorService: beta.simulatorService,
+      config,
+      logger,
+    });
     logger.log(
       `[isquared-beta] enabled: agreement v${beta.agreement.version}, db schema v${beta.migration.to}, ` +
-        `admin dashboard ${config.admin.username && config.admin.passwordHash ? 'on' : 'off'}`
+        `admin dashboard ${config.admin.username && config.admin.passwordHash ? 'on' : 'off'}, ` +
+        `simulator provider ${beta.provider.name}`
     );
-    return { enabled: true, config, router, service: beta.service, close: beta.close };
+    return {
+      enabled: true,
+      config,
+      router,
+      service: beta.service,
+      simulatorService: beta.simulatorService,
+      provider: beta.provider,
+      close: beta.close,
+    };
   } catch (error) {
     logger.error(`[isquared-beta] failed to start (${error.name}): ${error.message}`);
     return {

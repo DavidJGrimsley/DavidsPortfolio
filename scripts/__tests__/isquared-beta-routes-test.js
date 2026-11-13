@@ -174,9 +174,11 @@ describe('isquared-beta routes and server integration', () => {
     expect(html).toContain('I have read and agree to the confidentiality terms.');
     expect(html).toContain('Enter iSquared');
     expect(html).toContain('terms-dialog');
-    expect(html).toContain('postscript');
-    expect(html).toContain('This is a limited prototype');
-    expect(html).toContain('dynamic interactions with AI agents');
+    expect(html).toContain('iSquared will be open source');
+    expect(html).toContain('What’s real and what’s simulated');
+    expect(html).toContain('archive points');
+    expect(html).toContain('github.com/DavidJGrimsley/experimemo-exact');
+    expect(html).toContain('davidjgrimsley.com/portfolio/software-development/isquared');
   });
 
   it('blocks unauthenticated access to prototype files and assets with 401', async () => {

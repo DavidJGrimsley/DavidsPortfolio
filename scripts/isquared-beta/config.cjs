@@ -52,6 +52,19 @@ function loadConfig({ appRoot, env = process.env } = {}) {
       username: String(env.ISQUARED_ADMIN_USERNAME || '').trim(),
       passwordHash: String(env.ISQUARED_ADMIN_PASSWORD_HASH || '').trim(),
     },
+    simulator: {
+      provider: String(env.ISQUARED_SIMULATOR_PROVIDER || 'disabled').trim().toLowerCase(),
+      monthlyBudgetMinutes: readInt(env.ISQUARED_SIMULATOR_MONTHLY_BUDGET_MINUTES, 60, { min: 1, max: 10_000 }),
+      // Absolute 5 minute maximum enforced even if env/config asks longer
+      maxSessionMinutes: Math.min(5, readInt(env.ISQUARED_SIMULATOR_MAX_SESSION_MINUTES, 5, { min: 1, max: 60 })),
+      allowedOrigin: String(env.ISQUARED_SIMULATOR_ALLOWED_ORIGIN || env.EXPO_PUBLIC_SITE_ORIGIN || '').trim() || null,
+      allowedOrigins: env.ISQUARED_SIMULATOR_ALLOWED_ORIGINS
+        ? env.ISQUARED_SIMULATOR_ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean)
+        : [],
+      projectId: String(env.EXPO_PROJECT_ID || '00ff11f9-a771-44bb-a352-ba497bfea0c7').trim(),
+      buildId: env.EXPO_BUILD_ID ? String(env.EXPO_BUILD_ID).trim() : null,
+      applicationArchiveUrl: env.EXPO_APPLICATION_ARCHIVE_URL ? String(env.EXPO_APPLICATION_ARCHIVE_URL).trim() : null,
+    },
     limits: {
       ipFailures: readInt(env.ISQUARED_RATE_IP_FAILURES, 8, { min: 1, max: 1000 }),
       ipWindowMs: 15 * 60_000,

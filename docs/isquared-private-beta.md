@@ -466,3 +466,24 @@ Expected response and header characteristics:
   - `x-robots-tag: noindex, nofollow, noarchive`
   - `referrer-policy: no-referrer`
   - `cross-origin-resource-policy: same-origin`
+
+## Pet Show and Tell simulator preview (not enabled for testers)
+
+**Current decision (2026-11-13): testers get the labeled simulated preview.** The live embed is parked because the Expo account that owns Pet Show and Tell (`mrdj2u`) is on the Starter plan, and Expo refuses session creation that sets `frameAncestors` or `corsOrigins` ("supported on Production and Enterprise plans"). The embed requires those options, so the live path stays disabled (`ISQUARED_SIMULATOR_PROVIDER` unset) until the owning account is on a plan that supports them. Verified by an `eas simulator:start --cors-origin ... --frame-ancestor ...` attempt, which failed before creating any session; the same request over the REST API returned HTTP 403. Reading sessions and reaching create validation both work with a personal access token, so this is a plan restriction, not a token problem. An Android build for this project exists (`emulator` profile APK; build `50ccf8c9-26cf-4bed-a814-c671acef6980`) and the direct Expo-hosted preview works for the account owner. Live tapping, typing and scrolling inside the embedded `@expo/hub-client` view have still never been exercised.
+
+The simulator adapter is disabled by default. This integration is experimental and must pass a real, separately authorized end-to-end trial before tester access. The five-minute maximum is per simulator session, independent of beta login duration. The configurable budget is an internal conservative limit; it is not a statement of Expo's free allowance or billing. Confirm Expo availability, pricing, boot time and partial-session billing before enabling it.
+
+After a standalone Android APK has been built and made available to Expo as a compatible EAS build or an HTTPS application archive, configure the portfolio server's private environment:
+
+- `ISQUARED_SIMULATOR_PROVIDER=eas`
+- `EXPO_TOKEN`: a server-only Expo access token with the necessary project permissions.
+- `EXPO_PROJECT_ID`: the linked Pet Show and Tell Expo project ID.
+- Exactly one of `EXPO_BUILD_ID` or `EXPO_APPLICATION_ARCHIVE_URL` identifying the Android APK.
+- `ISQUARED_SIMULATOR_ALLOWED_ORIGIN`: the exact HTTPS origin of the i² page; localhost is permitted for development. Include no path or trailing slash.
+- Optional: `ISQUARED_SIMULATOR_MONTHLY_BUDGET_MINUTES` and `ISQUARED_SIMULATOR_MAX_SESSION_MINUTES` (maximum five).
+
+Restart the server with the existing persistent beta SQLite database. Credentials must never be placed in the prototype bundle. The preview token is sent only in no-store responses to the owning beta tester; anyone who obtains it can control that device until the session ends. Never share or log preview responses. The simulator runs the actual app; the fallback is explicitly labeled as simulated.
+
+An uncertain start, stop, or expired external session retains its reservation until the provider positively confirms its state. The server does not run a background reconciler: a tester must request reconciliation, and a lost create response without an Expo session ID may require an operator to investigate in the Expo dashboard. Do not delete the SQLite record or launch a replacement until the external session is confirmed ended. Confirm the service's actual usage accounting in Expo before changing limits.
+
+For the authorized trial, exercise start, touch, scrolling, text entry, Android navigation, scaling, reload/reconnection, stop and expiry within the existing frame. Confirm the Expo screen has just one set of system bars and inspect browser network/CSP errors. Also verify a second tester cannot access the first tester's preview. Do not enable public tester access until these checks and the artifact's startup without a development server pass.

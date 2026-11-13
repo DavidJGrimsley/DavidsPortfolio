@@ -84,6 +84,51 @@ const MIGRATIONS = [
       );
     `,
   },
+  {
+    version: 2,
+    sql: `
+      CREATE TABLE beta_simulator_config (
+        scope                TEXT PRIMARY KEY,
+        monthly_budget_secs  INTEGER NOT NULL,
+        max_session_secs     INTEGER NOT NULL,
+        updated_at           TEXT NOT NULL
+      );
+
+      CREATE TABLE beta_simulator_sessions (
+        id                   TEXT PRIMARY KEY,
+        tester_id            INTEGER NOT NULL REFERENCES beta_testers(id),
+        project_id           TEXT NOT NULL,
+        platform             TEXT NOT NULL,
+        status               TEXT NOT NULL CHECK (status IN ('starting', 'active', 'stopping', 'stopped', 'failed', 'expired', 'uncertain')),
+        provider             TEXT NOT NULL,
+        provider_session_id  TEXT,
+        web_preview_url      TEXT,
+        duration_seconds     INTEGER NOT NULL,
+        reserved_seconds     INTEGER NOT NULL DEFAULT 0,
+        used_seconds         INTEGER NOT NULL DEFAULT 0,
+        created_at           TEXT NOT NULL,
+        expires_at           TEXT NOT NULL,
+        ended_at             TEXT,
+        reconciled_at        TEXT,
+        error_code           TEXT,
+        metadata             TEXT
+      );
+      CREATE INDEX beta_sim_sessions_tester_status ON beta_simulator_sessions(tester_id, status);
+      CREATE INDEX beta_sim_sessions_created ON beta_simulator_sessions(created_at);
+
+      CREATE TABLE beta_simulator_attempts (
+        id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id           TEXT NOT NULL REFERENCES beta_simulator_sessions(id),
+        tester_id            INTEGER NOT NULL REFERENCES beta_testers(id),
+        action               TEXT NOT NULL,
+        outcome              TEXT NOT NULL,
+        created_at           TEXT NOT NULL,
+        details              TEXT
+      );
+      CREATE INDEX beta_sim_attempts_session ON beta_simulator_attempts(session_id);
+      CREATE INDEX beta_sim_attempts_tester ON beta_simulator_attempts(tester_id);
+    `,
+  },
 ];
 
 function migrate(db) {
@@ -131,7 +176,13 @@ function openDatabase(dbPath) {
   return { db, migration: result };
 }
 
+const activeTransactions = new WeakSet();
+
 function transaction(db, fn) {
+  if (activeTransactions.has(db)) {
+    return fn();
+  }
+  activeTransactions.add(db);
   db.exec('BEGIN IMMEDIATE');
   try {
     const result = fn();
@@ -140,6 +191,8 @@ function transaction(db, fn) {
   } catch (error) {
     db.exec('ROLLBACK');
     throw error;
+  } finally {
+    activeTransactions.delete(db);
   }
 }
 

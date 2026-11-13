@@ -41,6 +41,7 @@ function renderLoginPage({ agreement, csrfToken }) {
   <section class="card" aria-labelledby="page-title">
     <p class="eyebrow">iSquared</p>
     <h1 id="page-title">iSquared Private Preview</h1>
+    <p class="preview-note">iSquared will be open source. For now, I’m sharing this prototype with a small number of people.</p>
     <p class="lead">Please enter your personal access code to continue.</p>
     <form id="access-form" novalidate autocomplete="off"
           data-csrf="${escapeHtml(csrfToken)}"
@@ -61,9 +62,37 @@ function renderLoginPage({ agreement, csrfToken }) {
       <p id="form-error" class="error" role="alert" hidden></p>
       <button type="submit" id="submit" class="primary" disabled>Enter iSquared</button>
     </form>
-    <aside class="postscript" aria-label="Prototype notice">
-      <p><strong>P.S.</strong> This is a limited prototype. AI interactions and claims shown are scripted for demonstration purposes, and the intended experience will offer more dynamic interactions with AI agents.</p>
-    </aside>
+    <section class="preview-section" aria-labelledby="prototype-details-title">
+      <h2 id="prototype-details-title">What’s real and what’s simulated</h2>
+      <div class="details-grid">
+        <div>
+          <h3>Real</h3>
+          <ul>
+            <li>The example project repositories and their code.</li>
+            <li>The Pet Show and Tell app and its simulator experience.</li>
+            <li>The web preview of the Experimemo Exact app.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Simulated</h3>
+          <ul>
+            <li>AI chat and agent interactions are scripted for this prototype.</li>
+            <li>Session progression uses archive points I created while building locally to demonstrate the IDE’s flow.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section class="preview-section" aria-labelledby="repos-title">
+      <h2 id="repos-title">Explore the code</h2>
+      <p>Take a closer look at the projects featured in this preview.</p>
+      <ul class="repo-links">
+        <li><a href="https://github.com/DavidJGrimsley/mrdj-dev-suite" target="_blank" rel="noopener noreferrer">Mr. DJ’s Dev Suite and iSquared prototype</a></li>
+        <li><a href="https://github.com/DavidJGrimsley/pet-show-and-tell" target="_blank" rel="noopener noreferrer">Pet Show and Tell</a></li>
+        <li><a href="https://github.com/DavidJGrimsley/experimemo-exact" target="_blank" rel="noopener noreferrer">Experimemo Exact</a></li>
+        <li><a href="https://github.com/DavidJGrimsley/not-hot-dog" target="_blank" rel="noopener noreferrer">Not Hot Dog</a></li>
+      </ul>
+      <a class="more-info" href="https://davidjgrimsley.com/portfolio/software-development/isquared" target="_blank" rel="noopener noreferrer">More about iSquared <span aria-hidden="true">→</span></a>
+    </section>
   </section>
 </main>
 <dialog id="terms-dialog" aria-labelledby="terms-title">
