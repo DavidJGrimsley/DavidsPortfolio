@@ -51,6 +51,7 @@ function renderLoginPage({ agreement, csrfToken }) {
       <input id="code" name="code" type="text" inputmode="text" autocapitalize="characters"
              autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40"
              placeholder="4X73B" aria-describedby="form-error" required>
+      <p id="personal-message" class="personal-message" role="status" hidden></p>
       <div class="terms">
         <p class="statement">${escapeHtml(agreement.statement)}</p>
         <label class="check" for="agree">
@@ -93,6 +94,11 @@ function renderLoginPage({ agreement, csrfToken }) {
         <li><a href="https://github.com/DavidJGrimsley/not-hot-dog" target="_blank" rel="noopener noreferrer">Not Hot Dog</a></li>
       </ul>
       <a class="more-info" href="https://davidjgrimsley.com/portfolio/software-development/isquared" target="_blank" rel="noopener noreferrer">More about iSquared <span aria-hidden="true">→</span></a>
+    </section>
+    <section class="preview-section" aria-labelledby="feedback-title">
+      <h2 id="feedback-title">About this prototype</h2>
+      <p>This prototype is a Vite TypeScript app for demonstration and design purposes. I’m open to feedback of any sort.</p>
+      <p>I’m considering Code-OSS with a custom runtime, building it entirely in Rust, or exploring Contract in some areas.</p>
     </section>
   </section>
 </main>

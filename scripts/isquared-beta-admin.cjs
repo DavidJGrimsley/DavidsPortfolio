@@ -29,6 +29,9 @@ Testers
   rotate-code <id|name> (--code X | --code-stdin | --generate)
                                       Replace the code; old code stops working, sessions revoked
   set-expiry <id|name> <YYYY-MM-DD|none>
+  set-message <id|name> --message "Hello!"   Set or replace the personal message
+  clear-message <id|name>                    Remove the personal message
+        Messages are visible to anyone with the code, before terms are accepted.
 
 Reporting and maintenance
   stats [--days 30] [--json]          Totals, active testers in the period, never-logged-in
@@ -43,7 +46,7 @@ Identify testers by numeric id or exact name. Times are UTC (local time in paren
 function parseArgs(argv) {
   const flags = {};
   const positional = [];
-  const valueFlags = new Set(['name', 'code', 'expires', 'limit', 'days', 'id']);
+  const valueFlags = new Set(['name', 'code', 'expires', 'limit', 'days', 'id', 'message']);
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token.startsWith('--')) {
@@ -216,6 +219,7 @@ async function run(argv) {
         if (command === 'show') {
           console.log(`Name:        ${tester.name} (id ${tester.id})`);
           console.log(`Status:      ${statusLabel(row.status)}`);
+          console.log(`Message:     ${tester.personal_message || '(none)'}`);
           console.log(`Invited:     ${when(tester.created_at)}`);
           console.log(`Expires:     ${tester.expires_at ? when(tester.expires_at) : 'no expiry'}`);
           console.log(`Logins:      ${row.logins}`);
@@ -272,6 +276,17 @@ async function run(argv) {
         if (!expiryValue) throw new Error('set-expiry requires a date (YYYY-MM-DD) or "none"');
         const updated = service.setExpiry(tester.id, expiryValue);
         console.log(`${tester.name}: ${updated.expires_at ? `expires ${updated.expires_at}` : 'no expiry'}.`);
+        return 0;
+      }
+
+      case 'set-message':
+      case 'clear-message': {
+        const target = positional[0] || flags.name || flags.id;
+        if (!target) throw new Error(`${command} requires a tester name or ID`);
+        if (command === 'set-message' && typeof flags.message !== 'string') throw new Error('set-message requires --message');
+        const tester = service.findTester(target);
+        service.setMessage(tester.id, command === 'clear-message' ? '' : flags.message);
+        console.log(`${tester.name}: personal message ${command === 'clear-message' ? 'cleared' : 'updated'}.`);
         return 0;
       }
 

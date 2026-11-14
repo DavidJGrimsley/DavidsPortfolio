@@ -174,6 +174,17 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     return getTester(testerId);
   }
 
+  function setMessage(testerId, value) {
+    if (typeof value !== 'string' || value.length > 500 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u202a-\u202e\u2066-\u2069]/.test(value)) {
+      throw new BetaError('bad_message', 'Messages must be plain text of at most 500 characters.');
+    }
+    return transaction(db, () => {
+      db.prepare('UPDATE beta_testers SET personal_message = ? WHERE id = ?').run(value.trim() || null, testerId);
+      logEvent({ testerId, type: 'message_changed' });
+      return getTester(testerId);
+    });
+  }
+
   function rotateCode(testerId, code) {
     const generated = code === undefined || code === null || code === '';
     const normalized = generated ? generateUniqueCode() : validateManualCode(code);
@@ -202,6 +213,25 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
 
   function clientKey(address) {
     return hashClient(config.pepper, address);
+  }
+
+  function lookupMessage({ code, clientAddress = 'unknown' }) {
+    const client = clientKey(clientAddress);
+    const rules = [
+      { bucket: `message:client:${client}`, limit: limits.messageIpAttempts ?? 20, windowMs: limits.ipWindowMs },
+      { bucket: 'message:global', limit: limits.messageGlobalAttempts ?? 300, windowMs: limits.globalWindowMs },
+    ];
+    return transaction(db, () => {
+      const limited = limiter.check([...accessRules(client), ...rules]);
+      if (limited.blocked) return { limited: true, retryAfterSeconds: limited.retryAfterSeconds };
+      limiter.recordFailure(rules);
+      const normalized = normalizeCode(code);
+      if (!normalized || normalized.length < 5) return { message: null };
+      const tester = db.prepare('SELECT active, expires_at, personal_message FROM beta_testers WHERE code_hash = ?')
+        .get(hashCode(config.pepper, normalized));
+      if (!tester || !tester.active || (tester.expires_at && tester.expires_at <= toIso(now()))) return { message: null };
+      return { message: tester.personal_message || null };
+    });
   }
 
   /**
@@ -469,6 +499,8 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     createAdminSession,
     createTester,
     findTester,
+    setMessage,
+    lookupMessage,
     getTester,
     listAgreementsFor,
     logout,

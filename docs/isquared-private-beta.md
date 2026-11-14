@@ -91,6 +91,8 @@ Configure these in the production `.env` (or Plesk Node.js environment settings)
 | `ISQUARED_TRUSTED_PROXY_HOPS` | No | `1` | Number of trusted reverse proxy hops appending to `X-Forwarded-For`. **Must be verified on the host** (see Section 10). |
 | `ISQUARED_RATE_IP_FAILURES` | No | `8` | Failed code attempts per IP before temporary lockout (15 min window). |
 | `ISQUARED_RATE_GLOBAL_FAILURES`| No | `100` | Global failed attempts before lockout (60 min window). |
+| `ISQUARED_MESSAGE_IP_ATTEMPTS` | No | `20` | Personal-message lookups per IP in 15 minutes. |
+| `ISQUARED_MESSAGE_GLOBAL_ATTEMPTS` | No | `300` | Personal-message lookups globally in 60 minutes. |
 | `ISQUARED_BETA_INSECURE_COOKIES`| No | `0` | Set to `1` only during local HTTP development if `NODE_ENV=production`. |
 
 ### Generating Secrets
@@ -116,6 +118,17 @@ npm run isquared:beta -- <command> [options]
 ```
 
 Testers can be referenced by either exact name (case-insensitive) or numeric ID, via positional argument or explicit `--name` / `--id` flags.
+
+### Personal messages
+
+Set or remove a plain-text message (up to 500 characters) for an existing tester:
+
+```bash
+npm run isquared:beta -- set-message "Jane Smith" --message "Welcome, Jane! Thanks for trying this out."
+npm run isquared:beta -- clear-message "Jane Smith"
+```
+
+The message appears beneath the access-code field shortly after the complete code is entered, before the visitor accepts the terms or signs in. Anyone possessing or guessing that code can see it, so do not include sensitive information. The message lookup is rate-limited and does not create a session. The database migration preserves existing testers and leaves their messages empty until set.
 
 ### Common Commands
 

@@ -1,6 +1,6 @@
 const { loadAgreement } = require('../isquared-beta/agreement.cjs');
 const { loadConfig } = require('../isquared-beta/config.cjs');
-const { openDatabase } = require('../isquared-beta/db.cjs');
+const { MIGRATIONS, migrate, openDatabase } = require('../isquared-beta/db.cjs');
 const { createBetaService, BetaError } = require('../isquared-beta/service.cjs');
 const {
   clientAddress,
@@ -20,6 +20,21 @@ const {
 } = require('../isquared-beta/security.cjs');
 
 const TEST_PEPPER = '1234567890123456789012345678901234567890';
+
+it('adds personal messages to an existing version 2 database without losing testers', () => {
+  const { DatabaseSync } = process.getBuiltinModule('node:sqlite');
+  const oldDb = new DatabaseSync(':memory:');
+  try {
+    oldDb.exec(MIGRATIONS[0].sql);
+    oldDb.exec(MIGRATIONS[1].sql);
+    oldDb.exec('PRAGMA user_version = 2');
+    oldDb.prepare('INSERT INTO beta_testers (name, code_hash, created_at) VALUES (?, ?, ?)').run('Existing', 'hash', '2026-01-01');
+    expect(migrate(oldDb).to).toBe(3);
+    expect(oldDb.prepare('SELECT name, personal_message FROM beta_testers').get()).toMatchObject({ name: 'Existing', personal_message: null });
+  } finally {
+    oldDb.close();
+  }
+});
 
 describe('isquared-beta security utilities', () => {
   it('normalizes valid access codes and strips spaces/hyphens', () => {
@@ -192,6 +207,8 @@ describe('isquared-beta service and database', () => {
         ipWindowMs: 15 * 60_000,
         globalFailures: 100,
         globalWindowMs: 60 * 60_000,
+        messageIpAttempts: 8,
+        messageGlobalAttempts: 100,
         adminIpFailures: 5,
         adminGlobalFailures: 30,
       },
@@ -267,6 +284,22 @@ describe('isquared-beta service and database', () => {
     // Clear expiry
     service.setExpiry(t.tester.id, 'none');
     expect(service.getTester(t.tester.id).expires_at).toBeNull();
+  });
+
+  it('manages personal messages and limits lookups without signing anyone in', () => {
+    const { tester } = service.createTester({ name: 'Message Tester', code: 'HELLO7' });
+    service.setMessage(tester.id, '<b>Hi there!</b>');
+    expect(service.lookupMessage({ code: 'hello-7' }).message).toBe('<b>Hi there!</b>');
+    expect(db.prepare('SELECT count(*) AS n FROM beta_sessions').get().n).toBe(0);
+    expect(service.lookupMessage({ code: 'WRONG' }).message).toBeNull();
+    service.setActive(tester.id, false);
+    expect(service.lookupMessage({ code: 'HELLO7' }).message).toBeNull();
+    service.setActive(tester.id, true);
+    service.setMessage(tester.id, '');
+    expect(service.lookupMessage({ code: 'HELLO7' }).message).toBeNull();
+    expect(() => service.setMessage(tester.id, 'x'.repeat(501))).toThrow(BetaError);
+    for (let i = 0; i < 4; i += 1) service.lookupMessage({ code: 'WRONG' });
+    expect(service.lookupMessage({ code: 'HELLO7' }).limited).toBe(true);
   });
 
   it('authenticates valid tester and rejects invalid codes, inactive, or expired testers', () => {

@@ -187,9 +187,9 @@ describe('Simulator Foundation Service (isquared-beta)', () => {
     if (db) db.close();
   });
 
-  test('Database migration creates simulator tables at version 2', () => {
+  test('Database migration creates simulator tables', () => {
     const version = db.prepare('PRAGMA user_version').get().user_version;
-    expect(version).toBe(2);
+    expect(version).toBe(3);
 
     const service = createSimulatorService({ db, config: { ...fakeConfig, simulator: { monthlyBudgetMinutes: 10, maxSessionMinutes: 3 } } });
     expect(service.getBudgetConfig()).toMatchObject({ monthlyBudgetSeconds: 600, maxSessionSeconds: 180 });

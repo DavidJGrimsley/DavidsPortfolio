@@ -22,11 +22,47 @@
     var submit = document.getElementById('submit');
     var error = document.getElementById('form-error');
     var dialog = document.getElementById('terms-dialog');
+    var personalMessage = document.getElementById('personal-message');
+    var lookupTimer;
+    var lookupController;
+    var lookupVersion = 0;
+
+    function clearLookup() {
+      lookupVersion += 1;
+      clearTimeout(lookupTimer);
+      if (lookupController) lookupController.abort();
+      lookupController = null;
+      personalMessage.textContent = '';
+      personalMessage.hidden = true;
+    }
+
+    function scheduleLookup() {
+      clearLookup();
+      var value = code.value;
+      var normalized = value.replace(/[\s-]+/g, '');
+      if (!/^[a-z0-9]{5,32}$/i.test(normalized)) return;
+      var version = lookupVersion;
+      lookupTimer = setTimeout(function () {
+        lookupController = new AbortController();
+        fetch(API + '/personal-message', {
+          method: 'POST', credentials: 'same-origin', signal: lookupController.signal,
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': form.dataset.csrf },
+          body: JSON.stringify({ code: value }),
+        }).then(function (response) {
+          return response.ok ? response.json() : null;
+        }).then(function (data) {
+          if (version !== lookupVersion || code.value !== value || !data || typeof data.message !== 'string' || !data.message) return;
+          personalMessage.textContent = data.message;
+          personalMessage.hidden = false;
+        }).catch(function () { /* A missing message must not prevent sign-in. */ });
+      }, 250);
+    }
 
     var sync = function () {
       submit.disabled = !(code.value.trim().length > 0 && agree.checked);
     };
     code.addEventListener('input', sync);
+    code.addEventListener('input', scheduleLookup);
     agree.addEventListener('change', sync);
     sync();
 
@@ -42,6 +78,7 @@
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       if (submit.disabled) return;
+      clearLookup();
       error.hidden = true;
       submit.disabled = true;
       fetch(API + '/access', {

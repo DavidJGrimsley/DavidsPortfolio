@@ -70,6 +70,8 @@ function loadConfig({ appRoot, env = process.env } = {}) {
       ipWindowMs: 15 * 60_000,
       globalFailures: readInt(env.ISQUARED_RATE_GLOBAL_FAILURES, 100, { min: 1, max: 100_000 }),
       globalWindowMs: 60 * 60_000,
+      messageIpAttempts: readInt(env.ISQUARED_MESSAGE_IP_ATTEMPTS, 20, { min: 1, max: 1000 }),
+      messageGlobalAttempts: readInt(env.ISQUARED_MESSAGE_GLOBAL_ATTEMPTS, 300, { min: 1, max: 100_000 }),
       adminIpFailures: 5,
       adminGlobalFailures: 30,
     },

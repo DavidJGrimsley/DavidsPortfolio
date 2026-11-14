@@ -129,6 +129,10 @@ const MIGRATIONS = [
       CREATE INDEX beta_sim_attempts_tester ON beta_simulator_attempts(tester_id);
     `,
   },
+  {
+    version: 3,
+    sql: 'ALTER TABLE beta_testers ADD COLUMN personal_message TEXT;',
+  },
 ];
 
 function migrate(db) {

@@ -223,6 +223,28 @@ describe('isquared-beta routes and server integration', () => {
     expect(resCross.status).toBe(403);
   });
 
+  it('returns personal messages only for matching active codes without creating a session', async () => {
+    const { tester } = betaInstance.service.createTester({ name: 'Message User', code: 'M3SSAGE' });
+    betaInstance.service.setMessage(tester.id, 'Hello from David!');
+    const noCsrf = await httpRequest(`${baseUrl}/iSquared/api/personal-message`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: 'M3SSAGE' }),
+    });
+    expect(noCsrf.status).toBe(403);
+    const session = await httpRequest(`${baseUrl}/iSquared/api/session`);
+    const { csrfToken } = await session.json();
+    const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken, Cookie: cookieHeader(parseSetCookies(session)) };
+    const lookup = await httpRequest(`${baseUrl}/iSquared/api/personal-message`, {
+      method: 'POST', headers, body: JSON.stringify({ code: 'm3ssage' }),
+    });
+    expect(lookup.headers['cache-control']).toContain('no-store');
+    expect(await lookup.json()).toEqual({ message: 'Hello from David!' });
+    expect(parseSetCookies(lookup).isq_beta).toBeUndefined();
+    const invalid = await httpRequest(`${baseUrl}/iSquared/api/personal-message`, {
+      method: 'POST', headers, body: JSON.stringify({ code: 'WRONG' }),
+    });
+    expect(await invalid.json()).toEqual({ message: null });
+  });
+
   it('performs full login flow, prototype serving, visit tracking, and logout', async () => {
     // 1. Create a tester in the service
     betaInstance.service.createTester({ name: 'Tester Alice', code: '4X73B' });

@@ -143,6 +143,19 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
       );
     }
 
+    if (route === '/api/personal-message') {
+      if (req.method !== 'POST') return methodNotAllowed(res, 'POST');
+      res.setHeader('Cache-Control', 'private, no-store');
+      const body = await guardStateChange(req, res);
+      if (!body) return undefined;
+      const result = service.lookupMessage({ code: body.code, clientAddress: clientAddress(req, config.trustedProxyHops) });
+      if (result.limited) {
+        res.setHeader('Retry-After', String(result.retryAfterSeconds));
+        return sendJson(res, 429, { error: 'limited' });
+      }
+      return sendJson(res, 200, { message: result.message });
+    }
+
     if (route === '/api/access') {
       if (req.method !== 'POST') return methodNotAllowed(res, 'POST');
       const body = await guardStateChange(req, res);
