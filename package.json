@@ -28,7 +28,8 @@
     "verify:web": "node scripts/verify-web-rendering.mjs",
     "doctor": "npx expo-doctor",
     "server": "node server.js",
-    "server:dev": "nodemon server.js"
+    "server:dev": "nodemon server.js",
+    "isquared:beta": "node scripts/isquared-beta-admin.cjs"
   },
   "jest": {
     "preset": "jest-expo",
@@ -73,7 +74,7 @@
     "expo-font": "~57.0.4",
     "expo-image": "~57.0.5",
     "expo-linear-gradient": "~57.0.2",
-    "expo-linking": "~57.0.13",
+    "expo-linking": "~57.0.14",
     "expo-router": "~57.0.29",
     "expo-server": "~57.0.3",
     "expo-splash-screen": "~57.0.10",

@@ -11,6 +11,7 @@ const { createRequestHandler } = require('expo-server/adapter/express');
 const { loadFirstEnvFile } = require('./scripts/env-loader.cjs');
 const { assertSsrBuild } = require('./scripts/assert-ssr-build.cjs');
 const { registerWebPreview } = require('./scripts/web-preview-lease.cjs');
+const { createIsquaredBeta } = require('./scripts/isquared-beta/index.cjs');
 
 const loadedEnv = loadFirstEnvFile({ cwd: __dirname, prefix: '[startup]' });
 
@@ -242,6 +243,14 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// iSquared private beta: access-code login, sessions, usage tracking and the authenticated
+// prototype files. Mounted before static serving so nothing under /iSquared can bypass it.
+// Stays off (and the site unchanged) unless ISQUARED_BETA_CODE_PEPPER is configured.
+const isquaredBeta = createIsquaredBeta({ appRoot: __dirname });
+if (isquaredBeta.enabled) {
+  app.use(isquaredBeta.config.mountPath, isquaredBeta.router);
+}
 
 function assertBuildArtifact(filePath, description) {
   if (!fs.existsSync(filePath)) {
