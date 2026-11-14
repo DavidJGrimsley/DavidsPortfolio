@@ -247,16 +247,11 @@ When `ISQUARED_ADMIN_USERNAME` and `ISQUARED_ADMIN_PASSWORD_HASH` are set:
 
 ---
 
-## 6. Updating the Confidentiality Agreement
+## 6. Confidentiality Agreement
 
-The confidentiality agreement is versioned and immutable:
+This beta ships one agreement version, `scripts/isquared-beta/agreements/1.json`. Each tester's acceptance is recorded in `beta_agreements` with the version, time and SHA-256 digest of the text they accepted.
 
-1. Agreements are stored in `scripts/isquared-beta/agreements/<version>.json`.
-2. To release a new agreement (e.g. after legal review):
-   - Create `scripts/isquared-beta/agreements/2.json` with the new version number, title, statement, checkbox label, and terms.
-   - Do **not** modify `1.json` (modifying an existing recorded version throws an `agreement_changed` error on startup).
-   - Set `ISQUARED_AGREEMENT_VERSION=2` in `.env` (or leave unset to automatically select the highest version).
-3. On their next visit, testers will be prompted to review and accept version 2 before proceeding. Acceptance is recorded in `beta_agreements` with the version and SHA-256 digest.
+Do **not** edit `1.json` once testers have accepted it: the server refuses to start with an `agreement_changed` error if a recorded version's text changes. The terms are not expected to change during this beta. If they ever do, check how existing testers are asked to re-accept before relying on it, because this guide does not cover that flow.
 
 ---
 
@@ -412,8 +407,8 @@ In Plesk hosting environments, two proxy topologies are common:
 
 ### 3. Calibrating Proxy Headers and Rate-Limiting without Exposing Sensitive Data
 - **Zero Sensitive Data Logging**:
-  - The access control subsystem adheres strictly to privacy and data minimization principles: **no access codes, session tokens, passwords, raw IP addresses, or personal data are ever written to disk or logged**.
-  - The SQLite table `beta_events` records only operational event types (`login`, `visit`, `login_failed`, `admin_login_failed`) with non-sensitive metadata (such as `{ "reason": "invalid_code" }`). It does **not** contain an IP address column and records no client IP addresses.
+  - Access codes, session tokens and passwords are stored only as hashes and are never logged by the beta code. IP addresses are used only as keyed hashes for rate limiting, never stored or logged raw. The web server's own request log is separate and may contain IP addresses.
+  - The SQLite database **does** hold personal data: tester names, personal messages, agreement acceptances, and per-tester activity in `beta_events` (`login`, `login_failed`, `visit`, `logout`, `admin_login_failed`, with non-sensitive metadata such as `{ "reason": "invalid_code" }`). It has no IP address column. Restrict access to the database file and back it up accordingly.
   - Client IP addresses are hashed using keyed HMAC-SHA256 (`hashClient(pepper, address)`), and only the resulting 32-character hex hash is used in `beta_rate_limits` bucket keys (`access:client:<hash>`).
 - **Verifying Proxy Headers and Calibrating Hops via Authorized Administration**:
   1. Inspect effective proxy headers (`X-Forwarded-For`, `X-Forwarded-Proto`, and `Host`) through authorized server administration to verify proxy chain depth.
