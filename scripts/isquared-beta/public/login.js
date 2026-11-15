@@ -4,8 +4,8 @@
   var API = '/iSquared/api';
   var MESSAGES = {
     invalid: "That access code isn't valid, has expired, or is no longer active.",
-    terms: 'Please accept the confidentiality terms to continue.',
-    outdated: 'The confidentiality terms were updated. Reload this page to review them.',
+    terms: 'Please check the box to continue.',
+    outdated: 'The preview form was updated. Reload this page to continue.',
     limited: 'Too many attempts. Please wait a few minutes and try again.',
     network: 'Could not reach the server. Check your connection and try again.',
   };
@@ -21,8 +21,8 @@
     var agree = document.getElementById('agree');
     var submit = document.getElementById('submit');
     var error = document.getElementById('form-error');
-    var dialog = document.getElementById('terms-dialog');
     var personalMessage = document.getElementById('personal-message');
+    var fullscreenMessage = document.getElementById('fullscreen-message');
     var lookupTimer;
     var lookupController;
     var lookupVersion = 0;
@@ -34,6 +34,7 @@
       lookupController = null;
       personalMessage.textContent = '';
       personalMessage.hidden = true;
+      if (fullscreenMessage) fullscreenMessage.hidden = true;
     }
 
     function scheduleLookup() {
@@ -54,6 +55,7 @@
           if (version !== lookupVersion || code.value !== value || !data || typeof data.message !== 'string' || !data.message) return;
           personalMessage.textContent = data.message;
           personalMessage.hidden = false;
+          if (fullscreenMessage) fullscreenMessage.hidden = false;
         }).catch(function () { /* A missing message must not prevent sign-in. */ });
       }, 250);
     }
@@ -66,14 +68,39 @@
     agree.addEventListener('change', sync);
     sync();
 
-    document.getElementById('open-terms').addEventListener('click', function () {
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-      else dialog.setAttribute('open', '');
-    });
-    document.getElementById('close-terms').addEventListener('click', function () {
-      if (typeof dialog.close === 'function') dialog.close();
-      else dialog.removeAttribute('open');
-    });
+    var openInspiration = document.getElementById('open-inspiration');
+    var closeInspiration = document.getElementById('close-inspiration');
+    var inspirationDialog = document.getElementById('inspiration-dialog');
+    var inspirationFrame = document.getElementById('inspiration-frame');
+    if (openInspiration && inspirationDialog && inspirationFrame) {
+      var stopInspiration = function () {
+        if (typeof inspirationFrame.removeAttribute === 'function') {
+          inspirationFrame.removeAttribute('src');
+        } else {
+          inspirationFrame.src = '';
+        }
+      };
+      openInspiration.addEventListener('click', function () {
+        inspirationFrame.src = inspirationFrame.dataset.src || '';
+        if (typeof inspirationDialog.showModal === 'function') inspirationDialog.showModal();
+        else inspirationDialog.setAttribute('open', '');
+      });
+      if (closeInspiration) {
+        closeInspiration.addEventListener('click', function () {
+          stopInspiration();
+          if (typeof inspirationDialog.close === 'function') inspirationDialog.close();
+          else inspirationDialog.removeAttribute('open');
+        });
+      }
+      if (typeof inspirationDialog.addEventListener === 'function') {
+        inspirationDialog.addEventListener('close', stopInspiration);
+        inspirationDialog.addEventListener('click', function (event) {
+          if (event.target === inspirationDialog && typeof inspirationDialog.close === 'function') {
+            inspirationDialog.close();
+          }
+        });
+      }
+    }
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();

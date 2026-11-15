@@ -32,57 +32,89 @@ ${body}
 `;
 }
 
+function renderBrandLockup(tagText = 'INFINITE INTELLIGENCE') {
+  return `<div class="brand-lockup">
+      <div class="brand-mark" aria-hidden="true">
+        <svg class="brand-infinity" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.5 12C8.25 12 9.75 6 13.5 6C14.2956 6 15.0587 6.31607 15.6213 6.87868C16.1839 7.44129 16.5 8.20435 16.5 9C16.5 9.79565 16.1839 10.5587 15.6213 11.1213C15.0587 11.6839 14.2956 12 13.5 12C9.75 12 8.25 6 4.5 6C3.70435 6 2.94129 6.31607 2.37868 6.87868C1.81607 7.44129 1.5 8.20435 1.5 9C1.5 9.79565 1.81607 10.5587 2.37868 11.1213C2.94129 11.6839 3.70435 12 4.5 12Z" stroke="currentColor" stroke-width="1.875" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="brand-wordmark">i2</span>
+      <span class="eyebrow">${escapeHtml(tagText)}</span>
+    </div>`;
+}
+
 function renderLoginPage({ agreement, csrfToken }) {
-  const paragraphs = agreement.terms.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('\n');
   return layout({
     title: 'iSquared Private Preview',
     script: 'login.js',
     body: `<main class="shell">
-  <section class="card" aria-labelledby="page-title">
-    <p class="eyebrow">iSquared</p>
-    <h1 id="page-title">iSquared Private Preview</h1>
-    <p class="preview-note">iSquared will be open source. For now, I’m sharing this prototype with a small number of people.</p>
-    <p class="lead">Please enter your personal access code to continue.</p>
-    <form id="access-form" novalidate autocomplete="off"
-          data-csrf="${escapeHtml(csrfToken)}"
-          data-agreement-version="${escapeHtml(agreement.version)}"
-          data-agreement-digest="${escapeHtml(agreement.digest)}">
-      <label for="code">Access code</label>
-      <input id="code" name="code" type="text" inputmode="text" autocapitalize="characters"
-             autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40"
-             placeholder="4X73B" aria-describedby="form-error" required>
-      <p id="personal-message" class="personal-message" role="status" hidden></p>
-      <div class="terms">
-        <p class="statement">${escapeHtml(agreement.statement)}</p>
-        <label class="check" for="agree">
-          <input id="agree" name="agree" type="checkbox" required>
-          <span>${escapeHtml(agreement.checkboxLabel)}</span>
-        </label>
-        <button type="button" class="link" id="open-terms">Read the full confidentiality terms</button>
-      </div>
-      <p id="form-error" class="error" role="alert" hidden></p>
-      <button type="submit" id="submit" class="primary" disabled>Enter iSquared</button>
-    </form>
-    <section class="preview-section" aria-labelledby="prototype-details-title">
-      <h2 id="prototype-details-title">What’s real and what’s simulated</h2>
-      <div class="details-grid">
-        <div>
-          <h3>Real</h3>
-          <ul>
-            <li>The example project repositories and their code.</li>
-            <li>The Pet Show and Tell app and its simulator experience.</li>
-            <li>The web preview of the Experimemo Exact app.</li>
-          </ul>
+  <section class="card card-wide" aria-labelledby="page-title">
+    <header class="page-header">
+      ${renderBrandLockup('INFINITE INTELLIGENCE')}
+      <h1 id="page-title">iSquared Private Preview</h1>
+      <p class="preview-note">iSquared will be open source. For now, I’m sharing this prototype with a small number of people.</p>
+    </header>
+    <section class="preview-section" aria-labelledby="feedback-title">
+      <h2 id="feedback-title">About this prototype</h2>
+      <div class="about-grid">
+        <div class="about-copy">
+          <p>This prototype is a Vite TypeScript app for demonstration and design purposes. I’m open to feedback of any sort.</p>
+          <p>I’m considering Code-OSS with a custom runtime, building it entirely in Rust, or exploring Contract in some areas. That's where I want to lean on some more experienced developers who want to join the cause.</p>
+          <p>Any third-party plugins shown are for demonstration. No partnerships or agreements have been made. I do want to invite companies to make plugins such as Figma, Expo, GitHub, Brain.fm, Linear, Sentry, Supabase, etc., so that the experience can continue to grow without context switching.</p>
         </div>
-        <div>
-          <h3>Simulated</h3>
-          <ul>
-            <li>AI chat and agent interactions are scripted for this prototype.</li>
-            <li>Session progression uses archive points I created while building locally to demonstrate the IDE’s flow.</li>
-          </ul>
+        <div class="about-details">
+          <div class="details-grid">
+            <div class="detail-panel">
+              <h3>Real</h3>
+              <ul>
+                <li>The example project repositories and their code.</li>
+                <li>Web previews of the Pet Show and Tell and Experimemo Exact apps.</li>
+              </ul>
+            </div>
+            <div class="detail-panel">
+              <h3>Simulated</h3>
+              <ul>
+                <li>AI chat and agent interactions are scripted for this prototype.</li>
+                <li>Session progression uses archive points I created while building locally to demonstrate the IDE’s flow.</li>
+                <li>A lot of other claims.</li>
+              </ul>
+            </div>
+          </div>
+          <p class="imagination-caption">Use your imagination :)</p>
         </div>
       </div>
-      <p class="imagination-caption">Use your imagination :)</p>
+    </section>
+    <section class="preview-section access-section" aria-labelledby="access-title">
+      <div class="access-header">
+        <h2 id="access-title">Access code</h2>
+        <p class="lead">Please enter your personal access code to continue.</p>
+      </div>
+      <form id="access-form" novalidate autocomplete="off"
+            data-csrf="${escapeHtml(csrfToken)}"
+            data-agreement-version="${escapeHtml(agreement.version)}"
+            data-agreement-digest="${escapeHtml(agreement.digest)}">
+        <div class="access-grid">
+          <div class="access-code-col">
+            <label for="code">Access code</label>
+            <input id="code" name="code" type="text" inputmode="text" autocapitalize="characters"
+                   autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40"
+                   placeholder="4X73B" aria-describedby="form-error" required>
+            <p id="personal-message" class="personal-message" role="status" hidden></p>
+            <p id="fullscreen-message" class="personal-message personal-message-note" role="status" hidden>Please put this browser window in full screen before starting the prototype experience. Enjoy.</p>
+          </div>
+          <div class="access-action-col">
+            <div class="terms">
+              <label class="check" for="agree">
+                <input id="agree" name="agree" type="checkbox" required>
+                <span>${escapeHtml(agreement.checkboxLabel)}</span>
+              </label>
+            </div>
+            <button type="submit" id="submit" class="primary" disabled>Enter iSquared</button>
+          </div>
+        </div>
+        <p id="form-error" class="error" role="alert" hidden></p>
+      </form>
     </section>
     <section class="preview-section" aria-labelledby="repos-title">
       <h2 id="repos-title">Explore the code</h2>
@@ -93,22 +125,26 @@ function renderLoginPage({ agreement, csrfToken }) {
         <li><a href="https://github.com/DavidJGrimsley/experimemo-exact" target="_blank" rel="noopener noreferrer">Experimemo Exact</a></li>
         <li><a href="https://github.com/DavidJGrimsley/not-hot-dog" target="_blank" rel="noopener noreferrer">Not Hot Dog</a></li>
       </ul>
-      <a class="more-info" href="https://davidjgrimsley.com/portfolio/software-development/isquared" target="_blank" rel="noopener noreferrer">More about iSquared <span aria-hidden="true">→</span></a>
-    </section>
-    <section class="preview-section" aria-labelledby="feedback-title">
-      <h2 id="feedback-title">About this prototype</h2>
-      <p>This prototype is a Vite TypeScript app for demonstration and design purposes. I’m open to feedback of any sort.</p>
-      <p>I’m considering Code-OSS with a custom runtime, building it entirely in Rust, or exploring Contract in some areas.</p>
+      <div class="action-row">
+        <a class="more-info" href="https://davidjgrimsley.com/portfolio/software-development/isquared" target="_blank" rel="noopener noreferrer">More about iSquared <span aria-hidden="true">→</span></a>
+        <button type="button" id="open-inspiration" class="more-info secondary-action">Where I stole this idea</button>
+      </div>
     </section>
   </section>
 </main>
-<dialog id="terms-dialog" aria-labelledby="terms-title">
-  <h2 id="terms-title">${escapeHtml(agreement.title)}</h2>
-  <p class="meta">Version ${escapeHtml(agreement.version)}</p>
-  <div class="terms-body">
-${paragraphs}
+<dialog id="inspiration-dialog" class="video-dialog" aria-labelledby="inspiration-title">
+  <div class="dialog-header">
+    <h2 id="inspiration-title">Where I stole this idea</h2>
+    <button type="button" id="close-inspiration" class="dialog-close" aria-label="Close">×</button>
   </div>
-  <button type="button" class="primary" id="close-terms">Close</button>
+  <div class="video-frame-wrap">
+    <iframe id="inspiration-frame"
+            title="Where I stole this idea video"
+            data-src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&amp;rel=0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </div>
 </dialog>`,
   });
 }
@@ -119,7 +155,7 @@ function renderSignoutPage({ csrfToken, testerName }) {
     script: 'login.js',
     body: `<main class="shell">
   <section class="card">
-    <p class="eyebrow">iSquared</p>
+    ${renderBrandLockup('iSquared')}
     <h1>Sign out</h1>
     <p class="lead">${testerName ? `Signed in as ${escapeHtml(testerName)}.` : 'You are not signed in.'}</p>
     <div id="signout" data-csrf="${escapeHtml(csrfToken)}">
@@ -138,7 +174,7 @@ function renderAdminLoginPage({ csrfToken }) {
     script: 'admin.js',
     body: `<main class="shell">
   <section class="card" aria-labelledby="page-title">
-    <p class="eyebrow">iSquared beta</p>
+    ${renderBrandLockup('iSquared beta')}
     <h1 id="page-title">Administrator sign-in</h1>
     <form id="admin-login" novalidate data-csrf="${escapeHtml(csrfToken)}">
       <label for="username">Username</label>

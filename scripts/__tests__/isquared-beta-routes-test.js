@@ -166,19 +166,35 @@ describe('isquared-beta routes and server integration', () => {
     });
     expect(res.status).toBe(200);
     expect(res.headers['content-security-policy']).toContain("default-src 'none'");
+    expect(res.headers['content-security-policy']).toContain('https://www.youtube-nocookie.com');
     expect(res.headers['x-frame-options']).toBe('DENY');
     const html = await res.text();
     expect(html).toContain('iSquared Private Preview');
     expect(html).toContain('Please enter your personal access code to continue.');
     expect(html).toContain('4X73B');
-    expect(html).toContain('I have read and agree to the confidentiality terms.');
+    expect(html).toContain('I won&#39;t steal these ideas for my own profit or gain while this prototype is in private access.');
     expect(html).toContain('Enter iSquared');
-    expect(html).toContain('terms-dialog');
+    expect(html).not.toContain('terms-dialog');
+    expect(html).not.toContain('What’s real and what’s simulated');
     expect(html).toContain('iSquared will be open source');
-    expect(html).toContain('What’s real and what’s simulated');
+    expect(html).toContain('About this prototype');
+    expect(html).toContain('Web previews of the Pet Show and Tell and Experimemo Exact apps.');
+    expect(html).toContain('A lot of other claims.');
     expect(html).toContain('archive points');
+    expect(html).toContain(". That's where I want to lean on some more experienced developers who want to join the cause.");
+    expect(html).toContain('Figma, Expo, GitHub, Brain.fm');
+    expect(html).toContain('Where I stole this idea');
+    expect(html).toContain('id="open-inspiration"');
+    expect(html).toContain('id="inspiration-dialog"');
+    expect(html).toContain('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1');
+    expect(html).toContain('brand-infinity');
+    expect(html).toContain('id="fullscreen-message"');
+    expect(html).toContain('Please put this browser window in full screen before starting the prototype experience. Enjoy.');
+    expect(html.indexOf('id="personal-message"')).toBeLessThan(html.indexOf('id="fullscreen-message"'));
     expect(html).toContain('github.com/DavidJGrimsley/experimemo-exact');
     expect(html).toContain('davidjgrimsley.com/portfolio/software-development/isquared');
+    expect(html.indexOf('About this prototype')).toBeLessThan(html.indexOf('id="access-form"'));
+    expect(html.indexOf('id="access-form"')).toBeLessThan(html.indexOf('Explore the code'));
   });
 
   it('blocks unauthenticated access to prototype files and assets with 401', async () => {
@@ -191,7 +207,7 @@ describe('isquared-beta routes and server integration', () => {
     const resAgree = await httpRequest(`${baseUrl}/iSquared/api/agreement`);
     expect(resAgree.status).toBe(200);
     const agree = await resAgree.json();
-    expect(agree.version).toBe('1');
+    expect(agree.version).toBe('2');
     expect(agree.digest).toBeTruthy();
 
     const resSess = await httpRequest(`${baseUrl}/iSquared/api/session`);

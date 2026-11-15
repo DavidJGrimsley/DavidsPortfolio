@@ -249,9 +249,9 @@ When `ISQUARED_ADMIN_USERNAME` and `ISQUARED_ADMIN_PASSWORD_HASH` are set:
 
 ## 6. Confidentiality Agreement
 
-This beta ships one agreement version, `scripts/isquared-beta/agreements/1.json`. Each tester's acceptance is recorded in `beta_agreements` with the version, time and SHA-256 digest of the text they accepted.
+This beta defaults to the highest agreement file (`scripts/isquared-beta/agreements/2.json`, with `1.json` preserved for existing databases). Each tester's acceptance is recorded in `beta_agreements` with the version, time and SHA-256 digest of the text they accepted.
 
-Do **not** edit `1.json` once testers have accepted it: the server refuses to start with an `agreement_changed` error if a recorded version's text changes. The terms are not expected to change during this beta. If they ever do, check how existing testers are asked to re-accept before relying on it, because this guide does not cover that flow.
+Do **not** edit a published agreement file (`1.json`, `2.json`) once testers have accepted it: the server refuses to start with an `agreement_changed` error if a recorded version's text changes. If the text ever changes, add a new numbered version file.
 
 ---
 

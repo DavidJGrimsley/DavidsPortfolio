@@ -174,12 +174,17 @@ describe('isquared-beta security utilities', () => {
 describe('isquared-beta agreement system', () => {
   it('loads agreement and computes immutable digest', () => {
     const agreement = loadAgreement();
-    expect(agreement.version).toBe('1');
+    expect(agreement.version).toBe('2');
     expect(agreement.title).toContain('iSquared Private Preview');
-    expect(agreement.statement).toContain('invitation-only prototype');
-    expect(agreement.checkboxLabel).toContain('agree to the confidentiality terms');
+    expect(agreement.checkboxLabel).toBe(
+      "I won't steal these ideas for my own profit or gain while this prototype is in private access."
+    );
     expect(agreement.terms.length).toBeGreaterThan(0);
     expect(agreement.digest).toHaveLength(64);
+
+    const legacy = loadAgreement({ version: '1' });
+    expect(legacy.version).toBe('1');
+    expect(legacy.digest).toHaveLength(64);
   });
 });
 
