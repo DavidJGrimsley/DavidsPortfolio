@@ -98,6 +98,7 @@ function renderLoginPage({ agreement, csrfToken }) {
     <section class="preview-section" aria-labelledby="feedback-title">
       <h2 id="feedback-title">About this prototype</h2>
       <p>This prototype is a Vite TypeScript app for demonstration and design purposes. I’m open to feedback of any sort.</p>
+      <p>There’s up to an hour of exploration here. Please set aside at least 30 minutes for your initial review.</p>
       <p>I’m considering Code-OSS with a custom runtime, building it entirely in Rust, or exploring Contract in some areas.</p>
     </section>
   </section>
