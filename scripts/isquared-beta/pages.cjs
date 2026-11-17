@@ -60,6 +60,7 @@ function renderLoginPage({ agreement, csrfToken }) {
       <div class="about-grid">
         <div class="about-copy">
           <p>This prototype is a Vite TypeScript app for demonstration and design purposes. I’m open to feedback of any sort.</p>
+          <p>There’s up to an hour of exploration here. Please set aside at least 30 minutes for your initial review.</p>
           <p>I’m considering Code-OSS with a custom runtime, building it entirely in Rust, or exploring Contract in some areas. That's where I want to lean on some more experienced developers who want to join the cause.</p>
           <p>Any third-party plugins shown are for demonstration. No partnerships or agreements have been made. I do want to invite companies to make plugins such as Figma, Expo, GitHub, Brain.fm, Linear, Sentry, Supabase, etc., so that the experience can continue to grow without context switching.</p>
         </div>
