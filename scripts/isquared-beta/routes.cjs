@@ -270,6 +270,21 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
           });
         }
 
+        // The tester stopped the session while the provider start was in flight.
+        if (result.stopped) {
+          return sendJson(res, 200, {
+            ok: false,
+            stopped: true,
+            sessionId: result.sessionId,
+            message: result.reason,
+          });
+        }
+
+        if (!result.ok || !result.session) {
+          logger.error('[simulator] start returned no session');
+          return sendJson(res, 500, { error: 'start_failed', message: 'Simulator start did not return a session.' });
+        }
+
         return sendJson(res, 201, {
           ok: true,
           session: {
@@ -291,6 +306,9 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
         }
         if (err.code === 'budget_exhausted') {
           return sendJson(res, 429, { error: 'budget_exhausted', message: 'Monthly simulator budget exhausted.' });
+        }
+        if (err.code === 'invalid_duration') {
+          return sendJson(res, 400, { error: 'invalid_duration', message: 'Session duration must be a positive number of minutes.' });
         }
         if (err.code === 'provider_disabled' || err.code === 'provider_unavailable') {
           return sendJson(res, 503, { error: 'provider_unavailable', message: 'Simulator provider is currently disabled.' });
@@ -536,12 +554,18 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
       return sendPlain(res, 401, 'Unauthorized: tester session required');
     }
 
-    const simSessionId = String(req.query.session || '');
-    if (simulatorService && simSessionId) {
-      const simSession = simulatorService.getSession(simSessionId, session.testerId);
-      if (!simSession) {
-        return sendPlain(res, 403, 'Forbidden: session not found or not owned by tester');
-      }
+    if (!simulatorService) return sendPlain(res, 404, 'Not found');
+    // The preview URL comes from the provider, so `session` is the provider session ID.
+    const previewSessionId = typeof req.query.session === 'string' ? req.query.session : '';
+    if (!previewSessionId) {
+      return sendPlain(res, 400, 'Bad request: session is required');
+    }
+    const simSession = simulatorService.getSessionByProviderSessionId(previewSessionId, session.testerId);
+    if (!simSession) {
+      return sendPlain(res, 403, 'Forbidden: session not found or not owned by tester');
+    }
+    if (simSession.status !== 'active') {
+      return sendPlain(res, 410, 'Gone: this simulator session is not active');
     }
 
     res.setHeader('Cache-Control', 'private, no-store');

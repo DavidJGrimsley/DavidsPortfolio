@@ -210,6 +210,16 @@ function createSimulatorService({
     };
   }
 
+  // Provider preview URLs carry the provider's session ID, not the database ID.
+  function getSessionByProviderSessionId(providerSessionId, testerId) {
+    if (!providerSessionId || !testerId) return null;
+    const row = db
+      .prepare('SELECT id FROM beta_simulator_sessions WHERE provider_session_id = ? AND tester_id = ?')
+      .get(providerSessionId, testerId);
+    if (!row) return null;
+    return getSession(row.id, testerId);
+  }
+
   function getActiveSession(testerId) {
     if (!testerId) return null;
     cleanupExpiredSessions();
@@ -236,7 +246,19 @@ function createSimulatorService({
 
     const budgetConfig = getBudgetConfig();
     const maxSessionSecs = Math.min(ABSOLUTE_MAX_SESSION_SECS, budgetConfig.maxSessionSeconds);
-    const requestedSeconds = Math.min(maxSessionSecs, Math.max(60, Math.floor(durationMinutes * 60)));
+    // Providers allocate whole minutes, so the reservation, provider request, stored duration and
+    // expiry all use the same whole-minute value. Fractions round down (never above the request),
+    // with a one-minute floor and the configured maximum as the ceiling.
+    const maxSessionMinutes = Math.floor(maxSessionSecs / 60);
+    const requestedMinutesRaw = Number(durationMinutes);
+    if (!Number.isFinite(requestedMinutesRaw) || requestedMinutesRaw <= 0) {
+      throw new BetaError('invalid_duration', 'Session duration must be a positive number of minutes.');
+    }
+    if (maxSessionMinutes < 1) {
+      throw new BetaError('invalid_session_limit', 'Configured maximum session length is shorter than one minute.');
+    }
+    const requestedMinutes = Math.min(maxSessionMinutes, Math.max(1, Math.floor(requestedMinutesRaw)));
+    const requestedSeconds = requestedMinutes * 60;
 
     const sessionId = crypto.randomUUID();
     const nowMs = now();
@@ -307,7 +329,7 @@ function createSimulatorService({
       result = await provider.startSession({
         platform,
         projectId,
-        maxDurationMinutes: Math.ceil(requestedSeconds / 60),
+        maxDurationMinutes: requestedMinutes,
         frameAncestor,
       });
     } catch (err) {
@@ -1006,6 +1028,7 @@ function createSimulatorService({
     getBudgetConfig,
     getBudgetStatus,
     getSession,
+    getSessionByProviderSessionId,
     listSessionsForTester,
     provider,
     reconcileSession,

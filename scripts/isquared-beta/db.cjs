@@ -186,14 +186,21 @@ function transaction(db, fn) {
   if (activeTransactions.has(db)) {
     return fn();
   }
-  activeTransactions.add(db);
+  // BEGIN runs before tracking starts: if the write lock cannot be taken (SQLITE_BUSY), the
+  // connection must not stay marked as inside a transaction, or later calls would skip
+  // BEGIN/ROLLBACK and run in autocommit mode.
   db.exec('BEGIN IMMEDIATE');
+  activeTransactions.add(db);
   try {
     const result = fn();
     db.exec('COMMIT');
     return result;
   } catch (error) {
-    db.exec('ROLLBACK');
+    try {
+      db.exec('ROLLBACK');
+    } catch {
+      // Keep the original error; SQLite may already have rolled back on its own.
+    }
     throw error;
   } finally {
     activeTransactions.delete(db);

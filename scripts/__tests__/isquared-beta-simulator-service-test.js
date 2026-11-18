@@ -1562,3 +1562,140 @@ describe('Simulator Foundation Service (isquared-beta)', () => {
     });
   });
 });
+
+describe('Simulator session durations use whole provider minutes (isquared-beta)', () => {
+  let db;
+  let currentTime;
+  let tester;
+
+  const config = {
+    pepper: 'a'.repeat(48),
+    sessionTtlMs: 3600_000,
+    idleTimeoutMs: 600_000,
+    visitGapMs: 60_000,
+    limits: { ipFailures: 10, ipWindowMs: 60_000, globalFailures: 100, globalWindowMs: 60_000 },
+    simulator: { provider: 'test', monthlyBudgetMinutes: 60, maxSessionMinutes: 5 },
+  };
+
+  beforeEach(() => {
+    currentTime = Date.parse('2026-11-11T12:00:00.000Z');
+    db = openDatabase(':memory:').db;
+    const betaService = createBetaService({
+      db,
+      config,
+      agreement: { version: '1', digest: 'fake_digest_123', title: 'T', statement: 'S', checkboxLabel: 'C', terms: [] },
+      now: () => currentTime,
+    });
+    betaService.registerAgreement();
+    tester = betaService.createTester({ name: 'Duration Tester' }).tester;
+  });
+
+  afterEach(() => {
+    if (db) db.close();
+  });
+
+  function makeService(provider = new TestFakeProvider()) {
+    return { provider, simService: createSimulatorService({ db, config, provider, now: () => currentTime }) };
+  }
+
+  test.each([
+    [1.1, 60, 1],
+    [0.5, 60, 1],
+    [1.9, 60, 1],
+    [2, 120, 2],
+    [4.99, 240, 4],
+    [7.5, 300, 5],
+    ['3', 180, 3],
+  ])('durationMinutes %p reserves, requests, stores and expires %p seconds (%p provider minutes)', async (durationMinutes, seconds, providerMinutes) => {
+    const { provider, simService } = makeService();
+    const result = await simService.startSession({ testerId: tester.id, durationMinutes });
+
+    expect(result.ok).toBe(true);
+    expect(provider.startedSessions[0].options.maxDurationMinutes).toBe(providerMinutes);
+    expect(result.session.durationSeconds).toBe(seconds);
+    expect(result.session.reservedSeconds).toBe(seconds);
+    expect(result.session.expiresAt).toBe(new Date(currentTime + seconds * 1000).toISOString());
+    expect(simService.getBudgetStatus().reservedSeconds).toBe(seconds);
+    const startAttempt = simService.getAttempts(result.session.id).find((a) => a.outcome === 'starting');
+    expect(startAttempt.details.requestedSeconds).toBe(seconds);
+  });
+
+  test('fractional request is charged for exactly the provider allocation on expiry and on stop', async () => {
+    const { simService } = makeService();
+    const first = await simService.startSession({ testerId: tester.id, durationMinutes: 1.1 });
+    expect(first.session.durationSeconds).toBe(60);
+
+    // Past the 60s expiry the session is charged 60s, matching the 1 provider minute.
+    currentTime += 61_000;
+    const expired = simService.getSession(first.session.id, tester.id);
+    expect(expired.status).toBe('expired');
+    expect(expired.usedSeconds).toBe(60);
+    expect(expired.reservedSeconds).toBe(0);
+
+    // Stopping a fractional session can never charge more than the allocated minute.
+    const second = await simService.startSession({ testerId: tester.id, durationMinutes: 1.1 });
+    currentTime += 59_000;
+    const stopped = await simService.stopSession({ testerId: tester.id, sessionId: second.session.id });
+    expect(stopped.stopped).toBe(true);
+    expect(stopped.usedSeconds).toBe(59);
+    expect(simService.getBudgetStatus()).toMatchObject({ usedSeconds: 119, reservedSeconds: 0 });
+  });
+
+  test('a configured maximum that is not whole minutes rounds down to whole minutes', async () => {
+    const { provider, simService } = makeService();
+    simService.setBudgetConfig({ maxSessionSeconds: 150 });
+    const result = await simService.startSession({ testerId: tester.id, durationMinutes: 5 });
+    expect(provider.startedSessions[0].options.maxDurationMinutes).toBe(2);
+    expect(result.session.durationSeconds).toBe(120);
+    expect(result.session.reservedSeconds).toBe(120);
+  });
+
+  test('a configured maximum below one minute is refused before reserving anything', async () => {
+    const { provider, simService } = makeService();
+    simService.setBudgetConfig({ maxSessionSeconds: 30 });
+    await expect(simService.startSession({ testerId: tester.id, durationMinutes: 1 })).rejects.toMatchObject({
+      code: 'invalid_session_limit',
+    });
+    expect(provider.startedSessions).toHaveLength(0);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_simulator_sessions').get().n).toBe(0);
+  });
+
+  test.each([[0], [-1], [Number.NaN], ['abc'], [Infinity], [null]])(
+    'durationMinutes %p is rejected without a reservation or provider call',
+    async (durationMinutes) => {
+      const { provider, simService } = makeService();
+      await expect(simService.startSession({ testerId: tester.id, durationMinutes })).rejects.toMatchObject({
+        code: 'invalid_duration',
+      });
+      expect(provider.startedSessions).toHaveLength(0);
+      expect(db.prepare('SELECT COUNT(*) AS n FROM beta_simulator_sessions').get().n).toBe(0);
+    }
+  );
+
+  test('budget boundary: whole-minute reservation fits exactly and the next minute is refused', async () => {
+    const { provider, simService } = makeService();
+    simService.setBudgetConfig({ monthlyBudgetSeconds: 150 });
+
+    // 2.4 minutes -> 120s, which fits in 150s. The old 144s reservation with a 3-minute
+    // provider request (180s) would have overspent the budget.
+    const first = await simService.startSession({ testerId: tester.id, durationMinutes: 2.4 });
+    expect(first.session.reservedSeconds).toBe(120);
+    expect(provider.startedSessions[0].options.maxDurationMinutes).toBe(2);
+    currentTime += 121_000;
+    expect(simService.getBudgetStatus()).toMatchObject({ usedSeconds: 120, remainingSeconds: 30, exhausted: false });
+
+    // 30s remain: even a fractional 0.5 request needs a whole provider minute, so it is refused.
+    await expect(simService.startSession({ testerId: tester.id, durationMinutes: 0.5 })).rejects.toMatchObject({
+      code: 'budget_exhausted',
+    });
+    expect(provider.startedSessions).toHaveLength(1);
+  });
+
+  test('budget boundary: a request equal to the remaining budget is allowed and then exhausts it', async () => {
+    const { simService } = makeService();
+    simService.setBudgetConfig({ monthlyBudgetSeconds: 120 });
+    const result = await simService.startSession({ testerId: tester.id, durationMinutes: 2.9 });
+    expect(result.session.reservedSeconds).toBe(120);
+    expect(simService.getBudgetStatus()).toMatchObject({ remainingSeconds: 0, exhausted: true });
+  });
+});
