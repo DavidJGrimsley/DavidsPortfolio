@@ -35,7 +35,7 @@ Testers
 
 Reporting and maintenance
   stats [--days 30] [--json]          Totals, active testers in the period, never-logged-in
-  agreement                           Show the active confidentiality agreement version and digest
+  agreement                           Show active agreement version 2 and its digest. Retired pins error
   init                                Create/upgrade the SQLite schema (also done on server start)
   unlock                              Clear login rate-limit counters (after a lockout)
   cleanup                             Delete long-expired and revoked sessions
@@ -165,7 +165,9 @@ async function run(argv) {
       case 'agreement':
         console.log(`Active version: ${beta.agreement.version}`);
         console.log(`Digest (sha256): ${beta.agreement.digest}`);
-        console.log(`Available versions: ${listAgreementVersions().join(', ')}`);
+        console.log(
+          `Published files (not selectable): ${listAgreementVersions().join(', ')}. Only version ${beta.agreement.version} is offered.`
+        );
         console.log(`\n${beta.agreement.title}\n\n${beta.agreement.statement}\n[ ] ${beta.agreement.checkboxLabel}\n`);
         beta.agreement.terms.forEach((paragraph, index) => console.log(`${index + 1}. ${paragraph}`));
         return 0;

@@ -1,5 +1,5 @@
 const express = require('express');
-const { loadAgreement } = require('./agreement.cjs');
+const { loadActiveAgreement } = require('./agreement.cjs');
 const { loadConfig } = require('./config.cjs');
 const { openDatabase } = require('./db.cjs');
 const { createBetaRouter } = require('./routes.cjs');
@@ -17,7 +17,7 @@ function openBeta({ appRoot, env = process.env, now, config: provided } = {}) {
         : 'ISQUARED_BETA_CODE_PEPPER is not set.'
     );
   }
-  const agreement = loadAgreement({ version: config.agreementVersion });
+  const agreement = loadActiveAgreement({ version: config.agreementVersion });
   const { db, migration } = openDatabase(config.dbPath);
   const service = createBetaService({ db, config, agreement, now });
   service.registerAgreement();

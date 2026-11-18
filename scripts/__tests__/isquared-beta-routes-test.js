@@ -173,8 +173,16 @@ describe('isquared-beta routes and server integration', () => {
     expect(html).toContain('Please enter your personal access code to continue.');
     expect(html).toContain('4X73B');
     expect(html).toContain('I won&#39;t steal these ideas for my own profit or gain while this prototype is in private access.');
+    expect(html).not.toContain('I have read and agree to the confidentiality terms.');
+    expect(html).not.toContain('Invitation only');
     expect(html).toContain('Enter iSquared');
     expect(html).not.toContain('terms-dialog');
+    const agreeRes = await httpRequest(`${baseUrl}/iSquared/api/agreement`);
+    const agree = await agreeRes.json();
+    expect(agree.version).toBe('2');
+    expect(agree.terms).toEqual([agree.checkboxLabel]);
+    expect(html).toContain(`data-agreement-version="${agree.version}"`);
+    expect(html).toContain(`data-agreement-digest="${agree.digest}"`);
     expect(html).not.toContain('What’s real and what’s simulated');
     expect(html).toContain('iSquared will be open source');
     expect(html).toContain('About this prototype');

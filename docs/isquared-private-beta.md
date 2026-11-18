@@ -74,7 +74,7 @@ Default directory: `<appRoot>/iSquared-beta` or explicitly configured via `ISQUA
 
 ## 3. Environment Variables
 
-Configure these in the production `.env` (or Plesk Node.js environment settings):
+Configure these in the env file the server actually loads, or in the Plesk Node.js environment. `server.js` calls `loadFirstEnvFile` in `scripts/env-loader.cjs`. Hosted test/staging (`DEPLOY_ENV=test`, or branch `test`) reads `.env.test` when that file is next to `server.js`. Hosted production reads `.env.production` when that file exists. Those hosted modes do not also read a separate `.env`. Local development reads `.env` only. `scripts/plesk-post-deploy.sh` uses the same file choice.
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
@@ -84,7 +84,7 @@ Configure these in the production `.env` (or Plesk Node.js environment settings)
 | `ISQUARED_BETA_DIR` | No | `<appRoot>/iSquared-beta` | Path to the private beta directory holding `web/` and `data/`. |
 | `ISQUARED_BETA_DB_PATH` | No | `<baseDir>/data/beta.sqlite` | Explicit database file path. |
 | `ISQUARED_BETA_WEB_DIR` | No | `<baseDir>/web` | Explicit path to built prototype web files. |
-| `ISQUARED_AGREEMENT_VERSION` | No | *Highest found* | Pin a specific confidentiality agreement version (e.g. `1`). |
+| `ISQUARED_AGREEMENT_VERSION` | No | `2` | Active agreement pin. Only `2` is supported. Leave it unset to select version 2. A retired pin such as `1` fails the beta closed (HTTP 503) instead of showing the old terms. |
 | `ISQUARED_SESSION_TTL_HOURS` | No | `12` | Absolute session expiration (hours, 1-168). |
 | `ISQUARED_SESSION_IDLE_MINUTES` | No | `240` | Session idle timeout (minutes, 5-10080). |
 | `ISQUARED_VISIT_GAP_MINUTES` | No | `30` | Minimum gap between visits to count a new visit (minutes, 1-1440). |
@@ -214,7 +214,7 @@ npm run isquared:beta -- cleanup
 ```
 
 #### 12. Display Active Confidentiality Agreement
-Show the active confidentiality agreement version, SHA-256 digest, and terms:
+Show the active version 2 pledge, its SHA-256 digest, and the published files. Version 1 is listed only as a historical file. A retired `ISQUARED_AGREEMENT_VERSION` makes this command exit with an error instead of printing the old pledge:
 ```bash
 npm run isquared:beta -- agreement
 ```
@@ -249,13 +249,17 @@ When `ISQUARED_ADMIN_USERNAME` and `ISQUARED_ADMIN_PASSWORD_HASH` are set:
 
 ## 6. Confidentiality Agreement
 
-This beta defaults to the highest agreement file (`scripts/isquared-beta/agreements/2.json`, with `1.json` preserved for existing databases). Each tester's acceptance is recorded in `beta_agreements` with the version, time and SHA-256 digest of the text they accepted.
+The access page offers only version 2 (`scripts/isquared-beta/agreements/2.json`): one checkbox whose label is the whole pledge. The page does not render a terms dialog. On accept, the server records version `2` and that file's SHA-256 digest in `beta_agreements`. The form's `data-agreement-version` and `data-agreement-digest` are that same pair.
 
-Do **not** edit a published agreement file (`1.json`, `2.json`) once testers have accepted it: the server refuses to start with an `agreement_changed` error if a recorded version's text changes. If the text ever changes, add a new numbered version file.
+`scripts/isquared-beta/agreements/1.json` stays byte-for-byte so older digests can still be checked. It is not an active choice. `ISQUARED_AGREEMENT_VERSION` must be unset or `2`. Any other value, including `1`, is rejected at startup. The portfolio keeps running, and `/iSquared/` answers HTTP 503 until the pin is removed or set to `2` and Node is restarted. Existing SQLite rows and schema migrations are not rewritten or deleted. A tester who already accepted version 1 keeps that row and adds a version 2 row the next time they accept the current checkbox.
+
+Do **not** edit a published agreement file (`1.json`, `2.json`) once testers have accepted it: the server refuses to start with an `agreement_changed` error if a recorded version's text changes. If the pledge text ever changes, add a new numbered version file and change the active version in code. Do not point the env pin at version 1 to "roll back" the checkbox.
 
 ---
 
 ## 7. Deployment Procedures
+
+The supported prototype archive is `dist-hosted/isquared-web.tgz` from the iSquared app repository. This portfolio repository does not contain that archive or a zip of the prototype. Upload and extract the tar archive by hand. Do not extract it into `web/` itself, and do not delete `data/`.
 
 ### Building the iSquared Prototype (in `mrdj-dev-suite`)
 

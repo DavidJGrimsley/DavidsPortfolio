@@ -227,10 +227,15 @@ button { font: inherit; cursor: pointer; }
   margin-top: 0;
 }
 
+.repo-links > li {
+  min-width: 0;
+}
+
 .repo-links a {
   display: flex;
   align-items: center;
   height: 100%;
+  min-width: 0;
   padding: 12px 14px;
   background: var(--panel-2);
   border: 1px solid var(--border);
@@ -238,6 +243,7 @@ button { font: inherit; cursor: pointer; }
   color: var(--text);
   text-decoration: none;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .repo-links a:hover {
@@ -379,6 +385,7 @@ tbody th { font-weight: 600; }
   .access-grid {
     grid-template-columns: 1fr;
   }
+  .preview-section ul.repo-links,
   .repo-links {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -386,9 +393,13 @@ tbody th { font-weight: 600; }
 
 @media (max-width: 600px) {
   .details-grid,
-  .repo-links,
   .action-row {
     grid-template-columns: 1fr;
+  }
+
+  .preview-section ul.repo-links,
+  .repo-links {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
