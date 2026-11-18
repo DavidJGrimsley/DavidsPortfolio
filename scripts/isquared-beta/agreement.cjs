@@ -4,6 +4,8 @@ const path = require('node:path');
 
 const AGREEMENTS_DIR = path.join(__dirname, 'agreements');
 const VERSION_PATTERN = /^[A-Za-z0-9._-]{1,40}$/;
+/** The only agreement new testers can see and accept. Older files stay published for historical digests. */
+const ACTIVE_AGREEMENT_VERSION = '2';
 
 function canonicalize(agreement) {
   return JSON.stringify({
@@ -50,7 +52,7 @@ function listAgreementVersions(dir = AGREEMENTS_DIR) {
     .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
 }
 
-/** Loads the pinned version, or the highest version file when none is pinned. */
+/** Loads one published agreement file. With no version, uses the highest file name. */
 function loadAgreement({ version = null, dir = AGREEMENTS_DIR } = {}) {
   const versions = listAgreementVersions(dir);
   const chosen = version || versions[versions.length - 1];
@@ -62,4 +64,28 @@ function loadAgreement({ version = null, dir = AGREEMENTS_DIR } = {}) {
   return { ...agreement, digest: digestAgreement(agreement) };
 }
 
-module.exports = { AGREEMENTS_DIR, digestAgreement, listAgreementVersions, loadAgreement };
+/**
+ * Agreement served to testers and recorded for new acceptances.
+ * An empty pin selects the active version. Any other pin, including retired version 1,
+ * throws so startup can fail closed instead of showing a checkbox for text that is not offered.
+ */
+function loadActiveAgreement({ version = null, dir = AGREEMENTS_DIR } = {}) {
+  const pinned = String(version ?? '').trim();
+  if (pinned && pinned !== ACTIVE_AGREEMENT_VERSION) {
+    throw new Error(
+      `Agreement version "${pinned}" is retired and is not offered to testers. ` +
+        `Remove ISQUARED_AGREEMENT_VERSION or set it to "${ACTIVE_AGREEMENT_VERSION}". ` +
+        'Published agreement files and existing acceptance records stay unchanged.'
+    );
+  }
+  return loadAgreement({ version: ACTIVE_AGREEMENT_VERSION, dir });
+}
+
+module.exports = {
+  ACTIVE_AGREEMENT_VERSION,
+  AGREEMENTS_DIR,
+  digestAgreement,
+  listAgreementVersions,
+  loadActiveAgreement,
+  loadAgreement,
+};

@@ -22,7 +22,8 @@ const PUBLIC_ASSETS = {
 };
 const PAGE_CSP =
   "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; " +
-  "form-action 'self'; base-uri 'none'; frame-ancestors 'none'; frame-src 'self' data: blob: https://*.expo.dev https://expo.dev";
+  "form-action 'self'; base-uri 'none'; frame-ancestors 'none'; " +
+  "frame-src 'self' data: blob: https://*.expo.dev https://expo.dev https://www.youtube-nocookie.com https://www.youtube.com";
 const FORBIDDEN_FILE = /\.(map|sqlite3?|db|env|log|bak|ts|tsx)$/i;
 const CSRF_VALUE = /^[A-Za-z0-9_-]{43}$/;
 const jsonParser = express.json({ limit: '2kb', strict: true, type: () => true });

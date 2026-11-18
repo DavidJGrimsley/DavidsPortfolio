@@ -17,6 +17,7 @@
     "build:web:deploy": "npm run build:web && node scripts/write-build-marker.mjs",
     "serve:prod": "node server.js",
     "serve:prod:fresh": "npm run build:web:deploy && node server.js",
+    "serve:prod:stop": "node scripts/stop-web-preview.cjs",
     "serve:prod:env": "node server.js",
     "sitemap": "node scripts/generate-sitemap.mjs",
     "icons:copy": "node scripts/copy-icons.mjs",

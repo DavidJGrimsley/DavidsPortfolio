@@ -1,5 +1,10 @@
-const { loadAgreement } = require('../isquared-beta/agreement.cjs');
-const { loadConfig } = require('../isquared-beta/config.cjs');
+const fs = require('node:fs');
+const http = require('node:http');
+const os = require('node:os');
+const path = require('node:path');
+const express = require('express');
+const { loadActiveAgreement, loadAgreement } = require('../isquared-beta/agreement.cjs');
+const { createIsquaredBeta } = require('../isquared-beta/index.cjs');
 const { MIGRATIONS, migrate, openDatabase } = require('../isquared-beta/db.cjs');
 const { createBetaService, BetaError } = require('../isquared-beta/service.cjs');
 const {
@@ -171,15 +176,91 @@ describe('isquared-beta security utilities', () => {
   });
 });
 
+function listen(handler) {
+  return new Promise((resolve) => {
+    const server = http.createServer(handler);
+    server.listen(0, '127.0.0.1', () => resolve(server));
+  });
+}
+
+function closeServer(server) {
+  return new Promise((resolve) => server.close(resolve));
+}
+
+function getText(url) {
+  return new Promise((resolve, reject) => {
+    http
+      .get(url, (res) => {
+        const chunks = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => resolve({ status: res.statusCode, text: Buffer.concat(chunks).toString('utf8') }));
+      })
+      .on('error', reject);
+  });
+}
+
 describe('isquared-beta agreement system', () => {
+  const agreementsDir = path.join(__dirname, '..', 'isquared-beta', 'agreements');
+
   it('loads agreement and computes immutable digest', () => {
     const agreement = loadAgreement();
-    expect(agreement.version).toBe('1');
+    expect(agreement.version).toBe('2');
     expect(agreement.title).toContain('iSquared Private Preview');
-    expect(agreement.statement).toContain('invitation-only prototype');
-    expect(agreement.checkboxLabel).toContain('agree to the confidentiality terms');
-    expect(agreement.terms.length).toBeGreaterThan(0);
+    expect(agreement.checkboxLabel).toBe(
+      "I won't steal these ideas for my own profit or gain while this prototype is in private access."
+    );
+    expect(agreement.terms).toEqual([agreement.checkboxLabel]);
     expect(agreement.digest).toHaveLength(64);
+
+    const legacy = loadAgreement({ version: '1' });
+    expect(legacy.version).toBe('1');
+    expect(legacy.checkboxLabel).toBe('I have read and agree to the confidentiality terms.');
+    expect(legacy.terms.length).toBeGreaterThan(1);
+    expect(legacy.digest).toHaveLength(64);
+    expect(legacy.digest).not.toBe(agreement.digest);
+  });
+
+  it('offers only active version 2 and rejects a retired pin without rewriting published files', () => {
+    const version1 = fs.readFileSync(path.join(agreementsDir, '1.json'));
+    const version2 = fs.readFileSync(path.join(agreementsDir, '2.json'));
+    const active = loadActiveAgreement();
+    const pinned = loadActiveAgreement({ version: '2' });
+    expect(active).toEqual(pinned);
+    expect(active.version).toBe('2');
+    expect(active.digest).toBe(loadAgreement().digest);
+
+    expect(() => loadActiveAgreement({ version: '1' })).toThrow(/retired/);
+    expect(() => loadActiveAgreement({ version: '1' })).toThrow(/ISQUARED_AGREEMENT_VERSION/);
+    expect(fs.readFileSync(path.join(agreementsDir, '1.json')).equals(version1)).toBe(true);
+    expect(fs.readFileSync(path.join(agreementsDir, '2.json')).equals(version2)).toBe(true);
+  });
+
+  it('fails closed when the env pin is retired version 1', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'isq-retired-pin-'));
+    const beta = createIsquaredBeta({
+      appRoot: tempDir,
+      env: {
+        ISQUARED_BETA_CODE_PEPPER: TEST_PEPPER,
+        ISQUARED_BETA_DB_PATH: ':memory:',
+        ISQUARED_AGREEMENT_VERSION: '1',
+      },
+      logger: { log() {}, error() {} },
+    });
+    expect(beta.failed).toBe(true);
+    expect(beta.router).toBeTruthy();
+    const app = express();
+    app.use(beta.router);
+    const server = await listen(app);
+    try {
+      const res = await getText(`http://127.0.0.1:${server.address().port}/iSquared/`);
+      expect(res.status).toBe(503);
+      expect(res.text).not.toContain('I have read and agree');
+      expect(res.text).not.toContain("I won't steal");
+      expect(res.text).not.toContain('terms-dialog');
+    } finally {
+      await closeServer(server);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });
 
@@ -228,6 +309,54 @@ describe('isquared-beta service and database', () => {
 
   afterEach(() => {
     db.close();
+  });
+
+  it('keeps a version 1 acceptance when the tester later accepts active version 2', () => {
+    const historical = loadAgreement({ version: '1' });
+    const historicalText = fs.readFileSync(path.join(__dirname, '..', 'isquared-beta', 'agreements', '1.json'), 'utf8');
+    const historicalService = createBetaService({
+      db,
+      config,
+      agreement: historical,
+      now: () => fakeNowMs,
+    });
+    expect(historicalService.registerAgreement()).toBe(true);
+    const { code, tester } = historicalService.createTester({ name: 'Legacy Tester', code: 'LEGACY' });
+    const first = historicalService.authenticate({
+      code,
+      accepted: true,
+      agreementVersion: historical.version,
+      agreementDigest: historical.digest,
+    });
+    expect(first.ok).toBe(true);
+
+    const active = loadActiveAgreement();
+    const second = service.authenticate({
+      code,
+      accepted: true,
+      agreementVersion: active.version,
+      agreementDigest: active.digest,
+    });
+    expect(second.ok).toBe(true);
+    expect(second.tester.id).toBe(tester.id);
+
+    const texts = db.prepare('SELECT version, digest, content FROM beta_agreement_texts ORDER BY version').all();
+    expect(texts.map((row) => row.version)).toEqual(['1', '2']);
+    const storedLegacy = texts.find((row) => row.version === '1');
+    expect(storedLegacy.digest).toBe(historical.digest);
+    expect(JSON.parse(storedLegacy.content)).toMatchObject({
+      version: '1',
+      checkboxLabel: historical.checkboxLabel,
+      terms: historical.terms,
+    });
+    expect(historicalText).toContain(historical.checkboxLabel);
+
+    const accepted = service.listAgreementsFor(tester.id);
+    expect(accepted).toEqual([
+      expect.objectContaining({ agreement_version: '1', agreement_digest: historical.digest }),
+      expect.objectContaining({ agreement_version: '2', agreement_digest: active.digest }),
+    ]);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_agreements WHERE tester_id = ?').get(tester.id).n).toBe(2);
   });
 
   it('prevents registering a modified agreement under an existing version', () => {
