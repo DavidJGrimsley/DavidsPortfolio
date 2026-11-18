@@ -122,7 +122,7 @@ describe('Simulator Foundation HTTP Routes (isquared-beta)', () => {
     });
   });
 
-  async function loginAsTester() {
+  async function loginAsTester(code = testCode) {
     // 1. GET /iSquared/api/session to obtain CSRF token cookie and token string
     const initRes = await httpRequest(`${baseUrl}/iSquared/api/session`);
     const initData = await initRes.json();
@@ -143,7 +143,7 @@ describe('Simulator Foundation HTTP Routes (isquared-beta)', () => {
         origin: baseUrl,
       },
       body: JSON.stringify({
-        code: testCode,
+        code,
         acceptTerms: true,
         agreementVersion: agreementData.version,
         agreementDigest: agreementData.digest,
@@ -272,8 +272,8 @@ describe('Simulator Foundation HTTP Routes (isquared-beta)', () => {
     expect(statusData.session.id).toBe(sessionId);
     expect(statusData.session.webPreviewUrl).toBeDefined();
 
-    // 4. Access simulated preview frame
-    const previewRes = await httpRequest(`${baseUrl}/iSquared/simulator/preview?session=${sessionId}`, {
+    // 4. Open the preview URL exactly as the start API returned it
+    const previewRes = await httpRequest(new URL(startData.session.webPreviewUrl, baseUrl).toString(), {
       headers: { cookie: cookieHeader(cookies) },
     });
     expect(previewRes.status).toBe(200);
@@ -426,5 +426,189 @@ describe('Simulator Foundation HTTP Routes (isquared-beta)', () => {
       },
     });
     expect(authRes.headers['cache-control']).toContain('no-store');
+  });
+
+  async function startSimulator(cookies, csrfToken, body) {
+    return httpRequest(`${baseUrl}/iSquared/api/simulator/start`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-csrf-token': csrfToken,
+        cookie: cookieHeader(cookies),
+        origin: baseUrl,
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  async function stopSimulator(cookies, csrfToken, sessionId) {
+    return httpRequest(`${baseUrl}/iSquared/api/simulator/stop`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-csrf-token': csrfToken,
+        cookie: cookieHeader(cookies),
+        origin: baseUrl,
+      },
+      body: JSON.stringify({ sessionId }),
+    });
+  }
+
+  test('the preview URL returned by start opens for its owner only', async () => {
+    const owner = await loginAsTester(betaInstance.service.createTester({ name: 'PreviewOwner' }).code);
+    const other = await loginAsTester(betaInstance.service.createTester({ name: 'PreviewOther' }).code);
+
+    const startRes = await startSimulator(owner.cookies, owner.csrfToken, { durationMinutes: 2 });
+    expect(startRes.status).toBe(201);
+    const { session } = await startRes.json();
+    const previewUrl = new URL(session.webPreviewUrl, baseUrl);
+    // The provider builds the URL from its own session ID, not the database ID.
+    expect(previewUrl.searchParams.get('session')).toMatch(/^sim_/);
+    expect(previewUrl.searchParams.get('session')).not.toBe(session.id);
+
+    const ownerHeaders = { headers: { cookie: cookieHeader(owner.cookies) } };
+    const ownerPreview = await httpRequest(previewUrl.toString(), ownerHeaders);
+    expect(ownerPreview.status).toBe(200);
+    expect(await ownerPreview.text()).toContain('Simulated Preview · Not a Live EAS Simulator');
+
+    // Another authenticated tester cannot open it.
+    const otherPreview = await httpRequest(previewUrl.toString(), { headers: { cookie: cookieHeader(other.cookies) } });
+    expect(otherPreview.status).toBe(403);
+
+    // Signed-out requests are refused.
+    expect((await httpRequest(previewUrl.toString())).status).toBe(401);
+
+    // Missing, repeated, unknown and database-ID values do not open a preview.
+    const previewPath = `${baseUrl}/iSquared/simulator/preview`;
+    expect((await httpRequest(previewPath, ownerHeaders)).status).toBe(400);
+    expect((await httpRequest(`${previewPath}?session=`, ownerHeaders)).status).toBe(400);
+    expect((await httpRequest(`${previewPath}?session=a&session=b`, ownerHeaders)).status).toBe(400);
+    expect((await httpRequest(`${previewPath}?session=sim_00000000-0000-0000-0000-000000000000`, ownerHeaders)).status).toBe(403);
+    expect((await httpRequest(`${previewPath}?session=${encodeURIComponent(session.id)}`, ownerHeaders)).status).toBe(403);
+
+    // Once stopped, the owner's preview URL no longer opens.
+    expect((await stopSimulator(owner.cookies, owner.csrfToken, session.id)).status).toBe(200);
+    expect((await httpRequest(previewUrl.toString(), ownerHeaders)).status).toBe(410);
+  });
+
+  test('start normalizes fractional durations and rejects invalid ones', async () => {
+    const tester = await loginAsTester(betaInstance.service.createTester({ name: 'DurationRouteTester' }).code);
+
+    const invalid = await startSimulator(tester.cookies, tester.csrfToken, { durationMinutes: -2 });
+    expect(invalid.status).toBe(400);
+    expect((await invalid.json()).error).toBe('invalid_duration');
+
+    const startRes = await startSimulator(tester.cookies, tester.csrfToken, { durationMinutes: 1.1 });
+    expect(startRes.status).toBe(201);
+    const { session } = await startRes.json();
+    expect(session.durationSeconds).toBe(60);
+    expect(Date.parse(session.expiresAt) - Date.parse(session.createdAt)).toBe(60_000);
+
+    expect((await stopSimulator(tester.cookies, tester.csrfToken, session.id)).status).toBe(200);
+  });
+
+  test('a start that is stopped while the provider is still starting returns the stopped result', async () => {
+    const errorLogs = [];
+    const testLogger = { log: () => {}, error: (msg) => errorLogs.push(String(msg)) };
+
+    let resolveProviderStart;
+    const stoppedProviderSessions = [];
+    const delayedProvider = {
+      name: 'delayed_provider',
+      hasDeterministicExpiry: false,
+      async isAvailable() { return { available: true }; },
+      startSession() {
+        return new Promise((resolve) => {
+          resolveProviderStart = resolve;
+        });
+      },
+      async stopSession(providerSessionId) {
+        stoppedProviderSessions.push(providerSessionId);
+        return { ok: true, stopped: true };
+      },
+      async inspectSession() { return null; },
+    };
+
+    const { db: testDb } = openDatabase(':memory:');
+    const testService = createBetaService({
+      db: testDb,
+      config: betaInstance.config,
+      agreement: { version: '1', digest: 'dig', title: 'T', statement: 'S', checkboxLabel: 'C', terms: [] },
+      now: () => Date.now(),
+    });
+    testService.registerAgreement();
+    const tester = testService.createTester({ name: 'CancelTester' }).tester;
+    const testSimService = createSimulatorService({
+      db: testDb,
+      config: betaInstance.config,
+      provider: delayedProvider,
+      now: () => Date.now(),
+    });
+    const testApp = express();
+    testApp.use('/iSquared', createBetaRouter({
+      service: testService,
+      simulatorService: testSimService,
+      config: betaInstance.config,
+      logger: testLogger,
+    }));
+    const testServer = http.createServer(testApp);
+    await new Promise((resolve) => testServer.listen(0, '127.0.0.1', resolve));
+    const testBaseUrl = `http://127.0.0.1:${testServer.address().port}`;
+
+    try {
+      const sessionToken = 'c'.repeat(48);
+      const sessionNow = new Date().toISOString();
+      testDb.prepare(
+        'INSERT INTO beta_sessions (id, tester_id, token_hash, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)'
+      ).run('sess_cancel', tester.id, hashToken(sessionToken), sessionNow, new Date(Date.now() + 3600_000).toISOString(), sessionNow);
+      const csrfToken = newToken();
+      const headers = {
+        'content-type': 'application/json',
+        'x-csrf-token': csrfToken,
+        cookie: cookieHeader({ isq_beta: sessionToken, isq_csrf: csrfToken }),
+        origin: testBaseUrl,
+      };
+
+      const startPromise = httpRequest(`${testBaseUrl}/iSquared/api/simulator/start`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ durationMinutes: 5 }),
+      });
+
+      // Wait until the start request has reserved its session and is waiting on the provider.
+      let starting = null;
+      for (let i = 0; i < 200 && !(starting && resolveProviderStart); i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        starting = testSimService.getActiveSession(tester.id);
+      }
+      expect(starting.status).toBe('starting');
+
+      const stopRes = await httpRequest(`${testBaseUrl}/iSquared/api/simulator/stop`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ sessionId: starting.id }),
+      });
+      expect(stopRes.status).toBe(200);
+      expect(await stopRes.json()).toMatchObject({ ok: true, stopping: true });
+
+      resolveProviderStart({ providerSessionId: 'late_cancel_prov', webPreviewUrl: 'https://test-preview.local/session/late_cancel_prov' });
+      const startRes = await startPromise;
+      const startBody = await startRes.json();
+
+      expect(startRes.status).toBe(200);
+      expect(startBody).toMatchObject({ ok: false, stopped: true, sessionId: starting.id });
+      expect(startBody.error).toBeUndefined();
+      expect(startBody.session).toBeUndefined();
+      expect(JSON.stringify(startBody)).not.toContain('test-preview.local');
+      expect(errorLogs).toEqual([]);
+
+      expect(stoppedProviderSessions).toEqual(['late_cancel_prov']);
+      const finalSession = testSimService.getSession(starting.id, tester.id);
+      expect(finalSession.status).toBe('stopped');
+      expect(finalSession.reservedSeconds).toBe(0);
+    } finally {
+      testServer.close();
+      testDb.close();
+    }
   });
 });
