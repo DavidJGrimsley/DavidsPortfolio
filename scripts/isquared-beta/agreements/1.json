@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "title": "iSquared Private Preview: Confidentiality Terms",
+  "statement": "This is a private, invitation-only prototype. By continuing, you agree not to share your access code, disclose nonpublic information about this prototype, or copy or reproduce its confidential features or materials without authorization while we research potential patent protection.",
+  "checkboxLabel": "I have read and agree to the confidentiality terms.",
+  "terms": [
+    "These terms are provisional product copy. They have not been reviewed by a lawyer and may be replaced by an updated version; you will be asked to accept any new version before you continue.",
+    "Invitation only. Your access code is personal to you. Do not share it, post it, or let anyone else use it.",
+    "Confidential information means nonpublic information about the iSquared prototype that you learn through this preview, including its unreleased features, designs, behavior, and materials.",
+    "While we research potential patent protection, you agree not to disclose confidential information to others, and not to copy or reproduce the prototype's confidential features or materials, without our written authorization.",
+    "These terms do not restrict information that is already public, information you already knew or developed independently, or anything released under an open-source license (including source code of Mr. DJ's Dev Suite published under its open-source license) to the extent that license allows it. They also do not stop a disclosure that the law requires.",
+    "Nothing here promises that a patent will be sought or granted, or that any information is or will remain protected.",
+    "The preview is provided as is, for evaluation. To run the beta, this access system records your name, the times you sign in and open the prototype, and your acceptance of these terms. It does not collect chat contents, source code, or repository data.",
+    "Questions about these terms: contact the person who invited you."
+  ]
+}

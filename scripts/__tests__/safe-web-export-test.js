@@ -1,8 +1,10 @@
 /** @jest-environment node */
+const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { safeWebExport } = require('../safe-web-export.cjs');
+const { stopWebPreviews } = require('../stop-web-preview.cjs');
 const { registerWebPreview } = require('../web-preview-lease.cjs');
 
 let root;
@@ -66,4 +68,41 @@ it('protects a running preview from replacement until it stops', async () => {
     fs.writeFileSync(path.join(stage, 'preview.txt'), 'new preview');
   }, async () => {});
   expect(fs.readFileSync(path.join(root, 'dist', 'preview.txt'), 'utf8')).toBe('new preview');
+});
+
+it('stops active registered preview processes cleanly', async () => {
+  const leaseModulePath = path.resolve(__dirname, '../web-preview-lease.cjs');
+  const child = spawn(
+    process.execPath,
+    [
+      '-e',
+      'const { registerWebPreview } = require(process.argv[1]); registerWebPreview(process.argv[2]); console.log("READY"); setInterval(() => {}, 1000);',
+      leaseModulePath,
+      root,
+    ],
+    { stdio: ['ignore', 'pipe', 'inherit'] }
+  );
+
+  try {
+    await new Promise((resolve, reject) => {
+      let stdout = '';
+      child.once('error', reject);
+      child.once('exit', code => reject(new Error(`Preview helper exited early (${code})`)));
+      child.stdout.on('data', chunk => {
+        stdout += chunk.toString();
+        if (stdout.includes('READY')) resolve();
+      });
+    });
+
+    const result = await stopWebPreviews(root);
+    expect(result).toEqual({ stopped: [child.pid], remaining: [] });
+    await safeWebExport(root, async stage => {
+      fs.writeFileSync(path.join(stage, 'preview.txt'), 'after stop');
+    }, async () => {});
+    expect(fs.readFileSync(path.join(root, 'dist', 'preview.txt'), 'utf8')).toBe('after stop');
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill('SIGKILL');
+    }
+  }
 });

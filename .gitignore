@@ -81,3 +81,9 @@ ios/
 # Copilot MD files
 copilotInstructions/
 .claude/
+
+# iSquared private beta: deployed prototype build and tester database (never commit)
+/iSquared-beta/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
