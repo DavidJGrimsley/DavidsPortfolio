@@ -2,6 +2,7 @@
   'use strict';
 
   var API = '/iSquared/api';
+  const PROTOTYPE = '/iSquared/Prototype';
   var MESSAGES = {
     invalid: "That access code isn't valid, has expired, or is no longer active.",
     terms: 'Please check the box to continue.',
@@ -13,6 +14,41 @@
   function showError(node, message) {
     node.textContent = message;
     node.hidden = false;
+  }
+
+  // The inspiration video lives on the info page, which has no access form.
+  var openInspiration = document.getElementById('open-inspiration');
+  var closeInspiration = document.getElementById('close-inspiration');
+  var inspirationDialog = document.getElementById('inspiration-dialog');
+  var inspirationFrame = document.getElementById('inspiration-frame');
+  if (openInspiration && inspirationDialog && inspirationFrame) {
+    var stopInspiration = function () {
+      if (typeof inspirationFrame.removeAttribute === 'function') {
+        inspirationFrame.removeAttribute('src');
+      } else {
+        inspirationFrame.src = '';
+      }
+    };
+    openInspiration.addEventListener('click', function () {
+      inspirationFrame.src = inspirationFrame.dataset.src || '';
+      if (typeof inspirationDialog.showModal === 'function') inspirationDialog.showModal();
+      else inspirationDialog.setAttribute('open', '');
+    });
+    if (closeInspiration) {
+      closeInspiration.addEventListener('click', function () {
+        stopInspiration();
+        if (typeof inspirationDialog.close === 'function') inspirationDialog.close();
+        else inspirationDialog.removeAttribute('open');
+      });
+    }
+    if (typeof inspirationDialog.addEventListener === 'function') {
+      inspirationDialog.addEventListener('close', stopInspiration);
+      inspirationDialog.addEventListener('click', function (event) {
+        if (event.target === inspirationDialog && typeof inspirationDialog.close === 'function') {
+          inspirationDialog.close();
+        }
+      });
+    }
   }
 
   var form = document.getElementById('access-form');
@@ -68,40 +104,6 @@
     agree.addEventListener('change', sync);
     sync();
 
-    var openInspiration = document.getElementById('open-inspiration');
-    var closeInspiration = document.getElementById('close-inspiration');
-    var inspirationDialog = document.getElementById('inspiration-dialog');
-    var inspirationFrame = document.getElementById('inspiration-frame');
-    if (openInspiration && inspirationDialog && inspirationFrame) {
-      var stopInspiration = function () {
-        if (typeof inspirationFrame.removeAttribute === 'function') {
-          inspirationFrame.removeAttribute('src');
-        } else {
-          inspirationFrame.src = '';
-        }
-      };
-      openInspiration.addEventListener('click', function () {
-        inspirationFrame.src = inspirationFrame.dataset.src || '';
-        if (typeof inspirationDialog.showModal === 'function') inspirationDialog.showModal();
-        else inspirationDialog.setAttribute('open', '');
-      });
-      if (closeInspiration) {
-        closeInspiration.addEventListener('click', function () {
-          stopInspiration();
-          if (typeof inspirationDialog.close === 'function') inspirationDialog.close();
-          else inspirationDialog.removeAttribute('open');
-        });
-      }
-      if (typeof inspirationDialog.addEventListener === 'function') {
-        inspirationDialog.addEventListener('close', stopInspiration);
-        inspirationDialog.addEventListener('click', function (event) {
-          if (event.target === inspirationDialog && typeof inspirationDialog.close === 'function') {
-            inspirationDialog.close();
-          }
-        });
-      }
-    }
-
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       if (submit.disabled) return;
@@ -126,8 +128,13 @@
         })
         .then(function (result) {
           if (result.status === 200) {
-            // Reload the URL the visitor asked for; the session cookie now unlocks it.
-            window.location.replace(window.location.pathname + window.location.search);
+            // The main page continues to the prototype (keeping any query); a protected URL that
+            // showed this form just reloads, since the session cookie now unlocks it.
+            if (form.dataset.next === PROTOTYPE) {
+              window.location.replace(PROTOTYPE + window.location.search);
+            } else {
+              window.location.reload();
+            }
             return;
           }
           var kind = result.data && result.data.error;

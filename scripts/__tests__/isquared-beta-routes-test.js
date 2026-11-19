@@ -160,18 +160,25 @@ describe('isquared-beta routes and server integration', () => {
     expect(resAdminJs.headers['content-type']).toContain('javascript');
   });
 
-  it('displays the access-code login page for unauthenticated HTML requests', async () => {
+  it('shows only the slim access form on the main page for unauthenticated visitors', async () => {
     const res = await httpRequest(`${baseUrl}/iSquared/`, {
       headers: { Accept: 'text/html' },
     });
     expect(res.status).toBe(200);
     expect(res.headers['content-security-policy']).toContain("default-src 'none'");
-    expect(res.headers['content-security-policy']).toContain('https://www.youtube-nocookie.com');
     expect(res.headers['x-frame-options']).toBe('DENY');
+    expect(res.headers['cache-control']).toContain('no-store');
+    expect(parseSetCookies(res).isq_csrf).toBeTruthy();
     const html = await res.text();
-    expect(html).toContain('iSquared Private Preview');
-    expect(html).toContain('Please enter your personal access code to continue.');
+    expect(html).toContain('<h1 id="page-title">iSquared Agentic IDE Private Preview</h1>');
+    expect(html).toContain(
+      '<p class="page-caption">iSquared will be open source. For now, I’m sharing this prototype with a small number of people.</p>'
+    );
+    expect(html).toContain('brand-infinity');
+    expect(html).toContain('<span class="brand-wordmark">i2</span>');
+    expect(html).toContain('INFINITE INTELLIGENCE');
     expect(html).toContain('4X73B');
+    expect(html).toContain('<label for="code" class="visually-hidden">Access code</label>');
     expect(html).toContain('I won&#39;t steal these ideas for my own profit or gain while this prototype is in private access.');
     expect(html).not.toContain('I have read and agree to the confidentiality terms.');
     expect(html).not.toContain('Invitation only');
@@ -183,26 +190,131 @@ describe('isquared-beta routes and server integration', () => {
     expect(agree.terms).toEqual([agree.checkboxLabel]);
     expect(html).toContain(`data-agreement-version="${agree.version}"`);
     expect(html).toContain(`data-agreement-digest="${agree.digest}"`);
+    expect(html).toContain('data-next="/iSquared/Prototype"');
+    expect(html).toContain('id="fullscreen-message"');
+    expect(html).toContain('Please put this browser window in full screen before starting the prototype experience. Enjoy.');
+    expect(html.indexOf('id="personal-message"')).toBeLessThan(html.indexOf('id="fullscreen-message"'));
+    // Code and pledge share one row; the submit button follows that row; More info follows the form.
+    const row = html.slice(html.indexOf('class="access-row"'), html.indexOf('id="submit"'));
+    expect(row).toContain('id="code"');
+    expect(row).toContain('id="agree"');
+    expect(html.indexOf('</form>')).toBeLessThan(html.indexOf('href="/iSquared/Info"'));
+    expect(html).toContain('More info');
+    // Moved to /iSquared/Info or removed.
+    expect(html).not.toContain('About this prototype');
+    expect(html).not.toContain('Explore the code');
+    expect(html).not.toContain('inspiration-dialog');
+    expect(html).not.toContain('access-title');
+    expect(html).not.toContain('Please enter your personal access code to continue.');
+    expect(html).not.toContain('preview-note');
+    expect(html).not.toContain('Continue to prototype');
+  });
+
+  it('serves the main access page regardless of the Accept header and rejects other methods', async () => {
+    const plain = await httpRequest(`${baseUrl}/iSquared/`);
+    expect(plain.status).toBe(200);
+    expect(plain.headers['content-type']).toContain('text/html');
+    expect(await plain.text()).toContain('id="access-form"');
+
+    const head = await httpRequest(`${baseUrl}/iSquared/`, { method: 'HEAD' });
+    expect(head.status).toBe(200);
+
+    const post = await httpRequest(`${baseUrl}/iSquared/`, { method: 'POST' });
+    expect(post.status).toBe(405);
+    expect(post.headers.allow).toBe('GET, HEAD');
+  });
+
+  it('serves the public info page with the moved content and no access form', async () => {
+    const res = await httpRequest(`${baseUrl}/iSquared/Info`, { headers: { Accept: 'text/html' } });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-security-policy']).toContain("default-src 'none'");
+    expect(res.headers['content-security-policy']).toContain('https://www.youtube-nocookie.com');
+    expect(res.headers['x-frame-options']).toBe('DENY');
+    expect(res.headers['cache-control']).toContain('no-store');
+    expect(res.headers['x-robots-tag']).toBe('noindex, nofollow, noarchive');
+    expect(parseSetCookies(res).isq_csrf).toBeUndefined();
+    const html = await res.text();
+    expect(html).not.toContain('id="access-form"');
+    expect(html).toContain('href="/iSquared/"');
+    expect(html).toContain('Back to access page');
+    expect(html).toContain('/iSquared/_beta/login.js');
     expect(html).not.toContain('What’s real and what’s simulated');
-    expect(html).toContain('iSquared will be open source');
     expect(html).toContain('About this prototype');
+    expect(html).toContain('This prototype is a Vite TypeScript app for demonstration and design purposes.');
+    expect(html).toContain('Please set aside at least 30 minutes for your initial review.');
     expect(html).toContain('Web previews of the Pet Show and Tell and Experimemo Exact apps.');
     expect(html).toContain('A lot of other claims.');
     expect(html).toContain('archive points');
     expect(html).toContain(". That's where I want to lean on some more experienced developers who want to join the cause.");
     expect(html).toContain('Figma, Expo, GitHub, Brain.fm');
+    expect(html).toContain('Use your imagination :)');
+    expect(html).toContain('Explore the code');
+    expect(html).toContain('github.com/DavidJGrimsley/mrdj-dev-suite');
+    expect(html).toContain('github.com/DavidJGrimsley/pet-show-and-tell');
+    expect(html).toContain('github.com/DavidJGrimsley/experimemo-exact');
+    expect(html).toContain('github.com/DavidJGrimsley/not-hot-dog');
+    expect(html).toContain('davidjgrimsley.com/portfolio/software-development/isquared');
     expect(html).toContain('Where I stole this idea');
     expect(html).toContain('id="open-inspiration"');
     expect(html).toContain('id="inspiration-dialog"');
     expect(html).toContain('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1');
-    expect(html).toContain('brand-infinity');
-    expect(html).toContain('id="fullscreen-message"');
-    expect(html).toContain('Please put this browser window in full screen before starting the prototype experience. Enjoy.');
-    expect(html.indexOf('id="personal-message"')).toBeLessThan(html.indexOf('id="fullscreen-message"'));
-    expect(html).toContain('github.com/DavidJGrimsley/experimemo-exact');
-    expect(html).toContain('davidjgrimsley.com/portfolio/software-development/isquared');
-    expect(html.indexOf('About this prototype')).toBeLessThan(html.indexOf('id="access-form"'));
-    expect(html.indexOf('id="access-form"')).toBeLessThan(html.indexOf('Explore the code'));
+    expect(html.indexOf('About this prototype')).toBeLessThan(html.indexOf('Explore the code'));
+
+    const head = await httpRequest(`${baseUrl}/iSquared/Info`, { method: 'HEAD' });
+    expect(head.status).toBe(200);
+  });
+
+  it('canonicalizes info and prototype aliases in one redirect and keeps asset case', async () => {
+    for (const [from, to] of [
+      ['/iSquared/info', '/iSquared/Info'],
+      ['/iSquared/INFO/', '/iSquared/Info'],
+      ['/iSquared/Info/', '/iSquared/Info'],
+      ['/isquared/info/?x=1', '/iSquared/Info?x=1'],
+      ['/ISQUARED/Info', '/iSquared/Info'],
+      ['/iSquared/prototype', '/iSquared/Prototype'],
+      ['/isquared/PROTOTYPE/?s=b05', '/iSquared/Prototype?s=b05'],
+      ['/iSquared/Prototype/', '/iSquared/Prototype'],
+      ['/isquared/assets/Main.JS', '/iSquared/assets/Main.JS'],
+    ]) {
+      const res = await httpRequest(`${baseUrl}${from}`);
+      expect([from, res.status]).toEqual([from, 308]);
+      expect([from, res.headers.location]).toEqual([from, to]);
+    }
+  });
+
+  it('rejects unsupported methods on info and prototype paths before redirecting', async () => {
+    for (const target of ['/iSquared/Info', '/iSquared/info', '/isquared/INFO/', '/iSquared/Prototype', '/iSquared/prototype/']) {
+      const res = await httpRequest(`${baseUrl}${target}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      expect([target, res.status]).toEqual([target, 405]);
+      expect(res.headers.allow).toBe('GET, HEAD');
+    }
+  });
+
+  it('shows the access form in place for unauthenticated prototype requests', async () => {
+    const nav = await httpRequest(`${baseUrl}/iSquared/Prototype?s=b05`, { headers: { Accept: 'text/html' } });
+    expect(nav.status).toBe(401);
+    const html = await nav.text();
+    expect(html).toContain('id="access-form"');
+    // No fixed continuation: a successful login reloads this exact URL.
+    expect(html).not.toContain('data-next');
+
+    const nested = await httpRequest(`${baseUrl}/iSquared/session/b05`, { headers: { Accept: 'text/html' } });
+    expect(nested.status).toBe(401);
+    expect(await nested.text()).not.toContain('data-next');
+
+    const plain = await httpRequest(`${baseUrl}/iSquared/Prototype`);
+    expect(plain.status).toBe(401);
+    expect(await plain.text()).toBe('Unauthorized');
+  });
+
+  it('links the sign-out page back to the prototype address', async () => {
+    const res = await httpRequest(`${baseUrl}/iSquared/signout`);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('<a href="/iSquared/Prototype">Back to the prototype</a>');
   });
 
   it('blocks unauthenticated access to prototype files and assets with 401', async () => {
@@ -315,26 +427,64 @@ describe('isquared-beta routes and server integration', () => {
     expect(authSessJson.authenticated).toBe(true);
     expect(authSessJson.tester.name).toBe('Tester Alice');
 
-    // 5. Access protected prototype index.html
-    const protoRes = await httpRequest(`${baseUrl}/iSquared/`, {
+    // 5. The main page stays the access page: a Continue link replaces the form, no visit.
+    const mainRes = await httpRequest(`${baseUrl}/iSquared/?s=b05`, {
       headers: {
         Accept: 'text/html',
         Cookie: cookieHeader(authCookies),
       },
     });
+    expect(mainRes.status).toBe(200);
+    const mainHtml = await mainRes.text();
+    expect(mainHtml).toContain('iSquared Agentic IDE Private Preview');
+    expect(mainHtml).toContain('href="/iSquared/Prototype?s=b05"');
+    expect(mainHtml).toContain('Continue to prototype');
+    expect(mainHtml).toContain('href="/iSquared/Info"');
+    expect(mainHtml).not.toContain('id="access-form"');
+    expect(mainHtml).not.toContain('Tester Alice');
+    expect(mainHtml).not.toContain('signout');
+    expect(mainRes.headers['cache-control']).toContain('no-store');
+    expect(mainRes.headers.vary).toContain('Cookie');
+
+    const escapedMain = await httpRequest(`${baseUrl}/iSquared/?q=%22%3E%3Cscript%3E`, {
+      headers: { Cookie: cookieHeader(authCookies) },
+    });
+    expect(await escapedMain.text()).not.toContain('"><script>');
+
+    const infoRes = await httpRequest(`${baseUrl}/iSquared/Info`, {
+      headers: { Accept: 'text/html', Cookie: cookieHeader(authCookies) },
+    });
+    expect(infoRes.status).toBe(200);
+    let stats = betaInstance.service.stats({ days: 30 });
+    expect(stats.summary.totalLogins).toBe(1);
+    expect(stats.summary.totalVisits).toBe(0);
+
+    // HEAD on the prototype document does not count a visit.
+    const headRes = await httpRequest(`${baseUrl}/iSquared/Prototype`, {
+      method: 'HEAD',
+      headers: { Cookie: cookieHeader(authCookies) },
+    });
+    expect(headRes.status).toBe(200);
+    stats = betaInstance.service.stats({ days: 30 });
+    expect(stats.summary.totalVisits).toBe(0);
+
+    // 6. The protected prototype document, independent of the Accept header.
+    const protoRes = await httpRequest(`${baseUrl}/iSquared/Prototype`, {
+      headers: { Cookie: cookieHeader(authCookies) },
+    });
     expect(protoRes.status).toBe(200);
     const protoHtml = await protoRes.text();
     expect(protoHtml).toContain('<div id="root">App</div>');
     expect(protoRes.headers['content-security-policy']).toContain("frame-ancestors 'none'");
+    expect(protoRes.headers['x-frame-options']).toBe('DENY');
     expect(protoRes.headers['cache-control']).toContain('private, no-cache');
 
     // Verify 1 visit was logged
-    let stats = betaInstance.service.stats({ days: 30 });
-    expect(stats.summary.totalLogins).toBe(1);
+    stats = betaInstance.service.stats({ days: 30 });
     expect(stats.summary.totalVisits).toBe(1);
 
-    // 6. Reload index.html immediately -> visit count remains 1
-    const reloadRes = await httpRequest(`${baseUrl}/iSquared/`, {
+    // Reload the prototype immediately -> visit count remains 1
+    const reloadRes = await httpRequest(`${baseUrl}/iSquared/Prototype?s=b05`, {
       headers: {
         Accept: 'text/html',
         Cookie: cookieHeader(authCookies),
@@ -343,6 +493,13 @@ describe('isquared-beta routes and server integration', () => {
     expect(reloadRes.status).toBe(200);
     stats = betaInstance.service.stats({ days: 30 });
     expect(stats.summary.totalVisits).toBe(1);
+
+    // The legacy index.html address still serves the prototype document.
+    const legacyIndex = await httpRequest(`${baseUrl}/iSquared/index.html`, {
+      headers: { Cookie: cookieHeader(authCookies) },
+    });
+    expect(legacyIndex.status).toBe(200);
+    expect(await legacyIndex.text()).toContain('<div id="root">App</div>');
 
     // 7. Access protected prototype asset -> 200, visit count remains 1
     const assetRes = await httpRequest(`${baseUrl}/iSquared/assets/main.js`, {
@@ -407,6 +564,18 @@ describe('isquared-beta routes and server integration', () => {
       headers: { Cookie: cookieHeader(authCookies) },
     });
     expect(postLogoutAsset.status).toBe(401);
+
+    // After logout, the prototype shows the access form again and the main page offers the form.
+    const postLogoutProto = await httpRequest(`${baseUrl}/iSquared/Prototype`, {
+      headers: { Accept: 'text/html', Cookie: cookieHeader(authCookies) },
+    });
+    expect(postLogoutProto.status).toBe(401);
+    expect(await postLogoutProto.text()).toContain('id="access-form"');
+    const postLogoutMain = await httpRequest(`${baseUrl}/iSquared/`, {
+      headers: { Accept: 'text/html', Cookie: cookieHeader(authCookies) },
+    });
+    expect(postLogoutMain.status).toBe(200);
+    expect(await postLogoutMain.text()).toContain('id="access-form"');
   });
 
   it('protects the admin dashboard and enforces admin auth and tester isolation', async () => {
@@ -494,5 +663,61 @@ describe('isquared-beta routes and server integration', () => {
       headers: { Cookie: cookieHeader(adminAuthCookies) },
     });
     expect(postLogoutSummary.status).toBe(401);
+  });
+});
+
+describe('isquared-beta prototype entry without a deployable archive', () => {
+  async function withBeta(prepareWebDir, run) {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'isq-entry-test-'));
+    const webDir = path.join(tempDir, 'web');
+    prepareWebDir(webDir);
+    const beta = createIsquaredBeta({
+      appRoot: tempDir,
+      env: {
+        ISQUARED_BETA_CODE_PEPPER: TEST_PEPPER,
+        ISQUARED_BETA_DB_PATH: ':memory:',
+        ISQUARED_BETA_WEB_DIR: webDir,
+        ISQUARED_BETA_INSECURE_COOKIES: '1',
+      },
+      logger: { log: () => {}, error: () => {} },
+    });
+    const app = express();
+    app.use(beta.config.mountPath, beta.router);
+    const server = http.createServer(app);
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    try {
+      beta.service.createTester({ name: 'Entry Tester', code: 'ENTRY7' });
+      const auth = beta.service.authenticate({
+        code: 'ENTRY7',
+        accepted: true,
+        agreementVersion: beta.service.agreement.version,
+        agreementDigest: beta.service.agreement.digest,
+      });
+      await run(`http://127.0.0.1:${server.address().port}`, `isq_beta=${auth.token}`);
+    } finally {
+      beta.close();
+      await new Promise((resolve) => server.close(resolve));
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  }
+
+  it('authenticates before reporting a missing archive (503)', async () => {
+    await withBeta(() => {}, async (baseUrl, cookie) => {
+      const anonymous = await httpRequest(`${baseUrl}/iSquared/Prototype`, { headers: { Accept: 'text/html' } });
+      expect(anonymous.status).toBe(401);
+      const res = await httpRequest(`${baseUrl}/iSquared/Prototype`, { headers: { Cookie: cookie } });
+      expect(res.status).toBe(503);
+      expect(await res.text()).toBe('The prototype has not been deployed yet.');
+    });
+  });
+
+  it('returns 404 when the archive has no entry document', async () => {
+    await withBeta((webDir) => fs.mkdirSync(path.join(webDir, 'assets'), { recursive: true }), async (baseUrl, cookie) => {
+      const anonymous = await httpRequest(`${baseUrl}/iSquared/Prototype`);
+      expect(anonymous.status).toBe(401);
+      const res = await httpRequest(`${baseUrl}/iSquared/Prototype`, { headers: { Accept: 'text/html', Cookie: cookie } });
+      expect(res.status).toBe(404);
+      expect(await res.text()).toBe('Not found');
+    });
   });
 });
