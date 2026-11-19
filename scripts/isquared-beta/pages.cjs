@@ -1,6 +1,6 @@
-// Server-rendered HTML for the access screen, sign-out and admin dashboard. Every dynamic value
-// goes through escapeHtml, and the pages load only same-origin scripts/styles so the strict
-// Content-Security-Policy in routes.cjs can forbid inline script.
+// Server-rendered HTML for the access screen, info page, sign-out and admin dashboard. Every
+// dynamic value goes through escapeHtml, and the pages load only same-origin scripts/styles so the
+// strict Content-Security-Policy in routes.cjs can forbid inline script.
 
 const ASSET_BASE = '/iSquared/_beta';
 
@@ -44,16 +44,77 @@ function renderBrandLockup(tagText = 'INFINITE INTELLIGENCE') {
     </div>`;
 }
 
-function renderLoginPage({ agreement, csrfToken }) {
+const PAGE_HEADING = 'iSquared Agentic IDE Private Preview';
+
+function renderAccessHeader() {
+  return `<header class="page-header">
+      ${renderBrandLockup('INFINITE INTELLIGENCE')}
+      <h1 id="page-title">${escapeHtml(PAGE_HEADING)}</h1>
+      <p class="page-caption">iSquared will be open source. For now, I’m sharing this prototype with a small number of people.</p>
+    </header>`;
+}
+
+function renderAccessForm({ agreement, csrfToken, next }) {
+  return `<form id="access-form" novalidate autocomplete="off"
+            data-csrf="${escapeHtml(csrfToken)}"
+            data-agreement-version="${escapeHtml(agreement.version)}"
+            data-agreement-digest="${escapeHtml(agreement.digest)}"${next ? `
+            data-next="${escapeHtml(next)}"` : ''}>
+        <div class="access-row">
+          <div class="access-code-col">
+            <label for="code" class="visually-hidden">Access code</label>
+            <input id="code" name="code" type="text" inputmode="text" autocapitalize="characters"
+                   autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40"
+                   placeholder="4X73B" aria-describedby="form-error" required>
+          </div>
+          <div class="terms">
+            <label class="check" for="agree">
+              <input id="agree" name="agree" type="checkbox" required>
+              <span>${escapeHtml(agreement.checkboxLabel)}</span>
+            </label>
+          </div>
+        </div>
+        <p id="personal-message" class="personal-message" role="status" hidden></p>
+        <p id="fullscreen-message" class="personal-message personal-message-note" role="status" hidden>Please put this browser window in full screen before starting the prototype experience. Enjoy.</p>
+        <button type="submit" id="submit" class="primary" disabled>Enter iSquared</button>
+        <p class="meta access-caption">Simulated preview collects no data and is extra verbose to fully explain the idea to this round of testers.</p>
+        <p id="form-error" class="error" role="alert" hidden></p>
+      </form>`;
+}
+
+/**
+ * The access page. Unauthenticated visitors get the code form (`next` is set only on the main
+ * page, where a successful login continues to the prototype); signed-in testers get a link on.
+ */
+function renderLoginPage({ agreement, csrfToken, next, authenticated = false, continueHref = '/iSquared/Prototype' }) {
+  const access = authenticated
+    ? `<a class="primary continue-link" href="${escapeHtml(continueHref)}">Continue to prototype <span aria-hidden="true">→</span></a>`
+    : renderAccessForm({ agreement, csrfToken, next });
   return layout({
-    title: 'iSquared Private Preview',
+    title: PAGE_HEADING,
+    script: 'login.js',
+    body: `<main class="shell">
+  <section class="card card-access" aria-labelledby="page-title">
+    ${renderAccessHeader()}
+    <section class="access-section" aria-label="Access">
+      ${access}
+    </section>
+    <a class="more-info more-info-link" href="/iSquared/Info">More info <span aria-hidden="true">→</span></a>
+  </section>
+</main>`,
+  });
+}
+
+function renderInfoPage() {
+  return layout({
+    title: 'About the iSquared Private Preview',
     script: 'login.js',
     body: `<main class="shell">
   <section class="card card-wide" aria-labelledby="page-title">
     <header class="page-header">
       ${renderBrandLockup('INFINITE INTELLIGENCE')}
-      <h1 id="page-title">iSquared Private Preview</h1>
-      <p class="preview-note">iSquared will be open source. For now, I’m sharing this prototype with a small number of people.</p>
+      <h1 id="page-title">About the iSquared Private Preview</h1>
+      <p class="meta"><a href="/iSquared/"><span aria-hidden="true">←</span> Back to access page</a></p>
     </header>
     <section class="preview-section" aria-labelledby="feedback-title">
       <h2 id="feedback-title">About this prototype</h2>
@@ -85,37 +146,6 @@ function renderLoginPage({ agreement, csrfToken }) {
           <p class="imagination-caption">Use your imagination :)</p>
         </div>
       </div>
-    </section>
-    <section class="preview-section access-section" aria-labelledby="access-title">
-      <div class="access-header">
-        <h2 id="access-title">Access code</h2>
-        <p class="lead">Please enter your personal access code to continue.</p>
-      </div>
-      <form id="access-form" novalidate autocomplete="off"
-            data-csrf="${escapeHtml(csrfToken)}"
-            data-agreement-version="${escapeHtml(agreement.version)}"
-            data-agreement-digest="${escapeHtml(agreement.digest)}">
-        <div class="access-grid">
-          <div class="access-code-col">
-            <label for="code">Access code</label>
-            <input id="code" name="code" type="text" inputmode="text" autocapitalize="characters"
-                   autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40"
-                   placeholder="4X73B" aria-describedby="form-error" required>
-            <p id="personal-message" class="personal-message" role="status" hidden></p>
-            <p id="fullscreen-message" class="personal-message personal-message-note" role="status" hidden>Please put this browser window in full screen before starting the prototype experience. Enjoy.</p>
-          </div>
-          <div class="access-action-col">
-            <div class="terms">
-              <label class="check" for="agree">
-                <input id="agree" name="agree" type="checkbox" required>
-                <span>${escapeHtml(agreement.checkboxLabel)}</span>
-              </label>
-            </div>
-            <button type="submit" id="submit" class="primary" disabled>Enter iSquared</button>
-          </div>
-        </div>
-        <p id="form-error" class="error" role="alert" hidden></p>
-      </form>
     </section>
     <section class="preview-section" aria-labelledby="repos-title">
       <h2 id="repos-title">Explore the code</h2>
@@ -162,7 +192,7 @@ function renderSignoutPage({ csrfToken, testerName }) {
     <div id="signout" data-csrf="${escapeHtml(csrfToken)}">
       <p id="form-error" class="error" role="alert" hidden></p>
       <button type="button" id="signout-button" class="primary"${testerName ? '' : ' disabled'}>Sign out</button>
-      <p class="meta"><a href="/iSquared/">Back to the prototype</a></p>
+      <p class="meta"><a href="/iSquared/Prototype">Back to the prototype</a></p>
     </div>
   </section>
 </main>`,
@@ -318,6 +348,7 @@ module.exports = {
   escapeHtml,
   renderAdminLoginPage,
   renderDashboard,
+  renderInfoPage,
   renderLoginPage,
   renderSignoutPage,
 };

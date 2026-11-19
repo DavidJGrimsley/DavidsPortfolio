@@ -23,7 +23,7 @@ The system spans two repositories:
    - Contains no access control secrets, tokens, or auth logic.
 
 ```
-Visitor -> https://davidjgrimsley.com/iSquared/
+Visitor -> https://davidjgrimsley.com/iSquared/            (access page, always public)
               |
               v (Plesk Nginx / Apache / Passenger -> Node.js Express server)
         [Session Cookie Valid?]
@@ -31,13 +31,30 @@ Visitor -> https://davidjgrimsley.com/iSquared/
        YES                NO
         |                  \
         v                   v
-Serve Protected        Display Access Code Login Screen
-iSquared Prototype     (Requires Code + Confidentiality Agreement)
-(index.html / assets)       |
-                       Validate Code (HMAC-SHA256 lookup in SQLite)
-                            |
-                       Issue HttpOnly Session Cookie -> Redirect
+"Continue to prototype"  Access code form + confidentiality pledge
+        |                   |
+        |              Validate Code (HMAC-SHA256 lookup in SQLite)
+        |                   |
+        |              Issue HttpOnly Session Cookie
+        v                   v
+https://davidjgrimsley.com/iSquared/Prototype   (protected prototype entry document)
 ```
+
+### Public and protected addresses
+
+| Address | Access | Content |
+| --- | --- | --- |
+| `/iSquared/` | Public, `GET`/`HEAD` | The access page: brand, heading, caption, then either the access-code form (signed out) or a **Continue to prototype** link (signed in), plus **More info**. It never serves the prototype and never counts a visit. |
+| `/iSquared/Info` | Public, `GET`/`HEAD` | About this prototype, Explore the code, repository and portfolio links, and the "Where I stole this idea" video. No form and no cookies. |
+| `/iSquared/Prototype` | Tester session | The prototype's `index.html`. Each `GET` counts toward visits (within the visit gap). Without a session, a browser navigation shows the access form in place (401) and a successful sign-in reloads the same URL; other requests get a plain 401. Responds 503 if the archive directory is missing and 404 if it has no `index.html`. |
+| `/iSquared/assets/*`, `/iSquared/index.html`, other nested page URLs | Tester session | Unchanged legacy paths: the prototype is still built with base `/iSquared/`, so its assets stay at the mount root. Nested page-like URLs still fall back to the entry document. |
+
+`/iSquared/info`, `/iSquared/PROTOTYPE/`, `/isquared/info?x=1` and similar case or trailing-slash variants answer with a single `308` to the canonical `/iSquared/Info` or `/iSquared/Prototype`, keeping the query. Other methods on those addresses answer `405` with `Allow: GET, HEAD`. Asset and API suffixes keep their exact case.
+
+Signing in from the main page continues to `/iSquared/Prototype` (keeping the current query). Returning to `/iSquared/` later shows the Continue link instead of asking for the code and pledge again. Nothing redirects automatically based on the session, so there is no login loop.
+
+> [!WARNING]
+> **Pending: real archive check at `/iSquared/Prototype`.** Before deploying, load the actual hosted archive at `/iSquared/Prototype` and confirm the initial load, a refresh, in-app links, query-string state and the simulator preview all work. Tests use a fixture `index.html` only, so they cannot show that the external prototype does not route on its pathname or link back to `/iSquared/` (which now shows the access page).
 
 > [!IMPORTANT]
 > The exact reverse proxy topology on the live VPS (whether Nginx terminates directly into Passenger or proxies via Apache) must be verified against actual server configuration. Never assume routing behavior or proxy hop counts without live verification.
@@ -446,8 +463,14 @@ Execute these tests from an external machine to verify that no prototype route o
 > ```
 
 ```bash
-# 1. Unauthenticated root request -> Must return 200 OK with Login Page HTML (contains CSRF token)
+# 1. Unauthenticated root request -> Must return 200 OK with the access page HTML (contains CSRF token), with or without an Accept header
 curl -s -i https://davidjgrimsley.com/iSquared/ | head -n 15
+
+# 1b. Unauthenticated prototype entry -> Must return 401 Unauthorized
+curl -s -i https://davidjgrimsley.com/iSquared/Prototype | head -n 15
+
+# 1c. Public info page -> Must return 200 OK without setting cookies
+curl -s -i https://davidjgrimsley.com/iSquared/Info | head -n 15
 
 # 2. Unauthenticated direct JavaScript bundle request -> Must return 401 Unauthorized (NOT 200 OK or raw bundle)
 curl -s -i https://davidjgrimsley.com/iSquared/assets/index-TVwQlTMH.js | head -n 15
@@ -472,6 +495,8 @@ curl -s -I https://davidjgrimsley.com/iSquared/ | grep -E -i "(x-frame-options|x
 
 Expected response and header characteristics:
 - Root request (`/iSquared/`): Returns `HTTP/1.1 200 OK` with `Content-Type: text/html` and embedded CSRF token.
+- Prototype entry (`/iSquared/Prototype`): Returns `HTTP/1.1 401 Unauthorized` without a tester session.
+- Info page (`/iSquared/Info`): Returns `HTTP/1.1 200 OK` with `Content-Type: text/html` and no `Set-Cookie`.
 - Direct asset requests (`/iSquared/assets/*`): Return `HTTP/1.1 401 Unauthorized` with `Cache-Control: no-store` and `X-Robots-Tag: noindex, nofollow, noarchive`.
 - Security headers present on all prototype responses:
   - `x-frame-options: DENY`
