@@ -26,6 +26,13 @@ const PAGE_CSP =
   "frame-src 'self' data: blob: https://*.expo.dev https://expo.dev https://www.youtube-nocookie.com https://www.youtube.com";
 const FORBIDDEN_FILE = /\.(map|sqlite3?|db|env|log|bak|ts|tsx)$/i;
 const CSRF_VALUE = /^[A-Za-z0-9_-]{43}$/;
+const INFO_PATH = '/Info';
+const PROTOTYPE_PATH = '/Prototype';
+// Lowercased, slash-trimmed suffix -> canonical suffix for the server-rendered documents.
+const RESERVED_DOCUMENTS = new Map([
+  [INFO_PATH.toLowerCase(), INFO_PATH],
+  [PROTOTYPE_PATH.toLowerCase(), PROTOTYPE_PATH],
+]);
 const jsonParser = express.json({ limit: '2kb', strict: true, type: () => true });
 
 function parseJsonBody(req, res) {
@@ -526,14 +533,7 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
       return sendPlain(res, 405, 'Method not allowed');
     }
     const session = service.validateSession(cookiesOf(req)[names.session]);
-    if (!session) {
-      if (isNavigation(req, req.path)) {
-        const csrfToken = ensureCsrf(req, res);
-        const html = pages.renderLoginPage({ agreement: service.agreement, csrfToken });
-        return sendPage(res, req.path === '/' ? 200 : 401, html);
-      }
-      return sendPlain(res, 401, 'Unauthorized');
-    }
+    if (!session) return sendUnauthenticated(req, res);
 
     const resolved = resolvePrototypeFile(req.path);
     if (resolved.file) return sendPrototypeFile(req, res, session, resolved);
@@ -545,6 +545,48 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
     }
     if (resolved.status === 503) return sendPlain(res, 503, 'The prototype has not been deployed yet.');
     return sendPlain(res, resolved.status, resolved.status === 400 ? 'Bad request' : 'Not found');
+  }
+
+  /** Protected navigations show the access form in place; a successful login reloads the URL. */
+  function sendUnauthenticated(req, res) {
+    if (isNavigation(req, req.path)) {
+      const csrfToken = ensureCsrf(req, res);
+      return sendPage(res, 401, pages.renderLoginPage({ agreement: service.agreement, csrfToken }));
+    }
+    return sendPlain(res, 401, 'Unauthorized');
+  }
+
+  /** /iSquared/Prototype: the prototype entry document, regardless of the Accept header. */
+  function handlePrototypeEntry(req, res) {
+    if (!isRead(req)) return methodNotAllowed(res, 'GET, HEAD');
+    const session = service.validateSession(cookiesOf(req)[names.session]);
+    if (!session) return sendUnauthenticated(req, res);
+    const entry = resolvePrototypeFile('/');
+    if (entry.file) return sendPrototypeFile(req, res, session, entry);
+    if (entry.status === 503) return sendPlain(res, 503, 'The prototype has not been deployed yet.');
+    return sendPlain(res, 404, 'Not found');
+  }
+
+  /** /iSquared/: always the access page. Signed-in testers get a link onward instead of the form. */
+  function handleAccess(req, res) {
+    if (!isRead(req)) return methodNotAllowed(res, 'GET, HEAD');
+    const search = new URL(req.originalUrl, 'http://localhost').search;
+    const session = service.validateSession(cookiesOf(req)[names.session]);
+    if (session) {
+      return sendPage(res, 200, pages.renderLoginPage({ authenticated: true, continueHref: `${mount}${PROTOTYPE_PATH}${search}` }));
+    }
+    const csrfToken = ensureCsrf(req, res);
+    return sendPage(
+      res,
+      200,
+      pages.renderLoginPage({ agreement: service.agreement, csrfToken, next: `${mount}${PROTOTYPE_PATH}` })
+    );
+  }
+
+  /** /iSquared/Info: public background on the prototype; no session or CSRF state. */
+  function handleInfo(req, res) {
+    if (!isRead(req)) return methodNotAllowed(res, 'GET, HEAD');
+    return sendPage(res, 200, pages.renderInfoPage());
   }
 
   function handleSimulatedPreview(req, res) {
@@ -736,11 +778,19 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
 
       // Cookies are scoped to the exact-case mount path, so /isquared/x -> /iSquared/x, and the
       // bare mount path gets its trailing slash so relative behavior matches the build base.
+      // The reserved document paths (/Info, /Prototype) are canonicalized in the same redirect;
+      // every other suffix (assets, API) keeps its exact case.
       const url = new URL(req.originalUrl, 'http://localhost');
       const first = url.pathname.split('/')[1];
       const rest = url.pathname.slice(first.length + 1);
-      if (first !== mount.slice(1) || rest === '') {
-        return res.redirect(308, `${mount}${rest || '/'}${url.search}`);
+      const reserved = RESERVED_DOCUMENTS.get(rest.replace(/\/+$/, '').toLowerCase());
+      if (reserved && !isRead(req)) {
+        res.setHeader('Allow', 'GET, HEAD');
+        return sendPlain(res, 405, 'Method not allowed');
+      }
+      const canonicalRest = reserved || rest || '/';
+      if (first !== mount.slice(1) || canonicalRest !== rest) {
+        return res.redirect(308, `${mount}${canonicalRest}${url.search}`);
       }
 
       const p = req.path;
@@ -759,6 +809,9 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
         return await handleAdmin(req, res);
       }
       if (p === '/signout' || p === '/signout/') return handleSignout(req, res);
+      if (p === '/') return handleAccess(req, res);
+      if (p === INFO_PATH) return handleInfo(req, res);
+      if (p === PROTOTYPE_PATH) return handlePrototypeEntry(req, res);
       return handlePrototype(req, res);
     } catch (error) {
       logger.error(`[isquared-beta] request failed: ${error && error.name}`);
