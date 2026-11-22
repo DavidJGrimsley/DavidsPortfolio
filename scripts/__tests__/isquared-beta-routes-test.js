@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('node:fs');
 const http = require('node:http');
+const vm = require('node:vm');
 const os = require('node:os');
 const path = require('node:path');
 const { createIsquaredBeta } = require('../isquared-beta/index.cjs');
@@ -191,6 +192,9 @@ describe('isquared-beta routes and server integration', () => {
     expect(html).toContain(`data-agreement-version="${agree.version}"`);
     expect(html).toContain(`data-agreement-digest="${agree.digest}"`);
     expect(html).toContain('data-next="/iSquared/Prototype"');
+    expect(html).toContain('<p id="access-closed" class="access-closed" role="status" hidden>Closed for changes.</p>');
+    expect(html).toContain('data-access-closed="0"');
+    expect(html).not.toContain('is-closed');
     expect(html).toContain('id="fullscreen-message"');
     expect(html).toContain('Please put this browser window in full screen before starting the prototype experience. Enjoy.');
     expect(html.indexOf('id="personal-message"')).toBeLessThan(html.indexOf('id="fullscreen-message"'));
@@ -719,5 +723,374 @@ describe('isquared-beta prototype entry without a deployable archive', () => {
       expect(res.status).toBe(404);
       expect(await res.text()).toBe('Not found');
     });
+  });
+});
+
+describe('iSquared admin deletion and global access switch', () => {
+  let beta;
+  let server;
+  let base;
+  let adminCookies;
+  let csrf;
+
+  function parseSetCookies(res) {
+    const raw = res.headers['set-cookie'];
+    if (!raw) return {};
+    const cookies = {};
+    const list = Array.isArray(raw) ? raw : [raw];
+    for (const item of list) {
+      const match = item.match(/^([^=]+)=([^;]*)/);
+      if (match) cookies[match[1].trim()] = match[2].trim();
+    }
+    return cookies;
+  }
+
+  function cookieHeader(cookieMap) {
+    return Object.entries(cookieMap)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('; ');
+  }
+
+  beforeAll(async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'isq-admin-switch-'));
+    const webDir = path.join(tempDir, 'web');
+    fs.mkdirSync(webDir, { recursive: true });
+    fs.writeFileSync(path.join(webDir, 'index.html'), '<!doctype html><title>Prototype</title>');
+    beta = createIsquaredBeta({
+      appRoot: tempDir,
+      env: {
+        ISQUARED_BETA_CODE_PEPPER: TEST_PEPPER,
+        ISQUARED_BETA_DB_PATH: ':memory:',
+        ISQUARED_BETA_WEB_DIR: webDir,
+        ISQUARED_BETA_INSECURE_COOKIES: '1',
+        ISQUARED_ADMIN_USERNAME: 'admin',
+        ISQUARED_ADMIN_PASSWORD_HASH: hashPassword(ADMIN_PASS),
+      },
+      logger: { log() {}, error() {} },
+    });
+    beta.service.createTester({ name: 'Switch Tester', code: 'SWITCH' });
+    beta.service.createTester({ name: 'Other Tester', code: 'OTHER1' });
+    const app = express();
+    app.use(beta.config.mountPath, beta.router);
+    server = http.createServer(app);
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    base = `http://127.0.0.1:${server.address().port}`;
+    const page = await httpRequest(`${base}/iSquared/admin/`);
+    adminCookies = parseSetCookies(page);
+    csrf = adminCookies.isq_csrf;
+    const login = await httpRequest(`${base}/iSquared/admin/api/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf,
+        Cookie: cookieHeader(adminCookies),
+      },
+      body: JSON.stringify({ username: 'admin', password: ADMIN_PASS }),
+    });
+    adminCookies.isq_admin = parseSetCookies(login).isq_admin;
+  });
+
+  afterAll(async () => {
+    if (beta && beta.close) beta.close();
+    if (server) await new Promise((resolve) => server.close(resolve));
+  });
+
+  function adminPost(path, body) {
+    return httpRequest(`${base}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf,
+        Cookie: cookieHeader(adminCookies),
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it('blocks signed-in testers while access is off and restores that session', async () => {
+    const agreement = beta.service.agreement;
+    const auth = beta.service.authenticate({
+      code: 'SWITCH',
+      accepted: true,
+      agreementVersion: agreement.version,
+      agreementDigest: agreement.digest,
+    });
+    const cookie = `isq_beta=${auth.token}`;
+    const open = await httpRequest(`${base}/iSquared/Prototype`, {
+      headers: { Accept: 'text/html', Cookie: cookie },
+    });
+    expect(open.status).toBe(200);
+
+    const missing = await httpRequest(`${base}/iSquared/admin/api/access`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ testerAccessEnabled: false }),
+    });
+    expect(missing.status).toBe(403);
+
+    const off = await adminPost('/iSquared/admin/api/access', { testerAccessEnabled: false });
+    expect(off.status).toBe(200);
+    expect((await off.json()).testerAccessEnabled).toBe(false);
+
+    beta.service.setMessage(beta.service.findTester('Switch Tester').id, 'Secret note for Switch');
+    const closedPage = await httpRequest(`${base}/iSquared/`, {
+      headers: { Accept: 'text/html', Cookie: cookie },
+    });
+    const closedHtml = await closedPage.text();
+    expect(closedPage.status).toBe(200);
+    expect(closedHtml).toMatch(/<p id="access-closed" class="access-closed" role="status">Closed for changes\.<\/p>/);
+    expect(closedHtml).toContain('class="card card-access is-closed"');
+    expect(closedHtml).toContain('id="access-form"');
+    expect(closedHtml).toContain('data-access-closed="1"');
+    expect(closedHtml).not.toContain('Secret note for Switch');
+    expect(closedHtml).not.toContain('Continue to prototype');
+    const lookup = await httpRequest(`${base}/iSquared/api/personal-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf,
+        Cookie: cookieHeader(adminCookies),
+      },
+      body: JSON.stringify({ code: 'SWITCH' }),
+    });
+    expect(lookup.status).toBe(200);
+    expect(await lookup.json()).toEqual({ message: null, closed: true });
+    const unknownLookup = await httpRequest(`${base}/iSquared/api/personal-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf,
+        Cookie: cookieHeader(adminCookies),
+      },
+      body: JSON.stringify({ code: 'NOBODY' }),
+    });
+    expect(await unknownLookup.json()).toEqual({ message: null, closed: true });
+
+    const blocked = await httpRequest(`${base}/iSquared/Prototype`, {
+      headers: { Accept: 'text/html', Cookie: cookie },
+    });
+    expect(blocked.status).toBe(401);
+    expect(await blocked.text()).toMatch(/<p id="access-closed" class="access-closed" role="status">Closed for changes\.<\/p>/);
+    const session = await httpRequest(`${base}/iSquared/api/session`, { headers: { Cookie: cookie } });
+    expect((await session.json()).authenticated).toBe(false);
+    const sim = await httpRequest(`${base}/iSquared/api/simulator/session`, { headers: { Cookie: cookie } });
+    expect(sim.status).toBe(401);
+    const info = await httpRequest(`${base}/iSquared/Info`);
+    expect(info.status).toBe(200);
+    const paused = await httpRequest(`${base}/iSquared/api/access`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf,
+        Cookie: cookieHeader(adminCookies),
+      },
+      body: JSON.stringify({
+        code: 'SWITCH',
+        acceptTerms: true,
+        agreementVersion: agreement.version,
+        agreementDigest: agreement.digest,
+      }),
+    });
+    expect(paused.status).toBe(503);
+    expect((await paused.json()).error).toBe('paused');
+    const unknown = await httpRequest(`${base}/iSquared/api/access`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf,
+        Cookie: cookieHeader(adminCookies),
+      },
+      body: JSON.stringify({
+        code: 'NOBODY',
+        acceptTerms: true,
+        agreementVersion: agreement.version,
+        agreementDigest: agreement.digest,
+      }),
+    });
+    expect(unknown.status).toBe(503);
+    const dash = await httpRequest(`${base}/iSquared/admin/`, { headers: { Cookie: cookieHeader(adminCookies) } });
+    expect(await dash.text()).toContain('Tester access is off');
+    const summary = await httpRequest(`${base}/iSquared/admin/api/summary`, {
+      headers: { Cookie: cookieHeader(adminCookies) },
+    });
+    expect((await summary.json()).testerAccess.enabled).toBe(false);
+
+    const on = await adminPost('/iSquared/admin/api/access', { testerAccessEnabled: true });
+    expect((await on.json()).testerAccessEnabled).toBe(true);
+    const restored = await httpRequest(`${base}/iSquared/Prototype`, {
+      headers: { Accept: 'text/html', Cookie: cookie },
+    });
+    expect(restored.status).toBe(200);
+    const openPage = await httpRequest(`${base}/iSquared/`, {
+      headers: { Accept: 'text/html', Cookie: cookie },
+    });
+    const openHtml = await openPage.text();
+    expect(openHtml).toContain('Continue to prototype');
+    expect(openHtml).not.toContain('id="access-closed"');
+    expect(openHtml).not.toContain('Secret note for Switch');
+    const openLookup = await httpRequest(`${base}/iSquared/api/personal-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf,
+        Cookie: cookieHeader({ ...adminCookies, isq_beta: auth.token }),
+      },
+      body: JSON.stringify({ code: 'SWITCH' }),
+    });
+    expect(await openLookup.json()).toEqual({ message: 'Secret note for Switch' });
+  });
+
+  it('requires the typed name before deleting one tester', async () => {
+    const dash = await httpRequest(`${base}/iSquared/admin/`, { headers: { Cookie: cookieHeader(adminCookies) } });
+    const html = await dash.text();
+    expect(html).toContain('data-tester-name="Other Tester"');
+    const id = beta.service.findTester('Other Tester').id;
+    const wrong = await adminPost('/iSquared/admin/api/testers/delete', { testerId: id, confirmName: 'other tester' });
+    expect(wrong.status).toBe(409);
+    expect(beta.service.getTester(id).name).toBe('Other Tester');
+    const gone = await adminPost('/iSquared/admin/api/testers/delete', { testerId: id, confirmName: 'Other Tester' });
+    expect(gone.status).toBe(200);
+    expect((await gone.json()).remoteStop).toBe('none');
+    expect(beta.service.findTester('Switch Tester').name).toBe('Switch Tester');
+    expect(() => beta.service.findTester('Other Tester')).toThrow(/No tester matches/);
+    const repeat = await adminPost('/iSquared/admin/api/testers/delete', { testerId: id, confirmName: 'Other Tester' });
+    expect(repeat.status).toBe(404);
+    const injected = await adminPost('/iSquared/admin/api/testers/delete', { testerId: '1; DROP', confirmName: 'Switch Tester' });
+    expect(injected.status).toBe(400);
+  });
+
+  it('stops a deleted tester provider session only after the tester row is gone', async () => {
+    const created = beta.service.createTester({ name: 'Remote Tester', code: 'REMOTE' });
+    const nowIso = new Date().toISOString();
+    beta.db.prepare(
+      `INSERT INTO beta_simulator_sessions (
+         id, tester_id, project_id, platform, status, provider, provider_session_id,
+         duration_seconds, reserved_seconds, used_seconds, created_at, expires_at
+       ) VALUES ('sim-remote', ?, 'pet', 'android', 'active', ?, 'prov-remote', 90, 90, 0, ?, ?)`
+    ).run(created.tester.id, beta.provider.name, nowIso, nowIso);
+    let networkStops = 0;
+    const originalStop = beta.provider.stopSession.bind(beta.provider);
+    beta.provider.stopSession = async (...args) => {
+      networkStops += 1;
+      return originalStop(...args);
+    };
+    const originalAbandon = beta.simulatorService.abandonProviderSessions.bind(beta.simulatorService);
+    beta.simulatorService.abandonProviderSessions = async (stops) => {
+      expect(beta.db.prepare('SELECT id FROM beta_testers WHERE id = ?').get(created.tester.id)).toBeUndefined();
+      expect(stops).toEqual([{ provider: beta.provider.name, providerSessionId: 'prov-remote' }]);
+      return originalAbandon(stops);
+    };
+
+    const gone = await adminPost('/iSquared/admin/api/testers/delete', {
+      testerId: created.tester.id,
+      confirmName: 'Remote Tester',
+    });
+    expect(gone.status).toBe(200);
+    expect(await gone.json()).toMatchObject({ deleted: true, remoteStop: 'skipped_provider_disabled' });
+    expect(networkStops).toBe(0);
+    expect(beta.service.findTester('Switch Tester').name).toBe('Switch Tester');
+    const month = nowIso.slice(0, 7);
+    expect(beta.db.prepare('SELECT reserved_seconds FROM beta_simulator_usage_retained WHERE month = ?').get(month).reserved_seconds).toBe(90);
+  });
+});
+
+describe('iSquared admin dashboard controls', () => {
+  it('turns access off in one click and requires the exact tester name before delete', async () => {
+    const listeners = {};
+    const make = (id) => {
+      const node = {
+        id,
+        hidden: id === 'delete-panel' || id === 'delete-error',
+        disabled: id === 'delete-submit',
+        textContent: '',
+        value: '',
+        dataset: {},
+        attributes: {},
+        setAttribute(key, value) { this.attributes[key] = String(value); },
+        getAttribute(key) { return this.attributes[key]; },
+        addEventListener(event, fn) { listeners[`${id}:${event}`] = fn; },
+        classList: { toggle(name, on) { node.className = on ? name : ''; } },
+        focus() {},
+      };
+      return node;
+    };
+    const banner = make('access-banner');
+    banner.dataset.csrf = 'csrf-token';
+    banner.attributes['data-enabled'] = '1';
+    const switchButton = make('access-switch');
+    switchButton.textContent = 'Turn tester access off';
+    const feedback = make('access-feedback');
+    const state = make('access-state');
+    state.textContent = 'Tester access is on.';
+    const panel = make('delete-panel');
+    const confirm = make('delete-confirm');
+    const submit = make('delete-submit');
+    const error = make('delete-error');
+    const row = { removed: false, remove() { this.removed = true; } };
+    const deleteButton = make('delete-ada');
+    deleteButton.attributes['data-tester-id'] = '7';
+    deleteButton.attributes['data-tester-name'] = 'Ada Lovelace';
+    deleteButton.closest = () => row;
+    const byId = {
+      'access-banner': banner,
+      'access-switch': switchButton,
+      'access-feedback': feedback,
+      'access-state': state,
+      'delete-panel': panel,
+      'delete-confirm': confirm,
+      'delete-submit': submit,
+      'delete-cancel': make('delete-cancel'),
+      'delete-error': error,
+    };
+    const bodies = [];
+    const fetch = jest.fn(async (url, init) => {
+      bodies.push({ url, body: JSON.parse(init.body), csrf: init.headers['X-CSRF-Token'] });
+      if (String(url).endsWith('/access')) {
+        return { status: 200, json: async () => ({ testerAccessEnabled: false, changed: true, restoredSessions: 0 }) };
+      }
+      return { status: 200, json: async () => ({ deleted: true, remoteStop: 'skipped_provider_disabled' }) };
+    });
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../isquared-beta/public/admin.js'), 'utf8'), {
+      document: {
+        getElementById: (id) => byId[id] || null,
+        querySelectorAll: (selector) => (selector === '[data-delete-tester]' ? [deleteButton] : []),
+        querySelector: (selector) => (selector === '[data-delete-tester][data-tester-id="7"]' ? deleteButton : null),
+      },
+      fetch,
+      window: { location: { replace() {} } },
+    });
+
+    listeners['access-switch:click']();
+    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+    expect(bodies[0]).toMatchObject({
+      url: '/iSquared/admin/api/access',
+      body: { testerAccessEnabled: false },
+      csrf: 'csrf-token',
+    });
+    expect(banner.attributes['data-enabled']).toBe('0');
+    expect(banner.className).toBe('access-off');
+    expect(state.textContent).toContain('Tester access is off');
+    expect(switchButton.textContent).toBe('Turn tester access on');
+    expect(feedback.textContent).toBe('Tester access is off. Signed-in testers are blocked now.');
+
+    listeners['delete-ada:click']();
+    expect(panel.hidden).toBe(false);
+    confirm.value = 'ada lovelace';
+    listeners['delete-confirm:input']();
+    expect(submit.disabled).toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    confirm.value = 'Ada Lovelace';
+    listeners['delete-confirm:input']();
+    expect(submit.disabled).toBe(false);
+    listeners['delete-submit:click']();
+    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+    expect(bodies[1]).toMatchObject({
+      url: '/iSquared/admin/api/testers/delete',
+      body: { testerId: 7, confirmName: 'Ada Lovelace' },
+      csrf: 'csrf-token',
+    });
+    expect(row.removed).toBe(true);
+    expect(panel.hidden).toBe(true);
+    expect(feedback.textContent).toContain('No live simulator provider is configured');
   });
 });

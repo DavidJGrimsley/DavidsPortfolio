@@ -54,9 +54,10 @@ function renderAccessHeader() {
     </header>`;
 }
 
-function renderAccessForm({ agreement, csrfToken, next }) {
+function renderAccessForm({ agreement, csrfToken, next, closed = false }) {
   return `<form id="access-form" novalidate autocomplete="off"
             data-csrf="${escapeHtml(csrfToken)}"
+            data-access-closed="${closed ? '1' : '0'}"
             data-agreement-version="${escapeHtml(agreement.version)}"
             data-agreement-digest="${escapeHtml(agreement.digest)}"${next ? `
             data-next="${escapeHtml(next)}"` : ''}>
@@ -76,6 +77,7 @@ function renderAccessForm({ agreement, csrfToken, next }) {
         </div>
         <p id="personal-message" class="personal-message" role="status" hidden></p>
         <p id="fullscreen-message" class="personal-message personal-message-note" role="status" hidden>Please put this browser window in full screen before starting the prototype experience. Enjoy.</p>
+        <p id="access-closed-note" class="access-closed-note" role="status" hidden></p>
         <button type="submit" id="submit" class="primary" disabled>Enter iSquared</button>
         <p class="meta access-caption">Simulated preview collects no data and is extra verbose to fully explain the idea to this round of testers.</p>
         <p id="form-error" class="error" role="alert" hidden></p>
@@ -86,15 +88,20 @@ function renderAccessForm({ agreement, csrfToken, next }) {
  * The access page. Unauthenticated visitors get the code form (`next` is set only on the main
  * page, where a successful login continues to the prototype); signed-in testers get a link on.
  */
-function renderLoginPage({ agreement, csrfToken, next, authenticated = false, continueHref = '/iSquared/Prototype' }) {
+function renderLoginPage({ agreement, csrfToken, next, authenticated = false, continueHref = '/iSquared/Prototype', testerAccessEnabled = true }) {
+  const closed = !authenticated && testerAccessEnabled === false;
   const access = authenticated
     ? `<a class="primary continue-link" href="${escapeHtml(continueHref)}">Continue to prototype <span aria-hidden="true">→</span></a>`
-    : renderAccessForm({ agreement, csrfToken, next });
+    : renderAccessForm({ agreement, csrfToken, next, closed });
+  const closedNotice = authenticated
+    ? ''
+    : `<p id="access-closed" class="access-closed" role="status"${closed ? '' : ' hidden'}>Closed for changes.</p>`;
   return layout({
     title: PAGE_HEADING,
     script: 'login.js',
     body: `<main class="shell">
-  <section class="card card-access" aria-labelledby="page-title">
+  <section id="access-view" class="card card-access${closed ? ' is-closed' : ''}" aria-labelledby="page-title">
+    ${closedNotice}
     ${renderAccessHeader()}
     <section class="access-section" aria-label="Access">
       ${access}
@@ -276,7 +283,7 @@ function renderDashboard({ stats, query, csrfToken }) {
     const marker = sort === key ? (dir === 'asc' ? ' ▲' : ' ▼') : '';
     const numeric = key === 'logins' || key === 'visits' ? ' class="num"' : '';
     return `<th scope="col"${numeric}><a href="${escapeHtml(link({ sort: key, dir: next }))}">${escapeHtml(label)}${marker}</a></th>`;
-  }).join('');
+  }).join('') + '<th scope="col">Actions</th>';
 
   const body = rows.length
     ? rows
@@ -287,12 +294,15 @@ function renderDashboard({ stats, query, csrfToken }) {
   <td class="num">${tester.visits}</td>
   <td>${timeCell(tester.lastLoginAt)}</td>
   <td><span class="badge badge-${escapeHtml(tester.status)}">${escapeHtml(STATUS_LABELS[tester.status])}</span></td>
+  <td><button type="button" class="danger" data-delete-tester data-tester-id="${tester.id}" data-tester-name="${escapeHtml(tester.name)}">Delete</button></td>
 </tr>`
         )
         .join('\n')
-    : '<tr><td colspan="5" class="muted">No testers match.</td></tr>';
+    : '<tr><td colspan="6" class="muted">No testers match.</td></tr>';
 
   const s = stats.summary;
+  const access = stats.testerAccess || { enabled: false, pausedAt: null };
+  const accessOn = access.enabled === true;
   const tile = (label, value) => `<div class="tile"><span class="tile-value">${value}</span><span class="tile-label">${escapeHtml(label)}</span></div>`;
   const statusOptions = ['', ...Object.keys(STATUS_LABELS)]
     .map(
@@ -309,6 +319,13 @@ function renderDashboard({ stats, query, csrfToken }) {
     <h1>iSquared private beta</h1>
     <button type="button" id="admin-logout" data-csrf="${escapeHtml(csrfToken)}">Sign out</button>
   </header>
+  <section id="access-banner" class="access-panel${accessOn ? '' : ' access-off'}" data-enabled="${accessOn ? '1' : '0'}" data-csrf="${escapeHtml(csrfToken)}">
+    <p id="access-state">${accessOn
+      ? 'Tester access is on.'
+      : `Tester access is off${access.pausedAt ? ` since <time datetime="${escapeHtml(access.pausedAt)}" data-localize>${escapeHtml(access.pausedAt)}</time>` : ''}. Signed-in testers and protected APIs are blocked. Sessions that are still inside their original expiry are kept. Turning access on restores the idle time they had left. This switch does not stop a simulator that already started. A remote device can keep using a preview URL it already holds until the provider ends that session.`}</p>
+    <button type="button" id="access-switch">${accessOn ? 'Turn tester access off' : 'Turn tester access on'}</button>
+    <p id="access-feedback" class="meta" role="status"></p>
+  </section>
   <section class="tiles" aria-label="Summary">
     ${tile('Invited testers', s.totalTesters)}
     ${tile('Enabled testers', s.activeTesters)}
@@ -331,6 +348,14 @@ function renderDashboard({ stats, query, csrfToken }) {
     <input type="hidden" name="dir" value="${escapeHtml(dir)}">
     <button type="submit">Apply</button>
   </form>
+  <section id="delete-panel" hidden>
+    <h2>Delete tester</h2>
+    <p id="delete-copy">This permanently deletes this tester, their access code, personal message, sessions, agreement acceptances, and history. Shared settings and other testers stay. Type the tester name to confirm.</p>
+    <label>Tester name <input id="delete-confirm" autocomplete="off" maxlength="100"></label>
+    <button type="button" id="delete-submit" class="danger" disabled>Delete permanently</button>
+    <button type="button" id="delete-cancel">Cancel</button>
+    <p id="delete-error" class="error" role="alert" hidden></p>
+  </section>
   <div class="table-wrap">
     <table>
       <thead><tr>${headers}</tr></thead>
@@ -339,7 +364,7 @@ ${body}
       </tbody>
     </table>
   </div>
-  <p class="meta">Generated <time datetime="${escapeHtml(stats.generatedAt)}" data-localize>${escapeHtml(stats.generatedAt)}</time>. Times are stored in UTC and shown in your local time zone. A visit is an authenticated opening of the prototype page; reloads within the visit gap and asset requests are not counted. Tester management is CLI-only: <code>npm run isquared:beta -- help</code>.</p>
+  <p class="meta">Generated <time datetime="${escapeHtml(stats.generatedAt)}" data-localize>${escapeHtml(stats.generatedAt)}</time>. Times are stored in UTC and shown in your local time zone. A visit is an authenticated opening of the prototype page; reloads within the visit gap and asset requests are not counted. Deleting a tester and the access switch are on this page. Creating testers, codes, expiry, and messages stays on the command line: <code>npm run isquared:beta -- help</code>.</p>
 </main>`,
   });
 }

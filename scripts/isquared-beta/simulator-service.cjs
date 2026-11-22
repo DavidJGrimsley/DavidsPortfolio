@@ -105,11 +105,22 @@ function createSimulatorService({
       )
       .get(startIso, startIso, startIso, startIso);
 
+    // Deleted testers keep the same split: used seconds count only in their UTC month, and
+    // unresolved reservations count in every later month because the session row is gone.
+    const retainedRow = dbInstance
+      .prepare(
+        `SELECT
+           COALESCE(SUM(CASE WHEN month = ? THEN used_seconds ELSE 0 END), 0) AS used_secs,
+           COALESCE(SUM(reserved_seconds), 0) AS reserved_secs
+         FROM beta_simulator_usage_retained`
+      )
+      .get(monthKey);
+
     return {
       monthKey,
       startIso,
-      usedSeconds: Number(usageRow.used_secs),
-      reservedSeconds: Number(usageRow.reserved_secs),
+      usedSeconds: Number(usageRow.used_secs) + Number(retainedRow.used_secs),
+      reservedSeconds: Number(usageRow.reserved_secs) + Number(retainedRow.reserved_secs),
     };
   }
 
@@ -270,6 +281,11 @@ function createSimulatorService({
     // to serialize cross-process concurrent testers and avoid over-reservation.
     transaction(db, () => {
       cleanupExpiredSessions(db, { inTransaction: true });
+
+      const access = db.prepare('SELECT tester_access_enabled FROM beta_access_control WHERE id = 1').get();
+      if (!access || access.tester_access_enabled !== 1) {
+        throw new BetaError('access_paused', 'Tester access is off.');
+      }
 
       // Validate tester
       const tester = db.prepare('SELECT id, active, expires_at FROM beta_testers WHERE id = ?').get(testerId);
@@ -1021,7 +1037,37 @@ function createSimulatorService({
     return session;
   }
 
+  /**
+   * Best-effort stop after the tester rows are already gone. Never reads or writes simulator rows,
+   * and never waits inside the delete transaction. A disabled provider does not touch the network.
+   */
+  async function abandonProviderSessions(stops) {
+    if (!Array.isArray(stops) || stops.length === 0) return 'none';
+    let available;
+    try {
+      available = await provider.isAvailable();
+    } catch {
+      return 'unconfirmed';
+    }
+    if (available && available.reason === 'provider_disabled') return 'skipped_provider_disabled';
+    let unconfirmed = false;
+    for (const stop of stops) {
+      if (!stop || stop.provider !== provider.name || !stop.providerSessionId) {
+        unconfirmed = true;
+        continue;
+      }
+      try {
+        const result = await provider.stopSession(stop.providerSessionId);
+        if (!result || result.ok !== true) unconfirmed = true;
+      } catch {
+        unconfirmed = true;
+      }
+    }
+    return unconfirmed ? 'unconfirmed' : 'confirmed';
+  }
+
   return {
+    abandonProviderSessions,
     cleanupExpiredSessions,
     getActiveSession,
     getAttempts,
