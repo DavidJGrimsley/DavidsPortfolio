@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
 const pages = require('./pages.cjs');
+const { BetaError } = require('./service.cjs');
 const {
   clientAddress,
   hashToken,
@@ -121,6 +122,33 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
     }
   }
 
+  function isBusy(error) {
+    return Boolean(
+      error &&
+        (error.code === 'busy' ||
+          error.errcode === 5 ||
+          /SQLITE_BUSY|database is locked/i.test(String(error.message || '')))
+    );
+  }
+
+  function sendAdminFailure(res, error, busyMessage) {
+    if (isBusy(error)) return sendJson(res, 503, { error: 'busy', message: busyMessage });
+    if (error instanceof BetaError && error.code === 'not_found') {
+      return sendJson(res, 404, { error: 'not_found', message: 'That tester does not exist.' });
+    }
+    if (error instanceof BetaError && error.code === 'confirmation_mismatch') {
+      return sendJson(res, 409, {
+        error: 'confirmation_mismatch',
+        message: 'Type the tester name exactly. Nothing was deleted.',
+      });
+    }
+    if (error instanceof BetaError && error.code === 'bad_input') {
+      return sendJson(res, 400, { error: 'bad_request' });
+    }
+    logger.error(`[isquared-beta] admin change failed: ${error && error.name}`);
+    return sendJson(res, 500, { error: 'server_error' });
+  }
+
   function methodNotAllowed(res, allow) {
     res.setHeader('Allow', allow);
     sendJson(res, 405, { error: 'method_not_allowed' });
@@ -142,12 +170,13 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
       if (!isRead(req)) return methodNotAllowed(res, 'GET, HEAD');
       const csrfToken = ensureCsrf(req, res);
       const session = service.validateSession(cookiesOf(req)[names.session]);
+      const testerAccessEnabled = service.getTesterAccess().enabled;
       return sendJson(
         res,
         200,
         session
-          ? { authenticated: true, tester: { name: session.testerName }, expiresAt: session.expiresAt, csrfToken }
-          : { authenticated: false, csrfToken }
+          ? { authenticated: true, testerAccessEnabled: true, tester: { name: session.testerName }, expiresAt: session.expiresAt, csrfToken }
+          : { authenticated: false, testerAccessEnabled, csrfToken }
       );
     }
 
@@ -161,6 +190,7 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
         res.setHeader('Retry-After', String(result.retryAfterSeconds));
         return sendJson(res, 429, { error: 'limited' });
       }
+      if (result.closed) return sendJson(res, 200, { message: null, closed: true });
       return sendJson(res, 200, { message: result.message });
     }
 
@@ -183,6 +213,7 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
         res.setHeader('Retry-After', String(result.retryAfterSeconds));
         return sendJson(res, 429, { error: 'limited' });
       }
+      if (result.reason === 'access_paused') return sendJson(res, 503, { error: 'paused' });
       if (result.reason === 'terms_not_accepted') return sendJson(res, 400, { error: 'terms' });
       if (result.reason === 'terms_outdated') return sendJson(res, 409, { error: 'outdated' });
       // Unknown, inactive, expired and revoked codes are indistinguishable to the caller.
@@ -316,6 +347,9 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
         }
         if (err.code === 'invalid_duration') {
           return sendJson(res, 400, { error: 'invalid_duration', message: 'Session duration must be a positive number of minutes.' });
+        }
+        if (err.code === 'access_paused' || err.code === 'inactive') {
+          return sendJson(res, 401, { error: 'unauthorized' });
         }
         if (err.code === 'provider_disabled' || err.code === 'provider_unavailable') {
           return sendJson(res, 503, { error: 'provider_unavailable', message: 'Simulator provider is currently disabled.' });
@@ -456,6 +490,53 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
       return sendJson(res, 200, service.stats({ days: Number.isFinite(days) ? days : 30 }));
     }
 
+    if (route === '/admin/api/access') {
+      if (req.method !== 'POST') return methodNotAllowed(res, 'POST');
+      const body = await guardStateChange(req, res);
+      if (!body) return undefined;
+      if (!adminSessionOf(req)) return sendJson(res, 401, { error: 'unauthorized' });
+      if (typeof body.testerAccessEnabled !== 'boolean') return sendJson(res, 400, { error: 'bad_request' });
+      try {
+        const result = service.setTesterAccess(body.testerAccessEnabled);
+        return sendJson(res, 200, {
+          testerAccessEnabled: result.testerAccessEnabled,
+          changed: result.changed,
+          restoredSessions: result.restoredSessions,
+        });
+      } catch (error) {
+        return sendAdminFailure(res, error, 'The database is busy. The switch did not change.');
+      }
+    }
+
+    if (route === '/admin/api/testers/delete') {
+      if (req.method !== 'POST') return methodNotAllowed(res, 'POST');
+      const body = await guardStateChange(req, res);
+      if (!body) return undefined;
+      if (!adminSessionOf(req)) return sendJson(res, 401, { error: 'unauthorized' });
+      if (!Number.isInteger(body.testerId) || body.testerId <= 0 || typeof body.confirmName !== 'string') {
+        return sendJson(res, 400, { error: 'bad_request' });
+      }
+      try {
+        const result = service.deleteTester(body.testerId, { confirmName: body.confirmName });
+        let remoteStop = 'none';
+        try {
+          remoteStop = simulatorService
+            ? await simulatorService.abandonProviderSessions(result.providerStops)
+            : 'skipped_provider_disabled';
+        } catch {
+          remoteStop = 'unconfirmed';
+        }
+        return sendJson(res, 200, {
+          deleted: true,
+          name: result.name,
+          removed: result.removed,
+          remoteStop,
+        });
+      } catch (error) {
+        return sendAdminFailure(res, error, 'The database is busy. Nothing was deleted.');
+      }
+    }
+
     return sendPlain(res, 404, 'Not found');
   }
 
@@ -551,7 +632,11 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
   function sendUnauthenticated(req, res) {
     if (isNavigation(req, req.path)) {
       const csrfToken = ensureCsrf(req, res);
-      return sendPage(res, 401, pages.renderLoginPage({ agreement: service.agreement, csrfToken }));
+      return sendPage(res, 401, pages.renderLoginPage({
+        agreement: service.agreement,
+        csrfToken,
+        testerAccessEnabled: service.getTesterAccess().enabled,
+      }));
     }
     return sendPlain(res, 401, 'Unauthorized');
   }
@@ -579,7 +664,12 @@ function createBetaRouter({ service, simulatorService, config, logger = console 
     return sendPage(
       res,
       200,
-      pages.renderLoginPage({ agreement: service.agreement, csrfToken, next: `${mount}${PROTOTYPE_PATH}` })
+      pages.renderLoginPage({
+        agreement: service.agreement,
+        csrfToken,
+        next: `${mount}${PROTOTYPE_PATH}`,
+        testerAccessEnabled: service.getTesterAccess().enabled,
+      })
     );
   }
 

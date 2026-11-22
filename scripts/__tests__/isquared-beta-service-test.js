@@ -34,8 +34,9 @@ it('adds personal messages to an existing version 2 database without losing test
     oldDb.exec(MIGRATIONS[1].sql);
     oldDb.exec('PRAGMA user_version = 2');
     oldDb.prepare('INSERT INTO beta_testers (name, code_hash, created_at) VALUES (?, ?, ?)').run('Existing', 'hash', '2026-01-01');
-    expect(migrate(oldDb).to).toBe(3);
+    expect(migrate(oldDb).to).toBe(4);
     expect(oldDb.prepare('SELECT name, personal_message FROM beta_testers').get()).toMatchObject({ name: 'Existing', personal_message: null });
+    expect(oldDb.prepare('SELECT tester_access_enabled FROM beta_access_control WHERE id = 1').get().tester_access_enabled).toBe(1);
   } finally {
     oldDb.close();
   }
@@ -678,5 +679,260 @@ describe('isquared-beta service and database', () => {
     // Revoke admin session
     expect(service.revokeAdminSession(adminSess.token)).toBe(true);
     expect(service.validateAdminSession(adminSess.token)).toBeNull();
+  });
+
+  function signIn(code) {
+    return service.authenticate({
+      code,
+      accepted: true,
+      agreementVersion: agreement.version,
+      agreementDigest: agreement.digest,
+      clientAddress: '203.0.113.10',
+    });
+  }
+
+  it('upgrades a version 3 database without locking testers out', () => {
+    const { DatabaseSync } = process.getBuiltinModule('node:sqlite');
+    const oldDb = new DatabaseSync(':memory:');
+    try {
+      oldDb.exec(MIGRATIONS[0].sql);
+      oldDb.exec(MIGRATIONS[1].sql);
+      oldDb.exec(MIGRATIONS[2].sql);
+      oldDb.exec('PRAGMA user_version = 3');
+      oldDb.prepare(
+        'INSERT INTO beta_testers (name, code_hash, created_at, personal_message) VALUES (?, ?, ?, ?)'
+      ).run('Kept', 'hash', '2026-01-01T00:00:00.000Z', 'hello');
+      expect(migrate(oldDb)).toMatchObject({ from: 3, to: 4, applied: 1 });
+      expect(oldDb.prepare('SELECT name, personal_message FROM beta_testers').get()).toMatchObject({
+        name: 'Kept',
+        personal_message: 'hello',
+      });
+      expect(oldDb.prepare('SELECT tester_access_enabled, paused_at FROM beta_access_control').get()).toMatchObject({
+        tester_access_enabled: 1,
+        paused_at: null,
+      });
+      expect(migrate(oldDb).applied).toBe(0);
+    } finally {
+      oldDb.close();
+    }
+  });
+
+  it('deletes one tester and leaves shared rows and the other tester', () => {
+    const alice = service.createTester({ name: 'Alice Example', code: 'ALICE1' });
+    const bob = service.createTester({ name: 'Bob Example', code: 'BOB123' });
+    service.setMessage(alice.tester.id, 'Hello Alice');
+    const aliceLogin = signIn('ALICE1');
+    const bobLogin = signIn('BOB123');
+    expect(aliceLogin.ok).toBe(true);
+    expect(bobLogin.ok).toBe(true);
+    const nowIso = new Date(fakeNowMs).toISOString();
+    db.prepare(
+      `INSERT INTO beta_simulator_sessions (
+         id, tester_id, project_id, platform, status, provider, provider_session_id,
+         duration_seconds, reserved_seconds, used_seconds, created_at, expires_at, ended_at
+       ) VALUES (?, ?, 'pet', 'android', 'stopped', 'fake', NULL, 60, 0, 60, ?, ?, ?)`
+    ).run('sim-alice', alice.tester.id, nowIso, nowIso, nowIso);
+    db.prepare(
+      `INSERT INTO beta_simulator_attempts (session_id, tester_id, action, outcome, created_at)
+       VALUES ('sim-alice', ?, 'start', 'ok', ?)`
+    ).run(alice.tester.id, nowIso);
+    db.prepare(
+      `INSERT INTO beta_simulator_sessions (
+         id, tester_id, project_id, platform, status, provider, provider_session_id,
+         duration_seconds, reserved_seconds, used_seconds, created_at, expires_at
+       ) VALUES ('sim-bob', ?, 'pet', 'android', 'active', 'fake', 'prov-bob', 60, 60, 0, ?, ?)`
+    ).run(bob.tester.id, nowIso, nowIso);
+    const admin = service.createAdminSession();
+    db.prepare('INSERT INTO beta_rate_limits (bucket, window_start, count) VALUES (?, ?, ?)').run('access:global', fakeNowMs, 3);
+    const agreementCount = db.prepare('SELECT COUNT(*) AS n FROM beta_agreement_texts').get().n;
+
+    expect(() => service.deleteTester(alice.tester.id, { confirmName: 'alice example' })).toThrow(BetaError);
+    expect(db.prepare('SELECT id FROM beta_testers WHERE id = ?').get(alice.tester.id)).toBeTruthy();
+
+    const removed = service.deleteTester(alice.tester.id, { confirmName: 'Alice Example' });
+    expect(removed.removed.sessions).toBe(1);
+    expect(db.prepare('SELECT id FROM beta_testers WHERE name = ?').get('Alice Example')).toBeUndefined();
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_sessions WHERE tester_id = ?').get(alice.tester.id).n).toBe(0);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_events WHERE tester_id = ?').get(alice.tester.id).n).toBe(0);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_agreements WHERE tester_id = ?').get(alice.tester.id).n).toBe(0);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_simulator_sessions WHERE tester_id = ?').get(alice.tester.id).n).toBe(0);
+    expect(service.validateSession(bobLogin.token).testerName).toBe('Bob Example');
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_agreement_texts').get().n).toBe(agreementCount);
+    expect(db.prepare('SELECT count FROM beta_rate_limits WHERE bucket = ?').get('access:global').count).toBe(3);
+    expect(service.validateAdminSession(admin.token)).not.toBeNull();
+    expect(service.getTesterAccess().enabled).toBe(true);
+    const audit = db.prepare("SELECT tester_id, metadata FROM beta_events WHERE event_type = 'tester_deleted'").get();
+    expect(audit.tester_id).toBeNull();
+    expect(audit.metadata).not.toContain('Alice');
+    expect(service.authenticate({
+      code: 'ALICE1',
+      accepted: true,
+      agreementVersion: agreement.version,
+      agreementDigest: agreement.digest,
+    }).reason).toBe('invalid_code');
+    expect(() => service.deleteTester(alice.tester.id, { confirmName: 'Alice Example' })).toThrow(/does not exist/);
+    const month = new Date(fakeNowMs).toISOString().slice(0, 7);
+    expect(db.prepare('SELECT used_seconds FROM beta_simulator_usage_retained WHERE month = ?').get(month).used_seconds).toBe(60);
+  });
+
+  it('turns tester access off without revoking sessions and restores the remaining idle time', () => {
+    const { tester } = service.createTester({ name: 'Paused Tester', code: 'PAUSE1' });
+    const login = signIn('PAUSE1');
+    const seenBefore = db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(tester.id).last_seen_at;
+    fakeNowMs += 60 * 60_000;
+    expect(service.setTesterAccess(false)).toMatchObject({ testerAccessEnabled: false, changed: true });
+    expect(service.setTesterAccess(false).changed).toBe(false);
+    expect(db.prepare('SELECT revoked_at FROM beta_sessions WHERE tester_id = ?').get(tester.id).revoked_at).toBeNull();
+    expect(service.validateSession(login.token)).toBeNull();
+    expect(service.authenticate({
+      code: 'NOTREAL',
+      accepted: false,
+      agreementVersion: agreement.version,
+      agreementDigest: agreement.digest,
+      clientAddress: '203.0.113.20',
+    }).reason).toBe('access_paused');
+    expect(db.prepare("SELECT COUNT(*) AS n FROM beta_rate_limits WHERE bucket LIKE 'access:%'").get().n).toBe(0);
+    service.setMessage(tester.id, 'Hidden while closed');
+    expect(service.lookupMessage({ code: 'PAUSE1', clientAddress: '203.0.113.21' })).toEqual({ message: null, closed: true });
+    expect(JSON.stringify(service.lookupMessage({ code: 'PAUSE1', clientAddress: '203.0.113.21' }))).not.toContain('Hidden while closed');
+    expect(service.validateAdminSession(service.createAdminSession().token)).not.toBeNull();
+    fakeNowMs += 5 * 60 * 60_000;
+    const on = service.setTesterAccess(true);
+    expect(on).toMatchObject({ testerAccessEnabled: true, restoredSessions: 1 });
+    const seenAfter = db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(tester.id).last_seen_at;
+    expect(Date.parse(seenAfter) - Date.parse(seenBefore)).toBe(5 * 60 * 60_000);
+    expect(service.validateSession(login.token).testerName).toBe('Paused Tester');
+
+    service.setTesterAccess(false);
+    expect(service.logout(login.token)).toBe(true);
+    service.setTesterAccess(true);
+    expect(service.validateSession(login.token)).toBeNull();
+  });
+
+  it('does not restore a session that was already idle when access was turned off', () => {
+    const { tester } = service.createTester({ name: 'Idle Tester', code: 'IDLE12' });
+    const login = signIn('IDLE12');
+    const seen = db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(tester.id).last_seen_at;
+    fakeNowMs += 241 * 60_000;
+    service.setTesterAccess(false);
+    fakeNowMs += 60 * 60_000;
+    expect(service.setTesterAccess(true).restoredSessions).toBe(0);
+    expect(db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(tester.id).last_seen_at).toBe(seen);
+    expect(service.validateSession(login.token)).toBeNull();
+  });
+
+  it('does not restore an individually disabled tester or a revoked session', () => {
+    const disabled = service.createTester({ name: 'Off Tester', code: 'OFF123' });
+    const revoked = service.createTester({ name: 'Revoked Tester', code: 'REV123' });
+    const offLogin = signIn('OFF123');
+    const revokedLogin = signIn('REV123');
+    const offSeen = db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(disabled.tester.id).last_seen_at;
+    db.prepare('UPDATE beta_testers SET active = 0 WHERE id = ?').run(disabled.tester.id);
+    expect(service.logout(revokedLogin.token)).toBe(true);
+    const revokedSeen = db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(revoked.tester.id).last_seen_at;
+    service.setTesterAccess(false);
+    fakeNowMs += 2 * 60 * 60_000;
+    expect(service.setTesterAccess(true).restoredSessions).toBe(0);
+    expect(db.prepare('SELECT last_seen_at, revoked_at FROM beta_sessions WHERE tester_id = ?').get(disabled.tester.id)).toMatchObject({
+      last_seen_at: offSeen,
+      revoked_at: null,
+    });
+    expect(db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(revoked.tester.id).last_seen_at).toBe(revokedSeen);
+    expect(service.validateSession(offLogin.token)).toBeNull();
+    expect(service.validateSession(revokedLogin.token)).toBeNull();
+  });
+
+  it('does not restore a session that expires while access is off', () => {
+    const { tester } = service.createTester({ name: 'Expiring Tester', code: 'EXP123' });
+    const login = signIn('EXP123');
+    const seen = db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(tester.id).last_seen_at;
+    db.prepare('UPDATE beta_sessions SET expires_at = ? WHERE tester_id = ?').run(new Date(fakeNowMs + 30 * 60_000).toISOString(), tester.id);
+    service.setTesterAccess(false);
+    fakeNowMs += 60 * 60_000;
+    expect(service.setTesterAccess(true).restoredSessions).toBe(0);
+    expect(db.prepare('SELECT last_seen_at FROM beta_sessions WHERE tester_id = ?').get(tester.id).last_seen_at).toBe(seen);
+    expect(service.validateSession(login.token)).toBeNull();
+  });
+
+  it('still rate-limits a full login bucket while access is off and does not record a paused attempt', () => {
+    service.createTester({ name: 'Limited Tester', code: 'LIMIT1' });
+    const client = '203.0.113.77';
+    const attempt = (code, clientAddress) => service.authenticate({
+      code,
+      accepted: true,
+      agreementVersion: agreement.version,
+      agreementDigest: agreement.digest,
+      clientAddress,
+    });
+    for (let i = 0; i < 8; i += 1) {
+      expect(attempt('BADCODE', client).reason).toBe('invalid_code');
+    }
+    const buckets = () => db.prepare("SELECT bucket, count FROM beta_rate_limits WHERE bucket LIKE 'access:%' ORDER BY bucket").all();
+    const before = buckets();
+    service.setTesterAccess(false);
+    expect(attempt('LIMIT1', client).reason).toBe('rate_limited');
+    expect(buckets()).toEqual(before);
+    expect(attempt('NOBODY', '203.0.113.78').reason).toBe('access_paused');
+    expect(buckets()).toEqual(before);
+  });
+
+  it('fails closed when the access-control row is missing and can be turned back on', () => {
+    const { tester } = service.createTester({ name: 'Row Tester', code: 'ROW123' });
+    const login = signIn('ROW123');
+    db.prepare('DELETE FROM beta_access_control').run();
+    expect(service.getTesterAccess()).toEqual({ enabled: false, pausedAt: null, updatedAt: null });
+    expect(service.validateSession(login.token)).toBeNull();
+    expect(service.authenticate({
+      code: 'ROW123',
+      accepted: true,
+      agreementVersion: agreement.version,
+      agreementDigest: agreement.digest,
+    }).reason).toBe('access_paused');
+    expect(service.setTesterAccess(true).testerAccessEnabled).toBe(true);
+    expect(service.validateSession(login.token).testerName).toBe('Row Tester');
+  });
+
+  it('charges unresolved simulator time and keeps the provider id for a stop after commit', () => {
+    const { tester } = service.createTester({ name: 'Remote Person', code: 'REMOTE' });
+    const nowIso = new Date(fakeNowMs).toISOString();
+    const oldIso = '2026-10-01T00:00:00.000Z';
+    db.prepare(
+      `INSERT INTO beta_simulator_sessions (
+         id, tester_id, project_id, platform, status, provider, provider_session_id,
+         duration_seconds, reserved_seconds, used_seconds, created_at, expires_at, ended_at
+       ) VALUES
+         ('sim-open', ?, 'pet', 'android', 'active', 'eas', 'prov-remote', 90, 90, 0, ?, ?, NULL),
+         ('sim-hold', ?, 'pet', 'android', 'uncertain', 'eas', '', 10, 10, 0, ?, ?, NULL),
+         ('sim-used', ?, 'pet', 'android', 'stopped', 'eas', NULL, 40, 0, 40, ?, ?, ?),
+         ('sim-old', ?, 'pet', 'android', 'stopped', 'eas', 'prov-old', 120, 0, 120, ?, ?, ?)`
+    ).run(
+      tester.id, nowIso, nowIso,
+      tester.id, nowIso, nowIso,
+      tester.id, nowIso, nowIso, nowIso,
+      tester.id, oldIso, oldIso, oldIso
+    );
+    db.prepare(
+      `INSERT INTO beta_simulator_attempts (session_id, tester_id, action, outcome, created_at)
+       VALUES ('sim-open', ?, 'start', 'ok', ?)`
+    ).run(tester.id, nowIso);
+    db.prepare(
+      `INSERT INTO beta_simulator_config (scope, monthly_budget_secs, max_session_secs, updated_at)
+       VALUES ('global', 3600, 300, ?)`
+    ).run(nowIso);
+
+    const removed = service.deleteTester(tester.id, { confirmName: '  Remote   Person  ' });
+    expect(removed.providerStops).toEqual([{ provider: 'eas', providerSessionId: 'prov-remote' }]);
+    expect(removed.retained).toEqual({ usedSeconds: 40, reservedSeconds: 100 });
+    expect(db.prepare('SELECT used_seconds, reserved_seconds FROM beta_simulator_usage_retained WHERE month = ?').get('2026-11')).toEqual({
+      used_seconds: 40,
+      reserved_seconds: 100,
+    });
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_simulator_usage_retained').get().n).toBe(1);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_simulator_sessions').get().n).toBe(0);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_simulator_attempts').get().n).toBe(0);
+    expect(db.prepare('SELECT monthly_budget_secs, max_session_secs FROM beta_simulator_config WHERE scope = ?').get('global')).toEqual({
+      monthly_budget_secs: 3600,
+      max_session_secs: 300,
+    });
   });
 });

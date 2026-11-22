@@ -126,4 +126,20 @@ describe('iSquared access page repository links', () => {
     expect(item.declarations['min-width']).toBe('0');
     expect(css).not.toMatch(/\.repo-links a\s*\{[^}]*white-space:\s*nowrap/);
   });
+
+  it('pins the closed notice to the top right and keeps it inside a phone-width card', () => {
+    const desktop = rules.find((rule) => rule.maxWidth == null && rule.selectors.includes('.access-closed'));
+    const phone = rules.find((rule) => rule.maxWidth === 480 && rule.selectors.includes('.access-closed'));
+    expect(desktop.declarations.position).toBe('absolute');
+    expect(desktop.declarations.top).toBe('14px');
+    expect(desktop.declarations.right).toBe('16px');
+    expect(desktop.declarations.color).toBe('#ff7a4a');
+    expect(desktop.declarations.border).toBe('1px solid #ff7a4a');
+    expect(desktop.declarations['text-align']).toBe('right');
+    expect(phone.declarations.top).toBe('12px');
+    expect(phone.declarations.right).toBe('12px');
+    expect(phone.declarations['max-width']).toBe('calc(100% - 24px)');
+    const room = rules.find((rule) => rule.maxWidth === 480 && rule.selectors.includes('.card-access.is-closed'));
+    expect(room.declarations['padding-top']).toBe('68px');
+  });
 });

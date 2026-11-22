@@ -145,7 +145,7 @@ npm run isquared:beta -- set-message "Jane Smith" --message "Welcome, Jane! Than
 npm run isquared:beta -- clear-message "Jane Smith"
 ```
 
-The message appears beneath the access-code field shortly after the complete code is entered, before the visitor accepts the terms or signs in. Anyone possessing or guessing that code can see it, so do not include sensitive information. The message lookup is rate-limited and does not create a session. The database migration preserves existing testers and leaves their messages empty until set.
+The message appears beneath the access-code field shortly after the complete code is entered, before the visitor accepts the terms or signs in. Anyone possessing or guessing that code can see it, so do not include sensitive information. The message lookup is rate-limited and does not create a session. The page asks only after typing pauses for 800 ms, sends one request per distinct code (spaces, hyphens and case ignored) and reuses answers it already has, because every lookup counts against `ISQUARED_MESSAGE_IP_ATTEMPTS`. A refused (rate-limited) lookup shows nothing, exactly like a code without a message; the login-failure limits also suppress lookups. The database migration preserves existing testers and leaves their messages empty until set.
 
 ### Common Commands
 
@@ -237,7 +237,7 @@ npm run isquared:beta -- agreement
 ```
 
 #### 13. Initialize or Migrate SQLite Schema
-Create or upgrade the SQLite schema (also executed automatically on server startup):
+Create or upgrade the SQLite schema (also executed automatically on server startup). The access-switch migration inserts tester access as on, so upgrading an existing database does not lock testers out.
 ```bash
 npm run isquared:beta -- init
 ```
@@ -247,6 +247,20 @@ Compute the scrypt hash for setting `ISQUARED_ADMIN_PASSWORD_HASH`:
 ```bash
 npm run isquared:beta -- hash-password
 ```
+
+#### 15. Turn tester access off or on
+```bash
+npm run isquared:beta -- access status
+npm run isquared:beta -- access off
+npm run isquared:beta -- access on
+```
+Off blocks every tester, including people who are already signed in, and does not revoke their sessions. On restores sessions that were still inside the idle window when access was turned off and have not reached their expiry. It does not stop a simulator that already started. Repeating the current state changes nothing.
+
+#### 16. Permanently delete one tester
+```bash
+npm run isquared:beta -- delete "Jane Smith" --confirm-name "Jane Smith"
+```
+The confirmation must match the stored name after surrounding and repeated spaces are collapsed. Case still matters. The command removes that tester's private rows only. If a remote simulator session was still open, the server tries one stop after the database commit. A disabled provider does not call Expo, and an unconfirmed stop can leave the remote preview running.
 
 ---
 
@@ -260,6 +274,9 @@ When `ISQUARED_ADMIN_USERNAME` and `ISQUARED_ADMIN_PASSWORD_HASH` are set:
   - Summary tiles: total invited testers, active testers, never logged in, total logins, total visits, period logins/visits.
   - Interactive table showing all testers, their status, logins, visits, and last login time.
   - Sorting by any column and filtering by status, search string, or time window (7, 14, 30, 90, 365 days).
+  - One click turns tester access off for everyone. Signed-in sessions and protected APIs stop working immediately. Turning it back on restores sessions that have not expired and were still inside their idle window when access was turned off. The idle clock does not run during the pause, and session expiry dates are not extended.
+  - While tester access is off, the access page shows an orange-red notice at the top right reading "Closed for changes." Entering a code then shows "We're glad you're here but we need to make some changes. Please come back later or contact David Grimsley." and does not show that person's personal message or the full-screen note. Turning access back on restores the normal notes.
+  - Permanently delete one tester by typing that tester's exact name. This removes that tester's code, personal message, sessions, agreement acceptances, events, and simulator rows. Shared agreement text, rate-limit buckets, simulator budget settings, admin sessions, and other testers stay.
   - Ordinary tester sessions **cannot** access the admin dashboard or its API endpoints.
 
 ---
@@ -358,7 +375,8 @@ sqlite3 /var/www/vhosts/davidjgrimsley.com/iSquared-beta/data/beta.sqlite ".back
 If a deployment of the prototype fails:
 - Replace the files in `iSquared-beta/web/` with the previous build.
 - The portfolio website itself remains completely unaffected.
-- If private beta access needs to be immediately suspended, remove `ISQUARED_BETA_CODE_PEPPER` from `.env` and restart Node. All requests to `/iSquared/` will immediately return standard portfolio 404s with zero beta code active.
+- To block testers immediately and leave the admin dashboard available, turn tester access off from the dashboard or run `npm run isquared:beta -- access off`. Administrators can turn it back on. Sessions are kept. A simulator preview URL that a device already holds can continue until the provider ends it.
+- If private beta access needs to be immediately suspended, remove `ISQUARED_BETA_CODE_PEPPER` from `.env` and restart Node. All requests to `/iSquared/` will immediately return standard portfolio 404s with zero beta code active. That also removes the admin dashboard until the pepper is restored and Node restarts.
 
 ---
 
@@ -522,5 +540,7 @@ After a standalone Android APK has been built and made available to Expo as a co
 Restart the server with the existing persistent beta SQLite database. Credentials must never be placed in the prototype bundle. The preview token is sent only in no-store responses to the owning beta tester; anyone who obtains it can control that device until the session ends. Never share or log preview responses. The simulator runs the actual app; the fallback is explicitly labeled as simulated.
 
 An uncertain start, stop, or expired external session retains its reservation until the provider positively confirms its state. The server does not run a background reconciler: a tester must request reconciliation, and a lost create response without an Expo session ID may require an operator to investigate in the Expo dashboard. Do not delete the SQLite record or launch a replacement until the external session is confirmed ended. Confirm the service's actual usage accounting in Expo before changing limits.
+
+The global tester-access switch does not stop simulator rows and does not call the provider. Routes that need a tester session reject while access is off. A preview URL already delivered to a device is outside this server; that device can keep using it until the provider ends the session. Deleting a tester is the exception to the "do not delete the SQLite record" rule: the delete removes that tester's simulator rows after charging their current-month used time and any unresolved reservation into `beta_simulator_usage_retained`. The reservation stays in the shared budget after the row is gone, including in later months, because this server can no longer confirm that the remote session ended. After the database commit, the server makes one best-effort provider stop. If the provider is disabled, or the stop is not confirmed, the remote session may continue until the provider ends it. The local preview runs with the provider disabled, so it does not call Expo.
 
 For the authorized trial, exercise start, touch, scrolling, text entry, Android navigation, scaling, reload/reconnection, stop and expiry within the existing frame. Confirm the Expo screen has just one set of system bars and inspect browser network/CSP errors. Also verify a second tester cannot access the first tester's preview. Do not enable public tester access until these checks and the artifact's startup without a development server pass.

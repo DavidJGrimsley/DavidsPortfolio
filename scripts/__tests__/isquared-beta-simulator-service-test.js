@@ -187,9 +187,39 @@ describe('Simulator Foundation Service (isquared-beta)', () => {
     if (db) db.close();
   });
 
+  test('retained simulator usage counts this month used time and every reserved hold', () => {
+    const service = createSimulatorService({ db, config: fakeConfig, now: () => currentTime });
+    const before = service.getBudgetStatus();
+    db.prepare(
+      `INSERT INTO beta_simulator_usage_retained (month, used_seconds, reserved_seconds, updated_at)
+       VALUES (?, 60, 0, ?), (?, 120, 30, ?)`
+    ).run(before.month, new Date(currentTime).toISOString(), '2020-01', new Date(currentTime).toISOString());
+    const after = service.getBudgetStatus();
+    expect(after.usedSeconds - before.usedSeconds).toBe(60);
+    expect(after.reservedSeconds - before.reservedSeconds).toBe(30);
+  });
+
+  test('refuses a new simulator session while tester access is off', async () => {
+    db.prepare('UPDATE beta_access_control SET tester_access_enabled = 0 WHERE id = 1').run();
+    const fakeProvider = new TestFakeProvider();
+    const simService = createSimulatorService({
+      db,
+      config: fakeConfig,
+      provider: fakeProvider,
+      now: () => currentTime,
+    });
+    await expect(simService.startSession({
+      testerId: testTester.id,
+      projectId: 'pet-show-and-tell',
+      platform: 'android',
+      durationMinutes: 5,
+    })).rejects.toMatchObject({ code: 'access_paused' });
+    expect(db.prepare('SELECT COUNT(*) AS n FROM beta_simulator_sessions').get().n).toBe(0);
+  });
+
   test('Database migration creates simulator tables', () => {
     const version = db.prepare('PRAGMA user_version').get().user_version;
-    expect(version).toBe(3);
+    expect(version).toBe(4);
 
     const service = createSimulatorService({ db, config: { ...fakeConfig, simulator: { monthlyBudgetMinutes: 10, maxSessionMinutes: 3 } } });
     expect(service.getBudgetConfig()).toMatchObject({ monthlyBudgetSeconds: 600, maxSessionSeconds: 180 });

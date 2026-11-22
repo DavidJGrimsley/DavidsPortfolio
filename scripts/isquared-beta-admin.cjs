@@ -26,6 +26,9 @@ Testers
   history <id|name> [--limit 50]      Login/visit/admin event history for a tester
   disable <id|name>                   Deny access and revoke all of the tester's sessions
   enable <id|name>
+  delete <id|name> --confirm-name "Exact Name"
+                                      Permanently delete one tester and that tester's private rows
+  access [on|off|status]              Turn tester access off or on for everyone, or print it
   rotate-code <id|name> (--code X | --code-stdin | --generate)
                                       Replace the code; old code stops working, sessions revoked
   set-expiry <id|name> <YYYY-MM-DD|none>
@@ -46,7 +49,7 @@ Identify testers by numeric id or exact name. Times are UTC (local time in paren
 function parseArgs(argv) {
   const flags = {};
   const positional = [];
-  const valueFlags = new Set(['name', 'code', 'expires', 'limit', 'days', 'id', 'message']);
+  const valueFlags = new Set(['name', 'code', 'expires', 'limit', 'days', 'id', 'message', 'confirm-name']);
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token.startsWith('--')) {
@@ -259,6 +262,42 @@ async function run(argv) {
         return 0;
       }
 
+      case 'delete': {
+        const target = positional[0] || flags.name || flags.id;
+        if (!target) throw new Error('delete requires a tester name or ID');
+        if (typeof flags['confirm-name'] !== 'string') {
+          throw new Error('delete requires --confirm-name with the exact tester name');
+        }
+        const tester = service.findTester(target);
+        const result = service.deleteTester(tester.id, { confirmName: flags['confirm-name'] });
+        const remoteStop = await beta.simulatorService.abandonProviderSessions(result.providerStops);
+        console.log(
+          `Deleted ${result.name}. Sessions ${result.removed.sessions}, events ${result.removed.events}, agreements ${result.removed.agreements}, simulator sessions ${result.removed.simulatorSessions}.`
+        );
+        if (remoteStop === 'unconfirmed') {
+          console.log('A remote simulator session could not be confirmed stopped. It may keep running until the provider ends it.');
+        } else if (remoteStop === 'skipped_provider_disabled') {
+          console.log('No live simulator provider is configured, so no remote stop was attempted.');
+        }
+        return 0;
+      }
+
+      case 'access': {
+        const mode = positional[0] || 'status';
+        if (mode === 'status') {
+          const access = service.getTesterAccess();
+          console.log(`Tester access: ${access.enabled ? 'on' : 'off'}`);
+          return 0;
+        }
+        if (mode !== 'on' && mode !== 'off') throw new Error('access requires on, off, or status');
+        const result = service.setTesterAccess(mode === 'on');
+        console.log(`Tester access: ${result.testerAccessEnabled ? 'on' : 'off'}${result.changed ? '' : ' (already set)'}.`);
+        if (result.testerAccessEnabled && result.changed) {
+          console.log(`Restored sessions: ${result.restoredSessions}.`);
+        }
+        return 0;
+      }
+
       case 'rotate-code': {
         const target = positional[0] || flags.name || flags.id;
         if (!target) throw new Error('rotate-code requires a tester name or ID');
@@ -304,6 +343,7 @@ async function run(argv) {
         console.log(`Enabled testers:            ${s.activeTesters}`);
         console.log(`Active in period:           ${s.activeTestersInPeriod}`);
         console.log(`Never logged in:            ${s.neverLoggedIn}`);
+        console.log(`Tester access:              ${result.testerAccess.enabled ? 'on' : 'off'}`);
         console.log(`Total logins / visits:      ${s.totalLogins} / ${s.totalVisits}`);
         console.log(`Logins / visits in period:  ${s.loginsInPeriod} / ${s.visitsInPeriod}`);
         return 0;

@@ -27,6 +27,17 @@ function toIso(ms) {
   return new Date(ms).toISOString();
 }
 
+function monthWindow(ms) {
+  const date = new Date(ms);
+  const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+  const startIso = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)).toISOString();
+  return { monthKey, startIso };
+}
+
+function collapsedConfirm(value) {
+  return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : null;
+}
+
 function parseExpiry(value) {
   if (value === null || value === undefined || value === '' || value === 'none') {
     return null;
@@ -167,6 +178,176 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     });
   }
 
+  function readTesterAccess() {
+    const row = db
+      .prepare('SELECT tester_access_enabled, paused_at, updated_at FROM beta_access_control WHERE id = 1')
+      .get();
+    if (!row) return { enabled: false, pausedAt: null, updatedAt: null };
+    return {
+      enabled: row.tester_access_enabled === 1,
+      pausedAt: row.paused_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  function setTesterAccess(enabled) {
+    if (typeof enabled !== 'boolean') {
+      throw new BetaError('bad_input', 'Tester access must be turned on or off.');
+    }
+    return transaction(db, () => {
+      const current = readTesterAccess();
+      const rowExists = Boolean(db.prepare('SELECT 1 AS ok FROM beta_access_control WHERE id = 1').get());
+      if (rowExists && current.enabled === enabled) {
+        return {
+          testerAccessEnabled: current.enabled,
+          changed: false,
+          restoredSessions: 0,
+          pausedAt: current.pausedAt,
+          updatedAt: current.updatedAt,
+        };
+      }
+      const currentMs = now();
+      const nowIso = toIso(currentMs);
+      if (!enabled) {
+        db.prepare(
+          `INSERT INTO beta_access_control (id, tester_access_enabled, paused_at, updated_at)
+           VALUES (1, 0, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             tester_access_enabled = 0,
+             paused_at = excluded.paused_at,
+             updated_at = excluded.updated_at`
+        ).run(nowIso, nowIso);
+        logEvent({ type: 'tester_access_changed', metadata: { enabled: false, restoredSessions: 0 } });
+        return { testerAccessEnabled: false, changed: true, restoredSessions: 0, pausedAt: nowIso, updatedAt: nowIso };
+      }
+
+      const pauseStart = current.pausedAt ? Date.parse(current.pausedAt) : currentMs;
+      const delta = Math.max(0, currentMs - (Number.isNaN(pauseStart) ? currentMs : pauseStart));
+      const idleCutoff = toIso((Number.isNaN(pauseStart) ? currentMs : pauseStart) - config.idleTimeoutMs);
+      const eligible = db
+        .prepare(
+          `SELECT s.id, s.last_seen_at
+             FROM beta_sessions s
+             JOIN beta_testers t ON t.id = s.tester_id
+            WHERE s.revoked_at IS NULL
+              AND s.expires_at > ?
+              AND s.last_seen_at > ?
+              AND t.active = 1
+              AND (t.expires_at IS NULL OR t.expires_at > ?)`
+        )
+        .all(nowIso, idleCutoff, nowIso);
+      const touch = db.prepare('UPDATE beta_sessions SET last_seen_at = ? WHERE id = ?');
+      for (const row of eligible) {
+        touch.run(toIso(Date.parse(row.last_seen_at) + delta), row.id);
+      }
+      db.prepare(
+        `INSERT INTO beta_access_control (id, tester_access_enabled, paused_at, updated_at)
+         VALUES (1, 1, NULL, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           tester_access_enabled = 1,
+           paused_at = NULL,
+           updated_at = excluded.updated_at`
+      ).run(nowIso);
+      logEvent({ type: 'tester_access_changed', metadata: { enabled: true, restoredSessions: eligible.length } });
+      return {
+        testerAccessEnabled: true,
+        changed: true,
+        restoredSessions: eligible.length,
+        pausedAt: null,
+        updatedAt: nowIso,
+      };
+    });
+  }
+
+  function deleteTester(testerId, { confirmName } = {}) {
+    if (!Number.isInteger(testerId) || testerId <= 0) {
+      throw new BetaError('bad_input', 'A tester id is required.');
+    }
+    const confirmed = collapsedConfirm(confirmName);
+    return transaction(db, () => {
+      const tester = db.prepare('SELECT id, name FROM beta_testers WHERE id = ?').get(testerId);
+      if (!tester) throw new BetaError('not_found', 'That tester does not exist.');
+      if (confirmed === null || confirmed !== tester.name) {
+        throw new BetaError('confirmation_mismatch', 'Type the tester name exactly. Nothing was deleted.');
+      }
+
+      const providerStops = db
+        .prepare(
+          `SELECT provider, provider_session_id AS providerSessionId
+             FROM beta_simulator_sessions
+            WHERE tester_id = ?
+              AND status IN ('starting', 'active', 'stopping', 'uncertain')
+              AND provider_session_id IS NOT NULL
+              AND provider_session_id != ''`
+        )
+        .all(testerId);
+
+      const { monthKey, startIso } = monthWindow(now());
+      const usage = db
+        .prepare(
+          `SELECT
+             COALESCE(SUM(CASE
+               WHEN (ended_at >= ? OR (ended_at IS NULL AND created_at >= ?)) THEN used_seconds
+               ELSE 0
+             END), 0) AS used_secs,
+             COALESCE(SUM(CASE
+               WHEN status IN ('starting', 'active', 'stopping', 'uncertain') THEN reserved_seconds
+               ELSE 0
+             END), 0) AS reserved_secs
+           FROM beta_simulator_sessions
+          WHERE tester_id = ?
+            AND (created_at >= ? OR ended_at >= ? OR status IN ('starting', 'active', 'stopping', 'uncertain'))`
+        )
+        .get(startIso, startIso, testerId, startIso, startIso);
+      const usedSeconds = Number(usage.used_secs);
+      const reservedSeconds = Number(usage.reserved_secs);
+      if (usedSeconds > 0 || reservedSeconds > 0) {
+        db.prepare(
+          `INSERT INTO beta_simulator_usage_retained (month, used_seconds, reserved_seconds, updated_at)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(month) DO UPDATE SET
+             used_seconds = used_seconds + excluded.used_seconds,
+             reserved_seconds = reserved_seconds + excluded.reserved_seconds,
+             updated_at = excluded.updated_at`
+        ).run(monthKey, usedSeconds, reservedSeconds, toIso(now()));
+      }
+
+      const attempts = Number(
+        db.prepare(
+          `DELETE FROM beta_simulator_attempts
+            WHERE tester_id = ? OR session_id IN (SELECT id FROM beta_simulator_sessions WHERE tester_id = ?)`
+        ).run(testerId, testerId).changes
+      );
+      const simulatorSessions = Number(
+        db.prepare('DELETE FROM beta_simulator_sessions WHERE tester_id = ?').run(testerId).changes
+      );
+      const sessions = Number(db.prepare('DELETE FROM beta_sessions WHERE tester_id = ?').run(testerId).changes);
+      const agreements = Number(db.prepare('DELETE FROM beta_agreements WHERE tester_id = ?').run(testerId).changes);
+      const events = Number(db.prepare('DELETE FROM beta_events WHERE tester_id = ?').run(testerId).changes);
+      logEvent({
+        type: 'tester_deleted',
+        metadata: {
+          sessionsRemoved: sessions,
+          eventsRemoved: events,
+          agreementsRemoved: agreements,
+          simulatorSessionsRemoved: simulatorSessions,
+          simulatorAttemptsRemoved: attempts,
+          retainedUsedSeconds: usedSeconds,
+          retainedReservedSeconds: reservedSeconds,
+        },
+      });
+      const removedTester = Number(db.prepare('DELETE FROM beta_testers WHERE id = ?').run(testerId).changes);
+      if (removedTester !== 1) throw new BetaError('not_found', 'That tester does not exist.');
+      return {
+        deletedTesterId: testerId,
+        name: tester.name,
+        removed: { sessions, events, agreements, simulatorSessions, simulatorAttempts: attempts },
+        retained: { usedSeconds, reservedSeconds },
+        providerStops,
+      };
+    });
+  }
+
   function setExpiry(testerId, value) {
     const expiry = parseExpiry(value);
     db.prepare('UPDATE beta_testers SET expires_at = ? WHERE id = ?').run(expiry, testerId);
@@ -225,6 +406,7 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
       const limited = limiter.check([...accessRules(client), ...rules]);
       if (limited.blocked) return { limited: true, retryAfterSeconds: limited.retryAfterSeconds };
       limiter.recordFailure(rules);
+      if (!readTesterAccess().enabled) return { message: null, closed: true };
       const normalized = normalizeCode(code);
       if (!normalized || normalized.length < 5) return { message: null };
       const tester = db.prepare('SELECT active, expires_at, personal_message FROM beta_testers WHERE code_hash = ?')
@@ -245,6 +427,9 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     if (limited.blocked) {
       return { ok: false, reason: 'rate_limited', retryAfterSeconds: limited.retryAfterSeconds };
     }
+    if (!readTesterAccess().enabled) {
+      return { ok: false, reason: 'access_paused' };
+    }
     if (accepted !== true) {
       return { ok: false, reason: 'terms_not_accepted' };
     }
@@ -262,32 +447,46 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     if (!normalized) {
       return fail('invalid_code');
     }
-    const tester = db.prepare('SELECT * FROM beta_testers WHERE code_hash = ?').get(hashCode(config.pepper, normalized));
+    if (!readTesterAccess().enabled) {
+      return { ok: false, reason: 'access_paused' };
+    }
+    const codeHash = hashCode(config.pepper, normalized);
+    const tester = db.prepare('SELECT * FROM beta_testers WHERE code_hash = ?').get(codeHash);
     if (!tester) return fail('invalid_code');
     if (!tester.active) return fail('inactive', tester.id);
     if (tester.expires_at && tester.expires_at <= toIso(now())) return fail('expired', tester.id);
 
     return transaction(db, () => {
+      if (!readTesterAccess().enabled) {
+        return { ok: false, reason: 'access_paused' };
+      }
+      const currentTester = db
+        .prepare('SELECT id, active, expires_at FROM beta_testers WHERE id = ? AND code_hash = ?')
+        .get(tester.id, codeHash);
+      if (!currentTester) return fail('invalid_code');
+      if (!currentTester.active) return fail('inactive', currentTester.id);
+      if (currentTester.expires_at && currentTester.expires_at <= toIso(now())) return fail('expired', currentTester.id);
+
       const current = now();
       const token = newToken();
       const sessionId = crypto.randomUUID();
       const sessionExpiry = Math.min(
         current + config.sessionTtlMs,
-        tester.expires_at ? Date.parse(tester.expires_at) : Infinity
+        currentTester.expires_at ? Date.parse(currentTester.expires_at) : Infinity
       );
       db.prepare(
         'INSERT OR IGNORE INTO beta_agreements (tester_id, agreement_version, accepted_at, agreement_digest) VALUES (?, ?, ?, ?)'
-      ).run(tester.id, agreement.version, toIso(current), agreement.digest);
+      ).run(currentTester.id, agreement.version, toIso(current), agreement.digest);
       db.prepare(
         'INSERT INTO beta_sessions (id, tester_id, token_hash, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)'
-      ).run(sessionId, tester.id, hashToken(token), toIso(current), toIso(sessionExpiry), toIso(current));
-      db.prepare('UPDATE beta_testers SET last_login_at = ? WHERE id = ?').run(toIso(current), tester.id);
-      logEvent({ testerId: tester.id, sessionId, type: 'login', metadata: { agreementVersion: agreement.version } });
+      ).run(sessionId, currentTester.id, hashToken(token), toIso(current), toIso(sessionExpiry), toIso(current));
+      db.prepare('UPDATE beta_testers SET last_login_at = ? WHERE id = ?').run(toIso(current), currentTester.id);
+      logEvent({ testerId: currentTester.id, sessionId, type: 'login', metadata: { agreementVersion: agreement.version } });
       return {
         ok: true,
         token,
         maxAgeSeconds: Math.floor((sessionExpiry - current) / 1000),
-        tester: { id: tester.id, name: tester.name },
+        tester: { id: currentTester.id, name: tester.name },
       };
     });
   }
@@ -311,6 +510,7 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     const current = now();
     if (Date.parse(row.expires_at) <= current) return null;
     if (row.tester_expires_at && Date.parse(row.tester_expires_at) <= current) return null;
+    if (!readTesterAccess().enabled) return null;
     const lastSeen = Date.parse(row.last_seen_at);
     if (lastSeen + config.idleTimeoutMs <= current) return null;
 
@@ -331,10 +531,14 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
    * and a reload inside the visit gap extends the current visit instead of adding a new one.
    */
   function recordVisit(session) {
+    if (!readTesterAccess().enabled) return false;
     const current = now();
     const last = db.prepare('SELECT last_visit_at FROM beta_sessions WHERE id = ?').get(session.sessionId)?.last_visit_at;
     const isNewVisit = !last || current - Date.parse(last) >= config.visitGapMs;
     return transaction(db, () => {
+      if (!readTesterAccess().enabled) return false;
+      const exists = db.prepare('SELECT 1 AS ok FROM beta_sessions WHERE id = ?').get(session.sessionId);
+      if (!exists) return false;
       db.prepare('UPDATE beta_sessions SET last_visit_at = ? WHERE id = ?').run(toIso(current), session.sessionId);
       if (isNewVisit) {
         logEvent({ testerId: session.testerId, sessionId: session.sessionId, type: 'visit' });
@@ -344,10 +548,21 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
   }
 
   function logout(token) {
-    const session = validateSession(token);
-    if (!session) return false;
-    db.prepare('UPDATE beta_sessions SET revoked_at = ? WHERE id = ?').run(toIso(now()), session.sessionId);
-    logEvent({ testerId: session.testerId, sessionId: session.sessionId, type: 'logout' });
+    if (typeof token !== 'string' || token.length < 20 || token.length > 128) return false;
+    const row = db
+      .prepare(
+        `SELECT s.id, s.tester_id, s.expires_at, s.last_seen_at, t.active, t.expires_at AS tester_expires_at
+           FROM beta_sessions s JOIN beta_testers t ON t.id = s.tester_id
+          WHERE s.token_hash = ? AND s.revoked_at IS NULL`
+      )
+      .get(hashToken(token));
+    if (!row || !row.active) return false;
+    const current = now();
+    if (Date.parse(row.expires_at) <= current) return false;
+    if (row.tester_expires_at && Date.parse(row.tester_expires_at) <= current) return false;
+    if (readTesterAccess().enabled && Date.parse(row.last_seen_at) + config.idleTimeoutMs <= current) return false;
+    db.prepare('UPDATE beta_sessions SET revoked_at = ? WHERE id = ?').run(toIso(current), row.id);
+    logEvent({ testerId: row.tester_id, sessionId: row.id, type: 'logout' });
     return true;
   }
 
@@ -467,6 +682,7 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
       generatedAt: nowIso,
       periodDays,
       since,
+      testerAccess: readTesterAccess(),
       summary: {
         totalTesters: testers.length,
         activeTesters: testers.filter((tester) => tester.status === 'active' || tester.status === 'invited').length,
@@ -498,7 +714,9 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     cleanup,
     createAdminSession,
     createTester,
+    deleteTester,
     findTester,
+    getTesterAccess: readTesterAccess,
     setMessage,
     lookupMessage,
     getTester,
@@ -514,6 +732,7 @@ function createBetaService({ db, config, agreement, now = () => Date.now() }) {
     rotateCode,
     setActive,
     setExpiry,
+    setTesterAccess,
     stats,
     testerHistory,
     validateAdminSession,
