@@ -73,6 +73,7 @@ function createIsquaredBeta({ appRoot, env = process.env, logger = console, now 
       service: beta.service,
       simulatorService: beta.simulatorService,
       provider: beta.provider,
+      db: beta.db,
       close: beta.close,
     };
   } catch (error) {

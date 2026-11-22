@@ -133,6 +133,26 @@ const MIGRATIONS = [
     version: 3,
     sql: 'ALTER TABLE beta_testers ADD COLUMN personal_message TEXT;',
   },
+  {
+    version: 4,
+    sql: `
+      CREATE TABLE beta_access_control (
+        id                    INTEGER PRIMARY KEY CHECK (id = 1),
+        tester_access_enabled INTEGER NOT NULL CHECK (tester_access_enabled IN (0, 1)),
+        paused_at             TEXT,
+        updated_at            TEXT NOT NULL
+      );
+      INSERT INTO beta_access_control (id, tester_access_enabled, paused_at, updated_at)
+        VALUES (1, 1, NULL, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'));
+
+      CREATE TABLE beta_simulator_usage_retained (
+        month            TEXT PRIMARY KEY,
+        used_seconds     INTEGER NOT NULL DEFAULT 0 CHECK (used_seconds >= 0),
+        reserved_seconds INTEGER NOT NULL DEFAULT 0 CHECK (reserved_seconds >= 0),
+        updated_at       TEXT NOT NULL
+      );
+    `,
+  },
 ];
 
 function migrate(db) {
