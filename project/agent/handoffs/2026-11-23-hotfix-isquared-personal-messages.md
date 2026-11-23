@@ -1,6 +1,6 @@
 # Hotfix iSquared per-person messages — task worksheet
 
-Status: ACTIVE
+Status: COMPLETE
 Task mapping: Unmapped. `project/todo.md` has no checkbox for this personal-message or fullscreen-note hotfix. `todo.md` was not changed.
 Task source: user request to hotfix missing per-person special messages from freshly fetched `origin/main`, and to show the fullscreen note whether or not an individual message is set, including while access is closed, without leaking personal secrets while closed.
 Implementation owner: this session (sole owner). No merge and no production deploy.
@@ -56,7 +56,7 @@ On `b6eece248aaf8b9adb1447f353591f78f335b11a`, an open-access tester with a stor
 - Tester access was left on. The scheduled task `DavidsPortfolio-iSquared-local-preview` was already disabled and was not changed.
 
 ## Publication
-- Pull request: pending against `main`. Not merged. Production was not deployed.
+- Pull request: https://github.com/DavidJGrimsley/DavidsPortfolio/pull/88 against `main`. Not merged. Production was not deployed.
 
 ## Limits
 - A refused lookup still hides the personal message. Login-failure buckets can still suppress lookups.
