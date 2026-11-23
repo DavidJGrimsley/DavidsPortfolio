@@ -145,7 +145,10 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 #admin-login > label { margin-top: 16px; }
 #admin-login > label:first-child { margin-top: 0; }
 
+/* The shell entrance animation keeps a transform, which would otherwise
+   position this badge against the viewport padding instead of the card. */
 .card-access {
+  position: relative;
   max-width: 760px;
 }
 
