@@ -127,19 +127,33 @@ describe('iSquared access page repository links', () => {
     expect(css).not.toMatch(/\.repo-links a\s*\{[^}]*white-space:\s*nowrap/);
   });
 
-  it('pins the closed notice to the top right and keeps it inside a phone-width card', () => {
+  it('pins the closed notice inside the access card at the top right', () => {
+    const card = rules.find(
+      (rule) => rule.maxWidth == null && rule.selectors.includes('.card-access') && rule.declarations.position
+    );
     const desktop = rules.find((rule) => rule.maxWidth == null && rule.selectors.includes('.access-closed'));
     const phone = rules.find((rule) => rule.maxWidth === 480 && rule.selectors.includes('.access-closed'));
+    const desktopRoom = rules.find(
+      (rule) => rule.maxWidth == null && rule.selectors.includes('.card-access.is-closed')
+    );
+    const phoneRoom = rules.find((rule) => rule.maxWidth === 480 && rule.selectors.includes('.card-access.is-closed'));
+    // The shell animation leaves a transform in place. The card has to be the containing block
+    // or the badge anchors to that shell and straddles the card border.
+    expect(card.declarations.position).toBe('relative');
     expect(desktop.declarations.position).toBe('absolute');
     expect(desktop.declarations.top).toBe('14px');
     expect(desktop.declarations.right).toBe('16px');
     expect(desktop.declarations.color).toBe('#ff7a4a');
     expect(desktop.declarations.border).toBe('1px solid #ff7a4a');
+    expect(desktop.declarations.background).toBe('rgba(255, 122, 74, 0.08)');
+    expect(desktop.declarations['max-width']).toBe('calc(100% - 32px)');
     expect(desktop.declarations['text-align']).toBe('right');
+    expect(desktopRoom.declarations['padding-top']).toBe('58px');
     expect(phone.declarations.top).toBe('12px');
     expect(phone.declarations.right).toBe('12px');
     expect(phone.declarations['max-width']).toBe('calc(100% - 24px)');
-    const room = rules.find((rule) => rule.maxWidth === 480 && rule.selectors.includes('.card-access.is-closed'));
-    expect(room.declarations['padding-top']).toBe('68px');
+    expect(phone.declarations['font-size']).toBe('13px');
+    expect(phoneRoom.declarations['padding-top']).toBe('68px');
+    expect(rules.some((rule) => rule.selectors.includes('.access-closed') && rule.declarations.position === 'fixed')).toBe(false);
   });
 });
