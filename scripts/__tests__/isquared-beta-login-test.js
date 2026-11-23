@@ -28,7 +28,7 @@ it('clears stale messages and ignores delayed lookup responses after an edit', a
   for (let i = 0; i < 10; i += 1) await Promise.resolve();
   expect(elements['personal-message'].hidden).toBe(true);
   expect(elements['personal-message'].textContent).toBe('');
-  expect(elements['fullscreen-message'].hidden).toBe(true);
+  expect(elements['fullscreen-message'].hidden).toBe(false);
   jest.advanceTimersByTime(800);
   resolveFetch({ ok: true, json: async () => ({ message: '<b>Hi!</b>' }) });
   for (let i = 0; i < 10; i += 1) await Promise.resolve();
@@ -83,6 +83,8 @@ describe('personal-message lookups spend as few rate-limited requests as possibl
       jest.advanceTimersByTime(300);
     }
     expect(fetch).not.toHaveBeenCalled();
+    expect(elements['fullscreen-message'].hidden).toBe(false);
+    expect(elements['personal-message'].hidden).toBe(true);
     jest.advanceTimersByTime(800);
     await flush();
     expect(lookedUp()).toEqual(['ABCDEFGHJKMN']);
@@ -115,6 +117,7 @@ describe('personal-message lookups spend as few rate-limited requests as possibl
     await flush();
     typeValue('DEMO78');
     expect(elements['personal-message'].hidden).toBe(true);
+    expect(elements['fullscreen-message'].hidden).toBe(false);
     jest.advanceTimersByTime(800);
     await flush();
     expect(elements['personal-message'].hidden).toBe(true);
@@ -125,11 +128,28 @@ describe('personal-message lookups spend as few rate-limited requests as possibl
     jest.advanceTimersByTime(800);
     await flush();
     expect(elements['personal-message'].hidden).toBe(true);
-    expect(elements['fullscreen-message'].hidden).toBe(true);
+    expect(elements['personal-message'].textContent).toBe('');
+    expect(elements['fullscreen-message'].hidden).toBe(false);
     expect(lookedUp()).toEqual(['DEMO7', 'DEMO78']);
   });
 
-  it('shows nothing for refused lookups and asks again after a real edit', async () => {
+  it('retries a refused code when the same letters are entered again', async () => {
+    respond(429, { error: 'limited' });
+    respond(200, { message: 'Now available.' });
+    typeValue('DEMO7');
+    jest.advanceTimersByTime(800);
+    await flush();
+    expect(elements['personal-message'].hidden).toBe(true);
+    expect(elements['fullscreen-message'].hidden).toBe(false);
+    typeValue('DEMO7 ');
+    jest.advanceTimersByTime(800);
+    await flush();
+    expect(elements['personal-message'].textContent).toBe('Now available.');
+    expect(elements['fullscreen-message'].hidden).toBe(false);
+    expect(lookedUp()).toEqual(['DEMO7', 'DEMO7']);
+  });
+
+  it('hides the personal message for refused lookups and asks again after another entry', async () => {
     respond(429, { error: 'limited' });
     respond(403, { error: 'forbidden' });
     respond(200, { message: 'Now available.' });
@@ -142,7 +162,7 @@ describe('personal-message lookups spend as few rate-limited requests as possibl
     jest.advanceTimersByTime(800);
     await flush();
     expect(elements['personal-message'].hidden).toBe(true);
-    expect(elements['fullscreen-message'].hidden).toBe(true);
+    expect(elements['fullscreen-message'].hidden).toBe(false);
     typeValue('');
     typeValue('DEMO7');
     jest.advanceTimersByTime(800);
@@ -158,6 +178,7 @@ describe('personal-message lookups spend as few rate-limited requests as possibl
     }
     expect(fetch).not.toHaveBeenCalled();
     expect(elements['personal-message'].hidden).toBe(true);
+    expect(elements['fullscreen-message'].hidden).toBe(true);
   });
 });
 
@@ -358,6 +379,7 @@ describe('closed access notice', () => {
 
   function mount({ closed, watch }) {
     const inputHandlers = [];
+    const formHandlers = {};
     const accessView = { className: closed ? 'card card-access is-closed' : 'card card-access' };
     accessView.classList = {
       toggle(name, on) {
@@ -367,7 +389,7 @@ describe('closed access notice', () => {
     const elements = {
       'access-form': {
         dataset: { csrf: 'token', accessClosed: closed ? '1' : '0' },
-        addEventListener() {},
+        addEventListener(event, fn) { formHandlers[event] = fn; },
       },
       code: {
         value: '',
@@ -382,11 +404,22 @@ describe('closed access notice', () => {
       'access-closed-note': { hidden: true, textContent: '' },
       'access-view': accessView,
     };
-    const state = { enabled: !closed, authenticated: false };
+    const state = { enabled: !closed, authenticated: false, csrfToken: '' };
     const responses = [];
     const fetch = jest.fn(async (url) => {
       if (String(url).endsWith('/session')) {
-        return { ok: true, status: 200, json: async () => ({ authenticated: state.authenticated, testerAccessEnabled: state.enabled }) };
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            authenticated: state.authenticated,
+            testerAccessEnabled: state.enabled,
+            ...(state.csrfToken ? { csrfToken: state.csrfToken } : {}),
+          }),
+        };
+      }
+      if (String(url).endsWith('/access')) {
+        return { ok: false, status: 401, json: async () => ({ error: 'paused' }) };
       }
       return { ok: true, status: 200, json: async () => (responses.shift() || { message: null }) };
     });
@@ -418,6 +451,11 @@ describe('closed access notice', () => {
       messageCalls() {
         return fetch.mock.calls.filter(([url]) => String(url).endsWith('/personal-message'));
       },
+      submit() {
+        const event = { preventDefault() {} };
+        formHandlers.submit(event);
+        return flushMicrotasks();
+      },
     };
   }
 
@@ -425,7 +463,7 @@ describe('closed access notice', () => {
     jest.useRealTimers();
   });
 
-  it('shows the closed sentence instead of either note and does not request the secret', async () => {
+  it('shows the closed sentence and fullscreen note without requesting the secret', async () => {
     jest.useFakeTimers();
     const page = mount({ closed: true, watch: false });
     page.type('DEMO7');
@@ -438,7 +476,30 @@ describe('closed access notice', () => {
     expect(page.elements['access-closed-note'].textContent).toBe(CLOSED_NOTE);
     expect(page.elements['personal-message'].hidden).toBe(true);
     expect(page.elements['personal-message'].textContent).toBe('');
-    expect(page.elements['fullscreen-message'].hidden).toBe(true);
+    expect(page.elements['fullscreen-message'].hidden).toBe(false);
+  });
+
+  it('keeps the fullscreen note and closed sentence after a refused sign-in', async () => {
+    const page = mount({ closed: true, watch: false });
+    page.type('DEMO7');
+    page.elements.submit.disabled = false;
+    page.elements.agree.checked = true;
+    await page.submit();
+    expect(page.messageCalls()).toHaveLength(0);
+    expect(page.elements['personal-message'].textContent).toBe('');
+    expect(page.elements['personal-message'].hidden).toBe(true);
+    expect(page.elements['fullscreen-message'].hidden).toBe(false);
+    expect(page.elements['access-closed-note'].textContent).toBe(CLOSED_NOTE);
+  });
+
+  it('refreshes the form CSRF token from the session poll without a message lookup', async () => {
+    jest.useFakeTimers();
+    const page = mount({ closed: false, watch: true });
+    page.state.csrfToken = 'rotated-token';
+    jest.advanceTimersByTime(4000);
+    await flushMicrotasks();
+    expect(page.elements['access-form'].dataset.csrf).toBe('rotated-token');
+    expect(page.messageCalls()).toHaveLength(0);
   });
 
   it('drops a returned secret when the server is closed, then restores both notes when access returns', async () => {
@@ -451,7 +512,7 @@ describe('closed access notice', () => {
     await flushMicrotasks();
     expect(page.elements['personal-message'].textContent).toBe('');
     expect(page.elements['personal-message'].hidden).toBe(true);
-    expect(page.elements['fullscreen-message'].hidden).toBe(true);
+    expect(page.elements['fullscreen-message'].hidden).toBe(false);
     expect(page.elements['access-closed-note'].textContent).toBe(CLOSED_NOTE);
     expect(page.elements['access-closed'].hidden).toBe(false);
     expect(page.elements['access-closed'].textContent).toBe('Closed for changes.');
@@ -469,6 +530,7 @@ describe('closed access notice', () => {
     expect(page.elements['access-closed'].hidden).toBe(true);
     expect(page.accessView.className).not.toContain('is-closed');
     expect(page.location.reload).not.toHaveBeenCalled();
+    expect(page.messageCalls()).toHaveLength(2);
   });
 
   it('asks for the personal message after a closed page learns that access is back on', async () => {

@@ -79,6 +79,15 @@
       return code.value.replace(/[\s-]+/g, '').toUpperCase();
     }
 
+    function codeIsEligible() {
+      return /^[A-Z0-9]{5,32}$/.test(normalizedCode());
+    }
+
+    // The full-screen sentence is static page text. Hide the element without clearing it.
+    function syncFullscreen() {
+      if (fullscreenMessage) fullscreenMessage.hidden = !codeIsEligible();
+    }
+
     function hideSecrets() {
       personalMessage.textContent = '';
       personalMessage.hidden = true;
@@ -86,9 +95,10 @@
     }
 
     function showClosedNote() {
+      var eligible = codeIsEligible();
+      syncFullscreen();
       if (!closedNote) return;
-      var normalized = normalizedCode();
-      if (!/^[A-Z0-9]{5,32}$/.test(normalized)) {
+      if (!eligible) {
         if (!closedNote.hidden) {
           closedNote.textContent = '';
           closedNote.hidden = true;
@@ -144,10 +154,32 @@
     }
 
     function showPersonalMessage(message) {
-      if (!message || accessClosed) return;
-      personalMessage.textContent = message;
-      personalMessage.hidden = false;
+      if (accessClosed) return;
+      if (message) {
+        personalMessage.textContent = message;
+        personalMessage.hidden = false;
+      } else {
+        personalMessage.textContent = '';
+        personalMessage.hidden = true;
+      }
       if (fullscreenMessage) fullscreenMessage.hidden = false;
+    }
+
+    function releaseFailedLookup(normalized, version) {
+      if (version === lookupVersion && activeCode === normalized) activeCode = null;
+    }
+
+    function restoreEnteredNotes() {
+      if (!codeIsEligible()) return;
+      syncFullscreen();
+      if (accessClosed) {
+        showClosedNote();
+        return;
+      }
+      var normalized = normalizedCode();
+      if (Object.prototype.hasOwnProperty.call(settled, normalized)) {
+        showPersonalMessage(settled[normalized]);
+      }
     }
 
     function scheduleLookup() {
@@ -155,8 +187,10 @@
       var normalized = normalizedCode();
       if (normalized === activeCode) return;
       clearLookup();
-      if (!/^[A-Z0-9]{5,32}$/.test(normalized)) return;
+      if (!codeIsEligible()) return;
       activeCode = normalized;
+      // The static note depends only on a well-formed code, not on the lookup result.
+      syncFullscreen();
       if (accessClosed) {
         showClosedNote();
         return;
@@ -175,16 +209,26 @@
         }).then(function (response) {
           return response.ok ? response.json() : null;
         }).then(function (data) {
-          if (version !== lookupVersion || !data || typeof data !== 'object') return;
+          if (version !== lookupVersion) return;
+          if (!data || typeof data !== 'object') {
+            releaseFailedLookup(normalized, version);
+            return;
+          }
           if (data.closed === true) {
             applyClosedState(true);
             return;
           }
           if (accessClosed) return;
-          if (data.message !== null && typeof data.message !== 'string') return;
+          if (data.message !== null && typeof data.message !== 'string') {
+            releaseFailedLookup(normalized, version);
+            return;
+          }
           settled[normalized] = data.message || '';
           if (version === lookupVersion) showPersonalMessage(data.message);
-        }).catch(function () { /* A missing message must not prevent sign-in. */ });
+        }).catch(function (error) {
+          if (error && error.name === 'AbortError') return;
+          releaseFailedLookup(normalized, version);
+        });
       }, LOOKUP_DELAY_MS);
     }
 
@@ -193,6 +237,7 @@
         .then(function (response) { return response && response.ok ? response.json() : null; })
         .then(function (data) {
           if (!data || typeof data.testerAccessEnabled !== 'boolean') return;
+          if (typeof data.csrfToken === 'string' && data.csrfToken) form.dataset.csrf = data.csrfToken;
           if (data.authenticated === true && window && window.location && typeof window.location.reload === 'function') {
             window.location.reload();
             return;
@@ -226,7 +271,7 @@
       event.preventDefault();
       if (submit.disabled) return;
       clearLookup();
-      if (accessClosed) showClosedNote();
+      restoreEnteredNotes();
       error.hidden = true;
       submit.disabled = true;
       fetch(API + '/access', {
@@ -258,12 +303,12 @@
           }
           var kind = result.data && result.data.error;
           showError(error, MESSAGES[kind] || MESSAGES.invalid);
-          if (accessClosed) showClosedNote();
+          restoreEnteredNotes();
           sync();
         })
         .catch(function () {
           showError(error, MESSAGES.network);
-          if (accessClosed) showClosedNote();
+          restoreEnteredNotes();
           sync();
         });
     });
